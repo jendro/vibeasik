@@ -8,8 +8,9 @@ import (
 
 func (s *Server) generateReorgPlan(c *fiber.Ctx) error {
 	var req models.ReorgPlanRequest
-	if err := c.BodyParser(&req); err != nil {
-		req = models.ReorgPlanRequest{}
+	if msg := firstProblem(bindJSON(c, &req), absPath("target_directory", req.TargetDirectory),
+		maxLen("strategy", req.Strategy, maxName)); msg != "" {
+		return badPayload(c, msg)
 	}
 
 	plan, err := s.services.Organizer.GenerateReorgPlan(c.Context(), req)
@@ -21,8 +22,11 @@ func (s *Server) generateReorgPlan(c *fiber.Ctx) error {
 
 func (s *Server) executeReorgMoves(c *fiber.Ctx) error {
 	var payload models.ExecuteMovePayload
-	if err := c.BodyParser(&payload); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "payload tidak valid: " + err.Error()})
+	if msg := bindJSONRequired(c, &payload); msg != "" {
+		return badPayload(c, "payload tidak valid: "+msg)
+	}
+	if len(payload.Moves) > 1000 {
+		return badPayload(c, "field moves maksimal 1000 item")
 	}
 
 	if len(payload.Moves) == 0 {
@@ -54,12 +58,14 @@ func (s *Server) previewConsolidateProject(c *fiber.Ctx) error {
 
 func (s *Server) consolidateProject(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 
 	var payload models.ConsolidatePayload
-	_ = c.BodyParser(&payload)
+	if msg := firstProblem(bindJSON(c, &payload), absPath("target_parent_dir", payload.TargetParentDir)); msg != "" {
+		return badPayload(c, msg)
+	}
 
 	apiBase := c.BaseURL()
 
@@ -83,8 +89,8 @@ func (s *Server) updateWorkspaceSettings(c *fiber.Ctx) error {
 	var payload struct {
 		DefaultProjectsRoot string `json:"default_projects_root"`
 	}
-	if err := c.BodyParser(&payload); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "payload tidak valid: " + err.Error()})
+	if msg := firstProblem(bindJSONRequired(c, &payload), absPath("default_projects_root", payload.DefaultProjectsRoot)); msg != "" {
+		return badPayload(c, "payload tidak valid: "+msg)
 	}
 
 	ws, err := s.services.Organizer.UpdateWorkspaceSettings(c.Context(), payload.DefaultProjectsRoot)

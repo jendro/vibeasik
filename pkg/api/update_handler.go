@@ -58,8 +58,8 @@ func (s *Server) setUpdateAuto(c *fiber.Ctx) error {
 	var in struct {
 		Auto bool `json:"auto"`
 	}
-	if err := c.BodyParser(&in); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "body tidak valid"})
+	if msg := bindJSONRequired(c, &in); msg != "" {
+		return badPayload(c, msg)
 	}
 	if err := update.SetAuto(in.Auto); err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})

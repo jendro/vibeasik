@@ -49,18 +49,13 @@ func (s *Server) syncComponentRoutes(c *fiber.Ctx) error {
 
 func (s *Server) updateComponentRoute(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid component id"})
 	}
 
 	routeId, err := c.ParamsInt("routeId")
-	if err != nil {
+	if err != nil || routeId <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid route id"})
-	}
-
-	var r models.ComponentRoute
-	if err := s.db.Where("id = ? AND component_id = ?", routeId, id).First(&r).Error; err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "route not found"})
 	}
 
 	var body struct {
@@ -70,8 +65,15 @@ func (s *Server) updateComponentRoute(c *fiber.Ctx) error {
 		Tags           string `json:"tags"`
 		TargetRequests string `json:"target_requests"`
 	}
-	if err := c.BodyParser(&body); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	if msg := firstProblem(bindJSONRequired(c, &body), maxLen("description", body.Description, maxText),
+		maxLen("domain", body.Domain, maxName), maxLen("function_group", body.FunctionGroup, maxName),
+		maxLen("tags", body.Tags, maxLabel), maxLen("target_requests", body.TargetRequests, maxName)); msg != "" {
+		return badPayload(c, msg)
+	}
+
+	var r models.ComponentRoute
+	if err := s.db.Where("id = ? AND component_id = ?", routeId, id).First(&r).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "route not found"})
 	}
 
 	if body.Description != "" {

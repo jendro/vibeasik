@@ -39,8 +39,12 @@ func (s *Server) getKnowledgeNode(c *fiber.Ctx) error {
 // teachKnowledge menambah pengetahuan ke pustaka bersama kantor (diajarkan manusia).
 func (s *Server) teachKnowledge(c *fiber.Ctx) error {
 	var body knowledge.Note
-	if err := c.BodyParser(&body); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	if msg := firstProblem(bindJSONRequired(c, &body)); msg != "" {
+		return badPayload(c, msg)
+	}
+	if msg := firstProblem(needText("title", body.Title, maxLabel), needText("content", body.Content, maxText),
+		maxLen("domain", body.Domain, maxName), maxLen("kind", body.Kind, maxName), maxLen("owner_name", body.OwnerName, maxName)); msg != "" {
+		return badPayload(c, msg)
 	}
 	body.Source, body.OwnerEmployeeID = models.KnowledgeSrcManual, nil
 	node, merged, err := knowledge.Learn(s.db, body)
@@ -51,17 +55,17 @@ func (s *Server) teachKnowledge(c *fiber.Ctx) error {
 }
 
 func (s *Server) knowledgeFeedback(c *fiber.Ctx) error {
-	id, err := c.ParamsInt("id")
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid node id"})
+	id, bad := paramID(c, "id", "node")
+	if bad != "" {
+		return badPayload(c, bad)
 	}
 	var body struct {
 		Helpful bool `json:"helpful"`
 	}
-	if err := c.BodyParser(&body); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	if msg := bindJSONRequired(c, &body); msg != "" {
+		return badPayload(c, msg)
 	}
-	node, err := knowledge.Feedback(s.db, uint(id), body.Helpful)
+	node, err := knowledge.Feedback(s.db, id, body.Helpful)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -82,8 +86,14 @@ func (s *Server) retireKnowledgeNode(c *fiber.Ctx) error {
 // recallKnowledge menampilkan apa yang akan diterima agent untuk sebuah teks pekerjaan (tanpa mencatat pemakaian).
 func (s *Server) recallKnowledge(c *fiber.Ctx) error {
 	var q knowledge.Query
-	if err := c.BodyParser(&q); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	if msg := firstProblem(bindJSONRequired(c, &q)); msg != "" {
+		return badPayload(c, msg)
+	}
+	if msg := firstProblem(needText("text", q.Text, maxText)); msg != "" {
+		return badPayload(c, msg)
+	}
+	if q.Limit < 0 || q.Limit > 200 {
+		return badPayload(c, "field limit harus 0..200")
 	}
 	q.Context = ""
 	return c.JSON(knowledge.Recall(s.db, q))
@@ -103,8 +113,9 @@ func (s *Server) reportKnowledgeGap(c *fiber.Ctx) error {
 		Topic  string `json:"topic"`
 		Sample string `json:"sample"`
 	}
-	if err := c.BodyParser(&body); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	if msg := firstProblem(bindJSONRequired(c, &body), needText("topic", body.Topic, maxLabel),
+		maxLen("domain", body.Domain, maxName), maxLen("sample", body.Sample, maxText)); msg != "" {
+		return badPayload(c, msg)
 	}
 	g, err := knowledge.ReportGap(s.db, body.Domain, body.Topic, body.Sample)
 	if err != nil {
@@ -114,11 +125,14 @@ func (s *Server) reportKnowledgeGap(c *fiber.Ctx) error {
 }
 
 func (s *Server) dismissKnowledgeGap(c *fiber.Ctx) error {
-	id, err := c.ParamsInt("gid")
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid gap id"})
+	id, bad := paramID(c, "gid", "gap")
+	if bad != "" {
+		return badPayload(c, bad)
 	}
-	if err := knowledge.DismissGap(s.db, uint(id), c.Query("note")); err != nil {
+	if msg := maxLen("note", c.Query("note"), maxLabel); msg != "" {
+		return badPayload(c, msg)
+	}
+	if err := knowledge.DismissGap(s.db, id, c.Query("note")); err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"ok": true})

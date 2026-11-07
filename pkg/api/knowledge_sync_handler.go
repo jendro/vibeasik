@@ -57,8 +57,14 @@ func (s *Server) consentKnowledgeSync(c *fiber.Ctx) error {
 		Accept  bool   `json:"accept"`
 		Version string `json:"version"`
 	}
-	if err := c.BodyParser(&in); err != nil || !in.Accept {
-		return c.Status(400).JSON(fiber.Map{"error": "persetujuan harus eksplisit (accept: true)"})
+	if p := bindJSONRequired(c, &in); p != "" {
+		return badPayload(c, p)
+	}
+	if !in.Accept {
+		return badPayload(c, "persetujuan harus eksplisit (accept: true)")
+	}
+	if p := needText("version", in.Version, maxName); p != "" {
+		return badPayload(c, p)
 	}
 	// Pengguna menyetujui teks versi tertentu; tolak bila tampilan Studio sudah usang.
 	if in.Version != knowledgesync.ConsentVersion {
@@ -74,8 +80,8 @@ func (s *Server) setKnowledgeSyncMode(c *fiber.Ctx) error {
 	var in struct {
 		Mode string `json:"mode"`
 	}
-	if err := c.BodyParser(&in); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "body tidak valid"})
+	if p := firstProblem(bindJSONRequired(c, &in), needOneOf("mode", in.Mode, "auto", "ask", "off")); p != "" {
+		return badPayload(c, p)
 	}
 	if err := knowledgesync.SetMode(knowledgesync.Mode(in.Mode)); err != nil {
 		if errors.Is(err, knowledgesync.ErrLocked) {
@@ -112,8 +118,8 @@ func (s *Server) revokeKnowledgeSync(c *fiber.Ctx) error {
 	var in struct {
 		ServerID uint `json:"server_id"`
 	}
-	if err := c.BodyParser(&in); err != nil || in.ServerID == 0 {
-		return c.Status(400).JSON(fiber.Map{"error": "server_id wajib"})
+	if p := firstProblem(bindJSONRequired(c, &in), needID("server_id", in.ServerID)); p != "" {
+		return badPayload(c, p)
 	}
 	if err := knowledgesync.Revoke(in.ServerID); err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})

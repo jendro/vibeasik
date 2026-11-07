@@ -31,10 +31,15 @@ type CreateProjectPayload struct {
 
 func (s *Server) createProject(c *fiber.Ctx) error {
 	var payload CreateProjectPayload
-	if err := c.BodyParser(&payload); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	if p := bindJSONRequired(c, &payload); p != "" {
+		return badPayload(c, p)
 	}
 	p := payload.Project
+	if msg := firstProblem(needText("name", p.Name, 255), maxLen("slug", p.Slug, 255),
+		maxLen("root_path", p.RootPath, 1024), maxLen("short_description", p.ShortDescription, maxText),
+		maxLen("description", p.Description, maxText)); msg != "" {
+		return badPayload(c, msg)
+	}
 
 	devCommands := make([]string, 0, len(p.Components))
 	for _, comp := range p.Components {
@@ -42,10 +47,6 @@ func (s *Server) createProject(c *fiber.Ctx) error {
 	}
 	if denied, resp := guardDevCommand(c, "", devCommands...); denied {
 		return resp
-	}
-
-	if p.Name == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "name is required"})
 	}
 
 	if p.Slug == "" {
@@ -135,8 +136,12 @@ func (s *Server) updateProject(c *fiber.Ctx) error {
 	_ = c.BodyParser(&rawMap)
 
 	var updateData models.Project
-	if err := c.BodyParser(&updateData); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	if msg := bindJSONRequired(c, &updateData); msg != "" {
+		return badPayload(c, msg)
+	}
+	if msg := firstProblem(maxLen("name", updateData.Name, 255), maxLen("slug", updateData.Slug, 255),
+		maxLen("root_path", updateData.RootPath, 1024), maxLen("description", updateData.Description, maxText)); msg != "" {
+		return badPayload(c, msg)
 	}
 
 	updated, err := s.services.Projects.Update(c.Context(), uint(id), &updateData)
@@ -255,8 +260,8 @@ func (s *Server) mergeProject(c *fiber.Ctx) error {
 	}
 
 	var payload MergeProjectPayload
-	if err := c.BodyParser(&payload); err != nil || payload.TargetProjectID == 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "target_project_id is required"})
+	if msg := bindJSONRequired(c, &payload); msg != "" || payload.TargetProjectID == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": firstProblem(msg, "target_project_id is required")})
 	}
 
 	if uint(sourceID) == payload.TargetProjectID {

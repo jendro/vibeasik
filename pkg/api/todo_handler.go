@@ -170,13 +170,19 @@ func (s *Server) getTodo(c *fiber.Ctx) error {
 
 func (s *Server) createTodo(c *fiber.Ctx) error {
 	var payload models.Todo
-	if err := c.BodyParser(&payload); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	if msg := bindJSONRequired(c, &payload); msg != "" {
+		return badPayload(c, msg)
 	}
 
 	payload.Title = strings.TrimSpace(payload.Title)
 	if payload.Title == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "title is required"})
+	}
+	if msg := firstProblem(maxLen("title", payload.Title, maxLabel), maxLen("description", payload.Description, maxText),
+		oneOf("level", payload.Level, models.TodoLevelGlobal, models.TodoLevelProject, models.TodoLevelComponent),
+		oneOf("status", payload.Status, todoStatuses...),
+		oneOf("priority", payload.Priority, todoPriorities...)); msg != "" {
+		return badPayload(c, msg)
 	}
 
 	if payload.Level == "" {
@@ -260,14 +266,17 @@ func (s *Server) updateTodo(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid todo id"})
 	}
 
+	var updates map[string]interface{}
+	if msg := bindJSONRequired(c, &updates); msg != "" {
+		return badPayload(c, msg)
+	}
+	if msg := validateTodoUpdates(updates); msg != "" {
+		return badPayload(c, msg)
+	}
+
 	var todo models.Todo
 	if err := s.db.First(&todo, id).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "todo not found"})
-	}
-
-	var updates map[string]interface{}
-	if err := c.BodyParser(&updates); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	delete(updates, "id")
@@ -343,16 +352,19 @@ func (s *Server) approveTodo(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid todo id"})
 	}
 
-	var todo models.Todo
-	if err := s.db.First(&todo, id).Error; err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "todo not found"})
-	}
-
 	targetStatus := models.TodoStatusPending
 	var body struct {
 		Status string `json:"status"`
 	}
-	if err := c.BodyParser(&body); err == nil && body.Status != "" {
+	if msg := firstProblem(bindJSON(c, &body), oneOf("status", body.Status, todoStatuses...)); msg != "" {
+		return badPayload(c, msg)
+	}
+
+	var todo models.Todo
+	if err := s.db.First(&todo, id).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "todo not found"})
+	}
+	if body.Status != "" {
 		targetStatus = body.Status
 	}
 
@@ -423,7 +435,9 @@ func (s *Server) suggestTodos(c *fiber.Ctx) error {
 		ProjectID uint  `json:"project_id"`
 		SaveToDB  *bool `json:"save_to_db"`
 	}
-	_ = c.BodyParser(&body)
+	if msg := bindJSON(c, &body); msg != "" {
+		return badPayload(c, msg)
+	}
 
 	saveToDB := true
 	if body.SaveToDB != nil {
@@ -509,4 +523,41 @@ func (s *Server) suggestTodos(c *fiber.Ctx) error {
 		"pm_job_id":   pmJob,
 		"pm_error":    pmError,
 	})
+}
+
+var (
+	todoStatuses = []string{models.TodoStatusPending, models.TodoStatusInProgress, models.TodoStatusCompleted,
+		models.TodoStatusSuggested, models.TodoStatusRejected, models.TodoStatusMerged, models.TodoStatusSplit}
+	todoPriorities = []string{models.TodoPriorityLow, models.TodoPriorityMedium, models.TodoPriorityHigh, models.TodoPriorityCritical}
+)
+
+// validateTodoUpdates memeriksa bentuk field umum pada PUT /todos/:id (kunci lain diteruskan apa adanya).
+func validateTodoUpdates(u map[string]interface{}) string {
+	str := func(k string) (string, string) {
+		v, ok := u[k]
+		if !ok || v == nil {
+			return "", ""
+		}
+		sv, isStr := v.(string)
+		if !isStr {
+			return "", "field " + k + " harus berupa teks"
+		}
+		return sv, ""
+	}
+	for _, k := range []string{"title", "description", "status", "priority", "level"} {
+		if _, m := str(k); m != "" {
+			return m
+		}
+	}
+	title, _ := str("title")
+	desc, _ := str("description")
+	status, _ := str("status")
+	priority, _ := str("priority")
+	level, _ := str("level")
+	if _, has := u["title"]; has && u["title"] != nil && strings.TrimSpace(title) == "" {
+		return "field title tidak boleh kosong"
+	}
+	return firstProblem(maxLen("title", title, maxLabel), maxLen("description", desc, maxText),
+		oneOf("status", status, todoStatuses...), oneOf("priority", priority, todoPriorities...),
+		oneOf("level", level, models.TodoLevelGlobal, models.TodoLevelProject, models.TodoLevelComponent))
 }

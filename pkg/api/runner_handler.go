@@ -39,7 +39,12 @@ func (s *Server) assignComponentPort(c *fiber.Ctx) error {
 		Port     int  `json:"port"`
 		Reassign bool `json:"reassign"`
 	}
-	_ = c.BodyParser(&req)
+	if msg := firstProblem(bindJSON(c, &req)); msg != "" {
+		return badPayload(c, msg)
+	}
+	if req.Port < 0 || req.Port > 65535 {
+		return badPayload(c, "field port harus 0..65535")
+	}
 	comp, err := s.runner.AssignPort(uint(id), req.Port, req.Reassign)
 	if err != nil {
 		return runError(c, err)
@@ -55,7 +60,9 @@ func (s *Server) runComponent(c *fiber.Ctx) error {
 	var req struct {
 		Reassign bool `json:"reassign"`
 	}
-	_ = c.BodyParser(&req)
+	if msg := bindJSON(c, &req); msg != "" {
+		return badPayload(c, msg)
+	}
 	st, err := s.runner.Run(uint(id), req.Reassign)
 	if err != nil {
 		return runError(c, err)
@@ -100,7 +107,9 @@ func (s *Server) runProject(c *fiber.Ctx) error {
 	var req struct {
 		Reassign bool `json:"reassign"`
 	}
-	_ = c.BodyParser(&req)
+	if msg := bindJSON(c, &req); msg != "" {
+		return badPayload(c, msg)
+	}
 	items, err := s.runner.RunProject(uint(id), req.Reassign)
 	if err != nil {
 		return runError(c, err)
@@ -122,8 +131,15 @@ func (s *Server) stopProject(c *fiber.Ctx) error {
 
 // ensureUniquePorts mengalokasikan port unik untuk seluruh komponen proyek atau seluruh sistem bila id <= 0
 func (s *Server) ensureUniquePorts(c *fiber.Ctx) error {
-	id, _ := c.ParamsInt("id")
-	updated, err := s.runner.EnsureUniquePorts(uint(id))
+	// /ports/ensure-unique tanpa :id berarti semua proyek (id 0); :id yang ada harus valid.
+	var id uint
+	if c.Params("id") != "" {
+		var bad string
+		if id, bad = paramID(c, "id", "project"); bad != "" {
+			return badPayload(c, bad)
+		}
+	}
+	updated, err := s.runner.EnsureUniquePorts(id)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}

@@ -99,8 +99,8 @@ func (s *Server) setSetupAccount(c *fiber.Ctx) error {
 	var in struct {
 		Choice string `json:"choice"`
 	}
-	if err := c.BodyParser(&in); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "body tidak valid"})
+	if msg := firstProblem(bindJSONRequired(c, &in), needOneOf("choice", in.Choice, "register", "login", "skip")); msg != "" {
+		return badPayload(c, msg)
 	}
 	if err := setup.SetAccountChoice(in.Choice); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
@@ -113,8 +113,14 @@ func (s *Server) acceptSetupTerms(c *fiber.Ctx) error {
 		Version string `json:"version"`
 		Accept  bool   `json:"accept"`
 	}
-	if err := c.BodyParser(&in); err != nil || !in.Accept {
-		return c.Status(400).JSON(fiber.Map{"error": "persetujuan wajib dicentang"})
+	if msg := bindJSONRequired(c, &in); msg != "" {
+		return badPayload(c, msg)
+	}
+	if !in.Accept {
+		return badPayload(c, "persetujuan wajib dicentang")
+	}
+	if msg := needText("version", in.Version, maxName); msg != "" {
+		return badPayload(c, msg)
 	}
 	if in.Version != knowledgesync.ConsentVersion {
 		return c.Status(409).JSON(fiber.Map{"error": "versi ketentuan sudah berubah; muat ulang halaman", "version": knowledgesync.ConsentVersion})
@@ -131,16 +137,16 @@ func (s *Server) acceptSetupTerms(c *fiber.Ctx) error {
 
 func (s *Server) testSetupDatabase(c *fiber.Ctx) error {
 	var in setup.DB
-	if err := c.BodyParser(&in); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "body tidak valid"})
+	if msg := firstProblem(bindJSONRequired(c, &in), validateSetupDB(in)); msg != "" {
+		return badPayload(c, msg)
 	}
 	return c.JSON(setup.Test(in))
 }
 
 func (s *Server) saveSetupDatabase(c *fiber.Ctx) error {
 	var in setup.DB
-	if err := c.BodyParser(&in); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "body tidak valid"})
+	if msg := firstProblem(bindJSONRequired(c, &in), validateSetupDB(in)); msg != "" {
+		return badPayload(c, msg)
 	}
 	if rep := setup.Test(in); !rep.OK {
 		return c.Status(400).JSON(fiber.Map{"error": rep.Message, "report": rep})
@@ -177,4 +183,10 @@ func (s *Server) restartEngine(c *fiber.Ctx) error {
 		_ = s.restart()
 	}()
 	return c.JSON(fiber.Map{"restarting": true})
+}
+
+// validateSetupDB memeriksa bentuk payload database wizard (aturan koneksi sebenarnya ada di setup.Test).
+func validateSetupDB(d setup.DB) string {
+	return firstProblem(needOneOf("driver", strings.ToLower(strings.TrimSpace(d.Driver)), "sqlite", "mysql"), needText("name", d.Name, maxName),
+		maxLen("host", d.Host, maxName), maxLen("port", d.Port, 5), maxLen("user", d.User, maxName), maxLen("password", d.Password, maxName*2))
 }
