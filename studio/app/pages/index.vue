@@ -3,8 +3,6 @@ definePageMeta({
   public: true
 })
 
-const { isAuthenticated } = useAuth()
-
 useHead({
   title: 'vibeasik - Platform Observasi, Keamanan & MCP Studio untuk Vibecoders',
   meta: [
@@ -63,11 +61,11 @@ useHead({
             </NuxtLink>
 
             <NuxtLink
-              :to="isAuthenticated ? '/cockpit' : '/login'"
+              to="/cockpit"
               class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg font-medium text-white/90 bg-white/10 hover:bg-white/15 border border-white/20 transition-all text-xs backdrop-blur-xs"
             >
               <UIcon name="i-lucide-layout-grid" class="w-3.5 h-3.5 text-sky-300" />
-              <span>{{ isAuthenticated ? 'Buka Cockpit' : 'Masuk Studio' }}</span>
+              <span>Buka Cockpit</span>
             </NuxtLink>
           </div>
 
@@ -261,7 +259,7 @@ useHead({
                 <span>Dapatkan vibeasik Desktop</span>
               </NuxtLink>
               <NuxtLink
-                :to="isAuthenticated ? '/cockpit' : '/login'"
+                to="/cockpit"
                 class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/20 hover:bg-white/10 text-white font-semibold text-xs transition-colors backdrop-blur-sm"
               >
                 <span>Eksplorasi MCP Hub di Studio</span>

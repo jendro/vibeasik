@@ -1,3 +1,6 @@
+// Akun vibeasik di Studio. Akses Studio sendiri dijaga token engine (cookie dari `vibeasik open`);
+// akun dipakai untuk membuka fitur sesuai paket & menyumbang Pusat Pengetahuan.
+
 export interface AuthUser {
   id: number
   name: string
@@ -7,87 +10,58 @@ export interface AuthUser {
   toolPreference?: string
 }
 
+export interface AccountStatus {
+  logged_in: boolean
+  email?: string
+  plan: string
+  features: string[]
+  device_id?: string
+  expires_at?: string
+  usable_until?: string
+  offline: boolean
+  cloud_url: string
+  last_refresh?: string
+  refresh_error?: string
+}
+
+export interface AccountView {
+  account: AccountStatus
+  edition: string
+  features: Record<string, boolean>
+}
+
 export const useAuth = () => {
-  const router = useRouter()
-  const user = useCookie<AuthUser | null>('vibeasik_auth_user', {
-    maxAge: 60 * 60 * 24 * 30,
-    path: '/',
-    sameSite: 'lax'
-  })
-  const token = useCookie<string | null>('vibeasik_auth_token', {
-    maxAge: 60 * 60 * 24 * 30,
-    path: '/',
-    sameSite: 'lax'
-  })
+  const { apiBase } = useApi()
+  const view = useState<AccountView | null>('vibeasik-account', () => null)
+  // Diambil saat setup: composable Nuxt tidak boleh dipanggil setelah await.
+  const edition = useEdition()
 
-  const isAuthenticated = computed(() => Boolean(token.value && user.value))
-
-  const login = async (email: string, password: string): Promise<{ success: boolean, error?: string }> => {
-    if (!email || !password) {
-      return { success: false, error: 'Email dan password wajib diisi.' }
+  const load = async () => {
+    try {
+      view.value = await $fetch<AccountView>(`${apiBase}/api/account`)
+    } catch {
+      view.value = null
     }
-    if (password.length < 4) {
-      return { success: false, error: 'Password minimal 4 karakter.' }
-    }
-
-    // Set authenticated session
-    token.value = `vibe_tok_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-    user.value = {
-      id: 1,
-      name: email.split('@')[0] || 'Vibecoder',
-      email: email,
-      role: 'vibecoder',
-      toolPreference: 'Antigravity / Cursor'
-    }
-
-    return { success: true }
+    return view.value
   }
 
-  const register = async (name: string, email: string, password: string, toolPreference = 'Antigravity / Cursor'): Promise<{ success: boolean, error?: string }> => {
-    if (!name || !email || !password) {
-      return { success: false, error: 'Nama, email, dan password wajib diisi.' }
-    }
-    if (password.length < 4) {
-      return { success: false, error: 'Password minimal 4 karakter.' }
-    }
+  const account = computed(() => view.value?.account)
+  const isAuthenticated = computed(() => Boolean(account.value?.logged_in))
+  const user = computed<AuthUser | null>(() => account.value?.logged_in
+    ? { id: 0, name: account.value.email?.split('@')[0] || 'vibecoder', email: account.value.email || '', role: account.value.plan }
+    : null)
 
-    token.value = `vibe_tok_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-    user.value = {
-      id: Math.floor(Math.random() * 1000) + 2,
-      name,
-      email,
-      role: 'vibecoder',
-      toolPreference
+  const logout = async () => {
+    try {
+      view.value = await $fetch<AccountView>(`${apiBase}/api/account/logout`, { method: 'POST' })
+    } catch {
+      await load()
     }
-
-    return { success: true }
+    // Fitur Pro berubah: muat ulang status edisi.
+    await edition.load(true)
   }
 
-  const quickDemoLogin = () => {
-    token.value = `vibe_tok_demo_${Date.now()}`
-    user.value = {
-      id: 1,
-      name: 'Vibecoder Developer',
-      email: 'demo@vibeasik.com',
-      role: 'vibecoder',
-      toolPreference: 'Google Antigravity & Claude'
-    }
-    return { success: true }
-  }
+  if (import.meta.client && !view.value) load()
 
-  const logout = () => {
-    token.value = null
-    user.value = null
-    router.push('/')
-  }
-
-  return {
-    user,
-    token,
-    isAuthenticated,
-    login,
-    register,
-    quickDemoLogin,
-    logout
-  }
+  return { view, account, user, isAuthenticated, load, logout }
 }

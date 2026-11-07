@@ -27,6 +27,16 @@ export default defineNuxtConfig({
 
   compatibilityDate: '2026-06-30',
 
+  // Halaman fitur Pro (utils/proFeatures.ts PRO_PAGES) tidak di-prerender: di build Community halamannya tidak
+  // ada (menu mengarah ke /upgrade), di build Official dirender di browser lewat 200.html.
+  nitro: {
+    prerender: {
+      ignore: ['/agent-office', '/recap', '/client-room', '/ai-hub', '/orchestrator', '/queue', '/staff',
+        '/executives', '/audit-learning', '/runtime-test', '/screenshots', '/design-library', '/design-lessons',
+        '/downloads']
+    }
+  },
+
   // Gaya kode proyek: tanpa titik koma, kutip tunggal, tanpa koma di akhir (dipakai `bun run lint` & pre-commit hook)
   eslint: {
     config: {

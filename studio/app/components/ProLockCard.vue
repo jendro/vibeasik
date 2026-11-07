@@ -11,7 +11,9 @@ const info = computed(() => PRO_FEATURES[props.feature])
     <div class="min-w-0 space-y-1">
       <div class="text-sm font-semibold text-neutral-800 dark:text-neutral-100">
         {{ title || info?.label || 'Fitur Pro' }}
-        <UBadge size="xs" color="warning" variant="subtle" class="ml-1 align-middle">Pro</UBadge>
+        <UBadge size="xs" color="warning" variant="subtle" class="ml-1 align-middle">
+          Pro
+        </UBadge>
       </div>
       <p class="text-xs text-neutral-600 dark:text-neutral-400">
         {{ description || info?.description }}

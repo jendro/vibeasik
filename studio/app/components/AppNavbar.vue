@@ -282,19 +282,22 @@ const pageTitle = computed(() => {
         <!-- User Profile & Logout -->
         <div v-if="isAuthenticated" class="flex items-center gap-2 pl-2 border-l border-neutral-200 dark:border-neutral-800">
           <div class="hidden xl:flex flex-col text-right">
-            <span class="text-xs font-semibold text-neutral-800 dark:text-neutral-200 leading-tight truncate max-w-[120px]">{{ user?.name || 'Vibecoder' }}</span>
-            <span class="text-[10px] text-neutral-400 font-mono leading-tight">Admin</span>
+            <NuxtLink to="/account" class="text-xs font-semibold text-neutral-800 dark:text-neutral-200 leading-tight truncate max-w-[120px] hover:underline">{{ user?.name || 'Vibecoder' }}</NuxtLink>
+            <span class="text-[10px] text-neutral-400 font-mono leading-tight">{{ user?.role }}</span>
           </div>
           <button
             type="button"
             class="p-1.5 text-neutral-500 hover:text-rose-600 dark:text-neutral-400 dark:hover:text-rose-400 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 cursor-pointer"
-            title="Keluar dari Cockpit Studio"
+            title="Keluar dari akun vibeasik"
             aria-label="Logout"
             @click="logout"
           >
             <UIcon name="i-lucide-log-out" class="w-4 h-4" />
           </button>
         </div>
+        <UButton v-else to="/account" size="xs" variant="soft" icon="i-lucide-log-in" class="ml-2">
+          Masuk akun
+        </UButton>
       </div>
     </div>
   </header>
