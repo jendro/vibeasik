@@ -193,7 +193,15 @@ watch(open, (isOpen) => {
               {{ selectedAppId === 'all' ? 'Seluruh Temuan & Peringatan' : `Temuan Khusus: ${project?.components?.find(c => c.id === selectedAppId)?.name}` }}
               ({{ filteredFindings.length }})
             </span>
-            <span v-if="selectedAppId !== 'all'" class="text-[11px] font-normal normal-case text-sky-600 dark:text-sky-400 cursor-pointer" @click="selectedAppId = 'all'">
+            <span
+              v-if="selectedAppId !== 'all'"
+              role="button"
+              tabindex="0"
+              class="text-[11px] font-normal normal-case text-sky-600 dark:text-sky-400 cursor-pointer"
+              @click="selectedAppId = 'all'"
+              @keydown.enter="selectedAppId = 'all'"
+              @keydown.space.prevent="selectedAppId = 'all'"
+            >
               Tampilkan Semua
             </span>
           </div>

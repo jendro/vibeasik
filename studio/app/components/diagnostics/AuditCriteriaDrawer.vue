@@ -259,7 +259,15 @@ onUnmounted(() => {
           <span v-else>
             Menampilkan <strong>{{ filteredCriteria.length }}</strong> dari total {{ defaultCriteria.length }} kriteria
           </span>
-          <span v-if="searchQuery || activeSeverity !== 'all'" class="text-violet-600 dark:text-violet-400 font-medium cursor-pointer hover:underline" @click="searchQuery = ''; activeSeverity = 'all'; activeTab = 'all'">
+          <span
+            v-if="searchQuery || activeSeverity !== 'all'"
+            role="button"
+            tabindex="0"
+            class="text-violet-600 dark:text-violet-400 font-medium cursor-pointer hover:underline"
+            @click="searchQuery = ''; activeSeverity = 'all'; activeTab = 'all'"
+            @keydown.enter="searchQuery = ''; activeSeverity = 'all'; activeTab = 'all'"
+            @keydown.space.prevent="searchQuery = ''; activeSeverity = 'all'; activeTab = 'all'"
+          >
             Reset Filter
           </span>
         </div>
