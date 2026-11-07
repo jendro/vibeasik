@@ -18,7 +18,7 @@ var forcePull bool
 
 var knowledgePullCmd = &cobra.Command{
 	Use:   "pull",
-	Short: "Tarik paket pengetahuan terbaru dari server vibeasik (free tanpa login; full untuk paket Pro)",
+	Short: "Tarik paket pengetahuan terbaru dari server vibeasik (perlu persetujuan S&K; full untuk paket Pro)",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		db, err := database.InitDB(dbPath)
 		if err != nil {
@@ -48,7 +48,7 @@ var knowledgeStatusCmd = &cobra.Command{
 			return nil
 		}
 		fmt.Printf("Paket:  %s (%s), %d node\nDitarik: %s\n", st.Version, st.Tier, st.Nodes, st.PulledAt.Format(time.RFC3339))
-		fmt.Printf("Usulan terkirim: %d\n", len(st.Contributed))
+		fmt.Printf("Usulan terkirim: %d (mode %s; lihat `vibeasik knowledge auto status`)\n", len(st.Contributed), knowledgesync.EffectiveMode())
 		return nil
 	},
 }
