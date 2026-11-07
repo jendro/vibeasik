@@ -1,0 +1,48 @@
+// Package cli berisi perintah baris vibeasik. Build Official (vibeasik-pro) memakai paket yang sama:
+// main-nya mengimpor modul Pro (yang mendaftar ke registry) lalu memanggil cli.Execute.
+package cli
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/spf13/cobra"
+)
+
+// Version diisi saat rilis: -ldflags "-X github.com/vibeasik/vibeasik/pkg/cli.Version=vX.Y.Z".
+var Version = "dev"
+
+// Edition "Community" atau "Official"; build Official menggantinya sebelum Execute.
+var Edition = "Community"
+
+var dbPath string
+
+var rootCmd = &cobra.Command{
+	Use:   "vibeasik",
+	Short: "vibeasik — lapisan standar untuk kode buatan AI",
+	Long: `vibeasik berjalan di laptop atau dev server Anda: mencatat proyek, mengaudit kode buatan AI,
+mengatur port & dev server, dan menjadi server MCP untuk agent coding (Claude Code, Cursor, Antigravity, …).`,
+	SilenceUsage: true,
+}
+
+// Execute menjalankan CLI.
+func Execute() {
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+// AddCommand memungkinkan build Official menambah perintah Pro.
+func AddCommand(cmds ...*cobra.Command) { rootCmd.AddCommand(cmds...) }
+
+func init() {
+	rootCmd.PersistentFlags().StringVar(&dbPath, "db", "", "Path berkas database SQLite (bawaan ~/.vibeasik/projects.db)")
+	rootCmd.AddCommand(&cobra.Command{
+		Use:   "version",
+		Short: "Tampilkan versi",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("vibeasik %s (%s)\n", Version, Edition)
+		},
+	})
+}
