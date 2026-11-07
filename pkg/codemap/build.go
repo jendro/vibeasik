@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -85,6 +86,10 @@ func isDir(p string) bool {
 
 func exists(p string) bool {
 	_, err := os.Stat(p)
+	if err != nil && !os.IsNotExist(err) {
+		// Berkas tidak ada adalah jalur normal; error sistem (izin, I/O) dicatat agar terlihat.
+		log.Printf("[WARN] exists: os.Stat(%q): %v", p, err)
+	}
 	return err == nil
 }
 

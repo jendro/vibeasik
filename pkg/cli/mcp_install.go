@@ -25,7 +25,7 @@ type mcpAgent struct {
 func jsonAgentAt(rel ...string) func(string) (string, bool) {
 	return func(home string) (string, bool) {
 		p := filepath.Join(append([]string{home}, rel...)...)
-		_, err := os.Stat(filepath.Dir(p))
+		_, err := os.Stat(filepath.Dir(p)) // error stat = agen dianggap tidak terpasang (deteksi best-effort)
 		return p, err == nil
 	}
 }
@@ -44,7 +44,7 @@ func claudeDesktopPath(home string) (string, bool) {
 	default:
 		p = filepath.Join(home, ".config", "Claude", "claude_desktop_config.json")
 	}
-	_, err := os.Stat(filepath.Dir(p))
+	_, err := os.Stat(filepath.Dir(p)) // error stat = agen dianggap tidak terpasang (deteksi best-effort)
 	return p, err == nil
 }
 
@@ -60,12 +60,12 @@ func mcpAgents() []mcpAgent {
 		{key: "antigravity", name: "Google Antigravity (agy)", cli: "agy"},
 		{key: "cline", name: "VS Code · Cline", detect: func(h string) (string, bool) {
 			p, _ := vs("saoudrizwan.claude-dev")(h)
-			_, err := os.Stat(filepath.Dir(filepath.Dir(p)))
+			_, err := os.Stat(filepath.Dir(filepath.Dir(p))) // deteksi best-effort: error = tidak terpasang
 			return p, err == nil
 		}},
 		{key: "roo", name: "VS Code · Roo Code", detect: func(h string) (string, bool) {
 			p, _ := vs("rooveterinaryinc.roo-cline")(h)
-			_, err := os.Stat(filepath.Dir(filepath.Dir(p)))
+			_, err := os.Stat(filepath.Dir(filepath.Dir(p))) // deteksi best-effort: error = tidak terpasang
 			return p, err == nil
 		}},
 	}

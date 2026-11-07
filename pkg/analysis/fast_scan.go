@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -936,6 +937,10 @@ func readSnippet(path string, maxLines int) (string, error) {
 
 func fileExists(p string) bool {
 	_, err := os.Stat(p)
+	if err != nil && !os.IsNotExist(err) {
+		// Berkas tidak ada adalah jalur normal; error sistem (izin, I/O) dicatat agar terlihat.
+		log.Printf("[WARN] fileExists: os.Stat(%q): %v", p, err)
+	}
 	return err == nil
 }
 
