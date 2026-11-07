@@ -80,9 +80,18 @@ func (s *Server) getSetup(c *fiber.Ctx) error {
 	return c.JSON(s.viewWithRestart())
 }
 
+// DefaultDBName nama database bawaan untuk instalasi baru.
+const DefaultDBName = "vibeasik_platform"
+
 func (s *Server) viewWithRestart() fiber.Map {
 	v := setupView()
 	v["restart_supported"] = s.restart != nil
+	// Instalasi baru (belum ada proyek) disarankan memakai nama bawaan; yang sudah berisi data tetap memakai nama sekarang.
+	var n int64
+	s.db.Table("projects").Count(&n)
+	db := v["database"].(fiber.Map)
+	db["has_data"] = n > 0
+	db["suggested_name"] = DefaultDBName
 	return v
 }
 

@@ -10,6 +10,8 @@ interface SetupView {
   database: {
     current: { driver: string, name: string, host?: string, port?: string, user?: string }
     data_dir: string
+    has_data: boolean
+    suggested_name: string
     chosen: boolean
     requirements: { sqlite: string[], mysql: string[] }
   }
@@ -72,7 +74,7 @@ async function load() {
   agreed.value = v.terms.accepted
   const c = v.database.current
   db.driver = c.driver === 'mysql' ? 'mysql' : 'sqlite'
-  db.name = c.name || 'vibeasik'
+  db.name = v.database.has_data ? (c.name || v.database.suggested_name) : v.database.suggested_name
   if (c.driver === 'mysql') {
     db.host = c.host || db.host
     db.port = c.port || db.port
@@ -392,7 +394,7 @@ const steps = ['Akun', 'Ketentuan', 'Database']
           <div class="grid gap-3 sm:grid-cols-2">
             <label class="block sm:col-span-2">
               <span class="text-sm font-medium">Nama database</span>
-              <UInput v-model="db.name" class="w-full" placeholder="vibeasik" autocomplete="off" @update:model-value="report = null" />
+              <UInput v-model="db.name" class="w-full" placeholder="vibeasik_platform" autocomplete="off" @update:model-value="report = null" />
               <span class="text-xs text-neutral-500">
                 <template v-if="db.driver === 'sqlite'">Disimpan sebagai <code class="font-mono">{{ view.database.data_dir }}/{{ db.name || 'nama' }}.db</code>. </template>
                 Huruf, angka, dan garis bawah; diawali huruf.
