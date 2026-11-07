@@ -325,8 +325,15 @@ func (s *Server) getLatestProjectDiagnostic(c *fiber.Ctx) error {
 		}
 	}
 
+	// findings_json di dalam "diagnostic" menggandakan "findings" (belasan MB pada
+	// project dengan riwayat temuan panjang); kosongkan kecuali diminta ?full=1.
+	respDiag := diag
+	if f := c.Query("full"); f != "1" && f != "true" {
+		respDiag.FindingsJSON = ""
+	}
+
 	return c.JSON(fiber.Map{
-		"diagnostic":              diag,
+		"diagnostic":              respDiag,
 		"findings":                findings,
 		"optimizations":           optimizations,
 		"category_counts":         categoryCounts,

@@ -60,3 +60,34 @@ func TestProjectDetailOmitsDiagnosticsAndListPaginates(t *testing.T) {
 		t.Fatalf("default limit: %v", res["limit"])
 	}
 }
+
+func TestLatestProjectDiagnosticOmitsDuplicateFindingsJSON(t *testing.T) {
+	s := syncServer(t)
+	if err := s.db.AutoMigrate(&models.Diagnostic{}, &models.DeepCheckReport{}); err != nil {
+		t.Fatal(err)
+	}
+	p := models.Project{Name: "lat", Slug: "lat"}
+	if err := s.db.Create(&p).Error; err != nil {
+		t.Fatal(err)
+	}
+	d := models.Diagnostic{ProjectID: p.ID, Score: 90, Summary: "x",
+		FindingsJSON: `[{"rule_id":"R1","title":"t","target_file":"a.go","line":1}]`}
+	if err := s.db.Create(&d).Error; err != nil {
+		t.Fatal(err)
+	}
+	url := fmt.Sprintf("/api/projects/%d/diagnostics/latest", p.ID)
+	code, res := syncCall(t, s, "GET", url, "")
+	if code != 200 {
+		t.Fatalf("status %d", code)
+	}
+	if len(res["findings"].([]any)) != 1 {
+		t.Fatalf("findings must stay: %v", res["findings"])
+	}
+	if res["diagnostic"].(map[string]any)["findings_json"] != "" {
+		t.Fatal("diagnostic.findings_json must be omitted by default")
+	}
+	_, res = syncCall(t, s, "GET", url+"?full=1", "")
+	if res["diagnostic"].(map[string]any)["findings_json"] == "" {
+		t.Fatal("full=1 must keep findings_json")
+	}
+}
