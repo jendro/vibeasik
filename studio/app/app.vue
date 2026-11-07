@@ -98,6 +98,7 @@ useHead({
 
         <!-- Main Shell Area (Navbar + Page Content + Footer) -->
         <div class="flex-1 flex flex-col min-w-0 min-h-screen">
+          <UpdateBanner />
           <!-- Top Navbar -->
           <AppNavbar
             :api-connected="apiConnected"

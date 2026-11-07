@@ -21,6 +21,7 @@ import (
 	"github.com/vibeasik/vibeasik/pkg/runner"
 	"github.com/vibeasik/vibeasik/pkg/service"
 	"github.com/vibeasik/vibeasik/pkg/ui"
+	"github.com/vibeasik/vibeasik/pkg/update"
 )
 
 // Server coordinates the Fiber REST API and MCP endpoints
@@ -33,6 +34,7 @@ type Server struct {
 	services  *service.Services
 	mcpServer *mcp.Server
 	runner    *runner.Service
+	updater   *update.Updater
 	restart   func() error // mulai ulang engine (dipasang serve); nil bila tidak didukung
 }
 
@@ -306,6 +308,7 @@ func (s *Server) setupRoutes() {
 	}
 
 	s.setupSetupRoutes(api)
+	s.setupUpdateRoutes(api)
 	s.setupAccountRoutes(api)
 	s.setupKnowledgeSyncRoutes(api)
 

@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -23,7 +24,10 @@ import (
 	"github.com/vibeasik/vibeasik/pkg/registry"
 	"github.com/vibeasik/vibeasik/pkg/standard"
 	"github.com/vibeasik/vibeasik/pkg/traffic"
+	"github.com/vibeasik/vibeasik/pkg/update"
 )
+
+var restarting atomic.Bool
 
 var (
 	host        string
@@ -66,8 +70,20 @@ var serveCmd = &cobra.Command{
 		lan := listenHost != "127.0.0.1" && listenHost != "localhost" && listenHost != "::1"
 		server.SetLAN(lan)
 		if restartSelf != nil {
-			server.SetRestart(restartSelf)
+			// Hentikan dev server dan engine dengan rapi sebelum proses diganti biner/konfigurasi baru.
+			server.SetRestart(func() error {
+				if err := restartCheck(); err != nil {
+					return err // jangan hentikan engine bila proses baru tak bisa dijalankan
+				}
+				restarting.Store(true)
+				cancel()
+				return server.Shutdown() // Start() kembali; exec dilakukan di bawah, di goroutine utama
+			})
 		}
+		// Pembaruan: cek saat start dan tiap 6 jam; pasang otomatis di latar bila diizinkan (build Official).
+		upd := update.New(Version, Edition)
+		server.SetUpdater(upd)
+		upd.Background(ctx, update.Auto, 6*time.Hour)
 		token, err := localauth.Token()
 		if err != nil {
 			return fmt.Errorf("token akses lokal: %w", err)
@@ -123,7 +139,12 @@ var serveCmd = &cobra.Command{
 			_ = server.Shutdown()
 		}()
 
-		return server.Start(addr)
+		err = server.Start(addr)
+		if restarting.Load() {
+			time.Sleep(300 * time.Millisecond) // beri waktu dev server berhenti dan port dilepas
+			return restartSelf()
+		}
+		return err
 	},
 }
 
