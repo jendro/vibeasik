@@ -19,6 +19,11 @@ export interface AuditCriterion {
 }
 
 // Master Audit Criteria Catalog covering BE, FE, Mobile, Security, Critical Queries/Processes, Smelly Code & Design
+// Teks kriteria penanganan error dipakai bersama agar satu sumber kebenaran.
+const ERROR_HANDLING_RULE = 'Dilarang mengabaikan error return (misal: \'_ = err\' di Go, blok \'catch() {}\' kosong di JS, atau \'except: pass\' di Python). Setiap error wajib dicatat dalam log terstruktur atau diteruskan ke error handler layer.'
+const ERROR_HANDLING_RATIONALE = 'Mengabaikan error menyebabkan silent failure: sistem tetap berjalan seolah berhasil padahal terjadi kegagalan database atau I/O, menghasilkan inkonsistensi data.'
+const ERROR_HANDLING_INSPECTION = 'Pindai pola _ = err, catch () {}, atau except: pass pada kode sumber.'
+
 export const AUDIT_CRITERIA: AuditCriterion[] = [
   // ================= 1. KEAMANAN & VULNERABILITY =================
   {
@@ -286,9 +291,9 @@ export const AUDIT_CRITERIA: AuditCriterion[] = [
     title: 'Swallowed Error Smell: Error Diabaikan Tanpa Penanganan',
     scope: 'Backend (BE)',
     severity: 'warning',
-    rule: 'Dilarang mengabaikan error return (misal: \'_ = err\' di Go, blok \'catch() {}\' kosong di JS, atau \'except: pass\' di Python). Setiap error wajib dicatat dalam log terstruktur atau diteruskan ke error handler layer.',
-    rationale: 'Mengabaikan error menyebabkan silent failure: sistem tetap berjalan seolah berhasil padahal terjadi kegagalan database atau I/O, menghasilkan inkonsistensi data.',
-    inspection_check: 'Pindai pola _ = err, catch () {}, atau except: pass pada kode sumber.',
+    rule: ERROR_HANDLING_RULE,
+    rationale: ERROR_HANDLING_RATIONALE,
+    inspection_check: ERROR_HANDLING_INSPECTION,
     suggested_action: 'Tangani error secara eksplisit dan catat konteks error ke logger sistem.',
     example_code: {
       bad: '_ = db.Save(&user).Error // Error ditelan mentah-mentah',
@@ -914,7 +919,7 @@ export const AUDIT_CRITERIA: AuditCriterion[] = [
     title: 'Import Library Berat Secara Utuh (Bundle Bloat)',
     scope: 'Frontend (FE)',
     severity: 'warning',
-    rule: 'Dilarang mengimpor seluruh library besar (import _ from "lodash", moment, import * as dari icon set / UI kit). Impor hanya fungsi/komponen yang dipakai.',
+    rule: 'Dilarang mengimpor seluruh library besar (import default lodash, import default moment, atau import * as dari icon set / UI kit). Impor hanya fungsi/komponen yang dipakai, misalnya named import dari lodash-es, dayjs sebagai pengganti moment, atau satu ikon per impor.',
     rationale: 'Import utuh mematikan tree-shaking sehingga ratusan KB JavaScript ikut terkirim ke browser dan memperlambat waktu interaktif.',
     inspection_check: 'Pindai pola import default lodash/moment dan import * as dari lodash, lucide-react, @mui, date-fns, echarts, rxjs, antd.',
     suggested_action: 'Gunakan named import ES module (lodash-es), ganti moment dengan dayjs/date-fns, dan impor ikon satu per satu.',
