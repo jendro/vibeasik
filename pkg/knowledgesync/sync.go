@@ -46,6 +46,11 @@ type State struct {
 	Nodes        int       `json:"nodes"`
 	Contributed  []uint    `json:"contributed,omitempty"` // id node lokal yang sudah dikirim sebagai usulan
 	LastSignalAt time.Time `json:"last_signal_at"`
+
+	// Kirim otomatis (auto.go): mode pilihan (hanya berlaku untuk paket yang boleh mengubahnya) dan persetujuan S&K.
+	AutoMode       string    `json:"auto_mode,omitempty"`
+	ConsentVersion string    `json:"consent_version,omitempty"`
+	ConsentAt      time.Time `json:"consent_at,omitempty"`
 }
 
 func statePath() string { return filepath.Join(localauth.Dir(), "knowledge.json") }
@@ -106,6 +111,9 @@ type Result struct {
 
 // Pull menarik paket terbaru. Tanpa login mendapat tier free; akun berhak mendapat full.
 func Pull(db *gorm.DB, force bool) (*Result, error) {
+	if !HasConsent() {
+		return nil, ErrConsentRequired
+	}
 	var latest struct {
 		Version string `json:"version"`
 		Tier    string `json:"tier"`
@@ -312,6 +320,9 @@ func looksPrivate(s string) bool {
 
 // Contribute mengirim usulan yang id-nya dipilih pengguna.
 func Contribute(db *gorm.DB, ids []uint) (int, error) {
+	if !HasConsent() {
+		return 0, ErrConsentRequired
+	}
 	tok := account.DeviceToken()
 	if tok == "" {
 		return 0, errors.New("belum login: usulan hanya bisa dikirim dari perangkat yang masuk akun")
@@ -333,6 +344,7 @@ func Contribute(db *gorm.DB, ids []uint) (int, error) {
 			return n, err
 		}
 		st.Contributed = append(st.Contributed, c.ID)
+		_ = recordSent(LedgerSent{LocalID: c.ID, Hash: contentHash(c.Title, c.Content), Title: c.Title, SentAt: time.Now(), Mode: "manual"})
 		n++
 	}
 	return n, saveState(st)
@@ -429,6 +441,9 @@ func StartAutoPull(ctx context.Context, db *gorm.DB) {
 			}
 			if account.DeviceToken() != "" && LoadState().Version != "" {
 				_, _ = SendSignals(db)
+			}
+			if _, err := SendAuto(ctx, db, time.Now()); err != nil && !errors.Is(err, ErrConsentRequired) {
+				log.Printf("[knowledge] kirim otomatis dilewati: %v", err)
 			}
 			select {
 			case <-ctx.Done():
