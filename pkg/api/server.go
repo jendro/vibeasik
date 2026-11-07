@@ -284,6 +284,22 @@ func (s *Server) setupRoutes() {
 			rp.Routes(registry.NewRouter(api, m.Feature()), s.db)
 		}
 	}
+	// Route fitur berbayar yang modulnya tidak ada di build ini → 402 upgrade_required (bukan 404).
+	// Bila modulnya terpasang, route modul di atas terdaftar lebih dulu sehingga ini tidak pernah tercapai.
+	for _, r := range registry.ProCatalog {
+		feature := r.Feature
+		api.Add(r.Method, r.Path, func(c *fiber.Ctx) error { return registry.RespondUpgrade(c, feature) })
+	}
+
+	// Edisi & fitur aktif untuk Studio (gembok menu Pro).
+	api.Get("/edition", func(c *fiber.Ctx) error {
+		features := registry.Features()
+		installed := map[string]bool{}
+		for f := range features {
+			installed[f] = registry.Installed(f)
+		}
+		return c.JSON(fiber.Map{"edition": registry.Edition, "features": features, "installed": installed, "upgrade_url": registry.UpgradeURL})
+	})
 
 	// Mount Downloads directory if available on disk
 	downloadDirs := []string{

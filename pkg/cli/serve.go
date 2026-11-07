@@ -54,6 +54,7 @@ var serveCmd = &cobra.Command{
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
+		registry.Edition = Edition
 		server := api.NewServer(db)
 		// Pantau sesi agent coding di laptop ini (Claude Code, Antigravity, Copilot).
 		activity.StartLocalWatchers(ctx)

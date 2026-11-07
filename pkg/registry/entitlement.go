@@ -71,3 +71,30 @@ func RespondUpgrade(c *fiber.Ctx, feature string) error {
 		"upgrade_url": UpgradeURL,
 	})
 }
+
+// Edition nama build ("Community" / "Official"), diisi CLI saat start.
+var Edition = "Community"
+
+// Features semua kunci fitur yang dikenal (katalog + modul terdaftar) beserta statusnya untuk akun ini.
+func Features() map[string]bool {
+	out := map[string]bool{}
+	for _, r := range ProCatalog {
+		out[r.Feature] = Has(r.Feature)
+	}
+	for _, m := range All() {
+		if f := m.Feature(); f != "" {
+			out[f] = Has(f)
+		}
+	}
+	return out
+}
+
+// Installed melaporkan apakah build ini memuat modul untuk feature (bukan sekadar katalog).
+func Installed(feature string) bool {
+	for _, m := range All() {
+		if m.Feature() == feature {
+			return true
+		}
+	}
+	return false
+}
