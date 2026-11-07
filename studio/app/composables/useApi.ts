@@ -251,6 +251,12 @@ export const useApi = () => {
     return await $fetch<DiagnosticReportResponse>(`${apiBase}/api/projects/${projectId}/diagnostics/latest`)
   }
 
+  const listProjectDiagnostics = async (projectId: number, opts: { limit?: number, offset?: number, componentId?: number, full?: boolean } = {}): Promise<{ items: Diagnostic[], total: number, limit: number, offset: number }> => {
+    return await $fetch(`${apiBase}/api/projects/${projectId}/diagnostics`, {
+      query: { limit: opts.limit, offset: opts.offset, component_id: opts.componentId, full: opts.full ? 1 : undefined }
+    })
+  }
+
   const resolveDiagnosticIssue = async (projectId: number, finding: Finding, createTodo = true): Promise<ResolutionResponse> => {
     return await $fetch<ResolutionResponse>(`${apiBase}/api/projects/${projectId}/diagnostics/resolve-issue`, {
       method: 'POST',
@@ -1211,6 +1217,7 @@ export const useApi = () => {
     getRuntimeSimShotUrl,
     getRuntimeTestProfile,
     getLatestProjectDiagnostic,
+    listProjectDiagnostics,
     resolveDiagnosticIssue,
     resolveAllDiagnosticIssues,
     resolveDiagnosticGroup,

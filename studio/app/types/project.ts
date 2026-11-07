@@ -67,7 +67,6 @@ export interface Project {
   created_at?: string
   updated_at?: string
   components: ProjectComponent[]
-  diagnostics?: Diagnostic[]
 }
 
 export interface ExecutiveKnowledgeItem {

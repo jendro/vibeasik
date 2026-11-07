@@ -70,3 +70,11 @@ make test          # go test ./...
 make vet           # go vet ./...
 make fmt           # gofmt
 ```
+
+## Catatan API: diagnostik project
+
+`GET /api/projects/:id` tidak lagi memuat field `diagnostics` (sebelumnya ~8,7 MB). Riwayat diagnostik
+diambil lewat `GET /api/projects/:id/diagnostics?limit=&offset=&component_id=&full=1` dengan respons
+`{items,total,limit,offset}` (default limit 100, maks 500, terbaru dulu; tanpa `full=1` item tidak membawa
+`findings_json`/`optimizations`/`structure_tree`). Laporan terbaru tetap di `/diagnostics/latest`.
+Tool MCP `get_project_detail` juga tidak lagi menyertakan `diagnostics`.
