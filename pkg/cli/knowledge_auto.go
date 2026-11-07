@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -118,10 +119,19 @@ func autoPreview() error {
 	return nil
 }
 
+var ledgerSync bool
+
 var knowledgeLedgerCmd = &cobra.Command{
 	Use:   "ledger",
-	Short: "Riwayat kiriman pengetahuan dan alasan node dilewati",
+	Short: "Riwayat kiriman pengetahuan dan alasan node dilewati (--sync memperbarui status dari server)",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if ledgerSync {
+			n, err := knowledgesync.SyncLedger()
+			if err != nil {
+				return err
+			}
+			fmt.Printf("%d status diperbarui dari server.\n\n", n)
+		}
 		l := knowledgesync.LoadLedger()
 		fmt.Printf("Terkirim (%d):\n", len(l.Sent))
 		for _, s := range l.Sent {
@@ -129,7 +139,11 @@ var knowledgeLedgerCmd = &cobra.Command{
 			if s.ServerID != 0 {
 				id = fmt.Sprintf(" server#%d", s.ServerID)
 			}
-			fmt.Printf("  %s  lokal#%d%s  [%s]  %s\n", s.SentAt.Format("2006-01-02 15:04"), s.LocalID, id, s.Mode, s.Title)
+			st := ""
+			if s.Status != "" {
+				st = "  (" + s.Status + ")"
+			}
+			fmt.Printf("  %s  lokal#%d%s  [%s]%s  %s\n", s.SentAt.Format("2006-01-02 15:04"), s.LocalID, id, s.Mode, st, s.Title)
 		}
 		fmt.Printf("\nDilewati (%d):\n", len(l.Skipped))
 		for _, s := range l.Skipped {
@@ -139,7 +153,25 @@ var knowledgeLedgerCmd = &cobra.Command{
 	},
 }
 
+var knowledgeRevokeCmd = &cobra.Command{
+	Use:   "revoke <id-server>",
+	Short: "Cabut kiriman yang belum terbit (id-server = angka server#N di `knowledge ledger`)",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		id, err := strconv.ParseUint(strings.TrimPrefix(strings.ToLower(args[0]), "server#"), 10, 64)
+		if err != nil || id == 0 {
+			return fmt.Errorf("id tidak valid %q: pakai angka server#N dari `vibeasik knowledge ledger`", args[0])
+		}
+		if err := knowledgesync.Revoke(uint(id)); err != nil {
+			return err
+		}
+		fmt.Printf("Kiriman server#%d dicabut dan isinya dihapus dari server.\n", id)
+		return nil
+	},
+}
+
 func init() {
+	knowledgeLedgerCmd.Flags().BoolVar(&ledgerSync, "sync", false, "Perbarui status kiriman dari server lebih dulu")
 	knowledgeConsentCmd.Flags().BoolVar(&consentYes, "yes", false, "Setujui tanpa bertanya (setelah Anda membaca ketentuannya)")
-	knowledgeCmd.AddCommand(knowledgeConsentCmd, knowledgeAutoCmd, knowledgeLedgerCmd)
+	knowledgeCmd.AddCommand(knowledgeConsentCmd, knowledgeAutoCmd, knowledgeLedgerCmd, knowledgeRevokeCmd)
 }
