@@ -79,20 +79,21 @@ const copyToClipboard = async (text: string) => {
   }
 }
 
+// Seluruh nilai adalah placeholder sintetis (bukan secret nyata); jangan ganti dengan kredensial asli.
 const fillSimulatorPreset = (type: 'all' | 'tokens' | 'db') => {
   if (type === 'all') {
-    testSimulatorInput.value = `DATABASE_URL=postgres://root:p@ssw0rd123@db.internal:5432/production
-OPENAI_API_KEY=sk-proj-abc1234567890def1234567890abcdef1234567890
-STRIPE_SECRET=sk_live_51NyTestSecretKeyLiveStripeXYZ987654321
-JWT_SECRET=super_secret_jwt_hmac_sha256_token
-AUTH_BEARER=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.doNotLeakThisSignature`
+    testSimulatorInput.value = `DATABASE_URL=postgres://<EXAMPLE_DB_USER>:<EXAMPLE_DB_PASSWORD>@db.example.invalid:5432/example_db
+OPENAI_API_KEY=<EXAMPLE_ONLY_NOT_A_SECRET>
+STRIPE_SECRET=<EXAMPLE_ONLY_NOT_A_SECRET>
+JWT_SECRET=<EXAMPLE_ONLY_NOT_A_SECRET>
+AUTH_BEARER=<EXAMPLE_ONLY_NOT_A_SECRET>`
   } else if (type === 'tokens') {
-    testSimulatorInput.value = `const apiKey = "sk-proj-9999888877776666555544443333222211110000";
-const githubToken = "ghp${'_'}AbCdEfGhIjKlMnOpQrStUvWxYz0123456789";`
+    testSimulatorInput.value = `const apiKey = "<EXAMPLE_ONLY_NOT_A_SECRET>";
+const githubToken = "<EXAMPLE_ONLY_NOT_A_SECRET>";`
   } else {
-    testSimulatorInput.value = `DB_HOST=10.0.1.20
-DB_PASSWORD=MyUltraSecurePass2026!
-DSN=mysql://admin:MyUltraSecurePass2026!@10.0.1.20:3306/finance_app`
+    testSimulatorInput.value = `DB_HOST=db.example.invalid
+DB_PASSWORD=<EXAMPLE_ONLY_NOT_A_SECRET>
+DSN=mysql://<EXAMPLE_DB_USER>:<EXAMPLE_DB_PASSWORD>@db.example.invalid:3306/example_db`
   }
 }
 
