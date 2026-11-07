@@ -1,0 +1,98 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+@theme static {
+  --font-sans: 'Public Sans', sans-serif;
+}
+
+/* Sembunyikan scrollbar tetapi area tetap bisa digulir (tab/strip horizontal) */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ==============================================================================
+   Global Thin Scrollbar System (Cross-Browser & Theme-Aware)
+   Replaces bulky 16-17px native browser scrollbars with a sleek, modern 6px bar.
+   ============================================================================== */
+
+/* Firefox standard */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.4) transparent;
+}
+
+.dark *,
+:root[class~="dark"] * {
+  scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+}
+
+/* WebKit, Chromium, Edge, Safari, Electron */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.38);
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.15s ease-in-out;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(107, 114, 128, 0.65);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: rgba(75, 85, 99, 0.85);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Dark mode thumb colors */
+.dark ::-webkit-scrollbar-thumb,
+:root[class~="dark"] ::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.28);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover,
+:root[class~="dark"] ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(148, 163, 184, 0.55);
+}
+
+.dark ::-webkit-scrollbar-thumb:active,
+:root[class~="dark"] ::-webkit-scrollbar-thumb:active {
+  background-color: rgba(148, 163, 184, 0.8);
+}
+
+/* Helper utility classes for components */
+.scrollbar-none {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin !important;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 5px !important;
+  height: 5px !important;
+}
+
