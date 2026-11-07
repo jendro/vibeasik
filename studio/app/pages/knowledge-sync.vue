@@ -71,10 +71,20 @@ const syncLedger = () => act('ledger', async () => {
   view.value = await $fetch<SyncView>(`${apiBase}/api/knowledge-sync/ledger/sync`, { method: 'POST' })
 }, 'Status diperbarui dari server')
 
+const pendingRevoke = ref<Sent | null>(null)
+
 const revoke = (s: Sent) => {
   if (!s.server_id) return
-  if (!window.confirm(`Cabut kiriman "${s.title}"? Isinya dihapus dari server (selama belum terbit).`)) return
-  act('revoke', async () => {
+  pendingRevoke.value = s
+}
+
+const cancelRevoke = () => { pendingRevoke.value = null }
+
+const confirmRevoke = async () => {
+  const s = pendingRevoke.value
+  if (!s) return
+  pendingRevoke.value = null
+  await act('revoke', async () => {
     view.value = await $fetch<SyncView>(`${apiBase}/api/knowledge-sync/revoke`, { method: 'POST', body: { server_id: s.server_id } })
   }, 'Kiriman dicabut')
 }
@@ -335,5 +345,19 @@ useHead({ title: 'Berbagi Pengetahuan — vibeasik' })
         </UCard>
       </template>
     </ClientOnly>
+    <!-- Konfirmasi (pengganti confirm() bawaan browser) -->
+    <UModal
+      :open="!!pendingRevoke"
+      title="Cabut kiriman?"
+      :description="pendingRevoke ? `Cabut kiriman &quot;${pendingRevoke.title}&quot;? Isinya dihapus dari server (selama belum terbit).` : undefined"
+      @update:open="(v: boolean) => { if (!v) cancelRevoke() }"
+    >
+      <template #footer>
+        <div class="flex justify-end gap-2 w-full">
+          <UButton color="neutral" variant="ghost" label="Batal" :disabled="false" @click="cancelRevoke" />
+          <UButton color="error" icon="i-lucide-undo-2" label="Cabut" :loading="false" @click="confirmRevoke" />
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>

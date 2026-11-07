@@ -325,11 +325,26 @@ const handleDiagnoseAll = async () => {
   }
 }
 
-const handleDelete = async (id: number) => {
-  if (confirm('Are you sure you want to remove this project from manager? Files on disk will remain untouched.')) {
+const pendingDeleteId = ref<number | null>(null)
+const deleting = ref(false)
+
+const handleDelete = (id: number) => {
+  pendingDeleteId.value = id
+}
+
+const cancelDelete = () => {
+  if (!deleting.value) pendingDeleteId.value = null
+}
+
+const confirmDelete = async () => {
+  const id = pendingDeleteId.value
+  if (id === null) return
+  deleting.value = true
+  {
     const currentScroll = typeof window !== 'undefined' ? window.scrollY : 0
     try {
       await deleteProject(id)
+      pendingDeleteId.value = null
       projects.value = projects.value.filter(p => p.id !== id)
       toast.add({
         title: 'Proyek Dilepas',
@@ -349,6 +364,8 @@ const handleDelete = async (id: number) => {
         icon: 'i-lucide-alert-circle',
         color: 'error'
       })
+    } finally {
+      deleting.value = false
     }
   }
 }
@@ -504,5 +521,19 @@ const handleDelete = async (id: number) => {
       :project="projectToDeprecate"
       @updated="handleProjectUpdated"
     />
+    <!-- Konfirmasi (pengganti confirm() bawaan browser) -->
+    <UModal
+      :open="pendingDeleteId !== null"
+      title="Lepas proyek dari manager?"
+      :description="'Proyek dilepas dari pemantauan. File di disk tidak diubah.'"
+      @update:open="(v: boolean) => { if (!v) cancelDelete() }"
+    >
+      <template #footer>
+        <div class="flex justify-end gap-2 w-full">
+          <UButton color="neutral" variant="ghost" label="Batal" :disabled="deleting" @click="cancelDelete" />
+          <UButton color="error" icon="i-lucide-trash-2" label="Lepas" :loading="deleting" @click="confirmDelete" />
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>

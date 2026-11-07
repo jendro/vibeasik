@@ -324,10 +324,24 @@ const handleSaveEdit = async () => {
 }
 
 // Delete route
-const handleDelete = async (r: ComponentRoute) => {
-  if (!confirm(`Hapus endpoint ${r.method} ${r.path} dari database?`)) return
+const pendingDelete = ref<ComponentRoute | null>(null)
+const deleting = ref(false)
+
+const handleDelete = (r: ComponentRoute) => {
+  pendingDelete.value = r
+}
+
+const cancelDelete = () => {
+  if (!deleting.value) pendingDelete.value = null
+}
+
+const confirmDelete = async () => {
+  const r = pendingDelete.value
+  if (!r) return
+  deleting.value = true
   try {
     await deleteComponentRoute(props.comp.id, r.id)
+    pendingDelete.value = null
     routes.value = routes.value.filter(item => item.id !== r.id)
     emit('routes-count-changed', routes.value.length)
   } catch (err: any) {
@@ -337,6 +351,8 @@ const handleDelete = async (r: ComponentRoute) => {
       icon: 'i-lucide-alert-circle',
       color: 'error'
     })
+  } finally {
+    deleting.value = false
   }
 }
 
@@ -1026,6 +1042,20 @@ defineExpose({
           <UButton color="primary" size="xs" :loading="savingEdit" @click="handleSaveEdit">
             Simpan Perubahan
           </UButton>
+        </div>
+      </template>
+    </UModal>
+    <!-- Konfirmasi (pengganti confirm() bawaan browser) -->
+    <UModal
+      :open="!!pendingDelete"
+      title="Hapus rute?"
+      :description="pendingDelete ? `Hapus endpoint ${pendingDelete.method} ${pendingDelete.path} dari database?` : undefined"
+      @update:open="(v: boolean) => { if (!v) cancelDelete() }"
+    >
+      <template #footer>
+        <div class="flex justify-end gap-2 w-full">
+          <UButton color="neutral" variant="ghost" label="Batal" :disabled="deleting" @click="cancelDelete" />
+          <UButton color="error" icon="i-lucide-trash-2" label="Hapus" :loading="deleting" @click="confirmDelete" />
         </div>
       </template>
     </UModal>
