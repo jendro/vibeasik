@@ -37,10 +37,8 @@ func newAutoEnv(t *testing.T, pro bool) *autoEnv {
 	origPost, origTok, origJitter := postContribution, deviceToken, jitter
 	postContribution = func(_ string, body map[string]any, out any) error {
 		e.posted = append(e.posted, body)
-		if r, ok := out.(*struct {
-			ID uint `json:"id"`
-		}); ok {
-			r.ID = uint(len(e.posted))
+		if r, ok := out.(*Outcome); ok {
+			*r = Outcome{ID: uint(len(e.posted)), Status: "screened"}
 		}
 		return nil
 	}
@@ -254,5 +252,80 @@ func TestParsePackKeepsLicense(t *testing.T) {
 	_ = zw.Close()
 	if p, err = parse(buf.Bytes()); err != nil || p.License.ID != "" {
 		t.Fatalf("paket tanpa lisensi: err=%v lisensi=%+v", err, p.License)
+	}
+}
+
+func TestSendAutoHonorsServerRejectionAndDuplicate(t *testing.T) {
+	e := newAutoEnv(t, false)
+	rejected := e.good(1)
+	e.good(2)
+	_ = Consent()
+	call := 0
+	postContribution = func(_ string, body map[string]any, out any) error {
+		call++
+		o := out.(*Outcome)
+		if body["title"] == "Batasi ukuran body request 1" {
+			*o = Outcome{ID: 11, Status: "rejected", Note: "memuat email"}
+		} else {
+			*o = Outcome{ID: 12, Status: "duplicate"}
+		}
+		return nil
+	}
+	n, err := SendAuto(context.Background(), e.db, e.now)
+	if err != nil || n != 1 {
+		t.Fatalf("hanya yang diterima dihitung terkirim: n=%d err=%v", n, err)
+	}
+	l := LoadLedger()
+	if len(l.Sent) != 1 || l.Sent[0].ServerID != 12 || l.Sent[0].Status != "duplicate" {
+		t.Fatalf("ledger terkirim: %+v", l.Sent)
+	}
+	foundSkip := false
+	for _, s := range l.Skipped {
+		if s.LocalID == rejected && strings.HasPrefix(s.Reason, serverRejectedPrefix) {
+			foundSkip = true
+		}
+	}
+	if !foundSkip {
+		t.Fatalf("penolakan server harus tercatat: %+v", l.Skipped)
+	}
+	// Hari berikutnya: yang ditolak server tidak dikirim ulang.
+	call = 0
+	if n, _ := SendAuto(context.Background(), e.db, e.now.AddDate(0, 0, 1)); n != 0 || call != 0 {
+		t.Fatalf("tidak boleh mengirim ulang: n=%d post=%d", n, call)
+	}
+}
+
+func TestRevokeAndSyncLedger(t *testing.T) {
+	e := newAutoEnv(t, false)
+	_ = e
+	_ = recordSent(LedgerSent{LocalID: 1, Hash: "h1", Title: "satu", SentAt: time.Now(), ServerID: 7, Mode: "auto", Status: "screened"})
+	_ = recordSent(LedgerSent{LocalID: 2, Hash: "h2", Title: "dua", SentAt: time.Now(), ServerID: 8, Mode: "auto", Status: "screened"})
+
+	var revoked uint
+	revokeRequest = func(_ string, id uint) error { revoked = id; return nil }
+	if err := Revoke(7); err != nil || revoked != 7 {
+		t.Fatalf("revoke: %v id=%d", err, revoked)
+	}
+	l := LoadLedger()
+	if l.Sent[0].Status != "revoked" || l.Sent[1].Status != "screened" {
+		t.Fatalf("status ledger setelah revoke: %+v", l.Sent)
+	}
+
+	listRequest = func(out any) error {
+		b, _ := json.Marshal(map[string]any{"contributions": []map[string]any{{"id": 8, "status": "approved"}, {"id": 99, "status": "rejected"}}})
+		return json.Unmarshal(b, out)
+	}
+	n, err := SyncLedger()
+	if err != nil || n != 1 {
+		t.Fatalf("sinkron: n=%d err=%v", n, err)
+	}
+	if LoadLedger().Sent[1].Status != "approved" {
+		t.Fatal("status dari server harus masuk ledger")
+	}
+
+	// Gagal dari server tidak mengubah ledger.
+	revokeRequest = func(string, uint) error { return errors.New("404") }
+	if err := Revoke(8); err == nil || LoadLedger().Sent[1].Status != "approved" {
+		t.Fatal("gagal revoke tidak boleh mengubah status")
 	}
 }

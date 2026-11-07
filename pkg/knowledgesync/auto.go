@@ -128,7 +128,7 @@ func AutoEligible(db *gorm.DB, now time.Time) Eligibility {
 			continue
 		}
 		h := contentHash(n.Title, n.Content)
-		if ledger.HasHash(h) {
+		if ledger.HasHash(h) || ledger.HasServerRejected(h) {
 			continue
 		}
 		skip := func(reason string) {
@@ -197,16 +197,26 @@ func SendAuto(ctx context.Context, db *gorm.DB, now time.Time) (int, error) {
 				jitter()
 			}
 		}
-		var resp struct {
-			ID uint `json:"id"`
-		}
+		var resp Outcome
 		err := postContribution(tok, map[string]any{
 			"kind": c.Kind, "domain": c.Domain, "title": c.Title, "content": c.Content, "source_key": c.Key, "origin": "auto",
 		}, &resp)
 		if err != nil {
 			return sent, err
 		}
-		if err := recordSent(LedgerSent{LocalID: c.ID, Hash: c.Hash, Title: c.Title, SentAt: now, ServerID: resp.ID, Mode: "auto"}); err != nil {
+		if resp.Status == "rejected" {
+			// Server menolak (skrining ulang): jangan dikirim lagi, catat alasannya agar terlihat di ledger.
+			_ = recordSkips([]LedgerSkip{{LocalID: c.ID, Hash: c.Hash, Reason: serverRejectedPrefix + resp.Note, At: now}})
+			st := LoadState()
+			st.Contributed = append(st.Contributed, c.ID)
+			_ = saveState(st)
+			continue
+		}
+		status := resp.Status
+		if status == "" {
+			status = "screened"
+		}
+		if err := recordSent(LedgerSent{LocalID: c.ID, Hash: c.Hash, Title: c.Title, SentAt: now, ServerID: resp.ID, Mode: "auto", Status: status}); err != nil {
 			return sent, err
 		}
 		st := LoadState()
@@ -252,3 +262,10 @@ Lisensi:
   • Paket penuh: milik vibeasik, penggunaan terbatas (Lisensi Pengetahuan vibeasik: tidak boleh diterbitkan ulang,
     dijual, disalin massal, atau dipakai melatih model AI yang bersaing).
   • Kode vibeasik: Apache-2.0.`
+
+// Outcome jawaban server atas satu kiriman.
+type Outcome struct {
+	ID     uint   `json:"id"`
+	Status string `json:"status"` // screened | rejected | duplicate
+	Note   string `json:"note,omitempty"`
+}

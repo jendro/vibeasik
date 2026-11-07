@@ -350,14 +350,19 @@ func Contribute(db *gorm.DB, ids []uint) (int, error) {
 		if !want[c.ID] {
 			continue
 		}
+		var out Outcome
 		err := post("/api/v1/knowledge/contributions", tok, map[string]any{
-			"kind": c.Kind, "domain": c.Domain, "title": c.Title, "content": c.Content, "source_key": c.Key,
-		}, nil)
+			"kind": c.Kind, "domain": c.Domain, "title": c.Title, "content": c.Content, "source_key": c.Key, "origin": "manual",
+		}, &out)
 		if err != nil {
 			return n, err
 		}
 		st.Contributed = append(st.Contributed, c.ID)
-		_ = recordSent(LedgerSent{LocalID: c.ID, Hash: contentHash(c.Title, c.Content), Title: c.Title, SentAt: time.Now(), Mode: "manual"})
+		if out.Status == "rejected" {
+			_ = recordSkips([]LedgerSkip{{LocalID: c.ID, Hash: contentHash(c.Title, c.Content), Reason: serverRejectedPrefix + out.Note, At: time.Now()}})
+			continue
+		}
+		_ = recordSent(LedgerSent{LocalID: c.ID, Hash: contentHash(c.Title, c.Content), Title: c.Title, SentAt: time.Now(), ServerID: out.ID, Mode: "manual", Status: out.Status})
 		n++
 	}
 	return n, saveState(st)

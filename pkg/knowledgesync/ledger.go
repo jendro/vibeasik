@@ -27,7 +27,8 @@ type LedgerSent struct {
 	Title    string    `json:"title"` // judul yang sudah disensor, agar riwayat mudah dibaca (bukan isi)
 	SentAt   time.Time `json:"sent_at"`
 	ServerID uint      `json:"server_id,omitempty"`
-	Mode     string    `json:"mode"` // auto | manual
+	Mode     string    `json:"mode"`             // auto | manual
+	Status   string    `json:"status,omitempty"` // status terakhir di server: screened | approved | rejected | revoked | duplicate
 }
 
 // LedgerSkip node yang memenuhi syarat dasar tetapi ditolak penyaring, beserta alasannya.
@@ -72,6 +73,19 @@ func (l Ledger) save() error {
 func (l Ledger) HasHash(h string) bool {
 	for _, s := range l.Sent {
 		if s.Hash == h {
+			return true
+		}
+	}
+	return false
+}
+
+// serverRejectedPrefix awalan alasan untuk node yang ditolak server; node itu tidak dikirim ulang.
+const serverRejectedPrefix = "ditolak server: "
+
+// HasServerRejected true bila server pernah menolak isi dengan hash ini.
+func (l Ledger) HasServerRejected(h string) bool {
+	for _, s := range l.Skipped {
+		if s.Hash == h && strings.HasPrefix(s.Reason, serverRejectedPrefix) {
 			return true
 		}
 	}
