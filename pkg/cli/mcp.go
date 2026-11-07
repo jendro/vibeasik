@@ -19,12 +19,14 @@ import (
 	"github.com/vibeasik/vibeasik/pkg/activity"
 	"github.com/vibeasik/vibeasik/pkg/config"
 	"github.com/vibeasik/vibeasik/pkg/database"
+	"github.com/vibeasik/vibeasik/pkg/localauth"
 	"github.com/vibeasik/vibeasik/pkg/mcp"
 )
 
 var (
 	remoteHost      string
 	remoteExecToken string
+	remoteToken     string
 )
 
 // execTokenHeader must match api.headerExecToken: the engine's exec guard accepts LAN callers that send
@@ -299,6 +301,7 @@ func runRemoteStdioBridge(remoteURL, execToken string, in io.Reader, out io.Writ
 			return
 		}
 		if delReq, err := http.NewRequest(http.MethodDelete, endpoint, nil); err == nil {
+			applyRemoteToken(delReq)
 			delReq.Header.Set("Mcp-Session-Id", sessionID)
 			if resp, err := client.Do(delReq); err == nil {
 				resp.Body.Close()
@@ -338,6 +341,7 @@ func runRemoteStdioBridge(remoteURL, execToken string, in io.Reader, out io.Writ
 		if execToken != "" {
 			httpReq.Header.Set(execTokenHeader, execToken)
 		}
+		applyRemoteToken(httpReq)
 		if sessionID != "" {
 			httpReq.Header.Set("Mcp-Session-Id", sessionID)
 		}
@@ -379,7 +383,12 @@ func runRemoteStdioBridge(remoteURL, execToken string, in io.Reader, out io.Writ
 
 func listRemoteTools(remoteURL string) error {
 	remoteURL = strings.TrimRight(remoteURL, "/")
-	resp, err := http.Get(remoteURL + "/api/mcp/info")
+	req, err := http.NewRequest(http.MethodGet, remoteURL+"/api/mcp/info", nil)
+	if err != nil {
+		return err
+	}
+	applyRemoteToken(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("could not connect to remote vibeasik at %s: %w", remoteURL, err)
 	}
@@ -405,9 +414,21 @@ func listRemoteTools(remoteURL string) error {
 
 func init() {
 	mcpCmd.Flags().StringVar(&remoteHost, "remote", "", "Remote vibeasik engine URL to proxy MCP (e.g. http://192.168.1.10:8765)")
+	mcpCmd.Flags().StringVar(&remoteToken, "token", "", "Token akses engine jarak jauh ("+localauth.Header+"; bawaan: env "+localauth.EnvToken+" atau ~/.vibeasik/token)")
+	mcpListCmd.Flags().StringVar(&remoteToken, "token", "", "Token akses engine jarak jauh")
 	mcpCmd.Flags().StringVar(&remoteExecToken, "exec-token", "", "Token sent as "+execTokenHeader+" so the remote engine allows exec tools from LAN (default: env VIBEASIK_EXEC_TOKEN)")
 	mcpListCmd.Flags().StringVar(&remoteHost, "remote", "", "Remote vibeasik engine URL to list tools from (e.g. http://192.168.1.10:8765)")
 	mcpCmd.AddCommand(mcpListCmd)
 	mcpCmd.AddCommand(mcpInstallCmd)
 	rootCmd.AddCommand(mcpCmd)
+}
+
+// applyRemoteToken memasang token akses engine pada request jembatan --remote: flag --token, lalu
+// env VIBEASIK_TOKEN / berkas token lokal (engine di laptop yang sama).
+func applyRemoteToken(req *http.Request) {
+	if remoteToken != "" {
+		req.Header.Set(localauth.Header, remoteToken)
+		return
+	}
+	localauth.Apply(req)
 }

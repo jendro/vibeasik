@@ -15,6 +15,7 @@ import (
 
 	"github.com/vibeasik/vibeasik/pkg/activity"
 	"github.com/vibeasik/vibeasik/pkg/config"
+	"github.com/vibeasik/vibeasik/pkg/localauth"
 )
 
 var hookAgentName string
@@ -55,8 +56,12 @@ Register it with: vibeasik hook install`,
 			url = strings.TrimRight(remote, "/") + "/api/agents/activity"
 		}
 		client := &http.Client{Timeout: 1500 * time.Millisecond}
-		if resp, err := client.Post(url, "application/json", bytes.NewReader(body)); err == nil {
-			resp.Body.Close()
+		if req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(body)); err == nil {
+			req.Header.Set("Content-Type", "application/json")
+			localauth.Apply(req)
+			if resp, err := client.Do(req); err == nil {
+				resp.Body.Close()
+			}
 		}
 		return nil
 	},

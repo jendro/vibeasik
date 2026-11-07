@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/vibeasik/vibeasik/pkg/localauth"
 	"github.com/vibeasik/vibeasik/pkg/runner"
 )
 
@@ -260,6 +261,7 @@ func (s *Server) daemonRequest(method, path string, body interface{}) ([]byte, e
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	localauth.Apply(req)
 	resp, err := (&http.Client{Timeout: 20 * time.Second}).Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("local engine tidak bisa dihubungi: %w", err)

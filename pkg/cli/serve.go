@@ -17,6 +17,7 @@ import (
 	"github.com/vibeasik/vibeasik/pkg/config"
 	"github.com/vibeasik/vibeasik/pkg/database"
 	"github.com/vibeasik/vibeasik/pkg/knowledge"
+	"github.com/vibeasik/vibeasik/pkg/localauth"
 	"github.com/vibeasik/vibeasik/pkg/registry"
 	"github.com/vibeasik/vibeasik/pkg/standard"
 	"github.com/vibeasik/vibeasik/pkg/traffic"
@@ -56,6 +57,12 @@ var serveCmd = &cobra.Command{
 
 		registry.Edition = Edition
 		server := api.NewServer(db)
+		lan := listenHost != "127.0.0.1" && listenHost != "localhost" && listenHost != "::1"
+		server.SetLAN(lan)
+		token, err := localauth.Token()
+		if err != nil {
+			return fmt.Errorf("token akses lokal: %w", err)
+		}
 		// Pantau sesi agent coding di laptop ini (Claude Code, Antigravity, Copilot).
 		activity.StartLocalWatchers(ctx)
 		// Standar vibeasik: blok port per proyek, env lokal/server, todo standar.
@@ -78,20 +85,22 @@ var serveCmd = &cobra.Command{
 		addr := fmt.Sprintf("%s:%d", listenHost, listenPort)
 		log.Println("==================================================================")
 		log.Printf("🚀 vibeasik %s (%s)\n", Version, Edition)
-		log.Printf("   • Studio:  http://localhost:%d\n", listenPort)
-		if listenHost != "127.0.0.1" && listenHost != "localhost" {
+		studioURL := studioLoginURL(listenPort, token)
+		log.Printf("   • Studio:  %s\n", studioURL)
+		if lan {
+			log.Println("   ⚠ Engine dibuka ke LAN: siapa pun di jaringan ini yang punya token bisa memakainya.")
 			for _, ip := range config.GetLocalIPs() {
-				log.Printf("   • LAN:     http://%s:%d\n", ip, listenPort)
+				log.Printf("   • LAN:     http://%s:%d/auth?t=<token>\n", ip, listenPort)
 			}
 		}
-		log.Printf("   • MCP:     http://localhost:%d/mcp\n", listenPort)
+		log.Printf("   • MCP:     http://localhost:%d/mcp (header %s; token: `vibeasik token`)\n", listenPort, localauth.Header)
 		log.Printf("   • DB:      %s\n", cfg.DBDriver)
 		log.Println("==================================================================")
 
 		if openBrowser {
 			go func() {
 				time.Sleep(350 * time.Millisecond)
-				_ = openURL(fmt.Sprintf("http://localhost:%d", listenPort))
+				_ = openURL(studioURL)
 			}()
 		}
 
