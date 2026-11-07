@@ -14,7 +14,7 @@ Untuk perubahan besar, buka issue lebih dulu agar arahnya cocok sebelum Anda men
 Prasyarat: Go 1.26+, [bun](https://bun.sh), `make`, git.
 
 ```bash
-git clone https://github.com/jendro/vibeasik.git && cd vibeasik
+git clone https://github.com/vibeasik/vibeasik.git && cd vibeasik
 make hooks      # WAJIB sekali setelah clone: mengaktifkan pemeriksaan commit
 make studio     # membangun Studio (hanya perlu bila Anda mengubah/menjalankan Studio)
 make build      # bin/vibeasik

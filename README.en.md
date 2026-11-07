@@ -44,7 +44,7 @@ commands on your machine, so read [SECURITY.md](SECURITY.md) before exposing it 
 Go 1.26+, [bun](https://bun.sh), `make`:
 
 ```bash
-git clone https://github.com/jendro/vibeasik.git && cd vibeasik
+git clone https://github.com/vibeasik/vibeasik.git && cd vibeasik
 make hooks && make studio && make build && make test
 ```
 

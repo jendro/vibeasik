@@ -84,15 +84,15 @@ menjalankan perintah di komputer Anda, jadi jangan membukanya ke jaringan tanpa 
 Prasyarat: Go 1.26+, [bun](https://bun.sh) (untuk Studio), `make`.
 
 ```bash
-git clone https://github.com/jendro/vibeasik.git && cd vibeasik
+git clone https://github.com/vibeasik/vibeasik.git && cd vibeasik
 make hooks      # aktifkan aturan commit (sekali setelah clone)
 make studio     # bangun Studio ke pkg/ui/dist (tersemat di binary)
 make build      # hasil: bin/vibeasik
 make test
 ```
 
-Catatan: module Go bernama `github.com/vibeasik/vibeasik`, tetapi kode tinggal di `github.com/jendro/vibeasik`;
-karena itu `go install` dari URL belum didukung. Pakai `git clone` seperti di atas.
+Module Go-nya `github.com/vibeasik/vibeasik`, sama dengan alamat repo ini, sehingga bisa diimpor dari proyek Go lain.
+Untuk memakai programnya, pasang lewat installer atau `make build` seperti di atas.
 
 ## Berkontribusi
 
