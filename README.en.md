@@ -51,5 +51,5 @@ git clone https://github.com/vibeasik/vibeasik.git && cd vibeasik
 make hooks && make studio && make build && make test
 ```
 
-Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md). License: code is [Apache-2.0](LICENSE); knowledge
+Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md). vibeasik is owned and developed by [PT Pancen Apik Tenan](https://tenan.id). License: code is [Apache-2.0](LICENSE) (see [NOTICE](NOTICE)); knowledge
 pack content is CC BY 4.0 (free pack) or a restricted vibeasik license (full pack), see `docs/KNOWLEDGE.md`.
