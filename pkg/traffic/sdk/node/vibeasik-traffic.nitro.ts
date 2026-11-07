@@ -38,8 +38,12 @@ async function flush() {
 
 export default defineNitroPlugin((nitroApp) => {
   if (!ENDPOINT || !KEY) return
-  setInterval(flush, FLUSH_MS).unref?.()
-  nitroApp.hooks.hook('close', flush)
+  const timerId = setInterval(flush, FLUSH_MS)
+  timerId.unref?.()
+  nitroApp.hooks.hook('close', () => {
+    clearInterval(timerId)
+    return flush()
+  })
 
   nitroApp.hooks.hook('request', (event) => {
     event.context.__vibeasikStart = performance.now()
