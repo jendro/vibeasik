@@ -103,4 +103,5 @@ Kontribusi diterima: perbaikan bug, rule audit baru (`guidelines/`), dan dokumen
 
 ## Lisensi
 
-[Apache-2.0](LICENSE). Modul Pro dan server vibeasik adalah proyek terpisah dan tidak termasuk repo ini.
+Kode: [Apache-2.0](LICENSE). Isi Pusat Pengetahuan: paket gratis CC BY 4.0, paket penuh berlisensi terbatas
+(lihat [docs/KNOWLEDGE.md](docs/KNOWLEDGE.md#lisensi)). Modul Pro dan server vibeasik adalah proyek terpisah dan tidak termasuk repo ini.

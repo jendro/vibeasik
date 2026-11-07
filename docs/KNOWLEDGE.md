@@ -86,6 +86,22 @@ Kiriman ditinjau sebelum dipakai pengguna lain. Anda dapat melihat pratinjau dan
 `vibeasik knowledge revoke` untuk meminta penghapusan kiriman yang belum terbit menyusul pada pembaruan berikutnya.
 Data terbit tidak memuat identitas akun.
 
+## Lisensi
+
+| Bagian | Lisensi | Artinya |
+|---|---|---|
+| **Paket gratis** | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Boleh disalin, dibagikan, dan diubah, termasuk untuk komersial. Wajib menyebut "vibeasik Pusat Pengetahuan", menautkan lisensi, dan menyatakan perubahan |
+| **Paket penuh** (Pro) | [Lisensi Pengetahuan vibeasik 1.0](https://vibeasik.com/legal/knowledge-license) | Hak cipta vibeasik. Boleh dipakai di komputer Anda untuk pekerjaan Anda; dilarang menerbitkan ulang, menjual, menyalin massal, atau memakainya untuk melatih model AI atau layanan yang bersaing |
+| **Kode vibeasik dan 85 rule audit** | Apache-2.0 | Terbuka penuh, seperti repositori ini |
+| **Isi yang Anda kirim** | Hak cipta tetap pada Anda | Anda memberi vibeasik lisensi luas (selamanya untuk bagian yang sudah terbit, boleh disublisensikan) untuk menerbitkannya dalam paket gratis maupun penuh |
+
+Lisensi tertulis di dalam berkas paket yang ditandatangani server, jadi tidak dapat diubah tanpa membatalkan tanda
+tangan, dan `vibeasik knowledge pull` serta `knowledge status` menampilkannya.
+
+Alasan modelnya: paket gratis dibuat terbuka agar pengetahuan menyebar cepat dan kewajiban berkontribusi terasa adil
+(yang Anda kirim ikut memperkaya milik bersama); nilai tertutup vibeasik ada di paket penuh (graf, tautan, skor dari
+pemakaian) dan di mesin pembaruan serta kurasinya.
+
 ## Server sendiri
 
 Alamat server bawaan `https://enjoy.vibeasik.com`. Ganti dengan env `VIBEASIK_CLOUD_URL` bila Anda menjalankan server
