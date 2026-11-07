@@ -8,9 +8,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
-	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 
@@ -103,188 +100,6 @@ var mcpListCmd = &cobra.Command{
 		fmt.Println("==================================================================")
 		return nil
 	},
-}
-
-var mcpInstallCmd = &cobra.Command{
-	Use:   "install",
-	Short: "Auto-register vibeasik MCP into Claude Desktop, Cursor, and Antigravity",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return runMCPAutoInstall()
-	},
-}
-
-func runMCPAutoInstall() error {
-	fmt.Println("==================================================================")
-	fmt.Println("🚀 Installing & Registering vibeasik MCP Server for AI Agents...")
-	fmt.Println("==================================================================")
-
-	execPath, err := os.Executable()
-	if err != nil {
-		return fmt.Errorf("failed to determine executable path: %w", err)
-	}
-
-	cmdStr := "vibeasik"
-	inPath := false
-	if p, err := exec.LookPath("vibeasik"); err == nil {
-		inPath = true
-		cmdStr = p
-	}
-
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("could not get user home directory: %w", err)
-	}
-
-	// 1. Install binary to ~/.local/bin if not in PATH
-	if !inPath && runtime.GOOS != "windows" {
-		localBin := filepath.Join(home, ".local", "bin")
-		_ = os.MkdirAll(localBin, 0755)
-		targetBin := filepath.Join(localBin, "vibeasik")
-		if execPath != targetBin {
-			_ = os.Remove(targetBin)
-			if err := os.Symlink(execPath, targetBin); err == nil {
-				fmt.Printf("✅ Symlinked executable to %s\n", targetBin)
-				cmdStr = targetBin
-			} else {
-				// Fallback copy
-				if copyErr := copyFile(execPath, targetBin); copyErr == nil {
-					_ = os.Chmod(targetBin, 0755)
-					fmt.Printf("✅ Copied executable to %s\n", targetBin)
-					cmdStr = targetBin
-				} else {
-					cmdStr = execPath
-				}
-			}
-		} else {
-			cmdStr = targetBin
-		}
-	} else if !inPath {
-		cmdStr = execPath
-	}
-
-	// 2. Register into Claude Desktop
-	claudeConfigPath := getClaudeDesktopConfigPath(home)
-	if claudeConfigPath != "" {
-		if err := registerMCPConfig(claudeConfigPath, "vibeasik", cmdStr, []string{"mcp"}); err == nil {
-			fmt.Printf("✅ Registered in Claude Desktop: %s\n", claudeConfigPath)
-		} else {
-			fmt.Printf("⚠️ Claude Desktop config update skipped: %v\n", err)
-		}
-	}
-
-	// 3. Register into Cursor
-	cursorConfigPath := filepath.Join(home, ".cursor", "mcp.json")
-	if err := registerMCPConfig(cursorConfigPath, "vibeasik", cmdStr, []string{"mcp"}); err == nil {
-		fmt.Printf("✅ Registered in Cursor: %s\n", cursorConfigPath)
-	} else {
-		fmt.Printf("⚠️ Cursor config update skipped: %v\n", err)
-	}
-
-	// 4. Register into Windsurf if available
-	windsurfDir := filepath.Join(home, ".codeium", "windsurf")
-	if _, err := os.Stat(windsurfDir); err == nil {
-		windsurfConfigPath := filepath.Join(windsurfDir, "mcp_config.json")
-		if err := registerMCPConfig(windsurfConfigPath, "vibeasik", cmdStr, []string{"mcp"}); err == nil {
-			fmt.Printf("✅ Registered in Windsurf: %s\n", windsurfConfigPath)
-		}
-	}
-
-	// 5. Register into Antigravity (agy CLI) if available
-	if agyPath, err := exec.LookPath("agy"); err == nil {
-		out, err := exec.Command(agyPath, "mcp", "add", "vibeasik", "--", cmdStr, "mcp").CombinedOutput()
-		if err == nil {
-			fmt.Println("✅ Registered in Google Antigravity (agy)")
-		} else {
-			fmt.Printf("ℹ️ Antigravity (agy) note: %s\n", string(out))
-		}
-	}
-
-	// 6. Register into VS Code (Cline extension) if available
-	clineConfigPath := filepath.Join(home, ".config", "Code", "User", "globalStorage", "saoudrizwan.claude-dev", "settings", "cline_mcp_settings.json")
-	clineDir := filepath.Dir(clineConfigPath)
-	if _, err := os.Stat(filepath.Dir(clineDir)); err == nil {
-		if err := registerMCPConfig(clineConfigPath, "vibeasik", cmdStr, []string{"mcp"}); err == nil {
-			fmt.Printf("✅ Registered in VS Code (Cline): %s\n", clineConfigPath)
-		}
-	}
-
-	// 7. Register into VS Code (Roo Code extension) if available
-	rooConfigPath := filepath.Join(home, ".config", "Code", "User", "globalStorage", "rooveterinaryinc.roo-cline", "settings", "cline_mcp_settings.json")
-	rooDir := filepath.Dir(rooConfigPath)
-	if _, err := os.Stat(filepath.Dir(rooDir)); err == nil {
-		if err := registerMCPConfig(rooConfigPath, "vibeasik", cmdStr, []string{"mcp"}); err == nil {
-			fmt.Printf("✅ Registered in VS Code (Roo Code): %s\n", rooConfigPath)
-		}
-	}
-
-	fmt.Println("==================================================================")
-	fmt.Printf("🎉 vibeasik MCP is ready!\n")
-	fmt.Printf("   Command: %s mcp\n", cmdStr)
-	fmt.Printf("   AI agents can now access project catalogs, scan repos, and run diagnostics.\n")
-	fmt.Println("==================================================================")
-	return nil
-}
-
-func getClaudeDesktopConfigPath(home string) string {
-	switch runtime.GOOS {
-	case "darwin":
-		return filepath.Join(home, "Library", "Application Support", "Claude", "claude_desktop_config.json")
-	case "windows":
-		appData := os.Getenv("APPDATA")
-		if appData == "" {
-			appData = filepath.Join(home, "AppData", "Roaming")
-		}
-		return filepath.Join(appData, "Claude", "claude_desktop_config.json")
-	default: // linux and others
-		return filepath.Join(home, ".config", "claude", "claude_desktop_config.json")
-	}
-}
-
-func registerMCPConfig(configPath, serverName, command string, args []string) error {
-	dir := filepath.Dir(configPath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return err
-	}
-
-	dataMap := make(map[string]interface{})
-	if b, err := os.ReadFile(configPath); err == nil && len(b) > 0 {
-		_ = json.Unmarshal(b, &dataMap)
-	}
-
-	mcpServers, ok := dataMap["mcpServers"].(map[string]interface{})
-	if !ok {
-		mcpServers = make(map[string]interface{})
-		dataMap["mcpServers"] = mcpServers
-	}
-
-	mcpServers[serverName] = map[string]interface{}{
-		"command": command,
-		"args":    args,
-	}
-
-	outBytes, err := json.MarshalIndent(dataMap, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(configPath, outBytes, 0644)
-}
-
-func copyFile(src, dst string) error {
-	in, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-
-	out, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	_, err = io.Copy(out, in)
-	return err
 }
 
 func runRemoteStdioBridge(remoteURL, execToken string, in io.Reader, out io.Writer) error {
@@ -419,7 +234,6 @@ func init() {
 	mcpCmd.Flags().StringVar(&remoteExecToken, "exec-token", "", "Token sent as "+execTokenHeader+" so the remote engine allows exec tools from LAN (default: env VIBEASIK_EXEC_TOKEN)")
 	mcpListCmd.Flags().StringVar(&remoteHost, "remote", "", "Remote vibeasik engine URL to list tools from (e.g. http://192.168.1.10:8765)")
 	mcpCmd.AddCommand(mcpListCmd)
-	mcpCmd.AddCommand(mcpInstallCmd)
 	rootCmd.AddCommand(mcpCmd)
 }
 

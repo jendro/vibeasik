@@ -1,8 +1,8 @@
 #!/usr/bin/env sh
 # Pasang vibeasik (Linux/macOS):  curl -fsSL https://vibeasik.com/install.sh | sh
-# Variabel: VIBEASIK_VERSION (bawaan: terbaru), VIBEASIK_REPO (bawaan: vibeasik/vibeasik), INSTALL_DIR (bawaan: ~/.local/bin)
+# Variabel: VIBEASIK_VERSION (bawaan: terbaru), VIBEASIK_REPO (bawaan: jendro/vibeasik), INSTALL_DIR (bawaan: ~/.local/bin)
 set -eu
-REPO="${VIBEASIK_REPO:-vibeasik/vibeasik}"
+REPO="${VIBEASIK_REPO:-jendro/vibeasik}"
 DIR="${INSTALL_DIR:-$HOME/.local/bin}"
 
 os="$(uname -s | tr '[:upper:]' '[:lower:]')"

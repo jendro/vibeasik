@@ -12,6 +12,7 @@ Semuanya berjalan **lokal**: kode Anda tidak pernah diunggah.
 curl -fsSL https://vibeasik.com/install.sh | sh
 vibeasik serve        # jalankan engine
 vibeasik open         # buka Studio di browser (masuk otomatis)
+vibeasik mcp install   # daftarkan ke agent coding yang terpasang (Claude Code, Cursor, …)
 ```
 
 Windows: unduh `.zip` dari halaman Releases.
