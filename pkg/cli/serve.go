@@ -21,8 +21,11 @@ import (
 	"github.com/vibeasik/vibeasik/pkg/knowledge"
 	"github.com/vibeasik/vibeasik/pkg/knowledgesync"
 	"github.com/vibeasik/vibeasik/pkg/localauth"
+	"github.com/vibeasik/vibeasik/pkg/models"
 	"github.com/vibeasik/vibeasik/pkg/registry"
+	"github.com/vibeasik/vibeasik/pkg/setup"
 	"github.com/vibeasik/vibeasik/pkg/standard"
+	"github.com/vibeasik/vibeasik/pkg/telemetry"
 	"github.com/vibeasik/vibeasik/pkg/traffic"
 	"github.com/vibeasik/vibeasik/pkg/update"
 )
@@ -84,6 +87,15 @@ var serveCmd = &cobra.Command{
 		upd := update.New(Version, Edition)
 		server.SetUpdater(upd)
 		upd.Background(ctx, update.Auto, 6*time.Hour)
+		// Ping pemakaian ringan (OS, versi, zona waktu, status akun; tanpa isi proyek). Matikan: VIBEASIK_NO_TELEMETRY=1.
+		telemetry.Start(ctx, account.CloudURL(), func() telemetry.Info {
+			var n int64
+			db.Model(&models.Project{}).Count(&n)
+			return telemetry.Info{
+				Version: Version, Edition: Edition, DBDriver: cfg.DBDriver,
+				LoggedIn: account.Current().LoggedIn, AccountChoice: setup.Load().AccountChoice, Projects: int(n),
+			}
+		})
 		token, err := localauth.Token()
 		if err != nil {
 			return fmt.Errorf("token akses lokal: %w", err)

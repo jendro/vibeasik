@@ -34,7 +34,7 @@ const (
 const FeatureAutoControl = "knowledge.auto_control"
 
 // ConsentVersion versi Syarat & Ketentuan Pusat Pengetahuan yang harus disetujui. Naikkan bila pasal 4 berubah.
-const ConsentVersion = "2026-11-draf-2"
+const ConsentVersion = "2026-11-draf-3"
 
 // Syarat kelayakan node (lihat rancangan §3).
 const (
@@ -248,8 +248,19 @@ Pusat Pengetahuan bekerja dua arah.
     dapat mengubah atau mematikannya.
 
 Yang dikirim : judul dan isi node pengetahuan yang lolos penyaringan, serta angka helpful/harmful (anonim).
-Tidak dikirim: kode proyek, nama proyek/komponen/repo, path berkas, IP/hostname, kunci & kredensial, pengetahuan
+Tidak dikirim: kode proyek, nama proyek/komponen/repo, path berkas, hostname, kunci & kredensial, pengetahuan
                pribadi pegawai AI Anda. Node yang perlu disunting penyensor tidak dikirim sama sekali.
+
+Data pemakaian (terpisah dari pengetahuan):
+  • Aplikasi mengirim ping ringan ke server vibeasik saat dijalankan lalu tiap 24 jam, dengan atau tanpa akun:
+    ID instalasi acak, sistem operasi dan versinya, arsitektur, versi dan edisi vibeasik, bahasa dan zona waktu,
+    jenis database, jumlah proyek (angka saja), dan apakah Anda masuk akun.
+  • Server juga melihat alamat IP dan perkiraan negara/kota dari setiap permintaan, dan menyimpannya bersama ping.
+    Saat Anda mendaftar atau masuk, IP dan user agent dicatat pada akun Anda.
+  • Dipakai untuk menghitung jumlah pengguna, mendukung versi yang dipakai, mencegah penyalahgunaan, dan arah produk.
+    Tidak dijual dan tidak dibagikan ke pihak ketiga untuk iklan.
+  • Tidak dikirim: kode, nama proyek, path, hostname, nama pengguna komputer, isi berkas, kunci.
+  • Matikan dengan variabel lingkungan VIBEASIK_NO_TELEMETRY=1 sebelum menjalankan vibeasik.
 
 Kiriman masuk karantina dan ditinjau sebelum dipakai pengguna lain. Anda dapat melihat pratinjau
 (vibeasik knowledge auto preview) dan riwayat (vibeasik knowledge ledger).
