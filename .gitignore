@@ -14,7 +14,7 @@ data/
 
 # Hasil build
 bin/
-dist/
+/dist/
 *.exe
 /vibeasik
 coverage.out
@@ -36,3 +36,7 @@ node_modules/
 !.vscode/extensions.json
 .DS_Store
 *.swp
+
+# Hasil build Studio yang disematkan ke binary
+pkg/ui/dist/*
+!pkg/ui/dist/.gitkeep
