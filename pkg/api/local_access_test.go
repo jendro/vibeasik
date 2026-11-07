@@ -42,7 +42,7 @@ func TestLocalAccessRequiresToken(t *testing.T) {
 		{"dns rebinding", "GET", "/api/projects", "evil.example.com", tok, 403},
 		{"ip lan tanpa mode lan", "GET", "/api/projects", "192.168.1.10:8765", tok, 403},
 		{"traffic ingest berkunci sendiri", "POST", "/api/traffic/ingest", "localhost", nil, 401},
-				{"halaman studio tanpa token", "GET", "/cockpit", "localhost", nil, 401},
+		{"halaman studio tanpa token", "GET", "/cockpit", "localhost", nil, 401},
 	}
 	for _, c := range cases {
 		resp := doReq(t, s, c.method, c.path, c.host, c.hdr)
