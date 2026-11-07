@@ -17,7 +17,7 @@ import (
 
 // PublicKey kunci publik penandatangan entitlement (base64). Bisa diganti saat build:
 // -ldflags "-X github.com/vibeasik/vibeasik/pkg/account.PublicKey=<base64>" — tidak lewat env.
-var PublicKey = "6sZQ5MzT9ekdm7qfZQjOiJJoCSP+t0ck59bXf+haSFQ="
+var PublicKey = "7U4G01XmA3HtIXaE5HOEoPNLCp4/8l59i/2FRysDAKk="
 
 // Claims isi entitlement (format sama dengan server vibeasik-cloud).
 type Claims struct {
