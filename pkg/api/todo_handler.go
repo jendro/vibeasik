@@ -471,20 +471,14 @@ func (s *Server) suggestTodos(c *fiber.Ctx) error {
 	// Filter out suggestions that already exist in DB with same title & project_id
 	finalSuggestions := make([]models.Todo, 0)
 	createdCount := 0
+	todoIdx := models.NewTodoIndex(s.db, suggestions)
 	for _, sugg := range suggestions {
-		var existing models.Todo
-		q := s.db.Where("title = ?", sugg.Title)
-		if sugg.ProjectID != nil && *sugg.ProjectID > 0 {
-			q = q.Where("project_id = ?", *sugg.ProjectID)
-		}
-		if sugg.ComponentID != nil && *sugg.ComponentID > 0 {
-			q = q.Where("component_id = ?", *sugg.ComponentID)
-		}
-
-		if err := q.First(&existing).Error; err != nil {
+		existing, found := todoIdx.Find(sugg)
+		if !found {
 			if saveToDB {
 				if errCreate := s.db.Create(&sugg).Error; errCreate == nil {
 					createdCount++
+					todoIdx.Add(sugg)
 				}
 			}
 			finalSuggestions = append(finalSuggestions, sugg)

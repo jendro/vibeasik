@@ -1371,19 +1371,14 @@ func (s *Server) callTool(name string, args map[string]interface{}) (*ToolCallRe
 		suggestions = append(suggestions, registry.SuggestTodos(s.db, targetProject, allProjects)...)
 
 		finalSuggestions := make([]models.Todo, 0)
+		todoIdx := models.NewTodoIndex(s.db, suggestions)
 		for _, sugg := range suggestions {
-			var existing models.Todo
-			q := s.db.Where("title = ?", sugg.Title)
-			if sugg.ProjectID != nil && *sugg.ProjectID > 0 {
-				q = q.Where("project_id = ?", *sugg.ProjectID)
-			}
-			if sugg.ComponentID != nil && *sugg.ComponentID > 0 {
-				q = q.Where("component_id = ?", *sugg.ComponentID)
-			}
-
-			if err := q.First(&existing).Error; err != nil {
+			existing, found := todoIdx.Find(sugg)
+			if !found {
 				if saveToDB {
-					s.db.Create(&sugg)
+					if s.db.Create(&sugg).Error == nil {
+						todoIdx.Add(sugg)
+					}
 				}
 				finalSuggestions = append(finalSuggestions, sugg)
 			} else {
