@@ -40,3 +40,31 @@ node_modules/
 # Hasil build Studio yang disematkan ke binary
 pkg/ui/dist/*
 !pkg/ui/dist/.gitkeep
+
+# Dependency & artefak build (standar vibeasik)
+bower_components/
+vendor/
+build/
+out/
+coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Binary & hasil kompilasi
+*.dll
+*.so
+*.dylib
+*.class
+*.o
+*.a
+*.test
+
+# Cache & file sistem
+.cache/
+.tmp/
+Thumbs.db
+
+# Editor/IDE
+*.iml
