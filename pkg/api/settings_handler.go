@@ -32,8 +32,8 @@ func (s *Server) getLLMSettings(c *fiber.Ctx) error {
 
 func (s *Server) updateLLMSettings(c *fiber.Ctx) error {
 	var dto models.LLMSettingsDTO
-	if err := c.BodyParser(&dto); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	if msg := bindJSONRequired(c, &dto); msg != "" {
+		return badPayload(c, msg)
 	}
 
 	var settings models.LLMSettings
@@ -51,8 +51,8 @@ func (s *Server) setActiveProvider(c *fiber.Ctx) error {
 	var body struct {
 		Provider string `json:"provider"`
 	}
-	if err := c.BodyParser(&body); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	if msg := firstProblem(bindJSONRequired(c, &body), needOneOf("provider", body.Provider, models.ProviderSystemOne, models.ProviderStandardLLM)); msg != "" {
+		return badPayload(c, msg)
 	}
 
 	if err := s.services.Settings.SetActiveProvider(c.Context(), body.Provider); err != nil {
@@ -69,8 +69,8 @@ func (s *Server) selectActiveModel(c *fiber.Ctx) error {
 	var body struct {
 		Model string `json:"model"`
 	}
-	if err := c.BodyParser(&body); err != nil || strings.TrimSpace(body.Model) == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "model is required"})
+	if msg := firstProblem(bindJSONRequired(c, &body), needText("model", body.Model, maxName)); msg != "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": firstProblem(msg, "model is required")})
 	}
 
 	selected := strings.TrimSpace(body.Model)
@@ -126,10 +126,27 @@ type UpsertLLMConfigPayload struct {
 	IsActive      bool     `json:"is_active"`
 }
 
+// validateLLMConfigPayload memeriksa bentuk payload config LLM (create & update): panjang, provider, URL http(s).
+func validateLLMConfigPayload(p UpsertLLMConfigPayload) string {
+	if len(p.Models) > 500 {
+		return "field models maksimal 500 item"
+	}
+	for _, m := range p.Models {
+		if msg := maxLen("models[]", m, maxName); msg != "" {
+			return msg
+		}
+	}
+	if u := strings.TrimSpace(p.URL); u != "" && !strings.HasPrefix(u, "http://") && !strings.HasPrefix(u, "https://") {
+		return "field url harus diawali http:// atau https://"
+	}
+	return firstProblem(maxLen("name", p.Name, maxName), maxLen("url", p.URL, maxURL), maxLen("key", p.Key, maxName*2),
+		maxLen("selected_model", p.SelectedModel, maxName), oneOf("provider", p.Provider, models.ProviderSystemOne, models.ProviderStandardLLM))
+}
+
 func (s *Server) createLLMConfig(c *fiber.Ctx) error {
 	var payload UpsertLLMConfigPayload
-	if err := c.BodyParser(&payload); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	if msg := firstProblem(bindJSONRequired(c, &payload), validateLLMConfigPayload(payload)); msg != "" {
+		return badPayload(c, msg)
 	}
 	payload.Name = strings.TrimSpace(payload.Name)
 	payload.URL = strings.TrimSpace(payload.URL)
@@ -164,8 +181,8 @@ func (s *Server) updateLLMConfig(c *fiber.Ctx) error {
 	}
 
 	var payload UpsertLLMConfigPayload
-	if err := c.BodyParser(&payload); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	if msg := firstProblem(bindJSONRequired(c, &payload), validateLLMConfigPayload(payload)); msg != "" {
+		return badPayload(c, msg)
 	}
 
 	cfgUpdates := models.LLMConfig{
@@ -240,8 +257,8 @@ func (s *Server) setLLMModelVision(c *fiber.Ctx) error {
 		Model  string `json:"model"`
 		Vision bool   `json:"vision"`
 	}
-	if err := c.BodyParser(&body); err != nil || strings.TrimSpace(body.Model) == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "model wajib diisi"})
+	if msg := firstProblem(bindJSONRequired(c, &body), needText("model", body.Model, maxName)); msg != "" {
+		return badPayload(c, msg)
 	}
 	var cfg models.LLMConfig
 	if err := s.db.First(&cfg, id).Error; err != nil {
@@ -264,8 +281,8 @@ func (s *Server) setLLMModelAlias(c *fiber.Ctx) error {
 		Model string `json:"model"`
 		Alias string `json:"alias"`
 	}
-	if err := c.BodyParser(&body); err != nil || strings.TrimSpace(body.Model) == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "model wajib diisi"})
+	if msg := firstProblem(bindJSONRequired(c, &body), needText("model", body.Model, maxName), maxLen("alias", body.Alias, maxName)); msg != "" {
+		return badPayload(c, msg)
 	}
 	var cfg models.LLMConfig
 	if err := s.db.First(&cfg, id).Error; err != nil {

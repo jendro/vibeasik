@@ -35,8 +35,8 @@ func (s *Server) searchVibeDomains(c *fiber.Ctx) error {
 
 func (s *Server) generateVibeDeployPlan(c *fiber.Ctx) error {
 	var body map[string]interface{}
-	if err := c.BodyParser(&body); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+	if msg := bindJSONRequired(c, &body); msg != "" {
+		return badPayload(c, msg)
 	}
 	cli := cloud.NewClient()
 	plan, err := cli.GenerateDeployPlan(body)
@@ -48,8 +48,8 @@ func (s *Server) generateVibeDeployPlan(c *fiber.Ctx) error {
 
 func (s *Server) runCloudSecurityAudit(c *fiber.Ctx) error {
 	var body map[string]interface{}
-	if err := c.BodyParser(&body); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+	if msg := bindJSONRequired(c, &body); msg != "" {
+		return badPayload(c, msg)
 	}
 	cli := cloud.NewClient()
 	result, err := cli.AuditProject(body)
@@ -76,12 +76,15 @@ type InjectAITemplateRequest struct {
 
 func (s *Server) injectVibeAITemplate(c *fiber.Ctx) error {
 	var req InjectAITemplateRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+	if msg := bindJSONRequired(c, &req); msg != "" {
+		return badPayload(c, msg)
 	}
 
 	if req.TargetPath == "" {
 		return c.Status(400).JSON(fiber.Map{"error": "Target path komponen harus diisi"})
+	}
+	if msg := firstProblem(absPath("target_path", req.TargetPath), needText("template_id", req.TemplateID, maxName)); msg != "" {
+		return badPayload(c, msg)
 	}
 
 	cli := cloud.NewClient()

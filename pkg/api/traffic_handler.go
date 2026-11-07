@@ -24,8 +24,12 @@ type trafficSourceView struct {
 }
 
 func (s *Server) trafficSource(c *fiber.Ctx) (*models.TrafficSource, error) {
+	id, bad := paramID(c, "id", "traffic source")
+	if bad != "" {
+		return nil, badPayload(c, bad)
+	}
 	var src models.TrafficSource
-	if err := s.db.First(&src, c.Params("id")).Error; err != nil {
+	if err := s.db.First(&src, id).Error; err != nil {
 		return nil, c.Status(404).JSON(fiber.Map{"error": "Sumber traffic tidak ditemukan"})
 	}
 	return &src, nil
@@ -79,6 +83,15 @@ type trafficSourceRequest struct {
 	Enabled         *bool  `json:"enabled"`
 }
 
+// validateTrafficSourceRequest memeriksa bentuk payload sumber traffic (create & update).
+func validateTrafficSourceRequest(r trafficSourceRequest) string {
+	if r.SyncIntervalSec < 0 {
+		return "field sync_interval_sec tidak boleh negatif"
+	}
+	return firstProblem(maxLen("name", r.Name, maxName), maxLen("cloud_url", r.CloudURL, maxURL),
+		oneOf("mode", r.Mode, models.TrafficModeCloud, models.TrafficModeDirect))
+}
+
 func validInterval(sec int) int {
 	for _, v := range traffic.SyncIntervals {
 		if v == sec {
@@ -90,8 +103,8 @@ func validInterval(sec int) int {
 
 func (s *Server) createTrafficSource(c *fiber.Ctx) error {
 	var req trafficSourceRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+	if msg := firstProblem(bindJSON(c, &req), validateTrafficSourceRequest(req)); msg != "" {
+		return badPayload(c, msg)
 	}
 	src := models.TrafficSource{
 		Name: strings.TrimSpace(req.Name), ProjectID: req.ProjectID, ComponentID: req.ComponentID,
@@ -138,13 +151,13 @@ func (s *Server) createTrafficSource(c *fiber.Ctx) error {
 }
 
 func (s *Server) updateTrafficSource(c *fiber.Ctx) error {
+	var req trafficSourceRequest
+	if msg := firstProblem(bindJSONRequired(c, &req), validateTrafficSourceRequest(req)); msg != "" {
+		return badPayload(c, msg)
+	}
 	src, err := s.trafficSource(c)
 	if src == nil {
 		return err
-	}
-	var req trafficSourceRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
 	}
 	updates := map[string]any{}
 	if n := strings.TrimSpace(req.Name); n != "" {
@@ -292,8 +305,8 @@ func (s *Server) installTrafficSDK(c *fiber.Ctx) error {
 		Kit       string `json:"kit"`
 		Overwrite bool   `json:"overwrite"`
 	}
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+	if msg := firstProblem(bindJSONRequired(c, &req), needText("kit", req.Kit, maxName)); msg != "" {
+		return badPayload(c, msg)
 	}
 	var comp models.Component
 	if src.ComponentID == nil || s.db.First(&comp, *src.ComponentID).Error != nil || comp.AbsolutePath == "" {
@@ -332,8 +345,8 @@ func (s *Server) trafficRecommendationTodo(c *fiber.Ctx) error {
 		RecID  string `json:"rec_id"`
 		Window string `json:"window"`
 	}
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+	if msg := firstProblem(bindJSONRequired(c, &req), needText("rec_id", req.RecID, maxName), maxLen("window", req.Window, 16)); msg != "" {
+		return badPayload(c, msg)
 	}
 	if src.ProjectID == nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Hubungkan sumber ke proyek dulu agar todo punya tempat"})
