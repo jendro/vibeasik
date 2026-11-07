@@ -32,7 +32,7 @@ func (s *Server) getPortRegistry(c *fiber.Ctx) error {
 // assignComponentPort sets a manual port ({"port": 4123}) or lets vibeasik pick ({"reassign": true}).
 func (s *Server) assignComponentPort(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid component id"})
 	}
 	var req struct {
@@ -54,7 +54,7 @@ func (s *Server) assignComponentPort(c *fiber.Ctx) error {
 
 func (s *Server) runComponent(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid component id"})
 	}
 	var req struct {
@@ -72,7 +72,7 @@ func (s *Server) runComponent(c *fiber.Ctx) error {
 
 func (s *Server) stopComponent(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid component id"})
 	}
 	st, err := s.runner.Stop(uint(id))
@@ -85,7 +85,7 @@ func (s *Server) stopComponent(c *fiber.Ctx) error {
 // getComponentRunStatus returns status plus the last log lines (?logs=0 to omit them).
 func (s *Server) getComponentRunStatus(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid component id"})
 	}
 	st, err := s.runner.Status(uint(id), c.Query("logs", "1") != "0")
@@ -101,7 +101,7 @@ func (s *Server) listRuns(c *fiber.Ctx) error {
 
 func (s *Server) runProject(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 	var req struct {
@@ -119,7 +119,7 @@ func (s *Server) runProject(c *fiber.Ctx) error {
 
 func (s *Server) stopProject(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 	items, err := s.runner.StopProject(uint(id))

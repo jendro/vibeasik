@@ -106,7 +106,7 @@ func (s *Server) getImpactDimensions(c *fiber.Ctx) error {
 
 func (s *Server) getProjectTodos(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 
@@ -156,7 +156,7 @@ func (s *Server) getProjectTodos(c *fiber.Ctx) error {
 
 func (s *Server) getTodo(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid todo id"})
 	}
 
@@ -262,7 +262,7 @@ func (s *Server) createTodo(c *fiber.Ctx) error {
 
 func (s *Server) updateTodo(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid todo id"})
 	}
 
@@ -348,7 +348,7 @@ func rescoreTodo(todo *models.Todo, updates map[string]interface{}) bool {
 
 func (s *Server) approveTodo(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid todo id"})
 	}
 
@@ -390,7 +390,7 @@ func (s *Server) approveTodo(c *fiber.Ctx) error {
 
 func (s *Server) rejectTodo(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid todo id"})
 	}
 
@@ -409,7 +409,7 @@ func (s *Server) rejectTodo(c *fiber.Ctx) error {
 
 func (s *Server) deleteTodo(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid todo id"})
 	}
 

@@ -13,7 +13,7 @@ import (
 
 func (s *Server) getCodeMap(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 	ov, err := codemap.BuildOverview(s.db, uint(id), uint(c.QueryInt("component_id")), c.Query("detail") == "files")
@@ -25,7 +25,7 @@ func (s *Server) getCodeMap(c *fiber.Ctx) error {
 
 func (s *Server) buildCodeMap(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 	var body struct {
@@ -41,7 +41,7 @@ func (s *Server) buildCodeMap(c *fiber.Ctx) error {
 
 func (s *Server) searchCodeMap(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 	q := c.Query("q")
@@ -59,7 +59,7 @@ func (s *Server) searchCodeMap(c *fiber.Ctx) error {
 
 func (s *Server) getCodeMapFile(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 	fd, candidates, err := codemap.File(s.db, uint(id), c.Query("path"))
@@ -76,7 +76,7 @@ func (s *Server) getCodeMapFile(c *fiber.Ctx) error {
 
 func (s *Server) exportCodeMap(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 	res, err := codemap.Export(s.db, uint(id))

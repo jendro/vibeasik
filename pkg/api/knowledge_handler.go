@@ -26,7 +26,7 @@ func (s *Server) listKnowledgeNodes(c *fiber.Ctx) error {
 
 func (s *Server) getKnowledgeNode(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid node id"})
 	}
 	d, err := knowledge.GetDetail(s.db, uint(id))
@@ -74,7 +74,7 @@ func (s *Server) knowledgeFeedback(c *fiber.Ctx) error {
 
 func (s *Server) retireKnowledgeNode(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid node id"})
 	}
 	if err := knowledge.Retire(s.db, uint(id), c.Query("reason")); err != nil {

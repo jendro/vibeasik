@@ -13,7 +13,7 @@ func (s *Server) getScaleUpPatterns(c *fiber.Ctx) error {
 // evaluateComponentArchitecture runs an architectural inspection on a single component
 func (s *Server) evaluateComponentArchitecture(c *fiber.Ctx) error {
 	componentID, err := c.ParamsInt("componentId")
-	if err != nil {
+	if err != nil || componentID <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "ID komponen tidak valid"})
 	}
 
@@ -28,7 +28,7 @@ func (s *Server) evaluateComponentArchitecture(c *fiber.Ctx) error {
 // evaluateProjectArchitecture evaluates all code components in a project
 func (s *Server) evaluateProjectArchitecture(c *fiber.Ctx) error {
 	projectID, err := c.ParamsInt("projectId")
-	if err != nil {
+	if err != nil || projectID <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "ID proyek tidak valid"})
 	}
 

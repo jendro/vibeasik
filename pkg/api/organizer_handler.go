@@ -42,7 +42,7 @@ func (s *Server) executeReorgMoves(c *fiber.Ctx) error {
 
 func (s *Server) previewConsolidateProject(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 

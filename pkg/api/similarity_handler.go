@@ -14,11 +14,11 @@ func (s *Server) scanSimilarities(c *fiber.Ctx) error {
 
 func (s *Server) compareProjects(c *fiber.Ctx) error {
 	idA, err := c.ParamsInt("idA")
-	if err != nil {
+	if err != nil || idA <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "idA tidak valid"})
 	}
 	idB, err := c.ParamsInt("idB")
-	if err != nil {
+	if err != nil || idB <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "idB tidak valid"})
 	}
 

@@ -115,7 +115,7 @@ func (s *Server) createProject(c *fiber.Ctx) error {
 
 func (s *Server) getProject(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 
@@ -128,7 +128,7 @@ func (s *Server) getProject(c *fiber.Ctx) error {
 
 func (s *Server) updateProject(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 
@@ -160,7 +160,7 @@ func (s *Server) updateProject(c *fiber.Ctx) error {
 
 func (s *Server) deleteProject(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 
@@ -174,7 +174,7 @@ func (s *Server) deleteProject(c *fiber.Ctx) error {
 
 func (s *Server) generateProjectSummary(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 
@@ -202,7 +202,7 @@ type LinkWorkspacePayload struct {
 
 func (s *Server) linkProjectWorkspace(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 
@@ -227,7 +227,7 @@ func (s *Server) linkProjectWorkspace(c *fiber.Ctx) error {
 // initProject = "Init vibeasik": tautan AI (.vibeasik.json) + peta kode di repo yang diperbarui otomatis.
 func (s *Server) initProject(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 	res, err := workspace.InitProject(s.db, uint(id), c.BaseURL())
@@ -255,7 +255,7 @@ type MergeProjectPayload struct {
 
 func (s *Server) mergeProject(c *fiber.Ctx) error {
 	sourceID, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || sourceID <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 

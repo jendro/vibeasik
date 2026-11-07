@@ -105,7 +105,7 @@ func (s *Server) getLLMConfigs(c *fiber.Ctx) error {
 
 func (s *Server) getLLMConfig(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid config id"})
 	}
 
@@ -176,7 +176,7 @@ func (s *Server) createLLMConfig(c *fiber.Ctx) error {
 
 func (s *Server) updateLLMConfig(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid config id"})
 	}
 
@@ -204,7 +204,7 @@ func (s *Server) updateLLMConfig(c *fiber.Ctx) error {
 
 func (s *Server) deleteLLMConfig(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid config id"})
 	}
 
@@ -232,7 +232,7 @@ func (s *Server) deleteLLMConfig(c *fiber.Ctx) error {
 
 func (s *Server) activateLLMConfig(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid config id"})
 	}
 
@@ -250,7 +250,7 @@ func (s *Server) activateLLMConfig(c *fiber.Ctx) error {
 // setLLMModelVision: tandai satu model konfigurasi menerima gambar (vision) atau tidak.
 func (s *Server) setLLMModelVision(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid config id"})
 	}
 	var body struct {
@@ -274,7 +274,7 @@ func (s *Server) setLLMModelVision(c *fiber.Ctx) error {
 // setLLMModelAlias: beri alias tampilan untuk satu model konfigurasi (alias kosong = hapus).
 func (s *Server) setLLMModelAlias(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid config id"})
 	}
 	var body struct {

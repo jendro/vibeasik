@@ -12,7 +12,7 @@ type DeprecatePayload struct {
 
 func (s *Server) deprecateProject(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 
@@ -41,7 +41,7 @@ func (s *Server) undeprecateProject(c *fiber.Ctx) error {
 
 func (s *Server) activateProject(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 
@@ -58,7 +58,7 @@ func (s *Server) activateProject(c *fiber.Ctx) error {
 
 func (s *Server) holdProject(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 
@@ -75,7 +75,7 @@ func (s *Server) holdProject(c *fiber.Ctx) error {
 
 func (s *Server) doneProject(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 

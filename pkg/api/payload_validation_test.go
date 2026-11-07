@@ -115,6 +115,34 @@ func TestPayloadValidationRejects(t *testing.T) {
 	}
 }
 
+// Endpoint tanpa body tetap wajib id > 0 (dan bukan teks) — tanpa menyentuh DB.
+func TestMutationIDsMustBePositive(t *testing.T) {
+	s := newGuardTestServer(t)
+	routes := []string{
+		"POST /api/components/%s/routes/sync", "POST /api/components/%s/stop",
+		"POST /api/projects/%s/stop", "POST /api/todos/%s/reject", "POST /api/todos/%s/approve",
+		"POST /api/settings/llm/configs/%s/activate", "DELETE /api/todos/%s", "DELETE /api/projects/%s",
+		"POST /api/projects/%s/deprecate", "POST /api/projects/%s/consolidate", "DELETE /api/components/%s",
+	}
+	for _, r := range routes {
+		method, tmpl, _ := strings.Cut(r, " ")
+		for _, bad := range []string{"0", "-1", "abc"} {
+			req := httptest.NewRequest(method, strings.Replace(tmpl, "%s", bad, 1), strings.NewReader(`{}`))
+			req.Host = "localhost"
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set(localauth.Header, testLocalToken)
+			resp, err := s.app.Test(req, -1)
+			if err != nil {
+				t.Fatal(err)
+			}
+			code, out := decodeResp(t, resp)
+			if code != 400 || !strings.Contains(out["error"].(string), "invalid") {
+				t.Errorf("%s dengan id %q → %d %v, want 400 invalid ... id", r, bad, code, out)
+			}
+		}
+	}
+}
+
 // Payload sah tetap diproses seperti sebelumnya (respons sukses tidak berubah).
 func TestPayloadValidationAcceptsValid(t *testing.T) {
 	s := newGuardTestServer(t)

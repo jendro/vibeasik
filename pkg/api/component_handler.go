@@ -19,7 +19,7 @@ type AddComponentPayload struct {
 
 func (s *Server) addComponent(c *fiber.Ctx) error {
 	projectID, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || projectID <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 
@@ -88,7 +88,7 @@ func (s *Server) addComponent(c *fiber.Ctx) error {
 
 func (s *Server) getComponent(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid component id"})
 	}
 
@@ -101,7 +101,7 @@ func (s *Server) getComponent(c *fiber.Ctx) error {
 
 func (s *Server) updateComponent(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid component id"})
 	}
 
@@ -152,7 +152,7 @@ func (s *Server) updateComponent(c *fiber.Ctx) error {
 
 func (s *Server) deleteComponent(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid component id"})
 	}
 
@@ -169,7 +169,7 @@ func (s *Server) deleteComponent(c *fiber.Ctx) error {
 
 func (s *Server) createComponentDir(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid component id"})
 	}
 

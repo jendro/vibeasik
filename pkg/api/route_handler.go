@@ -9,7 +9,7 @@ import (
 
 func (s *Server) getComponentRoutes(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid component id"})
 	}
 
@@ -35,7 +35,7 @@ func (s *Server) getComponentRoutes(c *fiber.Ctx) error {
 
 func (s *Server) syncComponentRoutes(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid component id"})
 	}
 
@@ -101,12 +101,12 @@ func (s *Server) updateComponentRoute(c *fiber.Ctx) error {
 
 func (s *Server) deleteComponentRoute(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
-	if err != nil {
+	if err != nil || id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid component id"})
 	}
 
 	routeId, err := c.ParamsInt("routeId")
-	if err != nil {
+	if err != nil || routeId <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid route id"})
 	}
 
