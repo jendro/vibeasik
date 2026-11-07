@@ -33,7 +33,7 @@ const closeMobileSidebar = () => {
 
 // Route detection: Public website vs Admin Cockpit Workspace
 const route = useRoute()
-const publicRoutes = ['/download', '/login', '/register']
+const publicRoutes = ['/setup']
 const isPublicRoute = computed(() => publicRoutes.includes(route.path) || Boolean(route.meta.public))
 
 const isFluid = computed(() => !isPublicRoute.value && (Boolean(route.meta.fluid) || route.path.startsWith('/projects/') || route.path.startsWith('/todos')))
@@ -60,19 +60,27 @@ useHead({
 
 <template>
   <UApp :toaster="{ position: 'top-right' }">
-    <!-- 1. PUBLIC MARKETING & ONBOARDING LAYOUT (Home, Download, Login, Register) -->
+    <!-- 1. PENYIAPAN AWAL (tanpa sidebar; wajib selesai sebelum Cockpit) -->
     <template v-if="isPublicRoute">
-      <div
-        class="min-h-screen flex flex-col font-sans transition-colors duration-200"
-        :class="route.path === '/' ? 'bg-[#020c18] text-slate-100' : 'bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100'"
-      >
-        <PublicNavbar />
+      <div class="min-h-screen flex flex-col font-sans bg-neutral-50 dark:bg-[#020c18] text-neutral-900 dark:text-neutral-100">
+        <header class="h-16 px-4 sm:px-6 flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800">
+          <span class="flex items-center gap-2 font-bold text-lg tracking-tight">
+            <svg viewBox="0 0 64 64" class="w-7 h-7" aria-hidden="true">
+              <rect width="64" height="64" rx="14" fill="#0b1020" />
+              <path d="M14 20l18 28 18-28" fill="none" stroke="#7c9cff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+              <circle cx="32" cy="48" r="4" fill="#5eead4" />
+            </svg>
+            vibeasik
+          </span>
+          <UButton to="https://vibeasik.com" target="_blank" icon="i-lucide-globe" color="neutral" variant="ghost" size="sm">
+            vibeasik.com
+          </UButton>
+        </header>
         <main class="flex-1 w-full">
           <slot>
             <NuxtPage />
           </slot>
         </main>
-        <PublicFooter />
       </div>
     </template>
 
