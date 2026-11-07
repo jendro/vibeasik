@@ -282,7 +282,15 @@ useHead({ title: 'Berbagi Pengetahuan — vibeasik' })
               <table class="w-full text-xs">
                 <thead class="text-left text-neutral-500">
                   <tr>
-                    <th class="py-1 pr-2">Waktu</th><th class="pr-2">Judul</th><th class="pr-2">Mode</th><th class="pr-2">Status</th><th />
+                    <th class="py-1 pr-2">
+                      Waktu
+                    </th><th class="pr-2">
+                      Judul
+                    </th><th class="pr-2">
+                      Mode
+                    </th><th class="pr-2">
+                      Status
+                    </th><th />
                   </tr>
                 </thead>
                 <tbody>
