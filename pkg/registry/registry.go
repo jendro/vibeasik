@@ -10,7 +10,6 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 
 	"github.com/vibeasik/vibeasik/pkg/mcp/protocol"
@@ -30,9 +29,9 @@ type ModelProvider interface {
 	Models() []any
 }
 
-// RouteProvider memasang endpoint di bawah /api. Router sudah dibungkus gate fitur.
+// RouteProvider memasang endpoint di bawah /api. Router otomatis membungkus tiap route dengan gate fitur modul.
 type RouteProvider interface {
-	Routes(r fiber.Router, db *gorm.DB)
+	Routes(r Router, db *gorm.DB)
 }
 
 // ToolProvider menyediakan tool MCP. CallTool mengembalikan handled=false bila name bukan miliknya.
