@@ -1,0 +1,160 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# dev-mobile.sh — jalankan aplikasi mobile Flutter (folder ./__MOBILE_DIR__) ke HP/emulator
+# Standar vibeasik (Aturan 49), patokan: nemudijalan/dev-mobile.sh
+# ==============================================================================
+#
+# Dua lokasi menjalankan Flutter:
+#
+#   1. windows (DEFAULT) — lewat flutter-win (~/.local/bin/flutter-win):
+#        a. kode ./__MOBILE_DIR__ disalin ke PC Windows lewat SSH (tar over ssh) ke
+#           C:/flutter_remote/__REMOTE_NAME__ (diatur di __MOBILE_DIR__/.flutter-win, dibuat otomatis);
+#        b. flutter run berjalan di PC Windows → aplikasi tampil di HP/emulator yang
+#           tercolok ke PC Windows. Terminal ini tetap interaktif: r hot reload,
+#           R hot restart, q keluar;
+#        c. 10.0.2.2 di env dev menunjuk ke PC Windows, bukan laptop ini, maka
+#           API_BASE_URL diarahkan ke IP LAN laptop (http://<ip-laptop>:__BE_PORT__...).
+#      Syarat: PC Windows menyala & SSH aktif (FLUTTER_WIN_IP, default 192.168.1.3),
+#      backend jalan di laptop ini (./dev.sh di terminal lain) dan port __BE_PORT__ tidak
+#      diblokir firewall. Setelah mengubah kode, jalankan ulang skrip ini agar ter-sync
+#      (hot reload r hanya memuat kode yang sudah ada di Windows).
+#
+#   2. laptop — Flutter langsung di laptop ini (butuh Flutter SDK + HP/emulator di laptop).
+#
+# Penggunaan:
+#   ./dev-mobile.sh                            # Jalankan di PC Windows (default)
+#   ./dev-mobile.sh laptop                     # Jalankan di laptop ini
+#   ./dev-mobile.sh windows -d emulator-5554   # Argumen lain diteruskan ke flutter run
+#   ./dev-mobile.sh devices                    # Daftar device (di lokasi terpilih)
+#   MOBILE_RUNNER=laptop ./dev-mobile.sh       # Timpa default lewat env
+#   API_HOST=192.168.1.10 ./dev-mobile.sh      # Paksa IP laptop untuk API_BASE_URL
+# ==============================================================================
+
+# >>> SETTING: "windows" = jalankan di PC Windows (flutter-win), "laptop" = di laptop ini
+MOBILE_RUNNER_DEFAULT="windows"
+
+set -eo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MOBILE_DIR="${ROOT_DIR}/__MOBILE_DIR__"
+# Port BE dari blok proyek di PORTS.md (Aturan 35)
+BACKEND_PORT="${BACKEND_PORT:-${APP_PORT:-__BE_PORT__}}"
+WIN_IP="${FLUTTER_WIN_IP:-192.168.1.3}"
+REMOTE_NAME="__REMOTE_NAME__"
+# Env dev Flutter (--dart-define-from-file); bila tidak ada, API_BASE_URL dikirim lewat --dart-define
+ENV_FILE="config/env_dev.json"
+REMOTE_ENV_FILE="config/env_dev.flutter-win.json"
+API_PATH="${API_PATH:-}"
+
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+log()  { printf "${BLUE}[MOBILE]${NC} %s\n" "$*"; }
+warn() { printf "${YELLOW}[WARN]${NC} %s\n" "$*"; }
+err()  { printf "${RED}[ERROR]${NC} %s\n" "$*"; }
+
+# ------------------------------------------------------------------------------
+# 1. Argumen: kata kunci lokasi & perintah, sisanya diteruskan ke flutter
+# ------------------------------------------------------------------------------
+RUNNER="${MOBILE_RUNNER:-$MOBILE_RUNNER_DEFAULT}"
+COMMAND="run"
+FLUTTER_ARGS=()
+
+for arg in "$@"; do
+  case "$arg" in
+    windows|win|pc)   RUNNER="windows" ;;
+    laptop|lokal)     RUNNER="laptop" ;;
+    devices|doctor)   COMMAND="$arg" ;;
+    -h|--help|help)
+      sed -n '2,31p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+      exit 0
+      ;;
+    *) FLUTTER_ARGS+=("$arg") ;;
+  esac
+done
+
+if [[ "$RUNNER" != "windows" && "$RUNNER" != "laptop" ]]; then
+  err "MOBILE_RUNNER tidak dikenal: '$RUNNER' (pilih 'windows' atau 'laptop')."
+  exit 1
+fi
+
+cd "$MOBILE_DIR"
+
+# ------------------------------------------------------------------------------
+# 2. Mode laptop: Flutter lokal
+# ------------------------------------------------------------------------------
+if [[ "$RUNNER" == "laptop" ]]; then
+  command -v flutter >/dev/null 2>&1 || { err "Flutter tidak ditemukan di PATH laptop ini. Coba './dev-mobile.sh windows'."; exit 1; }
+  if [[ "$COMMAND" != "run" ]]; then
+    exec flutter "$COMMAND" "${FLUTTER_ARGS[@]}"
+  fi
+  if [[ -f "$ENV_FILE" ]]; then
+    log "Menjalankan Flutter di LAPTOP ini (env: ${ENV_FILE})..."
+    exec flutter run --dart-define-from-file="$ENV_FILE" "${FLUTTER_ARGS[@]}"
+  fi
+  LAN_IP="${API_HOST:-$(hostname -I 2>/dev/null | awk '{print $1}')}"
+  log "Menjalankan Flutter di LAPTOP ini (API_BASE_URL → http://${LAN_IP:-10.0.2.2}:${BACKEND_PORT}${API_PATH})..."
+  exec flutter run --dart-define=API_BASE_URL="http://${LAN_IP:-10.0.2.2}:${BACKEND_PORT}${API_PATH}" "${FLUTTER_ARGS[@]}"
+fi
+
+# ------------------------------------------------------------------------------
+# 3. Mode windows: Flutter di PC Windows via flutter-win
+# ------------------------------------------------------------------------------
+command -v flutter-win >/dev/null 2>&1 || { err "'flutter-win' tidak ditemukan (harusnya di ~/.local/bin/flutter-win)."; exit 1; }
+
+# Folder tujuan di Windows unik per proyek (default flutter-win = nama folder, bisa bentrok antar proyek)
+if [[ ! -f .flutter-win ]]; then
+  cat > .flutter-win <<EOF
+# Override flutter-win untuk project ini: folder tujuan di PC Windows
+PROJECT_NAME="${REMOTE_NAME}"
+REMOTE_PROJECT_DIR="\$REMOTE_BASE_DIR/\$PROJECT_NAME"
+EOF
+fi
+
+if [[ "$COMMAND" != "run" ]]; then
+  exec flutter-win "$COMMAND" "${FLUTTER_ARGS[@]}"
+fi
+
+# IP laptop yang menjangkau PC Windows (antarmuka jaringan yang sama)
+detect_laptop_ip() {
+  local ip=""
+  ip=$(ip -4 route get "$WIN_IP" 2>/dev/null | awk '{for (i=1;i<=NF;i++) if ($i=="src") print $(i+1)}' | head -n1)
+  [[ -z "$ip" ]] && ip=$(hostname -I 2>/dev/null | awk '{print $1}')
+  echo "$ip"
+}
+
+LAPTOP_IP="${API_HOST:-$(detect_laptop_ip)}"
+if [[ -z "$LAPTOP_IP" ]]; then
+  err "IP LAN laptop tidak terdeteksi. Set manual: API_HOST=192.168.x.x ./dev-mobile.sh"
+  exit 1
+fi
+
+if ! (echo > "/dev/tcp/127.0.0.1/${BACKEND_PORT}") >/dev/null 2>&1; then
+  warn "Backend belum jalan di laptop ini (port ${BACKEND_PORT})."
+  warn "Jalankan di terminal lain: ./dev.sh"
+fi
+
+log "Menjalankan Flutter di PC WINDOWS (${WIN_IP}) via flutter-win..."
+if [[ -f "$ENV_FILE" ]]; then
+  # Salin env dev, ganti host:port API_BASE_URL ke laptop ini (path /api/... dipertahankan)
+  python3 - "$ENV_FILE" "$REMOTE_ENV_FILE" "$LAPTOP_IP" "$BACKEND_PORT" "$API_PATH" <<'PY'
+import json, sys
+from urllib.parse import urlsplit
+src, dst, host, port, path = sys.argv[1:6]
+with open(src) as f:
+    data = json.load(f)
+old = urlsplit(data.get("API_BASE_URL", ""))
+data["API_BASE_URL"] = f"http://{host}:{port}{old.path.rstrip('/') if old.path else path}"
+with open(dst, "w") as f:
+    json.dump(data, f, indent=2)
+    f.write("\n")
+print(f"API_BASE_URL → {data['API_BASE_URL']}")
+PY
+  grep -qxF "$REMOTE_ENV_FILE" .gitignore 2>/dev/null || echo "$REMOTE_ENV_FILE" >> .gitignore
+  exec flutter-win run --dart-define-from-file="$REMOTE_ENV_FILE" "${FLUTTER_ARGS[@]}"
+fi
+log "API_BASE_URL → http://${LAPTOP_IP}:${BACKEND_PORT}${API_PATH}"
+exec flutter-win run --dart-define=API_BASE_URL="http://${LAPTOP_IP}:${BACKEND_PORT}${API_PATH}" "${FLUTTER_ARGS[@]}"
