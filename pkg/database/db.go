@@ -357,6 +357,38 @@ func SyncCensoredKeywords(db *gorm.DB) {
 	}
 }
 
+// classifyLegacyTodoCategory menentukan kategori todo lama dari judul dan guideline_ref.
+// Urutan case = prioritas (SEC, ARCH, FE, API, NET, AI/PLAN, CICD); fallback ke General.
+func classifyLegacyTodoCategory(title, guidelineRef string) string {
+	text := strings.ToLower(title)
+	g := strings.ToUpper(guidelineRef)
+	has := func(subs ...string) bool {
+		for _, s := range subs {
+			if strings.Contains(text, s) {
+				return true
+			}
+		}
+		return false
+	}
+	switch {
+	case strings.HasPrefix(g, "SEC"):
+		return models.CategorySecurity
+	case strings.HasPrefix(g, "ARCH") || has("arsitektur", "runner", "dev.sh"):
+		return models.CategoryArchitecture
+	case strings.HasPrefix(g, "FE") || has("ui", "composable"):
+		return models.CategoryUIUX
+	case strings.HasPrefix(g, "API") || has("endpoint", "health"):
+		return models.CategoryBackend
+	case strings.HasPrefix(g, "NET") || has("port", "proxy"):
+		return models.CategoryPerformance
+	case strings.HasPrefix(g, "AI") || strings.HasPrefix(g, "PLAN") || has("mcp", "neural"):
+		return models.CategoryFeature
+	case strings.HasPrefix(g, "CICD") || has("ci"):
+		return models.CategoryDevOps
+	}
+	return models.CategoryGeneral
+}
+
 func ensureDefaultTodos(db *gorm.DB) {
 	// Backfill any existing todos with missing fields
 	db.Model(&models.Todo{}).Where("level = '' OR level IS NULL").Where("component_id IS NOT NULL AND component_id > 0").Update("level", models.TodoLevelComponent)
@@ -366,14 +398,14 @@ func ensureDefaultTodos(db *gorm.DB) {
 	db.Model(&models.Todo{}).Where("creator_name = '' OR creator_name IS NULL").Update("creator_name", "developer")
 
 	// Backfill category for existing todos
-	db.Model(&models.Todo{}).Where("(category = '' OR category IS NULL) AND guideline_ref LIKE 'SEC%'").Update("category", models.CategorySecurity)
-	db.Model(&models.Todo{}).Where("(category = '' OR category IS NULL) AND (guideline_ref LIKE 'ARCH%' OR title LIKE '%Arsitektur%' OR title LIKE '%runner%' OR title LIKE '%dev.sh%')").Update("category", models.CategoryArchitecture)
-	db.Model(&models.Todo{}).Where("(category = '' OR category IS NULL) AND (guideline_ref LIKE 'FE%' OR title LIKE '%UI%' OR title LIKE '%Composable%')").Update("category", models.CategoryUIUX)
-	db.Model(&models.Todo{}).Where("(category = '' OR category IS NULL) AND (guideline_ref LIKE 'API%' OR title LIKE '%endpoint%' OR title LIKE '%health%')").Update("category", models.CategoryBackend)
-	db.Model(&models.Todo{}).Where("(category = '' OR category IS NULL) AND (guideline_ref LIKE 'NET%' OR title LIKE '%port%' OR title LIKE '%Proxy%')").Update("category", models.CategoryPerformance)
-	db.Model(&models.Todo{}).Where("(category = '' OR category IS NULL) AND (guideline_ref LIKE 'AI%' OR guideline_ref LIKE 'PLAN%' OR title LIKE '%MCP%' OR title LIKE '%Neural%')").Update("category", models.CategoryFeature)
-	db.Model(&models.Todo{}).Where("(category = '' OR category IS NULL) AND (guideline_ref LIKE 'CICD%' OR title LIKE '%CI%')").Update("category", models.CategoryDevOps)
-	db.Model(&models.Todo{}).Where("category = '' OR category IS NULL").Update("category", models.CategoryGeneral)
+	// Klasifikasi dilakukan di Go (satu pembacaan, lalu update per baris) agar tidak memakai
+	// LIKE dengan wildcard di awal yang mematikan indeks; semantik contains + case-insensitive dipertahankan.
+	var uncategorized []models.Todo
+	db.Select("id", "title", "guideline_ref").Where("category = '' OR category IS NULL").Find(&uncategorized)
+	for i := range uncategorized {
+		t := &uncategorized[i]
+		db.Model(&models.Todo{}).Where("id = ?", t.ID).Update("category", classifyLegacyTodoCategory(t.Title, t.GuidelineRef))
+	}
 
 	// Backfill target_apps for existing todos
 	db.Model(&models.Todo{}).Where("(target_apps = '' OR target_apps IS NULL) AND component_name != ''").Update("target_apps", gorm.Expr("CONCAT(component_name, ' [1 App]')"))
