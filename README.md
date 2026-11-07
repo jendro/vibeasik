@@ -1,55 +1,104 @@
 # vibeasik
 
-> Lapisan standar untuk kode buatan AI. Jalan di laptop atau dev server Anda, dipanggil agent lewat MCP.
+> Lapisan standar untuk kode buatan AI. Berjalan di laptop atau dev server Anda, dipanggil agent coding lewat MCP.
 
-vibeasik mencatat proyek Anda, mengaudit kode hasil AI (85 rule bawaan), mengatur port & dev server,
-membuat peta kode, dan menjadi server MCP untuk agent coding (Claude Code, Cursor, Antigravity, Aider).
-Semuanya berjalan **lokal**: kode Anda tidak pernah diunggah.
+[English summary](README.en.md) · [Mulai cepat](docs/GETTING_STARTED.md) · [MCP](docs/MCP.md) · [Edisi & paket](docs/EDITIONS.md) · [Arsitektur](docs/ARCHITECTURE.md)
+
+vibeasik adalah program lokal untuk **vibecoder**, yaitu orang yang membangun software bersama agent AI.
+Ia mencatat semua proyek Anda, mengaudit kode hasil AI dengan **85 rule bawaan**, mengatur port & dev server agar tidak
+bentrok, membuat peta kode, dan menjadi **server MCP** sehingga Claude Code, Cursor, Antigravity, dan agent lain
+bisa memakai semua itu.
+
+**Semuanya berjalan lokal.** Kode, fakta proyek, dan kunci API Anda tidak pernah diunggah ke server mana pun.
 
 ## Pasang
 
+Linux dan macOS:
+
 ```bash
 curl -fsSL https://vibeasik.com/install.sh | sh
-vibeasik serve        # jalankan engine
-vibeasik open         # buka Studio di browser (masuk otomatis)
-vibeasik mcp install   # daftarkan ke agent coding yang terpasang (Claude Code, Cursor, …)
 ```
 
-Windows: unduh `.zip` dari halaman Releases.
+Windows: unduh `.zip` dari `https://vibeasik.com/dl/` (file `vibeasik-<versi>-windows-amd64.zip`), ekstrak, lalu
+jalankan `vibeasik.exe`.
 
-## Gratis & Pro
+Installer memeriksa checksum SHA-256 sebelum memasang dan menaruh binary di `~/.local/bin/vibeasik`.
+Setelah itu:
+
+```bash
+vibeasik serve          # jalankan engine di http://127.0.0.1:8765
+vibeasik open           # buka Studio (antarmuka web) di browser, masuk otomatis
+vibeasik mcp install    # daftarkan ke agent coding yang terpasang
+```
+
+Panduan lengkap, termasuk memindai proyek pertama: [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
+
+> Dua cara mendapatkan vibeasik, dan bedanya: **installer** memasang build *Official* (fitur Pro terkunci sampai Anda
+> login dengan paket Pro), sedangkan **build dari kode ini** adalah build *Community* (sepenuhnya open source, tanpa
+> modul Pro). Lihat [docs/EDITIONS.md](docs/EDITIONS.md).
+
+## Apa yang bisa dilakukan
+
+| Fitur | Perintah / tempat |
+|---|---|
+| Mengenali proyek dan komponennya (backend, frontend, stack, port, perintah dev) | `vibeasik scan <folder>`, `vibeasik list`, Studio |
+| Audit kode dengan 85 rule dalam 12 kategori | `vibeasik rules`, `vibeasik diagnose`, Studio |
+| Port registry tanpa bentrok antarproyek | `vibeasik ports` |
+| Peta kode dan rute | Studio |
+| Daftar todo per proyek | MCP, Studio |
+| Server MCP untuk agent (64 tool di Community) | `vibeasik mcp`, `vibeasik mcp list` |
+| Pusat Pengetahuan: panduan & checklist yang diperbarui bersama pengguna | `vibeasik knowledge pull` |
+
+## Community dan Pro
 
 | | Community (gratis) | Pro (langganan) |
 |---|---|---|
-| Scan, audit dasar + 85 rule, port & runner, peta kode, todo | ✓ | ✓ |
-| Pusat Pengetahuan (paket dasar, diperbarui bersama pengguna) | ✓ | ✓ jaring lengkap |
-| MCP dasar (±64 tool) | ✓ | ✓ + ±60 tool Pro |
+| Scan proyek, 85 rule audit, port & runner, peta kode, todo | ✓ | ✓ |
+| Pusat Pengetahuan (paket dasar) | ✓ | ✓ jaring lengkap |
+| MCP | 64 tool | 123 tool |
 | Deep audit, AI review, pegawai AI, orkestrator, Galeri Desain, … | terkunci | ✓ |
 
-`vibeasik login` untuk masuk akun. Fitur Pro terbuka sesuai entitlement bertanda tangan dari server vibeasik.
+Fitur Pro dibuka oleh *entitlement* bertanda tangan dari server vibeasik (`vibeasik login`). Tanpa akun, semua fitur
+Community tetap jalan penuh. Rinciannya: [docs/EDITIONS.md](docs/EDITIONS.md).
 
 ## Pusat Pengetahuan
 
 ```bash
-vibeasik knowledge pull                 # tarik paket terbaru (diverifikasi tanda tangan)
-vibeasik knowledge contribute           # tinjau usulan Anda (sudah disensor)
-vibeasik knowledge contribute --send 12 # kirim yang Anda setujui
+vibeasik knowledge pull                  # tarik paket terbaru (tanda tangan & checksum diverifikasi)
+vibeasik knowledge status                # versi paket yang terpasang
+vibeasik knowledge contribute            # tinjau usulan pengetahuan dari proyek Anda (sudah disensor)
+vibeasik knowledge contribute --send 12  # kirim yang Anda setujui
 ```
 
-Pencarian pengetahuan berjalan di laptop Anda. Yang dikirim ke server hanya angka (helpful/harmful) dan usulan
-yang Anda setujui.
+Pencarian pengetahuan selalu berjalan **di laptop Anda**. Yang dikirim ke server hanya angka helpful/harmful (anonim,
+tanpa teks) dan usulan yang Anda setujui satu per satu. Detail: [docs/KNOWLEDGE.md](docs/KNOWLEDGE.md).
 
 ## Keamanan
 
-Engine bind ke `127.0.0.1`, mewajibkan token lokal, dan memeriksa Host. Lihat [SECURITY.md](SECURITY.md).
+Engine hanya mendengarkan `127.0.0.1`, mewajibkan token lokal untuk semua API, dan memeriksa header Host. Ia bisa
+menjalankan perintah di komputer Anda, jadi jangan membukanya ke jaringan tanpa memahami
+[SECURITY.md](SECURITY.md). Celah keamanan dilaporkan secara privat, bukan lewat issue publik.
 
-## Pengembangan
+## Bangun dari kode
+
+Prasyarat: Go 1.26+, [bun](https://bun.sh) (untuk Studio), `make`.
 
 ```bash
-make hooks     # aktifkan aturan commit (wajib sekali setelah clone)
-make studio    # build Studio ke pkg/ui/dist
-make build && make test
-scripts/release.sh v0.1.0
+git clone https://github.com/jendro/vibeasik.git && cd vibeasik
+make hooks      # aktifkan aturan commit (sekali setelah clone)
+make studio     # bangun Studio ke pkg/ui/dist (tersemat di binary)
+make build      # hasil: bin/vibeasik
+make test
 ```
 
-Aturan commit: [COMMITS.md](COMMITS.md). Lisensi: [Apache-2.0](LICENSE).
+Catatan: module Go bernama `github.com/vibeasik/vibeasik`, tetapi kode tinggal di `github.com/jendro/vibeasik`;
+karena itu `go install` dari URL belum didukung. Pakai `git clone` seperti di atas.
+
+## Berkontribusi
+
+Kontribusi diterima: perbaikan bug, rule audit baru (`guidelines/`), dan dokumentasi. Mulai dari
+[CONTRIBUTING.md](CONTRIBUTING.md). Aturan commit: [COMMITS.md](COMMITS.md).
+
+## Lisensi
+
+[Apache-2.0](LICENSE). Modul Pro dan server vibeasik adalah proyek terpisah dan tidak termasuk repo ini.

@@ -38,6 +38,10 @@ Yang dikirim ke Pusat Pengetahuan hanya sinyal & usulan yang Anda setujui.
 
 ## Melaporkan celah keamanan
 
-Jangan membuka issue publik untuk celah keamanan. Kirim laporan ke **security@vibeasik.com** berisi langkah
-reproduksi, dampak, dan versi (`vibeasik version`). Kami membalas dalam 3 hari kerja dan memberi kabar
-perbaikan sebelum pengungkapan publik.
+Jangan membuka issue publik untuk celah keamanan. Laporkan secara privat lewat salah satu:
+
+1. **GitHub**: tab *Security* repo ini, lalu *Report a vulnerability* (pelaporan privat).
+2. **Email**: security@vibeasik.com
+
+Sertakan langkah reproduksi, dampak, dan versi (`vibeasik version`). Kami berusaha membalas dalam 3 hari kerja dan
+memberi kabar perbaikan sebelum pengungkapan publik.
