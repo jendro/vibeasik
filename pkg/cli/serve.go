@@ -11,6 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/vibeasik/vibeasik/pkg/account"
 	"github.com/vibeasik/vibeasik/pkg/activity"
 	"github.com/vibeasik/vibeasik/pkg/api"
 	"github.com/vibeasik/vibeasik/pkg/codemap"
@@ -56,6 +57,8 @@ var serveCmd = &cobra.Command{
 		defer cancel()
 
 		registry.Edition = Edition
+		// Akun vibeasik (diaktifkan di PersistentPreRun): entitlement diperbarui berkala selama serve.
+		account.StartRefresher(ctx)
 		server := api.NewServer(db)
 		lan := listenHost != "127.0.0.1" && listenHost != "localhost" && listenHost != "::1"
 		server.SetLAN(lan)

@@ -304,6 +304,8 @@ func (s *Server) setupRoutes() {
 		api.Add(r.Method, r.Path, func(c *fiber.Ctx) error { return registry.RespondUpgrade(c, feature) })
 	}
 
+	s.setupAccountRoutes(api)
+
 	// Edisi & fitur aktif untuk Studio (gembok menu Pro).
 	api.Get("/edition", func(c *fiber.Ctx) error {
 		features := registry.Features()

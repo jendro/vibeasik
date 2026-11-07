@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/vibeasik/vibeasik/pkg/account"
 )
 
 // Version diisi saat rilis: -ldflags "-X github.com/vibeasik/vibeasik/pkg/cli.Version=vX.Y.Z".
@@ -23,6 +24,8 @@ var rootCmd = &cobra.Command{
 	Long: `vibeasik berjalan di laptop atau dev server Anda: mencatat proyek, mengaudit kode buatan AI,
 mengatur port & dev server, dan menjadi server MCP untuk agent coding (Claude Code, Cursor, Antigravity, …).`,
 	SilenceUsage: true,
+	// Setiap perintah (serve, mcp stdio, …) memakai entitlement akun yang tersimpan.
+	PersistentPreRun: func(cmd *cobra.Command, args []string) { account.Activate() },
 }
 
 // Execute menjalankan CLI.
