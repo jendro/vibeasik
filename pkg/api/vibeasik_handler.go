@@ -1,0 +1,125 @@
+package api
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/gofiber/fiber/v2"
+
+	"github.com/vibeasik/vibeasik/pkg/cloud"
+)
+
+func (s *Server) getVibeTutorials(c *fiber.Ctx) error {
+	category := c.Query("category")
+	cli := cloud.NewClient()
+	list, err := cli.GetTutorials(category)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"tutorials": list})
+}
+
+func (s *Server) searchVibeDomains(c *fiber.Ctx) error {
+	query := c.Query("query")
+	if query == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "Query domain harus diisi"})
+	}
+	cli := cloud.NewClient()
+	resp, err := cli.SearchDomains(query)
+	if err != nil {
+		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(resp)
+}
+
+func (s *Server) generateVibeDeployPlan(c *fiber.Ctx) error {
+	var body map[string]interface{}
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+	}
+	cli := cloud.NewClient()
+	plan, err := cli.GenerateDeployPlan(body)
+	if err != nil {
+		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(plan)
+}
+
+func (s *Server) runCloudSecurityAudit(c *fiber.Ctx) error {
+	var body map[string]interface{}
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+	}
+	cli := cloud.NewClient()
+	result, err := cli.AuditProject(body)
+	if err != nil {
+		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(result)
+}
+
+func (s *Server) getVibeAITemplates(c *fiber.Ctx) error {
+	cli := cloud.NewClient()
+	templates, err := cli.GetAITemplates()
+	if err != nil {
+		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"templates": templates})
+}
+
+type InjectAITemplateRequest struct {
+	ComponentID uint   `json:"component_id"`
+	TemplateID  string `json:"template_id"`
+	TargetPath  string `json:"target_path"` // absolute path to component directory
+}
+
+func (s *Server) injectVibeAITemplate(c *fiber.Ctx) error {
+	var req InjectAITemplateRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	if req.TargetPath == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "Target path komponen harus diisi"})
+	}
+
+	cli := cloud.NewClient()
+	templates, err := cli.GetAITemplates()
+	if err != nil {
+		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	var matched *cloud.AITemplateDTO
+	for _, t := range templates {
+		if t.ID == req.TemplateID {
+			matched = &t
+			break
+		}
+	}
+
+	if matched == nil {
+		return c.Status(404).JSON(fiber.Map{"error": "Template AI tidak ditemukan"})
+	}
+
+	var createdFiles []string
+	for _, f := range matched.Files {
+		fullPath := filepath.Join(req.TargetPath, filepath.FromSlash(f.Filename))
+		dir := filepath.Dir(fullPath)
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "Gagal membuat direktori: " + err.Error()})
+		}
+		if err := os.WriteFile(fullPath, []byte(f.Content), 0644); err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "Gagal menulis file: " + err.Error()})
+		}
+		createdFiles = append(createdFiles, strings.TrimPrefix(fullPath, req.TargetPath))
+	}
+
+	return c.JSON(fiber.Map{
+		"success":       true,
+		"template_name": matched.Name,
+		"created_files": createdFiles,
+		"install_guide": matched.InstallGuide,
+		"message":       "Template AI berhasil disuntikkan ke proyek lokal!",
+	})
+}
