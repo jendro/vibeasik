@@ -45,11 +45,19 @@ interface NavItem {
 }
 
 const projectNavItems = computed<NavItem[]>(() => {
-  const detailTo = activeProjectId.value ? `/projects/${activeProjectId.value}` : '/'
+  const detailTo = activeProjectId.value ? `/projects/${activeProjectId.value}` : '/cockpit'
   const detailDesc = activeProject.value ? activeProject.value.name : 'Pilih proyek aktif'
   const detailBadge = activeProject.value ? 'Aktif' : undefined
 
   return [
+    {
+      id: 'home',
+      to: '/',
+      label: 'Beranda',
+      desc: 'Status & cara memakai',
+      icon: 'i-lucide-house',
+      exact: true
+    },
     {
       id: 'project-detail',
       to: detailTo,

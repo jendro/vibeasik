@@ -244,27 +244,16 @@ const pageTitle = computed(() => {
 
         <!-- Link to Public Website -->
         <UButton
-          to="/"
+          to="https://vibeasik.com"
+          target="_blank"
           icon="i-lucide-globe"
           color="neutral"
           variant="ghost"
           size="sm"
           class="hidden lg:inline-flex"
-          title="Buka Website Publik vibeasik"
+          title="Buka vibeasik.com"
         >
           Web Publik
-        </UButton>
-
-        <!-- Pasang vibeasik -->
-        <UButton
-          to="/download"
-          icon="i-lucide-download"
-          color="neutral"
-          variant="outline"
-          size="sm"
-          class="hidden md:inline-flex"
-        >
-          Pasang vibeasik
         </UButton>
 
         <!-- Quick Import Action -->

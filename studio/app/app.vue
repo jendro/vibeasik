@@ -33,7 +33,7 @@ const closeMobileSidebar = () => {
 
 // Route detection: Public website vs Admin Cockpit Workspace
 const route = useRoute()
-const publicRoutes = ['/', '/download', '/login', '/register']
+const publicRoutes = ['/download', '/login', '/register']
 const isPublicRoute = computed(() => publicRoutes.includes(route.path) || Boolean(route.meta.public))
 
 const isFluid = computed(() => !isPublicRoute.value && (Boolean(route.meta.fluid) || route.path.startsWith('/projects/') || route.path.startsWith('/todos')))
