@@ -17,6 +17,15 @@ type Hooks struct {
 	ProjectChanged func(projectID uint, rootPath string)
 	// ProjectCreated dipanggil setelah proyek baru dibuat (mis. menyiapkan dewan eksekutif).
 	ProjectCreated func(db *gorm.DB, project *models.Project)
+	// TodoStarted dipanggil saat agent menandai todo in_progress. note ditambahkan ke jawaban agent;
+	// stop=true berarti jawaban selesai di sini (mis. todo dipecah jadi sub todo).
+	TodoStarted func(db *gorm.DB, todoID uint, agent string) (note string, stop bool)
+	// TodoCompleted dipanggil saat todo selesai (mis. penilaian QA & pembaruan pengetahuan pegawai).
+	TodoCompleted func(db *gorm.DB, todoID uint, agent string)
+	// SuggestTodos menambah saran todo cerdas (rapat PM / LLM) di atas saran rule.
+	SuggestTodos func(db *gorm.DB, project *models.Project, all []models.Project) []models.Todo
+	// AutoAssignOn: keputusan saran todo langsung dikerjakan agent (mempengaruhi kebijakan eksekusi).
+	AutoAssignOn func() bool
 }
 
 // H hook aktif. Diisi modul Pro di init().
@@ -50,4 +59,32 @@ func ProjectCreated(db *gorm.DB, project *models.Project) {
 	if H.ProjectCreated != nil {
 		H.ProjectCreated(db, project)
 	}
+}
+
+// TodoStarted menjalankan hook bila ada.
+func TodoStarted(db *gorm.DB, todoID uint, agent string) (string, bool) {
+	if H.TodoStarted == nil {
+		return "", false
+	}
+	return H.TodoStarted(db, todoID, agent)
+}
+
+// TodoCompleted menjalankan hook bila ada.
+func TodoCompleted(db *gorm.DB, todoID uint, agent string) {
+	if H.TodoCompleted != nil {
+		H.TodoCompleted(db, todoID, agent)
+	}
+}
+
+// SuggestTodos menjalankan hook bila ada.
+func SuggestTodos(db *gorm.DB, project *models.Project, all []models.Project) []models.Todo {
+	if H.SuggestTodos == nil {
+		return nil
+	}
+	return H.SuggestTodos(db, project, all)
+}
+
+// AutoAssignOn melaporkan hook bila ada; false di Community.
+func AutoAssignOn() bool {
+	return H.AutoAssignOn != nil && H.AutoAssignOn()
 }
