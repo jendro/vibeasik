@@ -1,8 +1,8 @@
 #!/usr/bin/env sh
 # Pasang vibeasik (Linux/macOS):  curl -fsSL https://vibeasik.com/install.sh | sh
-# Variabel: VIBEASIK_VERSION (bawaan: terbaru), VIBEASIK_REPO (bawaan: jendro/vibeasik), INSTALL_DIR (bawaan: ~/.local/bin)
+# Variabel: VIBEASIK_VERSION (bawaan: terbaru), VIBEASIK_BASE_URL (bawaan: https://vibeasik.com/dl), INSTALL_DIR (bawaan: ~/.local/bin)
 set -eu
-REPO="${VIBEASIK_REPO:-jendro/vibeasik}"
+SITE="${VIBEASIK_SITE:-https://vibeasik.com/dl}"
 DIR="${INSTALL_DIR:-$HOME/.local/bin}"
 
 os="$(uname -s | tr '[:upper:]' '[:lower:]')"
@@ -12,11 +12,11 @@ case "$arch" in x86_64|amd64) arch=amd64;; aarch64|arm64) arch=arm64;; *) echo "
 
 version="${VIBEASIK_VERSION:-}"
 if [ -z "$version" ]; then
-  version="$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' | head -n1)"
-  [ -n "$version" ] || { echo "Tidak bisa menentukan versi terbaru"; exit 1; }
+  version="$(curl -fsSL "$SITE/latest" | tr -d '[:space:]')"
+  case "$version" in v[0-9]*) ;; *) echo "Tidak bisa menentukan versi terbaru"; exit 1;; esac
 fi
 name="vibeasik-${version}-${os}-${arch}.tar.gz"
-base="${VIBEASIK_BASE_URL:-https://github.com/$REPO/releases/download/$version}"
+base="${VIBEASIK_BASE_URL:-$SITE/$version}"
 
 tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
 echo "→ Mengunduh $name"
