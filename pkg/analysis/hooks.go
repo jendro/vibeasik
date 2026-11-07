@@ -4,7 +4,10 @@
 // Hasilnya bisa diperkaya LLM bila modul Pro memasang LLMQuery; tanpa itu dipakai heuristik.
 package analysis
 
-import "gorm.io/gorm"
+import (
+	"github.com/vibeasik/vibeasik/pkg/models"
+	"gorm.io/gorm"
+)
 
 // LLMQuery dipasang modul Pro (paket ai) untuk memperkaya fast scan & pengelompokan dengan LLM.
 // Nil di build Community: semua fungsi memakai hasil heuristik saja.
@@ -16,3 +19,6 @@ func queryActiveLLM(db *gorm.DB, systemPrompt, userPrompt string) (string, error
 	}
 	return LLMQuery(db, systemPrompt, userPrompt)
 }
+
+// ExtractRoutes mengekstrak rute secara statis dari dir (dipakai modul Pro saat memperkaya rute).
+func ExtractRoutes(dir string, role ...string) []models.RouteInfo { return extractRoutes(dir, role...) }
