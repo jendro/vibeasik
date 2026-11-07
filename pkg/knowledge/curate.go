@@ -49,9 +49,15 @@ var (
 	extraSources []Source
 )
 
+// registeredSources sumber tambahan yang didaftarkan modul (mis. checklist audit & desain dari Pro) sebelum Start.
+var registeredSources []Source
+
+// RegisterSource mendaftarkan sumber pengetahuan tambahan; panggil di init() sebelum Start.
+func RegisterSource(s Source) { registeredSources = append(registeredSources, s) }
+
 // Start menjalankan kurator berkala (hanya dari `vibeasik serve`). extra = sumber tambahan, mis. checklist audit.
 func Start(ctx context.Context, db *gorm.DB, extra ...Source) {
-	extraSources = extra
+	extraSources = append(append([]Source{}, registeredSources...), extra...)
 	go func() {
 		select {
 		case <-ctx.Done():
