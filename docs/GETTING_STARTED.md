@@ -81,10 +81,12 @@ konfigurasi manual dan koneksi jarak jauh: [MCP.md](MCP.md).
 ## 5. Pusat Pengetahuan (opsional)
 
 ```bash
+vibeasik knowledge consent   # baca dan setujui Syarat & Ketentuan (sekali)
 vibeasik knowledge pull
 ```
 
-Menarik paket panduan dan checklist terbaru. Tidak perlu login untuk paket dasar. Lihat [KNOWLEDGE.md](KNOWLEDGE.md).
+Menarik paket panduan dan checklist terbaru. Pusat Pengetahuan bekerja dua arah: node pengetahuan Anda yang terbukti
+berguna dikirim otomatis setelah disensor dan disaring (pengguna Pro dapat mengubahnya). Lihat [KNOWLEDGE.md](KNOWLEDGE.md).
 
 ## 6. Akun dan fitur Pro (opsional)
 
@@ -103,5 +105,6 @@ Tanpa akun, semua fitur Community berjalan penuh. Lihat [EDITIONS.md](EDITIONS.m
 | `vibeasik: command not found` | `~/.local/bin` belum ada di `PATH`. Tambahkan `export PATH="$HOME/.local/bin:$PATH"` ke profil shell Anda |
 | Studio menolak akses atau meminta token | Buka lewat `vibeasik open`. Token ada di `~/.vibeasik/token`; `vibeasik token --rotate` membuat yang baru |
 | Port 8765 sudah dipakai | `vibeasik serve --port 8766` atau set `VIBEASIK_PORT` |
+| `knowledge pull` meminta persetujuan | Jalankan `vibeasik knowledge consent` sekali |
 | `knowledge pull` gagal menghubungi server | Periksa koneksi internet. Server bawaan `https://enjoy.vibeasik.com`; ganti dengan `VIBEASIK_CLOUD_URL` |
 | Agent tidak melihat vibeasik setelah `mcp install` | Mulai ulang agent. Jalankan `vibeasik mcp list` untuk memastikan server MCP berfungsi |

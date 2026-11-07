@@ -31,8 +31,11 @@ Windows: download the `.zip` from `https://vibeasik.com/dl/`.
 
 ## Knowledge Hub
 
-`vibeasik knowledge pull` downloads signed knowledge packs (checksum + Ed25519 signature verified). Search always runs
-on your machine. Only anonymous helpful/harmful counts and contributions you explicitly approve are ever sent.
+`vibeasik knowledge pull` downloads signed knowledge packs (checksum + Ed25519 signature verified) after you accept the
+terms (`vibeasik knowledge consent`). Search always runs on your machine. The hub works both ways: knowledge on your
+machine that has proven useful is sent automatically (sanitized and strictly filtered, at most 5 per day, never code,
+project names, paths or keys) to be curated into the packs. This is on by default; **Pro users can change it, Free users
+cannot**. Preview with `vibeasik knowledge auto preview`, review with `vibeasik knowledge ledger`.
 
 ## Security
 

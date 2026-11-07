@@ -21,7 +21,7 @@ keduanya.
 |---|---|---|
 | Scan proyek, 85 rule audit, port & runner, peta kode, todo | ✓ | ✓ |
 | MCP | 64 tool | 123 tool |
-| Pusat Pengetahuan | paket dasar | jaring lengkap |
+| Pusat Pengetahuan | paket dasar; kirim otomatis terkunci | jaring lengkap; kirim otomatis dapat diubah |
 | Deep audit, AI review, pegawai AI, orkestrator, Galeri Desain, … | terkunci | ✓ |
 
 Free tidak butuh akun. Bagian mana pun dari fitur Pro yang belum terbuka akan menjawab `upgrade_required` (HTTP 402

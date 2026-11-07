@@ -54,7 +54,7 @@ Panduan lengkap, termasuk memindai proyek pertama: [docs/GETTING_STARTED.md](doc
 | | Community (gratis) | Pro (langganan) |
 |---|---|---|
 | Scan proyek, 85 rule audit, port & runner, peta kode, todo | ✓ | ✓ |
-| Pusat Pengetahuan (paket dasar) | ✓ | ✓ jaring lengkap |
+| Pusat Pengetahuan (paket dasar; kirim otomatis terkunci) | ✓ | ✓ jaring lengkap; kirim otomatis dapat diubah |
 | MCP | 64 tool | 123 tool |
 | Deep audit, AI review, pegawai AI, orkestrator, Galeri Desain, … | terkunci | ✓ |
 
@@ -64,14 +64,16 @@ Community tetap jalan penuh. Rinciannya: [docs/EDITIONS.md](docs/EDITIONS.md).
 ## Pusat Pengetahuan
 
 ```bash
+vibeasik knowledge consent               # baca dan setujui Syarat & Ketentuan (sekali)
 vibeasik knowledge pull                  # tarik paket terbaru (tanda tangan & checksum diverifikasi)
-vibeasik knowledge status                # versi paket yang terpasang
-vibeasik knowledge contribute            # tinjau usulan pengetahuan dari proyek Anda (sudah disensor)
-vibeasik knowledge contribute --send 12  # kirim yang Anda setujui
+vibeasik knowledge auto preview          # lihat node mana yang akan dikirim, tanpa mengirim
+vibeasik knowledge ledger                # riwayat kiriman
 ```
 
-Pencarian pengetahuan selalu berjalan **di laptop Anda**. Yang dikirim ke server hanya angka helpful/harmful (anonim,
-tanpa teks) dan usulan yang Anda setujui satu per satu. Detail: [docs/KNOWLEDGE.md](docs/KNOWLEDGE.md).
+Pencarian pengetahuan selalu berjalan **di laptop Anda**. Pusat Pengetahuan bekerja dua arah: pengetahuan di komputer
+Anda yang terbukti berguna dikirim otomatis (setelah disensor dan disaring ketat; maksimal 5 per hari) untuk memperkaya
+paket. Bawaan menyala; **pengguna Pro dapat mengubahnya, pengguna Free tidak**. Fitur lokal lain tidak terkait.
+Kode, nama proyek, path, dan kunci tidak pernah dikirim. Detail dan syaratnya: [docs/KNOWLEDGE.md](docs/KNOWLEDGE.md).
 
 ## Keamanan
 
