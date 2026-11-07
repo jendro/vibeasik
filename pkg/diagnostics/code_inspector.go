@@ -78,9 +78,23 @@ var (
 	routeReceiverRegex = regexp.MustCompile(`^([A-Za-z_][A-Za-z0-9_]*)\.(?i:Post|Put|Delete|Patch)\s*\(`)
 	routeMutationRegex = regexp.MustCompile(`(?i)\.(Post|Put|Delete|Patch)\s*\(\s*["']([^"']+)["']\s*,\s*([a-zA-Z0-9_.]+)`)
 	wildcardCorsRegex  = regexp.MustCompile(`(?i)(AllowOrigins\s*:\s*["']\*["']|AllowOrigins\s*:\s*\[\]string\{["']\*["']\}|origin\s*:\s*["']\*["'])`)
-	stubHandlerRegex   = regexp.MustCompile(`(?i)(//\s*TODO:?\s*(implement|fix|handle)|c\.SendString\(["']TODO["']\)|return.*status.*not implemented|\bpanic\(["']not implemented["']\)|throw\s+(new\s+)?(NotImplementedError|UnsupportedOperationException|NotImplementedException)|\bTODO\(\))`)
-	stubPythonRegex    = regexp.MustCompile(`(?i)(^pass$|raise\s+NotImplementedError|#\s*TODO:?\s*(implement|fix|handle))`)
-	routerVerbRegex    = regexp.MustCompile(`(?i)\.(Get|Post|Put|Delete)\s*\(\s*["']\/[a-zA-Z0-9_/-]*(get|fetch|delete|remove|create|add|update|edit)[A-Z_][a-zA-Z0-9_/-]*["']`)
+	// stubHandlerRegex mendeteksi handler stub/placeholder yang belum diimplementasi.
+	// Cabang: komentar TODO, c.SendString("TODO"), panic("not implemented"),
+	// return singkat (<=80 karakter, satu baris) berisi "not implemented",
+	// http.StatusNotImplemented, TODO(), dan throw stub yang di-anchor ke "(" atau ";".
+	stubHandlerRegex = regexp.MustCompile(
+		`(?i)(` +
+			`//\s*TODO:?\s*(?:implement|fix|handle)\b` +
+			`|c\.SendString\(\s*["']TODO["']\s*\)` +
+			`|\bpanic\(\s*["']not implemented["']\s*\)` +
+			`|\breturn\b[^\n]{0,80}\bnot implemented\b` +
+			`|\bhttp\.StatusNotImplemented\b` +
+			`|\bTODO\(\)` +
+			`|\bthrow\s+(?:new\s+)?(?:NotImplementedError|UnsupportedOperationException|NotImplementedException)\s*[\(;]` +
+			`)`,
+	)
+	stubPythonRegex = regexp.MustCompile(`(?i)(^pass$|raise\s+NotImplementedError|#\s*TODO:?\s*(implement|fix|handle))`)
+	routerVerbRegex = regexp.MustCompile(`(?i)\.(Get|Post|Put|Delete)\s*\(\s*["']\/[a-zA-Z0-9_/-]*(get|fetch|delete|remove|create|add|update|edit)[A-Z_][a-zA-Z0-9_/-]*["']`)
 
 	// Code smells
 	swallowedErrorGoRegex = regexp.MustCompile(`(?m)^\s*_\s*,\s*err\s*:?=`)
