@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Tolak berkas terlarang & rahasia sebelum masuk riwayat.
 set -e
-bad=$(git diff --cached --name-only --diff-filter=ACM | grep -E '(^|/)(\.env(\..+)?|.*\.(db|sqlite|sqlite3|pem|key|p12|exe|log)|node_modules/.*|\.output/.*|\.nuxt/.*|bin/.*|dist/.*)$' | grep -vE '(^|/)\.env\.example$' || true)
+bad=$(git diff --cached --name-only --diff-filter=ACM | grep -E '(^|/)(\.env(\..+)?|.*\.(db|sqlite|sqlite3|pem|key|p12|exe|log)|node_modules/.*|\.output/.*|\.nuxt/.*|bin/.*|dist/.*)$' | grep -vE '(^|/)(\.env\.example|\.gitkeep)$' || true)
 if [ -n "$bad" ]; then
   echo "✖ Berkas berikut tidak boleh di-commit:" >&2; echo "$bad" | sed 's/^/  /' >&2; exit 1
 fi
