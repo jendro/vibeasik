@@ -17,6 +17,7 @@
     "@iconify-json/simple-icons": "^1.2.98",
     "@nuxt/ui": "^4.11.3",
     "d3-force": "3.0.0",
+    "dompurify": "^3.4.17",
     "html-to-image": "^1.11.13",
     "nuxt": "^4.6.0",
     "tailwindcss": "^4.3.3",

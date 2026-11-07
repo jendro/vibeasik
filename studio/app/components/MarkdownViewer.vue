@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Marked } from 'marked'
+import DOMPurify from 'dompurify'
 
 const props = withDefaults(
   defineProps<{
@@ -37,11 +38,33 @@ const md = new Marked({
   }
 })
 
-// Defense in depth for tags marked itself generates (links, images)
+// Allowlist ketat untuk tag yang dihasilkan markdown; selain ini dibuang DOMPurify.
+const SANITIZE_CONFIG = {
+  ALLOWED_TAGS: [
+    'p', 'strong', 'em', 'b', 'i', 'del', 'code', 'pre', 'ul', 'ol', 'li', 'span', 'a', 'br', 'hr',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'table', 'thead', 'tbody', 'tr', 'th', 'td'
+  ],
+  ALLOWED_ATTR: ['class', 'href', 'target', 'rel'],
+  ALLOW_DATA_ATTR: false
+}
+
+let linkHookInstalled = false
+const ensureLinkHook = () => {
+  if (linkHookInstalled) return
+  linkHookInstalled = true
+  DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+    if (node.tagName === 'A') {
+      node.setAttribute('target', '_blank')
+      node.setAttribute('rel', 'noopener noreferrer')
+    }
+  })
+}
+
+// DOMPurify butuh DOM (browser). Tanpa DOM (prerender/SSR) fallback ke teks ter-escape, tidak pernah HTML mentah.
 const sanitizeHtml = (html: string): string => {
-  return html
-    .replace(/\b(href|src)\s*=\s*"\s*(javascript|vbscript|data):[^"]*"/gi, '$1="#"')
-    .replace(/<a\b(?![^>]*\btarget=)/gi, '<a target="_blank" rel="noopener noreferrer"')
+  if (!DOMPurify.isSupported) return escapeHtml(html)
+  ensureLinkHook()
+  return DOMPurify.sanitize(html, SANITIZE_CONFIG)
 }
 
 const renderedHtml = computed(() => {
