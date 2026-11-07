@@ -33,6 +33,7 @@ type Server struct {
 	services  *service.Services
 	mcpServer *mcp.Server
 	runner    *runner.Service
+	restart   func() error // mulai ulang engine (dipasang serve); nil bila tidak didukung
 }
 
 // NewServer builds and configures the Fiber application with layered architecture
@@ -304,6 +305,7 @@ func (s *Server) setupRoutes() {
 		api.Add(r.Method, r.Path, func(c *fiber.Ctx) error { return registry.RespondUpgrade(c, feature) })
 	}
 
+	s.setupSetupRoutes(api)
 	s.setupAccountRoutes(api)
 	s.setupKnowledgeSyncRoutes(api)
 

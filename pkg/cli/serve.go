@@ -65,6 +65,9 @@ var serveCmd = &cobra.Command{
 		server := api.NewServer(db)
 		lan := listenHost != "127.0.0.1" && listenHost != "localhost" && listenHost != "::1"
 		server.SetLAN(lan)
+		if restartSelf != nil {
+			server.SetRestart(restartSelf)
+		}
 		token, err := localauth.Token()
 		if err != nil {
 			return fmt.Errorf("token akses lokal: %w", err)
