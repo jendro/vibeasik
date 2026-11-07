@@ -83,3 +83,6 @@ func (s *Server) UnguardedMutations() []string {
 	}
 	return bad
 }
+
+// Test menjalankan satu request lewat seluruh middleware & route tanpa membuka port (untuk uji modul eksternal).
+func (s *Server) Test(req *http.Request) (*http.Response, error) { return s.app.Test(req, -1) }
