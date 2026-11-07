@@ -228,18 +228,7 @@ const handleRetrySingle = async (finding: Finding) => {
   await processBatchItems([finding])
 }
 
-const getSeverityBadgeColor = (sev: string) => {
-  switch (sev?.toUpperCase()) {
-    case 'CRITICAL':
-      return 'error'
-    case 'WARNING':
-      return 'warning'
-    case 'INFO':
-      return 'info'
-    default:
-      return 'neutral'
-  }
-}
+const { getSeverityBadgeColor } = useFormatters()
 </script>
 
 <template>

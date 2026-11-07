@@ -43,21 +43,7 @@ const getScoreLabel = (score: number) => {
   return 'Kritis: Ditemukan Anti-Pattern / Smells'
 }
 
-const formatDateTime = (dateStr?: string | null) => {
-  if (!dateStr) return '-'
-  try {
-    const d = new Date(dateStr)
-    return d.toLocaleString('id-ID', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  } catch {
-    return dateStr
-  }
-}
+const { formatDateTime } = useFormatters()
 </script>
 
 <template>

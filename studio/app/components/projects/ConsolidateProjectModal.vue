@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Project, ConsolidatePreview, ConsolidateResult, RoleBadgeColor } from '~/types'
+import type { Project, ConsolidatePreview, ConsolidateResult } from '~/types'
 
 const open = defineModel<boolean>('open', { default: false })
 
@@ -53,36 +53,12 @@ watch(open, (isOpen) => {
   }
 })
 
-const getRoleBadgeColor = (role?: string): RoleBadgeColor => {
-  switch (role) {
-    case 'backend': return 'info'
-    case 'frontend_admin': return 'secondary'
-    case 'frontend_client': return 'success'
-    case 'frontend_mobile': return 'warning'
-    default: return 'neutral'
-  }
-}
+const { getRoleBadgeColor } = useFormatters()
 
-const getRoleLabel = (role?: string) => {
-  switch (role) {
-    case 'backend': return 'BE'
-    case 'frontend_admin': return 'FE Admin'
-    case 'frontend_client': return 'FE Web'
-    case 'frontend_mobile': return 'Mobile'
-    case 'docs': return 'Docs'
-    case 'cli': return 'CLI'
-    case 'worker': return 'Worker'
-    default: return role || 'Komponen'
-  }
-}
+const { getRoleLabel: roleLabel } = useFormatters()
+const getRoleLabel = (role?: string) => roleLabel(role, { other: 'other', fallback: 'Komponen' })
 
-const formatBytes = (bytes?: number) => {
-  if (!bytes || bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
-}
+const { formatBytes } = useFormatters()
 
 const handleConsolidate = async () => {
   if (!props.project?.id || !preview.value?.can_consolidate) return

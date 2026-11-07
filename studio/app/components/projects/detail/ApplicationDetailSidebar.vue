@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Project, ProjectComponent, Diagnostic, RoleBadgeColor } from '~/types'
+import type { Project, ProjectComponent, Diagnostic } from '~/types'
 import { resolveTech } from '~/composables/useTechLogo'
 
 const props = defineProps<{
@@ -19,21 +19,7 @@ defineEmits<{
   switchTab: [tab: string]
 }>()
 
-const toast = useToast()
-
-const copyToClipboard = async (text: string, label = 'Teks berhasil disalin!') => {
-  try {
-    await navigator.clipboard.writeText(text)
-    toast.add({
-      title: 'Disalin ke Clipboard',
-      description: label,
-      icon: 'i-lucide-clipboard-check',
-      color: 'neutral'
-    })
-  } catch {
-    // ignore
-  }
-}
+const { copyToClipboard } = useCopyToClipboard()
 
 const getScoreColor = (score: number) => {
   if (score >= 90) return 'text-sky-600 dark:text-sky-400 border-sky-500/30 bg-sky-50 dark:bg-sky-950/30'
@@ -45,15 +31,7 @@ const otherComponents = computed(() => {
   return props.project.components?.filter(c => c.id !== props.comp.id) || []
 })
 
-const getCompRoleBadgeColor = (role: string): RoleBadgeColor => {
-  switch (role) {
-    case 'backend': return 'info'
-    case 'frontend_admin': return 'secondary'
-    case 'frontend_client': return 'success'
-    case 'frontend_mobile': return 'warning'
-    default: return 'neutral'
-  }
-}
+const { getRoleBadgeColor: getCompRoleBadgeColor } = useFormatters()
 
 const getCompRoleLabel = (role: string): string => {
   switch (role) {

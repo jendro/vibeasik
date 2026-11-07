@@ -129,15 +129,7 @@ const editForm = ref({
 const savingEdit = ref(false)
 
 // Method Badge Colors
-const getMethodBadgeColor = (method: string): 'success' | 'info' | 'warning' | 'error' | 'neutral' | 'primary' => {
-  const m = (method || '').toUpperCase()
-  if (m === 'GET') return 'success'
-  if (m === 'POST') return 'info'
-  if (m === 'PUT' || m === 'PATCH') return 'warning'
-  if (m === 'DELETE') return 'error'
-  if (m.includes('PAGE') || m.includes('VIEW') || m.includes('SCREEN')) return 'primary'
-  return 'neutral'
-}
+const { getMethodBadgeColor } = useFormatters()
 
 // Domain Statistics
 const domainList = computed(() => {

@@ -24,21 +24,8 @@ const handleConsolidated = (res: ConsolidateResult) => {
   emit('consolidated', res)
 }
 
-const toast = useToast()
-
-const copyToClipboard = async (text: string) => {
-  try {
-    await navigator.clipboard.writeText(text)
-    toast.add({
-      title: 'Disalin ke Clipboard',
-      description: 'Root path proyek berhasil disalin.',
-      icon: 'i-lucide-clipboard-check',
-      color: 'neutral'
-    })
-  } catch {
-    // ignore
-  }
-}
+const { copyToClipboard: copyText } = useCopyToClipboard()
+const copyToClipboard = (text: string) => copyText(text, 'Root path proyek berhasil disalin.')
 
 const { initing: initingProject, initProject } = useInitVibeasik()
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Project, RoleBadgeColor, ConsolidateResult } from '~/types'
+import type { Project, ConsolidateResult } from '~/types'
 import ConsolidateProjectModal from '~/components/projects/ConsolidateProjectModal.vue'
 
 const props = defineProps<{
@@ -32,28 +32,10 @@ const handleConsolidated = (res: ConsolidateResult) => {
   emit('consolidated', res)
 }
 
-const getRoleBadgeColor = (role: string): RoleBadgeColor => {
-  switch (role) {
-    case 'backend': return 'info'
-    case 'frontend_admin': return 'secondary'
-    case 'frontend_client': return 'success'
-    case 'frontend_mobile': return 'warning'
-    default: return 'neutral'
-  }
-}
+const { getRoleBadgeColor } = useFormatters()
 
-const getRoleLabel = (role: string) => {
-  switch (role) {
-    case 'backend': return 'BE'
-    case 'frontend_admin': return 'FE Admin'
-    case 'frontend_client': return 'FE Web'
-    case 'frontend_mobile': return 'Mobile App'
-    case 'docs': return 'Docs'
-    case 'cli': return 'CLI'
-    case 'worker': return 'Worker'
-    default: return role === 'other' ? 'Folder Lain' : role
-  }
-}
+const { getRoleLabel: roleLabel } = useFormatters()
+const getRoleLabel = (role: string) => roleLabel(role, { mobile: 'Mobile App', other: 'Folder Lain' })
 
 const getScoreColor = (score: number) => {
   if (score >= 90) return 'text-sky-600 dark:text-sky-400 border-sky-500/30 bg-sky-50 dark:bg-sky-950/30'

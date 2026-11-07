@@ -17,28 +17,9 @@ const getScoreColor = (score: number) => {
   return 'text-rose-600 dark:text-rose-400 border-rose-500/30 bg-rose-50 dark:bg-rose-950/30'
 }
 
-const getRoleBadgeColor = (role: string) => {
-  switch (role) {
-    case 'backend': return 'info'
-    case 'frontend_admin': return 'secondary'
-    case 'frontend_client': return 'success'
-    case 'frontend_mobile': return 'warning'
-    default: return 'neutral'
-  }
-}
+const { getRoleBadgeColor } = useFormatters()
 
-const getRoleLabel = (role: string) => {
-  switch (role) {
-    case 'backend': return 'BE'
-    case 'frontend_admin': return 'FE Admin'
-    case 'frontend_client': return 'FE Web'
-    case 'frontend_mobile': return 'Mobile'
-    case 'docs': return 'Docs'
-    case 'cli': return 'CLI'
-    case 'worker': return 'Worker'
-    default: return role === 'other' ? 'Lainnya' : role
-  }
-}
+const { getRoleLabel } = useFormatters()
 
 const allFindings = computed<Finding[]>(() => {
   if (!props.diagnostic?.findings_json) return []

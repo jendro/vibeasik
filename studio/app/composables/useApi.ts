@@ -26,6 +26,6 @@ export const useApi = () => {
     ...useAgentsApi(),
     ...useQueueApi(),
     ...useTodosApi(),
-    ...useSystemApi(),
+    ...useSystemApi()
   }
 }

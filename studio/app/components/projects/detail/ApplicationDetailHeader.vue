@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Project, ProjectComponent, RoleBadgeColor } from '~/types'
+import type { Project, ProjectComponent } from '~/types'
 
 const activeTab = defineModel<string>('activeTab', { default: 'blueprint' })
 
@@ -17,31 +17,9 @@ defineEmits<{
   delete: []
 }>()
 
-const toast = useToast()
+const { copyToClipboard } = useCopyToClipboard()
 
-const copyToClipboard = async (text: string, label = 'Teks berhasil disalin!') => {
-  try {
-    await navigator.clipboard.writeText(text)
-    toast.add({
-      title: 'Disalin ke Clipboard',
-      description: label,
-      icon: 'i-lucide-clipboard-check',
-      color: 'neutral'
-    })
-  } catch {
-    // ignore
-  }
-}
-
-const getCompRoleBadgeColor = (role: string): RoleBadgeColor => {
-  switch (role) {
-    case 'backend': return 'info'
-    case 'frontend_admin': return 'secondary'
-    case 'frontend_client': return 'success'
-    case 'frontend_mobile': return 'warning'
-    default: return 'neutral'
-  }
-}
+const { getRoleBadgeColor: getCompRoleBadgeColor } = useFormatters()
 
 const getCompRoleLabel = (role: string): string => {
   switch (role) {

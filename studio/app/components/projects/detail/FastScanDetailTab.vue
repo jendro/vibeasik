@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FastScanResult, Project, ProjectComponent, RoleBadgeColor } from '~/types'
+import type { FastScanResult, Project, ProjectComponent } from '~/types'
 
 const props = defineProps<{
   comp: ProjectComponent
@@ -25,29 +25,9 @@ const routeSearchQuery = ref('')
 const newMetaKey = ref('')
 const newMetaVal = ref('')
 
-const copyToClipboard = async (text: string, label = 'Teks berhasil disalin!') => {
-  try {
-    await navigator.clipboard.writeText(text)
-    toast.add({
-      title: 'Disalin ke Clipboard',
-      description: label,
-      icon: 'i-lucide-clipboard-check',
-      color: 'neutral'
-    })
-  } catch {
-    // ignore
-  }
-}
+const { copyToClipboard } = useCopyToClipboard()
 
-const getCompRoleBadgeColor = (role: string): RoleBadgeColor => {
-  switch (role) {
-    case 'backend': return 'info'
-    case 'frontend_admin': return 'secondary'
-    case 'frontend_client': return 'success'
-    case 'frontend_mobile': return 'warning'
-    default: return 'neutral'
-  }
-}
+const { getRoleBadgeColor: getCompRoleBadgeColor } = useFormatters()
 
 const getCompRoleLabel = (role: string) => {
   switch (role) {
@@ -62,15 +42,7 @@ const getCompRoleLabel = (role: string) => {
   }
 }
 
-const getMethodBadgeColor = (method: string): 'success' | 'info' | 'warning' | 'error' | 'neutral' | 'primary' => {
-  const m = method.toUpperCase()
-  if (m === 'GET') return 'success'
-  if (m === 'POST') return 'info'
-  if (m === 'PUT' || m === 'PATCH') return 'warning'
-  if (m === 'DELETE') return 'error'
-  if (m.includes('PAGE') || m.includes('VIEW') || m.includes('SCREEN')) return 'primary'
-  return 'neutral'
-}
+const { getMethodBadgeColor } = useFormatters()
 
 const filteredRoutes = computed(() => {
   if (!props.scanResult?.routes) return []

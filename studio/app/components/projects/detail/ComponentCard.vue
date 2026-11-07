@@ -20,21 +20,8 @@ defineEmits<{
   delete: [id: number]
 }>()
 
-const toast = useToast()
-
-const copyToClipboard = async (text: string) => {
-  try {
-    await navigator.clipboard.writeText(text)
-    toast.add({
-      title: 'Disalin ke Clipboard',
-      description: 'Dev command berhasil disalin!',
-      icon: 'i-lucide-clipboard-check',
-      color: 'neutral'
-    })
-  } catch {
-    // ignore
-  }
-}
+const { copyToClipboard: copyText } = useCopyToClipboard()
+const copyToClipboard = (text: string) => copyText(text, 'Dev command berhasil disalin!')
 
 const getRoleConfig = (role: string) => {
   switch (role) {

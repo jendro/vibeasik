@@ -124,46 +124,9 @@ const menuItems = computed<DropdownMenuItem[][]>(() => {
   ]
 })
 
-const getSeverityBadgeColor = (sev: string) => {
-  switch (sev?.toUpperCase()) {
-    case 'CRITICAL':
-      return 'error'
-    case 'WARNING':
-      return 'warning'
-    case 'INFO':
-      return 'info'
-    default:
-      return 'neutral'
-  }
-}
+const { getSeverityBadgeColor } = useFormatters()
 
-const getCategoryIcon = (cat: string) => {
-  switch (cat?.toLowerCase()) {
-    case 'query':
-    case 'database':
-      return 'i-lucide-database'
-    case 'router':
-    case 'api':
-      return 'i-lucide-route'
-    case 'code_smell':
-      return 'i-lucide-flame'
-    case 'security':
-      return 'i-lucide-shield-alert'
-    case 'port':
-      return 'i-lucide-network'
-    case 'runtime':
-      return 'i-lucide-play-circle'
-    case 'frontend':
-      return 'i-lucide-layout-template'
-    case 'mobile':
-      return 'i-lucide-smartphone'
-    case 'deployment':
-    case 'config':
-      return 'i-lucide-hard-drive-upload'
-    default:
-      return 'i-lucide-alert-circle'
-  }
-}
+const { getCategoryIcon } = useFormatters()
 
 const getCategoryColor = (cat: string) => {
   switch (cat?.toLowerCase()) {

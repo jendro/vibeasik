@@ -24,20 +24,7 @@ const showRationale = ref(false)
 const isExpanded = ref(false)
 const isLongDescription = computed(() => (props.todo.description || '').length > 280)
 
-const formatDateTime = (dateStr?: string) => {
-  if (!dateStr) return '-'
-  try {
-    return new Date(dateStr).toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  } catch {
-    return dateStr
-  }
-}
+const { formatDateTime } = useFormatters()
 
 const levelMeta = computed(() => {
   switch (props.todo.level) {
