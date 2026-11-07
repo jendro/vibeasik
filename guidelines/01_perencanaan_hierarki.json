@@ -1,0 +1,37 @@
+{
+  "category": "perencanaan_hierarki",
+  "name": "Standar Hierarki Perencanaan (Global, Project, Component)",
+  "description": "Pedoman pembagian level perencanaan tugas berjenjang dari roadmap makro platform hingga eksekusi teknis komponen",
+  "guidelines": [
+    {
+      "id": "PLAN-001",
+      "level": "global",
+      "title": "Perencanaan Global (Platform & Architecture Roadmap)",
+      "rule": "Inisiatif strategis lintas-proyek, kebijakan arsitektur sistem menyeluruh, standarisasi security, atau integrasi core platform wajib dicatat pada level Global (Platform). Contoh: Standarisasi auth SSO, adopsi protokol MCP, kebijakan zero-leak credentials, migrasi platform.",
+      "rationale": "Menjaga agar arah pengembangan lintas ekosistem tetap selaras tanpa fragmentasi.",
+      "inspection_check": "Cek keselarasan arsitektur global, dependensi antar-proyek, dan konsistensi infrastruktur.",
+      "suggested_action": "Buat Global Todo yang merangkum inisiatif makro dan jabarkan menjadi Project Todo untuk masing-masing bundle proyek terkait.",
+      "severity": "high"
+    },
+    {
+      "id": "PLAN-002",
+      "level": "project",
+      "title": "Perencanaan Proyek (Project Bundle & Milestone)",
+      "rule": "Setiap repositori / project bundle wajib memiliki target capaian fungsional dan milestone rilis di tingkat Project Bundle. Proyek mengoordinasikan interaksi antara backend, web admin, dan aplikasi klien.",
+      "rationale": "Memastikan keterhubungan antar komponen dalam satu bundle aplikasi memiliki milestone rilis yang jelas.",
+      "inspection_check": "Cek keselarasan kontrak API antara backend dan frontend, kelengkapan rute, dan kesiapan deploy bundle.",
+      "suggested_action": "Petakan target rilis fitur ke Project Todo dan delegasikan tugas spesifik ke komponen di bawahnya.",
+      "severity": "high"
+    },
+    {
+      "id": "PLAN-003",
+      "level": "component",
+      "title": "Perencanaan Komponen (Component / Service Task)",
+      "rule": "Tugas-tugas teknis operasional (seperti penambahan endpoint, pembuatan form Vue, migrasi skema tabel, optimasi query) wajib ditempatkan pada level Component / Service dengan menunjuk langsung component_id target.",
+      "rationale": "Eksekutor atau AI agent membutuhkan konteks sempit dan spesifik untuk mengeksekusi kode tanpa merusak komponen lain.",
+      "inspection_check": "Cek bahasa, framework, file path, dependencies, dan test coverage pada komponen target.",
+      "suggested_action": "Tautkan Component Todo ke Project Todo induk agar progres pengerjaan di level bawah otomatis terakumulasi ke atas.",
+      "severity": "medium"
+    }
+  ]
+}

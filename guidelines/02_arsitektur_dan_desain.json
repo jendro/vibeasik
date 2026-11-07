@@ -1,0 +1,47 @@
+{
+  "category": "arsitektur_dan_desain",
+  "name": "Standar Arsitektur & Desain Sistem",
+  "description": "Pedoman pemisahan tanggung jawab, orkestrasi lokal, dan modularitas kode",
+  "guidelines": [
+    {
+      "id": "ARCH-001",
+      "level": "project",
+      "title": "Decoupled Backend & Frontend Architecture",
+      "rule": "Backend API dan antarmuka Frontend wajib dipisahkan dalam folder/subservis mandiri dengan port yang berbeda. Tidak diperbolehkan menyatukan logika kompilasi frontend ke dalam binary monolit tanpa pemisahan rute API yang jelas.",
+      "rationale": "Mempermudah scaling horizontal, pemeliharaan independen, dan pengujian unit tanpa overhead kompilasi frontend.",
+      "inspection_check": "Periksa daftar komponen di proyek. Proyek tipe bundle harus memiliki minimal 1 backend dan 1 frontend.",
+      "suggested_action": "Bagi proyek menjadi komponen terpisah: Backend (port 8xxx) dan Frontend (port 3xxx).",
+      "severity": "high"
+    },
+    {
+      "id": "ARCH-002",
+      "level": "project",
+      "title": "Unified Local Orchestration (dev.sh Wajib)",
+      "rule": "Setiap proyek wajib memiliki dev.sh executable di root yang menyalakan SEMUA komponen (backend, frontend, mobile, worker) secara paralel dengan 1 perintah ./dev.sh. Port tiap komponen diambil dari blok proyek di PORTS.md (env PORT), URL API BE diekspor ke FE/mobile dari port BE yang sama, dan Ctrl+C menghentikan semua proses (trap).",
+      "rationale": "Menghemat waktu developer saat onboarding atau beralih antar proyek lokal.",
+      "inspection_check": "Audit DEV-SCRIPT-MISSING (dev.sh tidak ada), DEV-SCRIPT-NOT-EXECUTABLE (tanpa chmod +x), DEV-SCRIPT-INCOMPLETE (folder komponen tidak disebut di dev.sh).",
+      "suggested_action": "Buat dev.sh di root: PORT per komponen dari PORTS.md, ekspor NUXT_PUBLIC_API_BASE/VITE_API_URL/--dart-define API_BASE_URL ke port BE, jalankan semua komponen dengan & lalu wait, trap 'kill 0' EXIT.",
+      "severity": "high"
+    },
+    {
+      "id": "ARCH-003",
+      "level": "component",
+      "title": "Single Responsibility & Clean Code Component",
+      "rule": "Komponen antarmuka (Vue/Nuxt) tidak boleh berupa berkas monolit melebihi 250 baris kode. Pecah menjadi sub-komponen terisolasi. Di backend Go, terapkan clean architecture (handler, service, repository).",
+      "rationale": "Komponen kecil lebih mudah di-audit, tidak membebani konteks AI agent, dan meminimalkan regresi saat refactor.",
+      "inspection_check": "Hitung jumlah baris file dalam direktori components/ dan internal/.",
+      "suggested_action": "Refactor berkas besar menjadi subkomponen dengan tanggung jawab tunggal.",
+      "severity": "medium"
+    },
+    {
+      "id": "ARCH-004",
+      "level": "component",
+      "title": "KISS: Solusi Paling Sederhana & Satu Lapisan Validasi/Middleware",
+      "rule": "Urutan prioritas koding: aman → benar → sesederhana mungkin. Setiap pemeriksaan (auth, rate limit, CORS, validasi input) cukup dipasang di SATU lapisan: middleware yang sudah aktif di global/group tidak dipasang ulang di rute, dan field yang sudah divalidasi handler/validator tidak divalidasi ulang di service (atau sebaliknya). Pakai ulang helper yang sudah ada sebelum menulis yang baru; jangan menambah abstraksi, flag, atau lapisan tanpa kebutuhan nyata.",
+      "rationale": "Pemeriksaan ganda menambah latensi tiap request, membuat aturan bisa berbeda di dua tempat (salah satu lupa diperbarui), dan membingungkan AI agent yang menyimpulkan dari satu baris. Kode sederhana lebih mudah diaudit sehingga justru lebih aman.",
+      "inspection_check": "Bandingkan rantai middleware efektif tiap rute (peta rute routemap) dan kondisi validasi di handler vs fungsi yang dipanggilnya; temuan ROUTER-DUPLICATE-MIDDLEWARE & ROUTER-DUPLICATE-VALIDATION.",
+      "suggested_action": "Pertahankan pemeriksaan di lapisan yang paling luas cakupannya (middleware di group/global; validasi di satu tempat — validator/handler untuk bentuk input, service untuk aturan domain) lalu hapus salinannya. Jangan melonggarkan keamanan: hapus hanya bila salinan lain terbukti selalu berjalan di jalur yang sama.",
+      "severity": "medium"
+    }
+  ]
+}

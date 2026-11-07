@@ -1,0 +1,57 @@
+{
+  "category": "scale_up_arsitektur_backend",
+  "name": "Standar Scale-Up & Pola Desain Backend",
+  "description": "Pedoman pemisahan router, controller, fungsi vs struct, abstraksi repository, MCP dan MVPP",
+  "guidelines": [
+    {
+      "id": "SCALE-001",
+      "level": "component",
+      "title": "Thin Controller & Transport Separation",
+      "rule": "Controller atau handler HTTP (Fiber/Express/Gin) dilarang mengeksekusi query database SQL secara langsung atau menjalankan logika kalkulasi bisnis. Handler hanya boleh mem-parsing request DTO, memvalidasi format, memanggil service layer via interface, dan memetakan HTTP response status code.",
+      "rationale": "Memisahkan lapisan transport memudahkan pengujian unit test independen tanpa memerlukan koneksi database fisik atau mock HTTP context yang berat.",
+      "inspection_check": "Periksa direktori handler/controller apakah terdapat panggilan db.Query, db.Find, atau logika algoritma yang panjang (> 80 baris per handler).",
+      "suggested_action": "Pindahkan logika bisnis dan query database ke struct Service dan Repository terpisah.",
+      "severity": "high"
+    },
+    {
+      "id": "SCALE-002",
+      "level": "component",
+      "title": "Pure Functions vs Stateful Struct Methods",
+      "rule": "Gunakan pure function murni (tanpa side effect, tanpa akses DB/state) untuk transformasi data, validasi string, sanitasi, dan komputasi skor. Gunakan struct/class method yang menginjeksi interface untuk operasi yang memiliki dependensi I/O, database, atau state.",
+      "rationale": "Pure function bersifat thread-safe, hemat memori, dan dapat diuji 100% tanpa mocking, sedangkan struct dengan interface memungkinkan Inversion of Control (IoC).",
+      "inspection_check": "Analisis fungsi-fungsi helper di service: apakah fungsi statis dideklarasikan sebagai method struct yang tidak perlu atau sebaliknya.",
+      "suggested_action": "Jadikan fungsi kalkulasi independen sebagai package level function tanpa receiver struct.",
+      "severity": "medium"
+    },
+    {
+      "id": "SCALE-003",
+      "level": "component",
+      "title": "Decoupled Repository Abstraction",
+      "rule": "Semua interaksi persistensi data ke database (GORM, SQL, Prisma) wajib dienkapsulasi di dalam layer Repository dengan interface abstrak. Layer Service hanya boleh bergantung pada interface repository, bukan struct implementasi konkret.",
+      "rationale": "Memungkinkan pertukaran database (misal SQLite ke PostgreSQL) atau penggunaan in-memory mock repository saat unit testing.",
+      "inspection_check": "Cek apakah struct Service mengimpor langsung koneksi *gorm.DB atau menggunakan interface repository.",
+      "suggested_action": "Bungkus kueri database ke dalam interface repository di internal/repository.",
+      "severity": "high"
+    },
+    {
+      "id": "SCALE-004",
+      "level": "project",
+      "title": "Dual Transport & MCP-First Extensibility",
+      "rule": "Sistem backend skala lanjut wajib menyediakan kapabilitas dual-transport: antarmuka REST API HTTP untuk browser dan antarmuka Model Context Protocol (MCP JSON-RPC) untuk AI coding agent.",
+      "rationale": "Memungkinkan AI coding agent menginspeksi dan mengeksekusi aksi sistem secara terstruktur tanpa perlu menebak-nebak endpoint REST.",
+      "inspection_check": "Periksa ketersediaan paket mcp/ dan registrasi tool protocol di backend.",
+      "suggested_action": "Bangun adapter MCP di internal/mcp yang berbagi domain service yang sama dengan controller HTTP.",
+      "severity": "medium"
+    },
+    {
+      "id": "SCALE-005",
+      "level": "component",
+      "title": "MVPP Cognitive Planner Isolation",
+      "rule": "Pada sistem bertenaga AI, dilarang mencampur prompt LLM mentah atau pemanggilan API AI probabilistik langsung di dalam HTTP Controller. Gunakan layer Planner terisolasi (primitif System One: choice, noul, score atau LLM agent) dengan fallback deterministik.",
+      "rationale": "Mencegah kegagalan sistem saat API LLM downtime atau lambat, serta memisahkan logika deterministik bisnis dari penalaran probabilistik AI.",
+      "inspection_check": "Cek apakah ada pemanggilan client LLM/OpenAI/Gemini langsung di dalam file handler HTTP.",
+      "suggested_action": "Ekstraksi logika penalaran AI ke dalam layer Planner mandiri.",
+      "severity": "high"
+    }
+  ]
+}

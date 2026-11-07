@@ -1,0 +1,27 @@
+{
+  "category": "ai_dan_mcp_integration",
+  "name": "Standar Integrasi AI Agent, System One & MCP",
+  "description": "Pedoman protokol konteks AI, drop-in primitives Jev, dan observabilitas agent",
+  "guidelines": [
+    {
+      "id": "AI-001",
+      "level": "global",
+      "title": "Model Context Protocol (MCP) Observability",
+      "rule": "Setiap sistem yang dikembangkan wajib mengekspos kapabilitas strukturalnya via MCP (stdio dan SSE) agar AI coding agent (Antigravity, Cursor, Claude Code, Cline) dapat melakukan inspeksi kode dan diagnosa mandiri tanpa hallucination.",
+      "rationale": "Memungkinkan agen AI memahami topologi sistem dan mengambil tindakan tepat tanpa tebak-tebakan rute.",
+      "inspection_check": "Cek ketersediaan endpoint /mcp dan /mcp/sse serta registrasi di config agent.",
+      "suggested_action": "Daftarkan MCP server via vibeasik mcp install atau sertakan file .vscode/mcp.json.",
+      "severity": "high"
+    },
+    {
+      "id": "AI-002",
+      "level": "component",
+      "title": "System One / Jev Cognitive Architecture Primitives",
+      "rule": "Untuk pengambilan keputusan AI terstruktur, gunakan primitif System One: choice (klasifikasi dengan probabilitas), noul (keputusan boolean biner), dan score (evaluasi numerik 0.0-1.0). Targetkan ke instance System One lokal (http://localhost:8750/v1/systemone) atau cloud official.",
+      "rationale": "Menghasilkan keputusan AI yang deterministik, tipe-aman, dan dapat diuji secara terprogram di dalam kode backend Go/TypeScript.",
+      "inspection_check": "Periksa penggunaan library HTTP client System One dan validasi payload primitif.",
+      "suggested_action": "Suntikkan template System One client via vibeasik_inject_ai_template.",
+      "severity": "medium"
+    }
+  ]
+}

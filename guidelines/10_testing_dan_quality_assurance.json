@@ -1,0 +1,67 @@
+{
+  "category": "testing_dan_quality_assurance",
+  "name": "Standar Testing, Unit Test & Quality Assurance",
+  "description": "Pedoman cakupan pengujian, isolasi test, konvensi penamaan test, regression test, dan pengujian komponen frontend",
+  "guidelines": [
+    {
+      "id": "TEST-001",
+      "level": "component",
+      "title": "Wajib Unit Test untuk Business Logic Service Layer",
+      "rule": "Setiap fungsi atau method di layer service/domain yang mengandung logika bisnis (kalkulasi skor, validasi aturan, transformasi data) WAJIB memiliki minimal 1 unit test. Target cakupan minimum 60% untuk package service dan 80% untuk fungsi pure utility.",
+      "rationale": "Kode tanpa unit test adalah bom waktu: setiap refactor berpotensi merusak fitur yang sudah bekerja tanpa ada mekanisme deteksi otomatis. Senior engineer tidak pernah mengirim kode bisnis tanpa pengujian.",
+      "inspection_check": "Periksa keberadaan file *_test.go di direktori service/ dan internal/ pada backend Go, atau folder __tests__/ dan file *.test.ts pada frontend TypeScript.",
+      "suggested_action": "Buat file test paralel untuk setiap file service (misal: project_service.go → project_service_test.go) dengan skenario happy path dan edge case.",
+      "severity": "critical"
+    },
+    {
+      "id": "TEST-002",
+      "level": "component",
+      "title": "Integration Test untuk Endpoint API Kritis",
+      "rule": "Endpoint kritis (health check, autentikasi, CRUD utama) wajib memiliki integration test yang menguji keseluruhan alur request-response melalui HTTP handler, termasuk status code, format payload JSON, dan penanganan error.",
+      "rationale": "Unit test menguji logika terisolasi, tetapi integration test memastikan seluruh middleware (CORS, auth, body parser) dan serialisasi bekerja bersama dengan benar di level HTTP.",
+      "inspection_check": "Periksa keberadaan test file yang menggunakan httptest.NewServer atau httptest.NewRequest pada handler utama.",
+      "suggested_action": "Buat test suite menggunakan httptest (Go) atau supertest (Node.js) untuk setiap grup rute API yang mengembalikan data ke klien.",
+      "severity": "high"
+    },
+    {
+      "id": "TEST-003",
+      "level": "component",
+      "title": "Isolasi Test: Dilarang Bergantung pada Infrastruktur Nyata",
+      "rule": "Unit test DILARANG bergantung pada koneksi database nyata, jaringan internet, filesystem host, atau service eksternal. Gunakan mock, stub, atau in-memory repository untuk mengisolasi logika yang diuji.",
+      "rationale": "Test yang bergantung pada infrastruktur nyata bersifat flaky (kadang lulus, kadang gagal), lambat, dan tidak bisa dijalankan di CI/CD pipeline tanpa provisioning environment kompleks.",
+      "inspection_check": "Periksa apakah test file mengimpor atau menginisialisasi koneksi database nyata (sql.Open, gorm.Open) tanpa menggunakan interface mock.",
+      "suggested_action": "Definisikan interface repository dan inject mock implementation saat test. Gunakan testify/mock atau gomock untuk Go, jest.mock untuk TypeScript.",
+      "severity": "high"
+    },
+    {
+      "id": "TEST-004",
+      "level": "component",
+      "title": "Konvensi Penamaan Test & Table-Driven Tests",
+      "rule": "Nama test function wajib deskriptif dan menyatakan skenario yang diuji (misal: TestComputeScore_WhenAllPassed_Returns100). Untuk Go, gunakan pola table-driven tests ([]struct{name, input, expected}) untuk menguji banyak skenario dalam satu fungsi test.",
+      "rationale": "Nama test yang deskriptif berfungsi sebagai dokumentasi hidup. Table-driven tests mengeliminasi duplikasi kode test dan memudahkan penambahan skenario baru.",
+      "inspection_check": "Periksa apakah nama fungsi test mengandung deskripsi skenario atau hanya nama generik seperti Test1, TestFunc.",
+      "suggested_action": "Refactor nama test menjadi format Test<Fungsi>_<Kondisi>_<Ekspektasi> dan gunakan subtests (t.Run) untuk setiap baris tabel skenario.",
+      "severity": "medium"
+    },
+    {
+      "id": "TEST-005",
+      "level": "component",
+      "title": "Regression Test Wajib untuk Setiap Bugfix",
+      "rule": "Setiap perbaikan bug (bugfix) WAJIB disertai dengan test case yang secara spesifik mereproduksi bug tersebut sebelum diperbaiki, lalu memverifikasi bahwa perbaikan berhasil menghilangkan bug.",
+      "rationale": "Tanpa regression test, bug yang sama akan kembali muncul saat kode di-refactor atau fitur terkait dimodifikasi. Ini adalah praktik wajib di tim engineering profesional.",
+      "inspection_check": "Periksa commit message bugfix apakah menyertakan perubahan pada file test yang berkaitan.",
+      "suggested_action": "Sebelum memperbaiki bug, tulis test yang gagal (red). Perbaiki kode agar test lulus (green). Commit keduanya bersamaan.",
+      "severity": "high"
+    },
+    {
+      "id": "TEST-006",
+      "level": "component",
+      "title": "Frontend Component Test untuk Komponen Kritis",
+      "rule": "Komponen frontend kritis (form input, tabel data, modal konfirmasi, flow autentikasi) wajib memiliki minimal 1 component test yang memverifikasi rendering, interaksi pengguna (klik, input), dan emisi event.",
+      "rationale": "Komponen UI tanpa test rentan terhadap regresi visual dan fungsional saat dependensi diperbarui atau props diubah oleh developer lain.",
+      "inspection_check": "Periksa keberadaan file *.test.ts atau *.spec.ts di dalam direktori components/ atau __tests__/ frontend.",
+      "suggested_action": "Gunakan @vue/test-utils atau @testing-library/vue untuk menulis component test yang memverifikasi rendering dan interaksi.",
+      "severity": "medium"
+    }
+  ]
+}

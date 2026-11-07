@@ -1,0 +1,77 @@
+{
+  "category": "mobile_dan_cross_platform",
+  "name": "Standar Mobile, Flutter & Cross-Platform",
+  "description": "Pedoman performa UI thread, pembersihan memory leak controller, penanganan offline, dan keamanan penyimpanan lokal mobile",
+  "guidelines": [
+    {
+      "id": "MOB-001",
+      "level": "component",
+      "title": "Non-Blocking Main / UI Thread (Zero UI Freezing)",
+      "rule": "Semua komputasi berat, parsing JSON berukuran besar (>50KB), enkripsi/hashing, dan manipulasi gambar pada aplikasi mobile DILARANG dijalankan di Main/UI Thread. Di Flutter, gunakan compute() atau Isolate; di Android gunakan Dispatchers.Default / Dispatchers.IO; di React Native delegasikan ke native background worker.",
+      "rationale": "Menjalankan kalkulasi berat pada UI Thread menyebabkan frame drop (jank), animasi patah-patah, dan memicu dialog ANR (Application Not Responding) yang merusak UX pengguna.",
+      "inspection_check": "Periksa kode mobile apakah ada pemanggilan JSON decode besar atau komputasi kripto langsung di dalam method handler UI tanpa worker/isolate.",
+      "suggested_action": "Bungkus parsing data dan komputasi intensif ke dalam isolate terpisah menggunakan Flutter compute() atau Kotlin Coroutines withContext(Dispatchers.Default).",
+      "severity": "critical"
+    },
+    {
+      "id": "MOB-002",
+      "level": "component",
+      "title": "Pembersihan Resource & Controller Memory Leak (Mandatory dispose)",
+      "rule": "Setiap instans TextEditingController, AnimationController, ScrollController, FocusNode, Timer, atau StreamSubscription pada Flutter StatefulWidget WAJIB dipanggil method .dispose() atau .cancel() di dalam override void dispose(). Pada Android/React Native, bersihkan listeners dan unregister broadcast receivers.",
+      "rationale": "Controller yang tidak di-dispose akan tetap hidup di memori RAM dan menahan referensi konteks widget, menyebabkan kebocoran memori (memory leak) kumulatif dan crash Out-Of-Memory (OOM).",
+      "inspection_check": "Pindai class StatefulWidget yang menginisialisasi controller apakah menyertakan blok dispose() dengan pemanggilan controller.dispose().",
+      "suggested_action": "Tambahkan method dispose() dan panggil controller.dispose() serta super.dispose().",
+      "severity": "critical"
+    },
+    {
+      "id": "MOB-003",
+      "level": "component",
+      "title": "Larangan setState() di Dalam Method Build (Rebuild Loop Hazard)",
+      "rule": "Dilarang keras memanggil setState(), ref.read/watch mutation, atau state trigger apa pun langsung di dalam body method build() atau render(). Mutasi state hanya boleh terjadi di lifecycle callbacks (initState, didUpdateWidget) atau event handler (onTap, onChanged).",
+      "rationale": "Memanggil setState() di dalam build() menyebabkan loop rekursif tanpa akhir (infinite rebuild loop), memanaskan CPU perangkat, menguras baterai, dan membekukan tampilan aplikasi.",
+      "inspection_check": "Cari pola setState( di dalam ruang lingkup method Widget build(BuildContext context).",
+      "suggested_action": "Pindahkan logika pembaruan state ke event listener tombol atau bungkus dalam WidgetsBinding.instance.addPostFrameCallback jika perlu dijadwalkan setelah frame selesai.",
+      "severity": "critical"
+    },
+    {
+      "id": "MOB-004",
+      "level": "component",
+      "title": "Keamanan Penyimpanan Lokal Mobile (Encrypted Storage Policy)",
+      "rule": "Dilarang menyimpan token JWT, kredensial login, data rahasia pengguna, atau API keys ke dalam penyimpanan teks mentah seperti SharedPreferences bawaan, NSUserDefaults, atau AsyncStorage tanpa enkripsi. Wajib gunakan Keystore/Keyring aman (FlutterSecureStorage, EncryptedSharedPreferences Android, atau iOS Keychain).",
+      "rationale": "Penyimpanan SharedPreferences atau AsyncStorage disimpan dalam file XML/JSON mentah di sandbox yang mudah diekstraksi pada perangkat yang di-root atau melalui backup ADB.",
+      "inspection_check": "Periksa apakah ada penyimpanan kata kunci token/auth/password menggunakan SharedPreferences.getInstance() tanpa enkripsi.",
+      "suggested_action": "Ganti SharedPreferences dengan package flutter_secure_storage atau Android EncryptedSharedPreferences.",
+      "severity": "critical"
+    },
+    {
+      "id": "MOB-005",
+      "level": "component",
+      "title": "Penanganan Offline & Graceful Network Resiliency",
+      "rule": "Aplikasi mobile harus menyediakan umpan balik visual ketika perangkat kehilangan koneksi internet (Airplane mode / sinyal hilang), dilengkapi dengan caching lokal (Hive/Isar/Room/SQLite) dan tombol 'Coba Lagi' (Retry). Dilarang menampilkan layar putih kosong (white screen) atau error crash mentah.",
+      "rationale": "Koneksi jaringan mobile sering terputus-putus. Ketiadaan penanganan offline merusak kepercayaan pengguna dan menyebabkan review bintang 1 di app store.",
+      "inspection_check": "Periksa apakah state repository menyertakan interceptor SocketException / TimeoutException dengan fallback data cache.",
+      "suggested_action": "Implementasikan offline cache menggunakan SQLite/Isar dan tampilkan banner/dialog ramah koneksi offline.",
+      "severity": "high"
+    },
+    {
+      "id": "MOB-006",
+      "level": "component",
+      "title": "Batas Cache Gambar & Asset (Anti-OOM Image Optimization)",
+      "rule": "Gambar dari internet wajib dimuat menggunakan library dengan cache terkontrol (seperti cached_network_image di Flutter atau Glide/Coil di Android) dengan spesifikasi memWidth/memHeight atau resize. Dilarang memuat gambar beresolusi mentah (4K/8K) tanpa downsampling ke RAM.",
+      "rationale": "Satu gambar 4K mentah (3840x2160) dalam format RGBA_8888 menghabiskan lebih dari 33 MB memori bitmap di RAM. Beberapa gambar sekaligus dapat memicu crash Out-Of-Memory seketika di HP low-end.",
+      "inspection_check": "Periksa penggunaan Image.network mentah tanpa properti cacheWidth/cacheHeight.",
+      "suggested_action": "Gunakan CachedNetworkImage dengan cacheWidth dan cacheHeight yang disesuaikan dengan dimensi layar.",
+      "severity": "medium"
+    },
+    {
+      "id": "MOB-007",
+      "level": "component",
+      "title": "List Mobile: Builder Malas + Paging Hemat Data (Anggaran 50 KB)",
+      "rule": "List panjang di aplikasi mobile wajib memakai builder malas (ListView.builder/SliverList di Flutter, LazyColumn di Compose, UITableView/LazyVStack di iOS) — bukan Column/ListView berisi semua item — dan memuat data per halaman dengan anggaran 50 KB JSON mentah (limit = floor(50 KB ÷ bobot_baris), maks 100; lihat NET-007) dengan pemicu muat berikutnya saat sisa item ≈ 5–10 dari ujung. Gambar thumbnail diminta berukuran layar (bukan aslinya) dan di-cache dengan batas (MOB-006); halaman yang sudah dimuat dipertahankan saat kembali dari layar detail; tampilkan placeholder/skeleton dan status offline (MOB-005).",
+      "rationale": "Jaringan seluler lambat dan tidak stabil, memori ponsel terbatas, serta decode JSON dan build widget 3–6× lebih lambat daripada desktop. Memuat semua item sekaligus menimbulkan jank (MOB-001), OOM, dan penggunaan kuota yang boros.",
+      "inspection_check": "Cari Column(children: list.map(...)) / ListView(children: ...) / shrinkWrap:true pada list panjang, fetch tanpa limit/cursor, dan tidak adanya pemicu muat berikutnya atau cache halaman.",
+      "suggested_action": "Ganti ke ListView.builder + controller scroll (atau paging library), kirim limit/cursor ke API, kembalikan has_more, cache halaman di state, dan hitung limit dengan vibeasik_paging_plan {mobile:true}.",
+      "severity": "high"
+    }
+  ]
+}

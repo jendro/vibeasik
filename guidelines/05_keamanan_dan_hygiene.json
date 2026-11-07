@@ -1,0 +1,97 @@
+{
+  "category": "keamanan_dan_hygiene",
+  "name": "Standar Keamanan, Kredensial & Hygiene Git",
+  "description": "Pedoman pencegahan kebocoran secret, proteksi BOLA/IDOR, mitigasi CORS wildcard, dan sanitasi environment",
+  "guidelines": [
+    {
+      "id": "SEC-001",
+      "level": "global",
+      "title": "Zero-Credential Leak Policy (Multi Env vs Git)",
+      "rule": "Konvensi multi env: .env.local untuk laptop dev dan satu berkas per server tujuan (.env.server, .env.server.<nama>, .env.production, ...). Semua berkas env selain template .env.example dilarang ter-commit; .gitignore wajib memakai pola wildcard (.env, .env.*, !.env.example) agar env server berikutnya otomatis tertutup.",
+      "rationale": "Mencegah kebocoran kredensial produksi dan rahasia infrastruktur ke publik atau pihak luar.",
+      "inspection_check": "Audit ENV-FILE-TRACKED (git ls-files), ENV-NOT-IGNORED & ENV-IGNORE-INCOMPLETE (git check-ignore --no-index pada berkas env yang ada dan nama uji .env.server.server-baru).",
+      "suggested_action": "Pasang blok .env / .env.* / !.env.example di .gitignore, git rm --cached berkas env yang ter-commit, lalu rotate secret-nya.",
+      "severity": "critical"
+    },
+    {
+      "id": "SEC-002",
+      "level": "project",
+      "title": "Template .env.example yang Tersanitasi",
+      "rule": "Setiap folder yang memiliki berkas env wajib menyediakan .env.example (satu-satunya berkas env yang di-commit) berisi semua kunci yang dipakai .env.local dan .env.server* dengan nilai dummy/kosong.",
+      "rationale": "Memudahkan rekan tim atau AI agent melakukan konfigurasi mandiri saat clone repositori baru.",
+      "inspection_check": "Audit ENV-EXAMPLE-MISSING, ENV-EXAMPLE-IGNORED (template ikut ter-ignore), dan ENV-EXAMPLE-DRIFT (kunci di berkas env yang tidak ada di template; hanya nama kunci yang dilaporkan).",
+      "suggested_action": "Buat file .env.example dengan format KEY=example_placeholder.",
+      "severity": "high"
+    },
+    {
+      "id": "SEC-003",
+      "level": "component",
+      "title": "Pre-flight AI Censor Sanitization",
+      "rule": "Semua konten payload kode atau ringkasan arsitektur yang dikirimkan ke LLM eksternal wajib melalui GlobalSanitizer untuk menyamarkan kata kunci rahasia (ADMIN_PASSWORD, JWT_SECRET, PRIVATE_KEY).",
+      "rationale": "Melindungi privasi data developer dari logging atau pemrosesan pihak ketiga.",
+      "inspection_check": "Uji endpoint /api/security/test-censor dengan payload teks kredensial.",
+      "suggested_action": "Aktifkan sanitizer sebelum payload dikirim ke AI Advisor atau cloud service.",
+      "severity": "high"
+    },
+    {
+      "id": "SEC-004",
+      "level": "component",
+      "title": "Proteksi Broken Object Level Authorization (BOLA / IDOR)",
+      "rule": "Setiap operasi mutasi (PUT/PATCH/DELETE) atau pembacaan detail data berbasis ID wajib memverifikasi bahwa entitas tersebut adalah milik user/tenant yang sedang terotentikasi (WHERE id = ? AND user_id = ?). Dilarang hanya mengandalkan ID dari parameter URL.",
+      "rationale": "BOLA/IDOR adalah celah API nomor 1 menurut OWASP API Top 10, di mana pengguna dapat mengedit atau menghapus data milik pengguna lain cukup dengan mengganti angka ID di URL.",
+      "inspection_check": "Periksa query update/delete di layer repository apakah menyertakan validasi kepemilikan user_id atau tenant_id.",
+      "suggested_action": "Selalu sertakan klausul WHERE user_id = current_user_id pada operasi modifikasi entitas pengguna.",
+      "severity": "critical"
+    },
+    {
+      "id": "SEC-005",
+      "level": "component",
+      "title": "Kebijakan CORS Ketat & Proteksi Kredensial",
+      "rule": "Konfigurasi CORS di backend DILARANG mengizinkan origin wildcard ('*') jika endpoint mendukung kredensial (AllowCredentials: true) atau menangani cookie autentikasi. Origin yang diizinkan wajib didaftarkan secara eksplisit.",
+      "rationale": "Wildcard CORS yang dikombinasikan dengan kredensial memungkinkan website berbahaya membaca respons API pengguna melalui browser korban (CSRF & credential theft).",
+      "inspection_check": "Periksa middleware CORS apakah menyertakan AllowOrigins: '*' atau origin: '*'.",
+      "suggested_action": "Tentukan domain frontend secara spesifik (misal: http://localhost:3000, https://app.example.com).",
+      "severity": "high"
+    },
+    {
+      "id": "SEC-006",
+      "level": "component",
+      "title": "Larangan Hardcoded Secret & Private Key di Kode Sumber",
+      "rule": "Dilarang keras menyematkan token JWT secret, private key RSA, database password, atau API key pihak ketiga langsung di dalam kode sumber (.go, .ts, .js, .py, .dart). Seluruh secret wajib diakses melalui environment variable.",
+      "rationale": "Kode yang memuat hardcoded secret mudah bocor saat di-push ke git, dibagikan ke anggota tim lain, atau diekspos melalui bundle client-side frontend.",
+      "inspection_check": "Pindai string literal yang memuat pola kata kunci secret, password, private_key, atau token.",
+      "suggested_action": "Pindahkan nilai kredensial ke file .env dan baca via os.Getenv() atau process.env.",
+      "severity": "critical"
+    },
+    {
+      "id": "SEC-007",
+      "level": "component",
+      "title": "Rate Limiting & Proteksi Anti Brute-Force pada Endpoint Publik",
+      "rule": "Setiap backend yang mengekspos endpoint publik WAJIB menerapkan rate limiting: maksimal 100 request/menit untuk endpoint API umum dan maksimal 5 request/menit untuk endpoint autentikasi/login. Rate limit wajib dikonfigurasi per IP address dan mengembalikan HTTP 429 Too Many Requests dengan header Retry-After.",
+      "rationale": "Tanpa rate limiting, endpoint login menjadi target brute-force password, endpoint API menjadi target scraping massal, dan satu klien jahat dapat menghabiskan seluruh kapasitas server (Denial of Service).",
+      "inspection_check": "Periksa middleware chain server apakah menyertakan rate limiter (fiber/limiter, express-rate-limit, atau custom token bucket). Periksa endpoint /login atau /auth apakah memiliki rate limit lebih ketat.",
+      "suggested_action": "Pasang middleware limiter.New(limiter.Config{Max: 100, Expiration: 1 * time.Minute}) pada router utama dan buat rate limit terpisah yang lebih ketat untuk grup rute autentikasi.",
+      "severity": "high"
+    },
+    {
+      "id": "SEC-008",
+      "level": "component",
+      "title": "HTTP Security Headers Wajib (CSP, HSTS, X-Frame-Options)",
+      "rule": "Setiap backend production WAJIB mengirimkan security headers berikut pada setiap HTTP response: X-Content-Type-Options: nosniff, X-Frame-Options: DENY (atau SAMEORIGIN), Strict-Transport-Security: max-age=31536000 (jika HTTPS), Content-Security-Policy dengan directive ketat, dan Referrer-Policy: strict-origin-when-cross-origin.",
+      "rationale": "Tanpa security headers, aplikasi rentan terhadap clickjacking (iframe embedding), MIME type sniffing attacks, protocol downgrade attacks, dan kebocoran informasi referrer ke domain pihak ketiga.",
+      "inspection_check": "Periksa konfigurasi middleware atau handler apakah menyertakan pengaturan security headers. Uji response header menggunakan curl -I atau browser DevTools Network tab.",
+      "suggested_action": "Buat middleware helmet yang menambahkan seluruh security headers pada setiap response, atau gunakan package fiber/helmet untuk Fiber framework.",
+      "severity": "high"
+    },
+    {
+      "id": "SEC-009",
+      "level": "project",
+      "title": "Audit Kerentanan Dependensi Berkala (Dependency Vulnerability Scanning)",
+      "rule": "Proyek WAJIB menjalankan scanner kerentanan dependensi secara berkala: govulncheck atau go vet untuk Go, npm audit atau pnpm audit untuk Node.js. Dependensi dengan CVE severity HIGH atau CRITICAL wajib di-update atau di-patch dalam waktu maksimal 7 hari kerja setelah advisory diterbitkan.",
+      "rationale": "Dependensi pihak ketiga adalah vektor serangan supply chain yang paling umum. Satu library yang memiliki kerentanan RCE dapat memberikan akses penuh ke server production meskipun kode aplikasi sendiri sudah aman.",
+      "inspection_check": "Jalankan govulncheck ./... pada backend Go dan npm audit pada frontend Node.js. Periksa output apakah ada vulnerability dengan severity HIGH atau CRITICAL.",
+      "suggested_action": "Tambahkan langkah govulncheck dan npm audit ke dalam script CI/CD atau pre-commit hook. Update dependensi yang memiliki CVE kritis segera.",
+      "severity": "critical"
+    }
+  ]
+}

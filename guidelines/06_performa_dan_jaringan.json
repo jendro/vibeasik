@@ -1,0 +1,107 @@
+{
+  "category": "performa_dan_jaringan",
+  "name": "Standar Performa, Kueri Berat & Jaringan",
+  "description": "Pedoman alokasi port bebas bentrok, eliminasi N+1 query, optimasi kueri berat, non-blocking I/O, dan pencegahan connection leak",
+  "guidelines": [
+    {
+      "id": "NET-001",
+      "level": "global",
+      "title": "Alokasi Port Jaringan per Blok Proyek (PORTS.md)",
+      "rule": "Setiap proyek yang dikelola punya satu blok 10 port tetap di rentang 4100-4999 (projects.port_slot, registri PORTS.md ditulis engine, Aturan 35): +0..+4 frontend, +5..+9 backend/service. Engine mengalokasikan slot & run_port otomatis saat proyek didaftarkan/diaudit/engine start, sehingga semua proyek bisa dijalankan serentak tanpa bentrok. Aplikasi wajib membaca port dari env PORT (bukan hardcoded) dan URL FE→BE lewat env. Port bawaan framework (3000, 8080) tidak dipakai sebagai run_port.",
+      "rationale": "Mencegah error 'address already in use' dan membuat Run proyek mana pun (atau semuanya sekaligus) langsung jalan tanpa mengatur port manual.",
+      "inspection_check": "Audit: bentrok port di dalam proyek (CRITICAL) dan port efektif sama dengan proyek lain (WARNING PORT-SHARED-<port>). Alokasi slot dikerjakan engine (runner.EnsureProjectPorts), bukan todo.",
+      "suggested_action": "Tidak perlu mengatur port manual: jalankan audit atau restart engine agar port dipindah ke blok proyek. Kode proyek cukup membaca env PORT dan URL API dari env; jangan mengubah PORTS.md/run_port sendiri.",
+      "severity": "medium"
+    },
+    {
+      "id": "NET-002",
+      "level": "global",
+      "title": "All-Interface LAN Binding (0.0.0.0)",
+      "rule": "Service daemon lokal yang dimaksudkan untuk kolaborasi tim atau akses mobile di LAN wajib melakukan binding ke 0.0.0.0 bukan hanya 127.0.0.1.",
+      "rationale": "Memungkinkan testing responsif dari HP fisik di jaringan WiFi yang sama dan integrasi AI remote dari komputer lain.",
+      "inspection_check": "Periksa file .env apakah HOST=0.0.0.0.",
+      "suggested_action": "Set HOST=0.0.0.0 pada file .env local-engine dan studio-frontend.",
+      "severity": "medium"
+    },
+    {
+      "id": "NET-003",
+      "level": "component",
+      "title": "Eliminasi N+1 Query & Kueri Database di Dalam Perulangan",
+      "rule": "Dilarang keras mengeksekusi kueri database (db.Find, db.Query, repo.Get, orm.select) di dalam blok perulangan (for, while, foreach, map). Semua data relasional wajib diambil secara batch menggunakan Eager Loading (GORM Preload, SQL JOIN, atau WHERE id IN (...)) di luar loop.",
+      "rationale": "N+1 query menghasilkan latensi jaringan berlipat ganda O(N), menghabiskan kuota koneksi database, dan menyebabkan API timeout saat dataset membesar.",
+      "inspection_check": "Pindai pemanggilan method database di dalam blok for/while loop.",
+      "suggested_action": "Refactor pemanggilan database ke luar loop dengan eager loading Preload atau batch WHERE IN.",
+      "severity": "critical"
+    },
+    {
+      "id": "NET-004",
+      "level": "component",
+      "title": "Optimasi Kueri Berat & Pencegahan Full Table Scan",
+      "rule": "Dilarang menggunakan kueri dengan wildcard di awal ('%keyword%') pada tabel bervolume tinggi tanpa Full-Text Index. Hindari penggunaan 'SELECT *' pada kueri produksi; cantumkan kolom yang dibutuhkan secara spesifik.",
+      "rationale": "Wildcard di awal mematikan penggunaan B-Tree index dan memaksa database melakukan Full Table Scan membaca jutaan baris ke memori disk I/O.",
+      "inspection_check": "Pindai query SQL yang menggunakan LIKE '%...%' atau SELECT * tanpa LIMIT.",
+      "suggested_action": "Ganti dengan full-text search engine (FTS5 SQLite / pg_trgm / Elasticsearch) atau sebutkan kolom spesifik.",
+      "severity": "high"
+    },
+    {
+      "id": "NET-005",
+      "level": "component",
+      "title": "Non-Blocking I/O & Pencegahan Event Loop Saturation",
+      "rule": "Dilarang menggunakan pembacaan/penulisan file sinkron (fs.readFileSync di Node.js, pemanggilan CPU-bound berat tanpa goroutine di Go) di dalam handler request HTTP.",
+      "rationale": "Operasi sinkron memblokir event loop utama sehingga ribuan request lain yang masuk harus antre dan mengalami lonjakan latency drastis (thread starvation).",
+      "inspection_check": "Pindai penggunaan Sync I/O di dalam handler HTTP.",
+      "suggested_action": "Ganti dengan fungsi asynchronous (fs.promises.readFile) atau delegasikan komputasi berat ke worker pool / background queue.",
+      "severity": "critical"
+    },
+    {
+      "id": "NET-006",
+      "level": "component",
+      "title": "Penutupan Kursor & Rollback Transaksi DB (Anti-Leak)",
+      "rule": "Setiap pemanggilan sql.Rows WAJIB diikuti dengan 'defer rows.Close()', dan setiap db.Begin() WAJIB memiliki pengaman 'defer tx.Rollback()'.",
+      "rationale": "Kursor yang tidak ditutup menyebabkan kebocoran koneksi pool database (connection leak), membuat backend kehabisan socket dan menolak request baru.",
+      "inspection_check": "Pindai pemanggilan db.Query dan db.Begin yang tidak memiliki defer Close atau Rollback.",
+      "suggested_action": "Pasang defer rows.Close() tepat setelah error handling kueri.",
+      "severity": "critical"
+    },
+    {
+      "id": "NET-007",
+      "level": "component",
+      "title": "Paginasi Wajib & Ukuran Halaman Adaptif Berdasar Bobot Baris",
+      "rule": "Setiap endpoint/query yang mengembalikan daftar entitas wajib dibatasi (limit/cursor) dan jumlah baris per permintaan TIDAK boleh angka tetap asal: turunkan dari bobot baris = byte JSON satu baris list (ukur p90 dari ±20 baris contoh). Rumus: limit = floor(100 KB ÷ bobot_baris), dibulatkan ke angka bulat, 1..200 (mobile 50 KB, maks 100). Acuan web: baris ≤500 B → 200, ≤1 KB → 100, ≤2 KB → 50, ≤4 KB → 25, ≤8 KB → 10, ≤16 KB → 5, ≤32 KB → 3; lebih berat dari itu list wajib proyeksi tipis. Server WAJIB memotong (clamp) parameter limit dari klien: tidak pernah melewati 200 baris maupun 512 KB ÷ bobot_baris, dan memakai default dari rumus bila limit kosong. Respons list memuat has_more/next_cursor.",
+      "rationale": "Serialisasi JSON linier terhadap byte (±10 ns/byte decode, 100 KB < 1 ms, 1 MB ≈ 9 ms di server; 3–6× lebih lambat di ponsel), jadi yang mahal adalah transfer jaringan, memori, dan render DOM. Target 100 KB mentah per halaman (≈ 15–25 KB setelah gzip) memuat dalam < 0,2 dtk di 4G lambat dan menjaga p95 API list ≤ 300 ms (RAIL: < 100 ms terasa instan, < 1 dtk mengalir). Baris kecil boleh banyak per load; baris besar harus sedikit — angka tetap 50/100 membuat baris 20 KB menjadi 2 MB per respons.",
+      "inspection_check": "Periksa setiap handler/repository list: ada Limit/cursor? limit klien di-clamp? default limit memperhitungkan ukuran baris (bukan 'ambil semua')? Temuan: .Find()/SELECT tanpa Limit di tabel yang bisa tumbuh, parameter limit tanpa batas atas, default >200 baris, atau respons list >512 KB untuk 1 halaman.",
+      "suggested_action": "Ukur bobot baris, hitung limit lewat rumus (MCP vibeasik_paging_plan {columns|row_bytes, table_rows, mobile}), buat helper clamp tunggal (default dari rumus, maks min(200, 512KB÷baris)), kembalikan {items, has_more, next_cursor} dan tambahkan test yang memastikan limit=100000 dipotong.",
+      "severity": "high"
+    },
+    {
+      "id": "NET-008",
+      "level": "component",
+      "title": "Proyeksi Tipis pada List: Kolom Berat Dilarang Ikut Daftar",
+      "rule": "Query list hanya memilih kolom yang benar-benar tampil di baris (tanpa SELECT * dan tanpa mengirim seluruh struct model). Kolom rata-rata >1 KB (text/longtext/JSON/blob/base64, analisis/ringkasan panjang, screenshot) tidak boleh ada di respons list: sediakan endpoint detail (GET /x/:id) atau ringkasan terpotong (mis. 200 karakter) + tautan. Bobot baris list ideal ≤ 2 KB; di atas 4 KB wajib proyeksi tipis.",
+      "rationale": "Satu kolom longtext membuat setiap baris list 10–100× lebih berat sehingga halaman harus dikecilkan jadi 1–3 baris atau payload membengkak. Memangkas kolom berat adalah cara termurah memperbesar jumlah baris per load tanpa mengorbankan kecepatan; juga mengurangi pemakaian memori DB dan serialisasi.",
+      "inspection_check": "Cari SELECT *, db.Find(&models) pada handler list, DTO list yang memuat field Text/JSON/Blob, dan respons list yang berisi objek penuh bersarang. Periksa ukuran respons list nyata (curl | wc -c) terhadap jumlah baris.",
+      "suggested_action": "Buat DTO/ kolom terpilih khusus list (Select(...)/Omit(...)), pindahkan field berat ke endpoint detail, dan batasi teks ringkas dengan clip. Gunakan vibeasik_paging_plan untuk melihat kolom berat dan ukuran halaman yang dihasilkan.",
+      "severity": "high"
+    },
+    {
+      "id": "NET-009",
+      "level": "component",
+      "title": "Keyset Pagination & Hitung Total Murah untuk Tabel Besar",
+      "rule": "Tabel yang ≥ 10.000 baris atau yang halaman dalamnya (offset > 1.000) bisa diakses wajib memakai keyset/cursor: WHERE (sort_key, id) > (:last_sort, :last_id) ORDER BY sort_key, id LIMIT n+1, dengan indeks pada (sort_key, id). ORDER BY selalu memakai kolom stabil + id agar tidak ada baris ganda/terlewat antar halaman. Jangan COUNT(*) pada setiap request di tabel > 100.000 baris: kembalikan has_more (ambil limit+1) dan next_cursor; total hanya perkiraan atau di-cache bila UI benar-benar butuh.",
+      "rationale": "OFFSET n membaca lalu membuang n baris sehingga waktu naik linier terhadap kedalaman halaman; COUNT(*) memindai indeks/tabel penuh di setiap request. Keyset bekerja dalam waktu hampir konstan di halaman ke-1 maupun ke-10.000.",
+      "inspection_check": "Cari .Offset( dengan nilai dari klien pada tabel yang tumbuh, ORDER BY tanpa tiebreaker id, COUNT(*) di handler list, dan tidak adanya indeks pada kolom urut.",
+      "suggested_action": "Ganti ke cursor (kode base64 dari sort_key+id), tambahkan indeks komposit, kembalikan has_more/next_cursor, dan hitung total dari cache/perkiraan (pg_class.reltuples, tabel statistik) bila perlu.",
+      "severity": "medium"
+    },
+    {
+      "id": "NET-010",
+      "level": "project",
+      "title": "FE & Mobile Memuat Data BE dengan Benar saat Dev",
+      "rule": "URL API frontend dan mobile dibaca dari env (NUXT_PUBLIC_API_BASE, VITE_API_URL, --dart-define API_BASE_URL, ...) yang diisi dev.sh dari port BE proyek yang sama. Aplikasi mobile dilarang memanggil BE lewat localhost/127.0.0.1: pakai IP LAN laptop (HP fisik) atau 10.0.2.2 (emulator Android), BE listen 0.0.0.0, cleartext HTTP hanya di build debug. CORS BE mengizinkan origin FE dev.",
+      "rationale": "Port BE yang berpindah (blok PORTS.md) atau localhost di emulator membuat halaman kosong/timeout saat dev walau BE berjalan normal.",
+      "inspection_check": "Audit FE-API-PORT-MISMATCH (URL API di .env.local/.env/.env.development menunjuk port selain port BE) dan MOBILE-API-LOCALHOST (localhost di env atau kode lib/src/app mobile).",
+      "suggested_action": "Samakan URL API dengan port BE dan ekspor dari dev.sh; mobile memakai --dart-define/env dengan IP LAN.",
+      "severity": "high"
+    }
+  ]
+}

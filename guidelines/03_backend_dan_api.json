@@ -1,0 +1,117 @@
+{
+  "category": "backend_dan_api",
+  "name": "Standar Backend, Database & REST API",
+  "description": "Pedoman stabilitas API, liveness probe, pencegahan SQL Injection, RCE, Path Traversal, dan manajemen persistensi",
+  "guidelines": [
+    {
+      "id": "API-001",
+      "level": "component",
+      "title": "Wajib Health Check Probe (/health)",
+      "rule": "Setiap servis backend wajib menyediakan endpoint GET /health yang mengembalikan status 200 OK dengan format JSON ringkas {'status': 'ok'}. Endpoint ini tidak boleh memerlukan autentikasi.",
+      "rationale": "Dibutuhkan oleh sistem orkestrasi, reverse proxy (Caddy/Docker), dan diagnosa Vibeasik untuk verifikasi liveness servis.",
+      "inspection_check": "Periksa daftar rute pada komponen backend apakah rute /health terdaftar.",
+      "suggested_action": "Tambahkan handler GET /health pada router utama backend.",
+      "severity": "high"
+    },
+    {
+      "id": "API-002",
+      "level": "component",
+      "title": "Pure Go Database Driver (Zero CGO) untuk SQLite",
+      "rule": "Jika backend Go menggunakan SQLite lokal, DILARANG keras menggunakan mattn/go-sqlite3. SELALU gunakan github.com/glebarez/sqlite (pure Go).",
+      "rationale": "CGO merusak kemampuan cross-compile instan ke Windows (.exe) dan memperlambat proses build.",
+      "inspection_check": "Periksa go.mod pada backend untuk mendeteksi keberadaan mattn/go-sqlite3.",
+      "suggested_action": "Ganti modul mattn/go-sqlite3 dengan github.com/glebarez/sqlite di go.mod.",
+      "severity": "critical"
+    },
+    {
+      "id": "API-003",
+      "level": "component",
+      "title": "Typed API Responses & Structured Error Codes",
+      "rule": "Semua respon REST API harus mengembalikan format payload JSON yang konsisten dengan HTTP status code yang tepat (200, 201, 400, 401, 404, 500) dan pesan error yang terstruktur.",
+      "rationale": "Mencegah kegagalan parsing pada klien Nuxt/Flutter dan memudahkan debugging error runtime.",
+      "inspection_check": "Analisis rute API dan handler error handling pada backend.",
+      "suggested_action": "Bungkus response error ke dalam format standar {'error': 'Deskripsi pesan'}.",
+      "severity": "medium"
+    },
+    {
+      "id": "API-004",
+      "level": "component",
+      "title": "Pencegahan Command Injection & Remote Code Execution (RCE)",
+      "rule": "DILARANG keras melewatkan input pengguna langsung ke pemanggilan sistem operasi seperti exec.Command, child_process.exec, system(), eval(), atau shell interpreter tanpa allowlist argumen yang ketat dan pemisahan argumen terpisah.",
+      "rationale": "Celah Command Injection memungkinkan penyerang mengambil alih server host sepenuhnya, membaca file sensitif, menghapus database, atau memasang pintu belakang (backdoor).",
+      "inspection_check": "Pindai kode sumber untuk pemanggilan exec.Command, os/exec, atau eval() yang menggabungkan variabel string dinamis.",
+      "suggested_action": "Hindari eksekusi shell. Jika wajib, gunakan allowlist ketat dan lewatkan argumen sebagai array slice terpisah tanpa shell invocation (sh -c / bash -c).",
+      "severity": "critical"
+    },
+    {
+      "id": "API-005",
+      "level": "component",
+      "title": "Mandatory Parameterized Query & SQL Injection Guard",
+      "rule": "Semua query database (SQL, GORM, Raw, Prisma, PDO) WAJIB menggunakan prepared statements dan parameterized placeholders (?, $1, :param). Dilarang menyambung string query dengan fmt.Sprintf, template literals, atau tanda plus (+).",
+      "rationale": "Penggabungan string mentah ke query SQL adalah penyebab utama kerentanan SQL Injection (OWASP A03), memicu pencurian data massal dan perusakan integritas data.",
+      "inspection_check": "Pindai pemanggilan db.Raw, db.Exec, atau db.Where yang memuat string concatenation atau formatting dinamis.",
+      "suggested_action": "Ganti string formatting dengan parameter binding placeholder (contoh: db.Where('email = ?', email)).",
+      "severity": "critical"
+    },
+    {
+      "id": "API-006",
+      "level": "component",
+      "title": "Sanitasi Jalur Berkas & Proteksi Path Traversal",
+      "rule": "Semua operasi pembacaan, penulisan, atau penghapusan berkas (os.ReadFile, fs.readFile) yang menerima nama file dari parameter pengguna WAJIB divalidasi dengan filepath.Clean() dan diverifikasi berada di dalam direktori dasar yang diizinkan (base directory boundary check).",
+      "rationale": "Karakter '../' atau file path absolut yang tidak tersanitasi memungkinkan penyerang membaca file sensitif sistem seperti /etc/passwd atau menimpa file konfigurasi server.",
+      "inspection_check": "Periksa handler berkas/unduhan apakah menggunakan input parameter secara langsung pada operasi path I/O.",
+      "suggested_action": "Gunakan filepath.Clean() dan pastikan strings.HasPrefix(targetPath, allowedBaseDir) bernilai true sebelum mengakses berkas.",
+      "severity": "critical"
+    },
+    {
+      "id": "API-007",
+      "level": "component",
+      "title": "Mitigasi Server-Side Request Forgery (SSRF)",
+      "rule": "Jika backend melakukan HTTP request keluar (webhook, fetch URL) berdasarkan URL yang diberikan klien, URL WAJIB divalidasi terhadap allowlist domain dan dilarang menjangkau alamat IP privat/internal (127.0.0.1, localhost, 169.254.169.254, 10.0.0.0/8, 192.168.0.0/16).",
+      "rationale": "Penyerang dapat memanfaatkan endpoint fetch untuk memindai port jaringan internal, mengakses metadata cloud AWS/GCP, atau berinteraksi dengan servis internal tanpa otorisasi.",
+      "inspection_check": "Pindai pemanggilan http.Get atau request library yang menerima parameter URL dari payload request.",
+      "suggested_action": "Validasi IP tujuan setelah DNS resolving dan tolak semua IP dalam subnet loopback dan privat RFC 1918.",
+      "severity": "critical"
+    },
+    {
+      "id": "API-008",
+      "level": "component",
+      "title": "Validasi Input DTO & Batas Ukuran Payload (Anti-DoS)",
+      "rule": "Setiap endpoint yang menerima request body (POST/PUT/PATCH) wajib memvalidasi tipe data dan batasan panjang input (DTO validation), serta menerapkan middleware pembatas ukuran body (misal: max 2MB untuk JSON, 10MB untuk upload).",
+      "rationale": "Payload JSON raksasa dapat menghabiskan memori RAM parser server (OOM) dan memicu penolakan layanan (Denial of Service / DoS).",
+      "inspection_check": "Periksa konfigurasi BodyLimit middleware pada web server dan fungsi validasi DTO pada handler.",
+      "suggested_action": "Pasang middleware BodyLimit pada router (misal: app.Use(recover.New()), app.Use(limiter.New())) dan validasi struct DTO.",
+      "severity": "high"
+    },
+    {
+      "id": "API-009",
+      "level": "component",
+      "title": "Context Propagation Wajib di Seluruh Layer (context.Context)",
+      "rule": "Seluruh method di layer service dan repository WAJIB menerima context.Context sebagai parameter pertama (misal: func (s *Service) GetProject(ctx context.Context, id uint) (*Project, error)). Context harus diteruskan dari handler HTTP ke service ke repository ke database query tanpa terputus.",
+      "rationale": "Context propagation memungkinkan timeout otomatis (mencegah query database menggantung selamanya), cancellation saat klien memutus koneksi (menghemat resource server), dan propagasi metadata tracing untuk observability.",
+      "inspection_check": "Periksa signature method di service/ dan repository/ apakah parameter pertama bertipe context.Context. Pindai pemanggilan db.Find atau db.Query yang tidak menggunakan WithContext(ctx).",
+      "suggested_action": "Tambahkan ctx context.Context sebagai parameter pertama di semua method service dan repository. Gunakan db.WithContext(ctx).Find(...) untuk meneruskan context ke GORM.",
+      "severity": "high"
+    },
+    {
+      "id": "API-010",
+      "level": "component",
+      "title": "Constructor-Based Dependency Injection (Dilarang Global Variable & init())",
+      "rule": "Dilarang menginisialisasi dependensi (koneksi database, HTTP client, service instance) menggunakan variabel global package-level atau fungsi init(). Seluruh dependensi wajib diinjeksikan melalui constructor function (misal: NewProjectService(repo ProjectRepository) *ProjectService) dan di-wire di composition root (main.go atau cmd/).",
+      "rationale": "Global state menyebabkan coupling tersembunyi, membuat unit test tidak mungkin mengisolasi dependensi, dan mempersulit debugging karena urutan inisialisasi tidak eksplisit.",
+      "inspection_check": "Pindai file di internal/ untuk variabel global bertipe *gorm.DB, *http.Client, atau service instance yang dideklarasikan di level package. Periksa penggunaan func init() yang menginisialisasi state.",
+      "suggested_action": "Pindahkan inisialisasi ke fungsi New*() dan wire seluruh dependensi di main.go: repo := NewRepo(db); svc := NewService(repo); handler := NewHandler(svc).",
+      "severity": "high"
+    },
+    {
+      "id": "API-011",
+      "level": "component",
+      "title": "Idempotent API Design untuk Operasi Mutasi Kritis",
+      "rule": "Operasi POST yang memiliki efek samping signifikan (pembuatan order, pembayaran, pengiriman email, deploy) wajib mendukung idempotency key melalui header (Idempotency-Key) atau parameter unik. Server harus menyimpan hasil response pertama dan mengembalikan response yang sama jika request dengan key yang sama dikirim ulang.",
+      "rationale": "Jaringan tidak reliable: timeout, retry otomatis browser, dan double-click pengguna dapat mengirim request identik berkali-kali. Tanpa idempotency, operasi kritis tereksekusi ganda (duplikat order, pembayaran ganda).",
+      "inspection_check": "Periksa endpoint POST kritis apakah menyertakan pengecekan duplikasi berdasarkan unique key atau idempotency header.",
+      "suggested_action": "Tambahkan middleware atau guard di handler yang membaca header Idempotency-Key, cek di cache/DB apakah key sudah diproses, dan kembalikan cached response jika sudah ada.",
+      "severity": "medium"
+    }
+  ]
+}

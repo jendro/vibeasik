@@ -1,0 +1,67 @@
+{
+  "category": "error_handling_dan_observability",
+  "name": "Standar Error Handling, Logging & Observability",
+  "description": "Pedoman penanganan error terstruktur, structured logging, panic recovery, request tracing, graceful shutdown, dan pemisahan probe liveness/readiness",
+  "guidelines": [
+    {
+      "id": "OBS-001",
+      "level": "component",
+      "title": "Structured Logging (Dilarang fmt.Println & console.log di Production)",
+      "rule": "Dilarang menggunakan fmt.Println, fmt.Printf, log.Println (Go), atau console.log, console.error (JavaScript/TypeScript) untuk pencatatan log pada kode production. Gunakan structured logger yang menghasilkan output JSON terformat (zerolog, slog, zap untuk Go; pino, winston untuk Node.js) dengan level log yang benar (debug, info, warn, error).",
+      "rationale": "Log tidak terstruktur tidak bisa diparsing oleh log aggregator (Grafana Loki, ELK, CloudWatch). Tanpa level log, error tenggelam di antara ribuan baris info yang tidak relevan.",
+      "inspection_check": "Pindai kode sumber backend untuk pemanggilan fmt.Println, fmt.Printf, atau log.Println di luar file test. Pindai frontend untuk console.log di luar blok development conditional.",
+      "suggested_action": "Ganti fmt.Println dengan slog.Info() atau zerolog.Log().Msg() dan pastikan setiap log entry menyertakan field kontekstual (request_id, user_id, action).",
+      "severity": "critical"
+    },
+    {
+      "id": "OBS-002",
+      "level": "component",
+      "title": "Error Wrapping & Typed Domain Error",
+      "rule": "Seluruh error yang dikembalikan dari function wajib di-wrap dengan konteks menggunakan fmt.Errorf(\"deskripsi aksi: %w\", err) agar stack trace kontekstual tidak hilang. Untuk error yang dikonsumsi oleh handler HTTP, definisikan typed domain error (misal: ErrNotFound, ErrUnauthorized, ErrValidation) yang dapat dipetakan ke HTTP status code secara deterministik.",
+      "rationale": "Error mentah tanpa konteks (return err) menghasilkan pesan error yang tidak bisa di-debug (contoh: 'EOF' tanpa tahu dari operasi mana). Typed domain error memastikan handler selalu mengembalikan status code yang tepat.",
+      "inspection_check": "Pindai return err di layer service dan repository tanpa fmt.Errorf wrapping. Periksa handler HTTP apakah menggunakan mapping error-to-status-code yang konsisten.",
+      "suggested_action": "Bungkus setiap error return dengan fmt.Errorf(\"[nama_operasi] gagal: %w\", err) dan definisikan package errors/ dengan sentinel domain errors.",
+      "severity": "high"
+    },
+    {
+      "id": "OBS-003",
+      "level": "component",
+      "title": "Panic Recovery Middleware pada HTTP Server",
+      "rule": "Setiap HTTP server (Fiber, Gin, Express) WAJIB memasang middleware panic/crash recovery sebagai middleware pertama dalam chain agar unhandled panic pada satu request tidak menjatuhkan seluruh proses server.",
+      "rationale": "Panic yang tidak ditangkap akan menghentikan seluruh goroutine server (SIGABRT), menyebabkan downtime total untuk semua pengguna hanya karena satu request yang bermasalah.",
+      "inspection_check": "Periksa konfigurasi middleware server apakah menyertakan recover.New() (Fiber), gin.Recovery() (Gin), atau express-async-errors (Express).",
+      "suggested_action": "Tambahkan app.Use(recover.New()) sebagai middleware pertama pada inisialisasi Fiber app.",
+      "severity": "high"
+    },
+    {
+      "id": "OBS-004",
+      "level": "component",
+      "title": "Request ID & Correlation Header untuk Tracing",
+      "rule": "Setiap request HTTP yang masuk wajib diberi unique Request ID (UUID v4 atau ULID) melalui middleware, diteruskan sebagai header response (X-Request-ID), dan disertakan di setiap log entry selama pemrosesan request tersebut.",
+      "rationale": "Request ID memungkinkan korelasi log dari satu request yang melewati banyak layer (handler → service → repository → external API). Tanpa ini, debugging error pada production multi-concurrent menjadi mustahil.",
+      "inspection_check": "Periksa middleware chain apakah menyertakan request ID generator dan propagation ke context.",
+      "suggested_action": "Tambahkan middleware requestid.New() pada Fiber atau buat custom middleware yang meng-generate UUID dan menyimpannya di c.Locals(\"request_id\").",
+      "severity": "medium"
+    },
+    {
+      "id": "OBS-005",
+      "level": "component",
+      "title": "Graceful Shutdown (Signal Handling SIGTERM/SIGINT)",
+      "rule": "Server wajib menangani OS signal SIGTERM dan SIGINT untuk melakukan shutdown bersih: menolak koneksi baru, menunggu request yang sedang berjalan selesai (dengan timeout maksimal 15 detik), menutup koneksi database pool, dan membersihkan resource background worker sebelum proses berakhir.",
+      "rationale": "Tanpa graceful shutdown, deployment ulang atau restart akan memutus koneksi pengguna yang sedang aktif, menyebabkan data korup pada transaksi yang terputus, dan meninggalkan file lock atau koneksi DB zombie.",
+      "inspection_check": "Periksa main.go atau entrypoint server apakah menggunakan signal.NotifyContext atau os/signal.Notify dengan handler shutdown.",
+      "suggested_action": "Implementasikan signal listener: ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM) dan panggil app.ShutdownWithContext(ctx) setelah signal diterima.",
+      "severity": "high"
+    },
+    {
+      "id": "OBS-006",
+      "level": "component",
+      "title": "Pemisahan Probe: Liveness vs Readiness Health Check",
+      "rule": "Untuk deployment ke container orchestrator (Docker/Kubernetes), pisahkan endpoint liveness probe (GET /health → hanya memverifikasi proses hidup) dan readiness probe (GET /ready → memverifikasi koneksi database, cache, dan dependensi eksternal aktif).",
+      "rationale": "Jika liveness dan readiness digabung, kegagalan koneksi database sementara akan menyebabkan orchestrator me-restart container (padahal proses masih sehat), memperburuk kondisi dan memicu restart loop.",
+      "inspection_check": "Periksa daftar rute backend apakah menyediakan endpoint /health dan /ready terpisah dengan logika pengecekan yang berbeda.",
+      "suggested_action": "Buat endpoint GET /ready yang melakukan db.Exec('SELECT 1') dan mengembalikan 503 jika database tidak responsif, terpisah dari /health yang selalu mengembalikan 200.",
+      "severity": "medium"
+    }
+  ]
+}

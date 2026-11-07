@@ -1,0 +1,157 @@
+{
+  "category": "frontend_dan_antarmuka",
+  "name": "Standar Frontend, UX & Anti-Slop",
+  "description": "Pedoman kualitas tampilan, composable typed, pencegahan XSS, memory leak SPA, aksesibilitas, dan tata letak responsif",
+  "guidelines": [
+    {
+      "id": "FE-001",
+      "level": "component",
+      "title": "Typed Composable & Single Point of API Consumption",
+      "rule": "Semua pemanggilan API dari Nuxt 4 wajib melalui composables terpusat (seperti useApi.ts) menggunakan typed $fetch, bukan fetch mentah di setiap halaman.",
+      "rationale": "Memastikan header Authorization, base URL, dan penanganan timeout terkonsentrasi di satu tempat.",
+      "inspection_check": "Periksa folder composables/ pada frontend untuk mendeteksi useApi.ts.",
+      "suggested_action": "Buat composable useApi.ts untuk mengonsentrasikan seluruh interaksi HTTP.",
+      "severity": "high"
+    },
+    {
+      "id": "FE-002",
+      "level": "component",
+      "title": "Anti-Slop UI & Ergonomi Desain",
+      "rule": "Antarmuka harus bersih, minim visual noise, memiliki hierarki tipografi tegas, rasio kontras warna tinggi (WCAG AA), dan status loading/empty state yang jelas pada setiap aksi pengguna.",
+      "rationale": "Mencegah estetika generic AI yang melelahkan mata dan meningkatkan kepuasan penggunaan developer.",
+      "inspection_check": "Periksa keberadaan skeleton loader, empty state card, dan palet warna kontras.",
+      "suggested_action": "Terapkan prinsip antislop-ui: hindari gradien berlebih, gunakan whitespace proporsional, dan sediakan feedback interaktif.",
+      "severity": "medium"
+    },
+    {
+      "id": "FE-003",
+      "level": "component",
+      "title": "Mobile Responsive & Adaptive Viewport",
+      "rule": "Layout harus beradaptasi mulus dari layar HP (360px), tablet, hingga layar desktop lebar dengan collapsible navigation drawer dan fluid container.",
+      "rationale": "Memungkinkan monitoring sistem dari perangkat mobile/HP di jaringan LAN lokal.",
+      "inspection_check": "Periksa penggunaan breakpoint Tailwind (sm:, md:, lg:) pada layout dan sidebar.",
+      "suggested_action": "Pastikan sidebar memiliki mode collapsible dan mobile drawer dengan tombol toggle responsif.",
+      "severity": "medium"
+    },
+    {
+      "id": "FE-004",
+      "level": "component",
+      "title": "Larangan Alert & Confirm Bawaan Browser (Zero Alert Policy)",
+      "rule": "Jangan pernah gunakan confirmation atau notifikasi dalam bentuk alert bawaan browser (alert(), confirm(), prompt()). Selalu gunakan toast notification (useToast() dari Nuxt UI) yang muncul di pojok kanan atas (top-right) untuk notifikasi, atau modal dialog kustom yang elegan untuk konfirmasi aksi.",
+      "rationale": "Browser alert bersifat synchronous dan blocking, merusak estetika antarmuka modern, mengganggu alur kerja pengguna (UX), serta tidak konsisten di berbagai browser dan platform.",
+      "inspection_check": "Periksa kode frontend terhadap pemanggilan alert(, confirm(, atau prompt(.",
+      "suggested_action": "Ganti pemanggilan alert() dengan useToast() dari Nuxt UI dan konfirmasi dengan modal dialog kustom.",
+      "severity": "high"
+    },
+    {
+      "id": "FE-005",
+      "level": "component",
+      "title": "Safe HTML Rendering & Proteksi XSS (Larangan Raw v-html)",
+      "rule": "Dilarang merender input teks dari pengguna atau API eksternal menggunakan v-html (Vue) atau dangerouslySetInnerHTML (React) tanpa melewati library sanitizer HTML (seperti DOMPurify).",
+      "rationale": "Penyerang dapat menyuntikkan script JavaScript berbahaya (Cross-Site Scripting / XSS) yang mencuri token session dan mengeksekusi aksi ilegal atas nama pengguna.",
+      "inspection_check": "Pindai file template terhadap keberadaan v-html atau innerHTML.",
+      "suggested_action": "Ganti v-html dengan text interpolation biasa ({{ text }}), atau bungkus nilai dengan DOMPurify.sanitize(content).",
+      "severity": "critical"
+    },
+    {
+      "id": "FE-006",
+      "level": "component",
+      "title": "Pembersihan Event Listener & Memory Leak SPA",
+      "rule": "Setiap pendaftaran window.addEventListener, document.addEventListener, atau setInterval di dalam komponen wajib dibersihkan di dalam hook onUnmounted / onBeforeUnmount.",
+      "rationale": "Pada Single Page Application (SPA), event listener yang tertinggal akan terus mengeksekusi callback di background dan menahan memori DOM komponen yang sudah dihancurkan.",
+      "inspection_check": "Periksa keberadaan addEventListener atau setInterval tanpa pasangan removeEventListener atau clearInterval di onUnmounted.",
+      "suggested_action": "Gunakan useEventListener dari VueUse atau daftarkan removeEventListener pada lifecycle onUnmounted().",
+      "severity": "high"
+    },
+    {
+      "id": "FE-007",
+      "level": "component",
+      "title": "Zero Layout Shifts (CLS) & Skeleton Loading State",
+      "rule": "Setiap proses pengambilan data asinkron wajib menampilkan placeholder skeleton loader yang dimensinya menyerupai konten akhir, dan setiap elemen media (gambar/video) wajib memiliki rasio aspek atau lebar/tinggi eksplisit.",
+      "rationale": "Mencegah Cumulative Layout Shift (CLS) yang membuat tombol meloncat saat halaman memuat data, yang sering menyebabkan salah klik oleh pengguna.",
+      "inspection_check": "Periksa halaman yang memuat data apakah memiliki USkeleton atau loader state yang proporsional.",
+      "suggested_action": "Tambahkan elemen skeleton placeholder saat status loading=true sebelum data siap dirender.",
+      "severity": "medium"
+    },
+    {
+      "id": "FE-008",
+      "level": "component",
+      "title": "Aksesibilitas & Rasio Kontras Warna (WCAG AA)",
+      "rule": "Warna teks terhadap warna latar belakang wajib memenuhi rasio kontras minimal 4.5:1 untuk teks normal dan 3:1 untuk teks tebal/besar sesuai standar WCAG 2.1 AA. Dilarang menggunakan teks abu-abu pudar di atas latar terang atau gelap.",
+      "rationale": "Teks dengan kontras rendah sulit dibaca oleh pengguna di luar ruangan dengan cahaya silau atau pengguna dengan gangguan penglihatan.",
+      "inspection_check": "Uji rasio kontras teks menggunakan antislop contrast checker atau DevTools a11y audit.",
+      "suggested_action": "Gunakan kelas warna netral dengan kontras kuat (misal: text-neutral-800 dark:text-neutral-100).",
+      "severity": "medium"
+    },
+    {
+      "id": "FE-009",
+      "level": "component",
+      "title": "Optimasi Pemanggilan API & Caching State Halaman (Anti-Reload Tab)",
+      "rule": "Pemanggilan API backend pada halaman dinamis atau sub-tab wajib dioptimasi dengan penyimpanan pada variabel/state lokal (seperti ref/useState/store) atau caching, sehingga saat pengguna berpindah-pindah tab antarmuka, data tidak di-fetch ulang terus-menerus kecuali ada pemicu refresh eksplisit atau data di backend berubah.",
+      "rationale": "Mencegah reload berulang yang membebani backend, menghabiskan kuota jaringan/bandwidth, dan merusak kenyamanan navigasi pengguna dengan skeleton berkedip terus-menerus.",
+      "inspection_check": "Periksa komponen sub-tab atau halaman yang memanggil fungsi API di dalam onMounted() tanpa pemeriksaan cache (contoh: if (!data.value) fetchData()).",
+      "suggested_action": "Simpan hasil pemanggilan API di level state halaman atau composable induk, lalu lekatkan props/cache ke sub-komponen tab.",
+      "severity": "high"
+    },
+    {
+      "id": "FE-010",
+      "level": "component",
+      "title": "Pencegahan Overfetching & Unused API Data pada Halaman",
+      "rule": "Komponen atau tab dilarang memanggil endpoint API backend jika datanya tidak digunakan secara esensial pada tampilan halaman tersebut. Jangan memanggil endpoint agregasi berat (seperti base-knowledge atau visual audit) hanya untuk membaca 1-2 metrik kecil yang sebenarnya sudah tersedia di parent state atau endpoint terpisah yang lebih ringan.",
+      "rationale": "Overfetching dan dead API calls membuang komputasi CPU backend, memperlambat rendering antarmuka, dan meningkatkan jejak memori pada client.",
+      "inspection_check": "Pindai pemanggilan API berat pada sub-tab yang tidak memiliki binding template atau hanya membaca properti minim yang sudah ada di props.",
+      "suggested_action": "Hapus pemanggilan endpoint yang tidak diperlukan dari lifecycle komponen, dan manfaatkan computed property dari props yang sudah ada.",
+      "severity": "high"
+    },
+    {
+      "id": "FE-011",
+      "level": "component",
+      "title": "Zero TypeScript `any` Policy (Strict Type Safety)",
+      "rule": "Dilarang menggunakan tipe `any` pada kode TypeScript production. Semua variabel, parameter fungsi, return type, dan reactive state (ref, computed) wajib dideklarasikan dengan tipe eksplisit atau generic. Pengecualian hanya diizinkan pada file adapter pihak ketiga dengan komentar `// eslint-disable-next-line @typescript-eslint/no-explicit-any` dan justifikasi tertulis.",
+      "rationale": "Penggunaan `any` menghilangkan seluruh manfaat TypeScript: autocompletion IDE mati, refactoring menjadi berbahaya karena compiler tidak mendeteksi perubahan kontrak, dan bug runtime yang seharusnya tertangkap saat kompilasi lolos ke production.",
+      "inspection_check": "Pindai file .ts dan .vue pada folder app/ dan composables/ terhadap deklarasi tipe `: any`, `as any`, atau `<any>`.",
+      "suggested_action": "Ganti setiap `any` dengan tipe spesifik dari app/types/ atau definisikan interface baru. Gunakan `unknown` jika tipe benar-benar tidak diketahui dan tambahkan type guard.",
+      "severity": "high"
+    },
+    {
+      "id": "FE-012",
+      "level": "component",
+      "title": "Code Splitting & Lazy Loading untuk Halaman Non-Kritis",
+      "rule": "Halaman atau komponen berat yang tidak termasuk dalam initial render (halaman settings, modal detail, editor kode) wajib dimuat secara lazy menggunakan defineAsyncComponent (Vue) atau dynamic import() (Nuxt auto-routing). Bundle JavaScript awal dilarang melebihi 200KB gzipped.",
+      "rationale": "Bundle monolitik memperlambat Time to Interactive (TTI) dan First Contentful Paint (FCP), terutama pada jaringan mobile lambat. Code splitting memastikan pengguna hanya mengunduh kode yang dibutuhkan pada halaman aktif.",
+      "inspection_check": "Periksa ukuran bundle build (nuxt analyze) dan identifikasi chunk yang melebihi 100KB. Periksa apakah komponen berat diimpor secara statis di halaman utama.",
+      "suggested_action": "Gunakan defineAsyncComponent(() => import('~/components/HeavyEditor.vue')) untuk komponen berat dan pastikan Nuxt auto-routing melakukan code-split per halaman secara otomatis.",
+      "severity": "medium"
+    },
+    {
+      "id": "FE-013",
+      "level": "component",
+      "title": "Proper SSR Data Fetching (useAsyncData/useFetch Nuxt)",
+      "rule": "Pada halaman Nuxt yang mendukung SSR, dilarang mengambil data menggunakan pola onMounted + raw $fetch karena data tidak tersedia saat server-side rendering (menyebabkan flash kosong atau hydration mismatch). Gunakan useAsyncData() atau useFetch() agar data sudah tersedia di HTML yang dikirim server.",
+      "rationale": "Data yang di-fetch hanya di onMounted tidak termasuk dalam HTML yang di-render server, menyebabkan pengguna melihat skeleton/kosong sebelum JavaScript selesai dieksekusi. Ini merusak SEO dan Core Web Vitals (LCP).",
+      "inspection_check": "Pindai file halaman (.vue di pages/) untuk pola onMounted yang memanggil $fetch atau useApi tanpa pembungkus useAsyncData/useFetch.",
+      "suggested_action": "Ganti pola onMounted(() => { data.value = await $fetch(...) }) dengan const { data } = await useAsyncData('key', () => $fetch(...)).",
+      "severity": "high"
+    },
+    {
+      "id": "FE-014",
+      "level": "component",
+      "title": "Daftar Besar di UI: Paging Server-Side, Batas DOM & Virtualisasi",
+      "rule": "Tabel/list/kartu yang datanya bisa tumbuh memuat data per halaman dari server (limit sesuai bobot baris, lihat NET-007), bukan mengambil semua lalu memotong di klien. Jumlah simpul DOM yang dirender sekaligus ≤ 800 (baris di layar × simpul per baris; Lighthouse memperingatkan >800 dan gagal >1400): baris lebih banyak dari itu wajib virtual list/windowing atau tombol 'Muat lagi'. Tampilkan skeleton saat memuat, pertahankan data lama saat pindah halaman (tanpa layar kosong), batalkan request usang (AbortController) saat filter/halaman berganti, debounce pencarian ≥ 250 ms, dan simpan halaman/filter di query string agar bisa kembali tanpa memuat ulang.",
+      "rationale": "DOM besar memperlambat style/layout/paint dan memakai memori; mengambil semua data membuat waktu tunggu pertama tak terbatas. Halaman yang dibatasi anggaran byte dan DOM tetap terasa instan (< 100 ms respons UI, < 1 dtk muat) di perangkat menengah.",
+      "inspection_check": "Cari v-for/map pada array yang bukan hasil paging server, fetch tanpa limit, tabel dengan ratusan baris tanpa virtualisasi, pencarian tanpa debounce, dan tidak adanya state loading/empty/error + penanganan request tumpang tindih.",
+      "suggested_action": "Pakai composable paging (limit, cursor/page, hasMore, loading, abort), UTable/UVirtualList atau @tanstack/vue-virtual untuk daftar panjang, query string untuk halaman/filter, dan hitung limit via MCP vibeasik_paging_plan {nodes_per_row}.",
+      "severity": "high"
+    },
+    {
+      "id": "FE-015",
+      "level": "component",
+      "title": "Zero Duplicate Import (Termasuk WARN Duplicated imports Nuxt)",
+      "rule": "Satu modul hanya diimpor sekali per berkas (gabungkan import nilai; import type boleh terpisah). Pada Nuxt, satu nama auto-import hanya boleh diekspor dari satu berkas di composables/ atau utils/ sehingga dev server bebas WARN 'Duplicated imports'.",
+      "rationale": "Unimport diam-diam memilih salah satu definisi saat nama kembar, sehingga kode bisa memanggil fungsi yang salah; import ganda menambah noise dan konflik merge.",
+      "inspection_check": "Audit FE-DUPLICATE-IMPORT: import modul sama berulang dalam satu berkas JS/TS/Vue, dan nama ekspor kembar antar berkas composables/ & utils/ (root maupun app/).",
+      "suggested_action": "Gabungkan import ke satu pernyataan; untuk auto-import kembar sisakan satu definisi atau ganti nama salah satunya dan perbarui pemanggilnya.",
+      "severity": "medium"
+    }
+  ]
+}

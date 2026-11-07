@@ -1,0 +1,77 @@
+{
+  "category": "devops_dan_deployment",
+  "name": "Standar DevOps, Container & Deployment",
+  "description": "Pedoman containerisasi multi-stage, .dockerignore, docker-compose development, semantic versioning, dan reproducible build",
+  "guidelines": [
+    {
+      "id": "DEV-001",
+      "level": "project",
+      "title": "Multi-Stage Dockerfile (Builder vs Runner Separation)",
+      "rule": "Dockerfile untuk production build WAJIB menggunakan multi-stage build: stage pertama (builder) menginstal compiler/SDK dan melakukan kompilasi, stage kedua (runner) hanya menyalin binary hasil kompilasi ke image minimal (alpine, distroless, atau scratch). Image final DILARANG mengandung compiler, source code, atau file development.",
+      "rationale": "Image Docker monolitik yang mengandung compiler dan source berukuran ratusan MB, memperlambat deploy, memperluas attack surface, dan memboroskan storage registry.",
+      "inspection_check": "Periksa Dockerfile apakah menggunakan pattern 'FROM ... AS builder' diikuti 'FROM alpine/distroless' dengan COPY --from=builder.",
+      "suggested_action": "Refactor Dockerfile menjadi 2 stage: stage 'builder' untuk kompilasi (FROM golang:1.22-alpine AS builder) dan stage 'runner' untuk eksekusi (FROM alpine:3.19 dengan COPY --from=builder).",
+      "severity": "high"
+    },
+    {
+      "id": "DEV-002",
+      "level": "project",
+      "title": "Wajib .dockerignore untuk Mengecilkan Build Context",
+      "rule": "Setiap proyek yang memiliki Dockerfile WAJIB menyediakan file .dockerignore yang mengecualikan .git/, node_modules/, .env, dist/, bin/, *.exe, log/, dan file IDE (.vscode/, .idea/) dari Docker build context.",
+      "rationale": "Tanpa .dockerignore, seluruh isi direktori (termasuk .git berukuran ratusan MB dan node_modules) dikirim ke Docker daemon, memperlambat proses build secara drastis dan berpotensi menyertakan secrets ke dalam image.",
+      "inspection_check": "Periksa keberadaan file .dockerignore di root proyek atau di samping Dockerfile. Verifikasi bahwa .git, node_modules, dan .env tercantum di dalamnya.",
+      "suggested_action": "Buat file .dockerignore dengan entri: .git, node_modules, .env, dist/, bin/, *.exe, .vscode/, .idea/, *.log.",
+      "severity": "high"
+    },
+    {
+      "id": "DEV-003",
+      "level": "project",
+      "title": "Docker Compose untuk Lingkungan Development Lokal",
+      "rule": "Proyek multi-komponen (backend + frontend + database) wajib menyediakan file docker-compose.yml atau docker-compose.dev.yml yang dapat menjalankan seluruh stack development dengan satu perintah (docker compose up).",
+      "rationale": "Mengeliminasi variasi environment antar developer ('works on my machine' problem), mempercepat onboarding anggota tim baru, dan memastikan konsistensi versi database dan runtime.",
+      "inspection_check": "Periksa keberadaan docker-compose.yml atau docker-compose.dev.yml di root proyek.",
+      "suggested_action": "Buat docker-compose.yml dengan service untuk database (SQLite/PostgreSQL), backend (Go), dan frontend (Node/Nuxt) lengkap dengan volume mount untuk hot-reload.",
+      "severity": "medium"
+    },
+    {
+      "id": "DEV-004",
+      "level": "project",
+      "title": "Semantic Versioning & Changelog Terdokumentasi",
+      "rule": "Setiap rilis resmi proyek wajib menggunakan tag semantic versioning (vMAJOR.MINOR.PATCH) pada git dan menyediakan file CHANGELOG.md yang mendokumentasikan perubahan, penambahan fitur, perbaikan bug, dan breaking changes per versi.",
+      "rationale": "Tanpa versioning, pengguna dan operator tidak dapat menentukan kompatibilitas, rollback target, atau perubahan apa yang menyebabkan regresi pada deployment tertentu.",
+      "inspection_check": "Periksa keberadaan CHANGELOG.md di root proyek dan keberadaan tag git (git tag -l 'v*').",
+      "suggested_action": "Buat file CHANGELOG.md dengan format Keep a Changelog (keepachangelog.com) dan tag setiap rilis dengan git tag -a v1.0.0 -m 'Initial stable release'.",
+      "severity": "medium"
+    },
+    {
+      "id": "DEV-005",
+      "level": "project",
+      "title": "Reproducible Build (Lock File & Pinned Dependencies)",
+      "rule": "Binary dan bundle yang dihasilkan WAJIB bisa di-build ulang secara identik dari source yang sama. Semua dependensi wajib di-lock menggunakan lock file (go.sum untuk Go, package-lock.json / pnpm-lock.yaml untuk Node.js). Dilarang mengandalkan dependensi yang di-resolve secara dinamis tanpa lock file.",
+      "rationale": "Build yang tidak reproducible menyebabkan 'phantom bug' di mana binary production berbeda dari binary development karena versi dependensi berubah diam-diam antara waktu build.",
+      "inspection_check": "Periksa keberadaan go.sum di root backend Go dan package-lock.json atau pnpm-lock.yaml di root frontend Node.js. Verifikasi file lock ter-commit ke git.",
+      "suggested_action": "Jalankan go mod tidy dan commit go.sum. Jalankan npm ci (bukan npm install) di CI pipeline. Commit lock file ke repository.",
+      "severity": "high"
+    },
+    {
+      "id": "DEV-006",
+      "level": "component",
+      "title": "Lokasi Penyimpanan Berkas Tetap (Tanpa Object Storage)",
+      "rule": "Aplikasi yang menyimpan berkas di disk (bukan S3/MinIO/GCS/Azure Blob/Cloudinary) wajib memakai folder tetap: dibaca dari env (mis. STORAGE_DIR) dengan default absolut di sebelah binary (os.Executable), dibuat dengan MkdirAll saat start, dan di server ditempatkan di luar folder rilis (mis. /var/lib/<app>). Dilarang path relatif terhadap working directory, folder temp sistem untuk berkas permanen, path dari lokasi source (runtime.Caller), atau path home mesin developer.",
+      "rationale": "Binary hasil build dijalankan systemd/supervisor/docker dari working directory lain dan tanpa source tree, sehingga path relatif atau path source menyimpan ke tempat berbeda dan gagal memuat berkas lama; folder di dalam rilis terhapus saat deploy ulang.",
+      "inspection_check": "Audit STORAGE-RELATIVE-PATH, STORAGE-TEMP-DIR (dilewati bila kode memakai object storage), STORAGE-SOURCE-RELATIVE, dan STORAGE-MACHINE-PATH pada kode server.",
+      "suggested_action": "Satu helper storageDir() (env → folder binary), MkdirAll saat start, STORAGE_DIR didaftarkan di .env.example, folder penyimpanan di-ignore git.",
+      "severity": "high"
+    },
+    {
+      "id": "DEV-007",
+      "level": "project",
+      "title": "deploy.sh Wajib: Satu Berkas Env per Server & Kembali ke .env.local",
+      "rule": "Setiap proyek wajib memiliki deploy.sh di root. Pengguna cukup mengisi .env.server (atau .env.<nama> pilihannya, ./deploy.sh <nama>); skrip memasang berkas itu sebagai env aktif tiap komponen, build & upload ke server (host/path dari env tersebut), lalu SELALU mengembalikan env aktif ke .env.local lewat trap EXIT, termasuk saat deploy gagal. Semua berkas env asli ter-ignore git (.env, .env.*); hanya .env.example yang di-commit.",
+      "rationale": "Deploy tidak perlu mengedit konfigurasi manual, kredensial server tidak pernah masuk git, dan laptop dev tidak tertinggal memakai env produksi.",
+      "inspection_check": "Audit DEPLOY-SCRIPT-MISSING, DEPLOY-ENV-NOT-RESTORED (tidak ada .env.local + trap), DEPLOY-ENV-NOT-SELECTABLE (tidak memakai .env.server/.env.$NAMA), ditambah audit env Aturan 32 (ENV-FILE-TRACKED, ENV-NOT-IGNORED, ENV-IGNORE-INCOMPLETE).",
+      "suggested_action": "Buat deploy.sh: TARGET=${1:-server}, cek .env.$TARGET ada, trap restore EXIT (cp .env.local .env), cp .env.$TARGET .env, build, rsync/scp ke DEPLOY_HOST:DEPLOY_PATH. .gitignore: .env / .env.* / !.env.example.",
+      "severity": "high"
+    }
+  ]
+}
