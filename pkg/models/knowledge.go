@@ -30,6 +30,7 @@ const (
 	KnowledgeSrcDesign    = "design_library"  // cermin Galeri Desain: kesimpulan per jenis website, pola teramati, referensi
 	KnowledgeSrcTheory    = "design_theory"   // teori desain & teori warna (designlib/theory.json) bertaut ke contoh di Galeri Desain
 	KnowledgeSrcLesson    = "design_lesson"   // pelajaran desain before/after (gambar awal, gambar akhir, narasi konten)
+	KnowledgeSrcHub       = "hub"             // paket Pusat Pengetahuan vibeasik (ditarik dari server, bisa diperbarui)
 	KnowledgeSrcManual    = "manual"          // diajarkan manusia
 	KnowledgeSrcAgent     = "agent"           // dicatat agent coding lewat MCP
 )

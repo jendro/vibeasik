@@ -18,6 +18,7 @@ import (
 	"github.com/vibeasik/vibeasik/pkg/config"
 	"github.com/vibeasik/vibeasik/pkg/database"
 	"github.com/vibeasik/vibeasik/pkg/knowledge"
+	"github.com/vibeasik/vibeasik/pkg/knowledgesync"
 	"github.com/vibeasik/vibeasik/pkg/localauth"
 	"github.com/vibeasik/vibeasik/pkg/registry"
 	"github.com/vibeasik/vibeasik/pkg/standard"
@@ -59,6 +60,8 @@ var serveCmd = &cobra.Command{
 		registry.Edition = Edition
 		// Akun vibeasik (diaktifkan di PersistentPreRun): entitlement diperbarui berkala selama serve.
 		account.StartRefresher(ctx)
+		// Pusat Pengetahuan: tarik paket baru tiap hari (gagal jaringan diabaikan; pengetahuan lokal tetap jalan).
+		knowledgesync.StartAutoPull(ctx, db)
 		server := api.NewServer(db)
 		lan := listenHost != "127.0.0.1" && listenHost != "localhost" && listenHost != "::1"
 		server.SetLAN(lan)
