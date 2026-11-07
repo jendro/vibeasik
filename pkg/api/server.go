@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/vibeasik/vibeasik/pkg/activity"
+	"github.com/vibeasik/vibeasik/pkg/localauth"
 	"github.com/vibeasik/vibeasik/pkg/mcp"
 	"github.com/vibeasik/vibeasik/pkg/registry"
 	"github.com/vibeasik/vibeasik/pkg/repository"
@@ -23,6 +25,8 @@ import (
 
 // Server coordinates the Fiber REST API and MCP endpoints
 type Server struct {
+	token     string // token akses lokal (pkg/localauth)
+	lan       bool   // engine dibuka ke LAN: Host IP privat diterima
 	app       *fiber.App
 	db        *gorm.DB
 	repos     *repository.Repositories
@@ -45,10 +49,11 @@ func NewServer(db *gorm.DB) *Server {
 	app.Use(logger.New(logger.Config{
 		Format: "[${time}] ${status} - ${method} ${path} (${latency})\n",
 	}))
+	app.Use(securityHeaders)
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:  "*",
+		AllowOrigins:  corsOrigins(),
 		AllowMethods:  "GET,POST,PUT,DELETE,OPTIONS",
-		AllowHeaders:  "Origin, Content-Type, Accept, Authorization, " + headerMCPSession + ", " + headerExecToken,
+		AllowHeaders:  "Origin, Content-Type, Accept, Authorization, " + headerMCPSession + ", " + headerExecToken + ", " + localauth.Header,
 		ExposeHeaders: headerMCPSession,
 	}))
 
@@ -57,7 +62,13 @@ func NewServer(db *gorm.DB) *Server {
 	activity.Init(db)
 	mcpSrv := mcp.NewServer(db)
 
+	token, err := localauth.Token()
+	if err != nil {
+		log.Fatalf("token akses lokal tidak bisa dibuat di %s: %v", localauth.Path(), err)
+	}
+
 	s := &Server{
+		token:     token,
 		app:       app,
 		db:        db,
 		repos:     repos,
@@ -66,6 +77,8 @@ func NewServer(db *gorm.DB) *Server {
 		runner:    runner.NewService(db),
 	}
 
+	// Token & Host diperiksa sebelum route mana pun (termasuk Studio statis).
+	app.Use(s.localAccess)
 	s.setupRoutes()
 	return s
 }
@@ -319,11 +332,30 @@ func (s *Server) setupRoutes() {
 
 	// Mount Static Studio Frontend UI (Embedded or Local)
 	if httpFS, ok := ui.GetFileSystem(); ok {
+		// Aset ber-hash (/_nuxt/) boleh di-cache permanen; HTML & lainnya selalu divalidasi ulang agar
+		// Studio baru langsung terpakai setelah engine diperbarui (HTML lama menunjuk aset yang sudah tiada).
+		s.app.Use("/", func(c *fiber.Ctx) error {
+			// Aset ber-hash yang tidak ada: 404, jangan 200.html (bisa ter-cache sebagai JS).
+			if strings.HasPrefix(c.Path(), "/_nuxt/") {
+				f, openErr := httpFS.Open(c.Path())
+				if openErr != nil {
+					c.Set(fiber.HeaderCacheControl, "no-store")
+					return c.SendStatus(fiber.StatusNotFound)
+				}
+				_ = f.Close()
+			}
+			err := c.Next()
+			if strings.HasPrefix(c.Path(), "/_nuxt/") && c.Response().StatusCode() == fiber.StatusOK {
+				c.Set(fiber.HeaderCacheControl, "public, max-age=31536000, immutable")
+			} else {
+				c.Set(fiber.HeaderCacheControl, "no-cache")
+			}
+			return err
+		})
 		s.app.Use("/", filesystem.New(filesystem.Config{
 			Root:         httpFS,
 			Index:        "index.html",
 			NotFoundFile: "200.html",
-			MaxAge:       3600,
 			Next: func(c *fiber.Ctx) bool {
 				path := c.Path()
 				return strings.HasPrefix(path, "/api") || strings.HasPrefix(path, "/health") || strings.HasPrefix(path, "/downloads")

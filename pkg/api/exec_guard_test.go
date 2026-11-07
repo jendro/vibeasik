@@ -13,6 +13,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
+	"github.com/vibeasik/vibeasik/pkg/localauth"
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
@@ -66,6 +67,7 @@ func newGuardTestServer(t *testing.T) *Server {
 	t.Helper()
 	t.Setenv(envAllowLANExec, "")
 	t.Setenv(envExecToken, "")
+	t.Setenv(localauth.EnvToken, testLocalToken)
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	if err != nil {
 		t.Fatalf("open db: %v", err)
@@ -90,6 +92,8 @@ func newGuardTestServer(t *testing.T) *Server {
 	return NewServer(db)
 }
 
+const testLocalToken = "test-local-token"
+
 type guardCase struct {
 	method, path, body string
 	origin, token      string
@@ -99,7 +103,9 @@ type guardCase struct {
 func sendLAN(t *testing.T, s *Server, gc guardCase) (int, map[string]interface{}) {
 	t.Helper()
 	req := httptest.NewRequest(gc.method, gc.path, strings.NewReader(gc.body))
+	req.Host = "localhost" // lolos pemeriksaan Host; yang diuji di sini kebijakan eksekusi
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set(localauth.Header, testLocalToken)
 	if gc.origin != "" {
 		req.Header.Set("Origin", gc.origin)
 	}
@@ -244,6 +250,7 @@ func TestExecRoutesAllowedFromLoopback(t *testing.T) {
 	do := func(method, path, body, origin string) (int, map[string]interface{}) {
 		req, _ := http.NewRequest(method, base+path, strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set(localauth.Header, testLocalToken)
 		if origin != "" {
 			req.Header.Set("Origin", origin)
 		}

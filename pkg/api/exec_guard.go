@@ -12,9 +12,9 @@ import (
 )
 
 // Guard untuk endpoint yang mengeksekusi (atau menyimpan) perintah shell: dev runner, agent execute,
-// perubahan dev_command, custom agent, dan tool MCP sejenis. Engine bind ke 0.0.0.0 dengan CORS *,
-// jadi tanpa guard ini siapa pun di LAN — atau website mana pun yang dibuka di browser lokal — bisa
-// menjalankan perintah. Default: hanya loopback + origin localhost. Opt-in LAN lewat env.
+// perubahan dev_command, custom agent, dan tool MCP sejenis. Lapisan kedua setelah token akses lokal
+// (local_access.go): walau pemanggil punya token, eksekusi tetap hanya dari loopback + origin localhost,
+// kecuali LAN diizinkan sadar lewat env.
 const (
 	envAllowLANExec = "VIBEASIK_ALLOW_LAN_EXEC"
 	envExecToken    = "VIBEASIK_EXEC_TOKEN"
