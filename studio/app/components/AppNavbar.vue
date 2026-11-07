@@ -54,16 +54,13 @@ const pageTitle = computed(() => {
   if (route.path === '/audit-report') return 'Laporan Audit Diagnostik & Code Smells'
   if (route.path === '/runtime-test') return 'Uji Runtime'
   if (route.path === '/audit-learning') return 'Pembelajaran Audit (Vonis Keliru & Benar)'
-  if (route.path === '/scale-up') return 'Scale Up & Best Practice Aplikasi (BE, FE & Mobile)'
   if (route.path === '/delivery') return 'Delivery, Domain & Hosting'
-  if (route.path === '/academy') return 'Vibe Academy (Tutorial & Edukasi)'
   if (route.path === '/ai-hub') return 'AI Agent Hub & Templates'
   if (route.path === '/scan') return 'Pindai & Impor Repository'
   if (route.path === '/adapters') return 'Katalog Adapter Rute'
   if (route.path === '/mcp') return 'AI & MCP Protocol Hub'
   if (route.path === '/ports') return 'Monitor Port Lokal'
   if (route.path === '/queue') return 'Antrean Tugas & Pipeline'
-  if (route.path === '/download') return 'Pasang vibeasik'
   if (route.path === '/settings') return 'Pengaturan LLM & System One'
   if (route.path === '/design-library') return 'Galeri Desain (Referensi Tampilan untuk AI)'
   if (route.path === '/design-lessons') return 'Pelajaran Desain (Before / After)'
@@ -253,7 +250,7 @@ const pageTitle = computed(() => {
           class="hidden lg:inline-flex"
           title="Buka vibeasik.com"
         >
-          Web Publik
+          vibeasik.com
         </UButton>
 
         <!-- Quick Import Action -->

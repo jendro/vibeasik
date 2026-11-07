@@ -889,18 +889,6 @@ export const useApi = () => {
     return await $fetch<GuidelineCategory[]>(`${apiBase}/api/guidelines`)
   }
 
-  const getScaleUpPatterns = async (): Promise<ArchitecturePattern[]> => {
-    return await $fetch<ArchitecturePattern[]>(`${apiBase}/api/scaleup/patterns`)
-  }
-
-  const evaluateComponentArchitecture = async (componentId: number): Promise<ArchitectureEvaluation> => {
-    return await $fetch<ArchitectureEvaluation>(`${apiBase}/api/scaleup/evaluate/${componentId}`)
-  }
-
-  const evaluateProjectArchitecture = async (projectId: number): Promise<ArchitectureEvaluation[]> => {
-    return await $fetch<ArchitectureEvaluation[]>(`${apiBase}/api/scaleup/project-evaluate/${projectId}`)
-  }
-
   const scanSimilarities = async (): Promise<SimilarityScanResult> => {
     return await $fetch<SimilarityScanResult>(`${apiBase}/api/projects/similarity-scan`)
   }
@@ -1162,9 +1150,6 @@ export const useApi = () => {
     getExecutiveAutonomousStatus,
     getCurrentExecutiveMeeting,
     getEligibleMeetingStaff,
-    getScaleUpPatterns,
-    evaluateComponentArchitecture,
-    evaluateProjectArchitecture,
     getTodos,
     getTodo,
     createTodo,

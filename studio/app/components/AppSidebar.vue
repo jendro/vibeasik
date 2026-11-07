@@ -136,14 +136,6 @@ const projectNavItems = computed<NavItem[]>(() => {
       exact: false
     },
     {
-      id: 'scale-up',
-      to: '/scale-up',
-      label: 'Scale Up',
-      desc: 'Best practice BE, Mobile & FE',
-      icon: 'i-lucide-trending-up',
-      exact: false
-    },
-    {
       id: 'queue',
       to: '/queue',
       label: 'Antrean Proses',
@@ -287,14 +279,6 @@ const globalNavItems: NavItem[] = [
     exact: false
   },
   {
-    id: 'academy',
-    to: '/academy',
-    label: 'Vibe Academy',
-    desc: 'Tutorial dasar & arsitektur',
-    icon: 'i-lucide-graduation-cap',
-    exact: false
-  },
-  {
     // Bukan milik satu proyek: referensi desain dipakai bersama oleh semua proyek & agent AI.
     id: 'design-library',
     to: '/design-library',
@@ -309,14 +293,6 @@ const globalNavItems: NavItem[] = [
     label: 'Pelajaran Desain',
     desc: 'Before / after + prinsip desain',
     icon: 'i-lucide-git-compare-arrows',
-    exact: false
-  },
-  {
-    id: 'download',
-    to: '/download',
-    label: 'Pasang vibeasik',
-    desc: 'Instal satu baris & MCP',
-    icon: 'i-lucide-download',
     exact: false
   },
   {
