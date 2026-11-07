@@ -56,7 +56,7 @@ func LoadConfig() *Config {
 		DBName:           getEnv("DB_NAME", "projectmanager_db"), // nama lama dipertahankan agar DB yang ada tetap terbaca
 		DBPath:           getEnv("DB_PATH", defaultDBPath),
 		SystemOneURL:     getEnv("SYSTEM_ONE_URL", "http://localhost:8750/v1/systemone"),
-		VibeasikCloudURL: getEnv("VIBEASIK_CLOUD_URL", "https://api.vibeasik.com"),
+		VibeasikCloudURL: getEnv("VIBEASIK_CLOUD_URL", "https://enjoy.vibeasik.com"),
 	}
 
 	globalConfig = cfg

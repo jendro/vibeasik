@@ -97,7 +97,7 @@ func NewClient() *Client {
 	cfg := config.GetConfig()
 	url := cfg.VibeasikCloudURL
 	if url == "" {
-		url = "https://api.vibeasik.com"
+		url = "https://enjoy.vibeasik.com"
 	}
 	return &Client{
 		baseURL: url,
