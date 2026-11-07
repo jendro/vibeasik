@@ -172,6 +172,7 @@ func (s *Server) setupRoutes() {
 	api.Post("/scan", s.scanPath)
 	api.Post("/scan/group-ai", s.groupScanComponents)
 	api.Post("/projects/:id/diagnose", s.diagnoseProject)
+	api.Get("/projects/:id/diagnostics", s.listProjectDiagnostics)
 	api.Get("/projects/:id/diagnostics/latest", s.getLatestProjectDiagnostic)
 	api.Post("/projects/:id/diagnostics/delete-finding", s.deleteDiagnosticFinding)
 	api.Delete("/projects/:id/diagnostics/findings", s.deleteDiagnosticFinding)

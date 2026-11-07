@@ -48,7 +48,7 @@ func (r *gormProjectRepository) FindAll(ctx context.Context, projectType string,
 
 func (r *gormProjectRepository) FindByID(ctx context.Context, id uint) (*models.Project, error) {
 	var project models.Project
-	if err := r.db.WithContext(ctx).Preload("Components").Preload("Diagnostics").First(&project, id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Components").First(&project, id).Error; err != nil {
 		return nil, err
 	}
 	return &project, nil

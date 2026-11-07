@@ -65,8 +65,9 @@ type Project struct {
 	CreatedAt             time.Time  `json:"created_at"`
 	UpdatedAt             time.Time  `json:"updated_at"`
 
-	Components  []Component       `gorm:"foreignKey:ProjectID;constraint:OnDelete:CASCADE" json:"components"`
-	Diagnostics []Diagnostic      `gorm:"foreignKey:ProjectID;constraint:OnDelete:CASCADE" json:"diagnostics,omitempty"`
+	Components []Component `gorm:"foreignKey:ProjectID;constraint:OnDelete:CASCADE" json:"components"`
+	// Diagnostics tidak ikut respons detail project (bisa puluhan MB); gunakan GET /projects/:id/diagnostics.
+	Diagnostics []Diagnostic      `gorm:"foreignKey:ProjectID;constraint:OnDelete:CASCADE" json:"-"`
 	DeepChecks  []DeepCheckReport `gorm:"foreignKey:ProjectID;constraint:OnDelete:CASCADE" json:"deep_checks,omitempty"`
 }
 

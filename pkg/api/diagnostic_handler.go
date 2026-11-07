@@ -733,3 +733,46 @@ func (s *Server) ignoreDiagnosticFinding(c *fiber.Ctx) error {
 		"score":    diag.Score,
 	})
 }
+
+const (
+	defaultDiagnosticsLimit = 100
+	maxDiagnosticsLimit     = 500
+)
+
+// listProjectDiagnostics mengembalikan riwayat diagnostik project secara berpaginasi
+// (terbaru dulu). Query: limit (default 100, maks 500), offset, component_id,
+// full=1 untuk menyertakan findings_json/optimizations/structure_tree (default: ringkas).
+func (s *Server) listProjectDiagnostics(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
+	}
+	limit := c.QueryInt("limit", defaultDiagnosticsLimit)
+	if limit <= 0 {
+		limit = defaultDiagnosticsLimit
+	}
+	if limit > maxDiagnosticsLimit {
+		limit = maxDiagnosticsLimit
+	}
+	offset := c.QueryInt("offset", 0)
+	if offset < 0 {
+		offset = 0
+	}
+
+	q := s.db.Model(&models.Diagnostic{}).Where("project_id = ?", id)
+	if cid := c.QueryInt("component_id", 0); cid > 0 {
+		q = q.Where("component_id = ?", cid)
+	}
+	var total int64
+	if err := q.Count(&total).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	if f := c.Query("full"); f != "1" && f != "true" {
+		q = q.Select("id", "project_id", "component_id", "summary", "score", "created_at")
+	}
+	items := []models.Diagnostic{}
+	if err := q.Order("created_at DESC, id DESC").Limit(limit).Offset(offset).Find(&items).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"items": items, "total": total, "limit": limit, "offset": offset})
+}

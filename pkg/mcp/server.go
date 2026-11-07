@@ -523,9 +523,9 @@ func (s *Server) callTool(name string, args map[string]interface{}) (*ToolCallRe
 	case "get_project_detail":
 		var p models.Project
 		if pid, ok := args["project_id"]; ok {
-			s.db.Preload("Components").Preload("Diagnostics").First(&p, pid)
+			s.db.Preload("Components").First(&p, pid)
 		} else if slug, ok := args["slug"]; ok {
-			s.db.Preload("Components").Preload("Diagnostics").Where("slug = ?", slug).First(&p)
+			s.db.Preload("Components").Where("slug = ?", slug).First(&p)
 		}
 		if p.ID == 0 {
 			return nil, fmt.Errorf("project not found")
