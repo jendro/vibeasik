@@ -9,7 +9,7 @@ import (
 	"os"
 	"sort"
 
-	"github.com/vibeasik/vibeasik/internal/guidelines"
+	"github.com/vibeasik/vibeasik/pkg/guidelines"
 )
 
 // version diisi saat rilis lewat -ldflags "-X main.version=vX.Y.Z".
