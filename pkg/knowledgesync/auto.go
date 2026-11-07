@@ -223,7 +223,14 @@ func SendAuto(ctx context.Context, db *gorm.DB, now time.Time) (int, error) {
 
 // ConsentText ringkasan Syarat & Ketentuan Pusat Pengetahuan yang ditampilkan sebelum persetujuan.
 // Teks lengkap: pasal 4 Syarat & Ketentuan di vibeasik.com/terms.
-const ConsentText = `Pusat Pengetahuan bekerja dua arah.
+const ConsentText = `Prinsip utama:
+  • Data koding Anda tetap aman di laptop atau server Anda: kode, data proyek, dan kunci tidak diunggah.
+  • vibeasik adalah auditor lokal dan aplikasi manajemen proyek yang membantu memastikan aplikasi Anda aman.
+  • Yang dikumpulkan hanya "pokok ilmu" (node pengetahuan yang lolos penyaringan), bukan kode atau data kerja Anda.
+  • Hanya pokok ilmu itu yang dipakai meningkatkan pengetahuan vibeasik, termasuk melatih dan mengevaluasi model dan
+    AI vibeasik, agar hasilnya lebih maksimal.
+
+Pusat Pengetahuan bekerja dua arah.
 
   • Anda mendapat paket panduan dan checklist; pencarian pengetahuan berjalan di komputer Anda.
   • Node pengetahuan di komputer Anda yang terbukti berguna dikirim otomatis ke server vibeasik setelah disensor

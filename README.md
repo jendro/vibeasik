@@ -9,7 +9,9 @@ Ia mencatat semua proyek Anda, mengaudit kode hasil AI dengan **85 rule bawaan**
 bentrok, membuat peta kode, dan menjadi **server MCP** sehingga Claude Code, Cursor, Antigravity, dan agent lain
 bisa memakai semua itu.
 
-**Semuanya berjalan lokal.** Kode, fakta proyek, dan kunci API Anda tidak pernah diunggah ke server mana pun.
+**Semuanya berjalan lokal.** Kode, fakta proyek, dan kunci API Anda tidak pernah diunggah ke server mana pun. Yang
+dikumpulkan Pusat Pengetahuan hanya "pokok ilmu" (node pengetahuan yang lolos penyaringan), dan hanya itu yang dipakai
+untuk meningkatkan pengetahuan dan model vibeasik; lihat [docs/KNOWLEDGE.md](docs/KNOWLEDGE.md).
 
 ## Pasang
 

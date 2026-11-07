@@ -4,7 +4,12 @@ Pusat Pengetahuan adalah kumpulan panduan, checklist audit, dan teori desain yan
 Isinya tumbuh bersama pengguna, tetapi **pencarian selalu berjalan di laptop Anda**, sehingga server tetap ringan
 dan konteks proyek Anda tidak keluar dari komputer.
 
-> **Berlaku mulai rilis setelah v0.1.0.** Versi v0.1.0 masih memakai usulan yang disetujui satu per satu.
+> **Berlaku mulai v0.2.0.** Versi v0.1.0 masih memakai usulan yang disetujui satu per satu.
+>
+> **Prinsip utama.** Data koding Anda tetap di laptop atau server Anda. vibeasik adalah auditor lokal dan aplikasi
+> manajemen proyek; yang dikumpulkan hanya *pokok ilmu* (node pengetahuan yang lolos penyaringan), dan hanya itu yang
+> dipakai untuk meningkatkan pengetahuan dan melatih serta mengevaluasi model dan AI vibeasik. Kode dan data proyek
+> tidak pernah dipakai.
 >
 > **Timbal balik.** Pusat Pengetahuan bekerja dua arah: Anda menerima paket, dan pengetahuan di komputer Anda yang
 > terbukti berguna ikut dikirim (setelah disensor dan disaring) untuk memperkaya paket. Ini bawaan menyala; pengguna
