@@ -428,7 +428,7 @@ func InspectFile(fullPath string, relPath string, lang string) []models.Finding 
 				Line:         lineNum,
 				Snippet:      trimmed,
 				TheoryBasis:  "OWASP Top 10 A03:2021-Injection & CWE-89 (Improper Neutralization of Special Elements in SQL Command).",
-				SuggestedFix: "// Ganti penggabungan string dengan parameterized query:\n// SEBELUM: db.Raw(fmt.Sprintf(\"SELECT * FROM users WHERE id = %s\", id))\n// SESUDAH: db.Raw(\"SELECT * FROM users WHERE id = ?\", id)",
+				SuggestedFix: "// Gunakan parameterized query dengan placeholder dan kirim nilai sebagai argumen terpisah.\n// Contoh aman: db.Raw(\"SELECT * FROM users WHERE id = ?\", id)",
 			})
 		}
 
