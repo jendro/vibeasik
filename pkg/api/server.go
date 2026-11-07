@@ -305,6 +305,7 @@ func (s *Server) setupRoutes() {
 	}
 
 	s.setupAccountRoutes(api)
+	s.setupKnowledgeSyncRoutes(api)
 
 	// Edisi & fitur aktif untuk Studio (gembok menu Pro).
 	api.Get("/edition", func(c *fiber.Ctx) error {
