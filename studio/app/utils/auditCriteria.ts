@@ -32,7 +32,7 @@ export const AUDIT_CRITERIA: AuditCriterion[] = [
     inspection_check: 'Pindai pemanggilan db.Raw, db.Exec, db.Where, atau .query() yang memuat string concatenation dengan variabel pengguna.',
     suggested_action: 'Gunakan parameter placeholder: db.Where("email = ?", email) atau db.Raw("SELECT id, name FROM users WHERE id = ?", id).',
     example_code: {
-      bad: 'db.Raw(fmt.Sprintf("SELECT * FROM users WHERE email = \'%s\'", inputEmail))',
+      bad: 'Contoh tidak aman: membentuk query SQL dengan fmt.Sprintf atau penyambungan string memakai input pengguna.',
       good: 'db.Raw("SELECT id, name, email FROM users WHERE email = ?", inputEmail)'
     }
   },
@@ -47,8 +47,8 @@ export const AUDIT_CRITERIA: AuditCriterion[] = [
     inspection_check: 'Deteksi pemanggilan exec.Command, child_process, eval(), atau system() yang menggabungkan parameter dinamis.',
     suggested_action: 'Gunakan whitelist argumen tetap, validasi input secara ketat, dan lewatkan argumen sebagai slice/array terpisah tanpa shell interpreter.',
     example_code: {
-      bad: 'exec.Command("sh", "-c", "ping " + userHost).Output()',
-      good: 'exec.Command("ping", "-c", "1", validatedHost).Output()'
+      bad: 'DILARANG: shell invocation dengan input pengguna yang digabungkan menjadi satu perintah.',
+      good: 'DISARANKAN: API proses native dengan executable tetap dan argumen terpisah yang sudah divalidasi.'
     }
   },
   {
@@ -59,11 +59,11 @@ export const AUDIT_CRITERIA: AuditCriterion[] = [
     severity: 'critical',
     rule: 'Semua operasi pembacaan, penulisan, atau pengunduhan file (os.ReadFile, fs.readFile) yang menerima nama file dari klien wajib dibersihkan dengan filepath.Clean() dan diverifikasi berada di dalam batas direktori dasar (safe root boundary check).',
     rationale: 'Input seperti "../../etc/passwd" atau "....//config.json" memungkinkan penyerang membaca file sensitif di luar folder penyimpanan publik.',
-    inspection_check: 'Periksa operasi I/O file yang menerima parameter query/param langsung tanpa filepath.Clean dan path prefix verification.',
-    suggested_action: 'Terapkan filepath.Clean(filepath.Join(baseDir, filename)) dan pastikan strings.HasPrefix(cleanPath, baseDir) bernilai true.',
+    inspection_check: 'Periksa operasi I/O file yang menerima parameter query/param langsung tanpa filepath.Clean dan path boundary verification.',
+    suggested_action: 'Gunakan filepath.Clean(filepath.Join(baseDir, filename)), lalu validasi filepath.Rel(baseDir, cleanPath). Tolak hasil yang sama dengan ".." atau yang diawali ".." + string(os.PathSeparator). Jangan mengandalkan strings.HasPrefix karena /safe/root-evil dapat lolos pemeriksaan prefix.',
     example_code: {
       bad: 'data, err := os.ReadFile("./uploads/" + c.Params("filename"))',
-      good: 'clean := filepath.Clean(filepath.Join(baseDir, c.Params("filename")))\nif !strings.HasPrefix(clean, baseDir) { return c.Status(403).SendString("Akses ditolak") }\ndata, err := os.ReadFile(clean)'
+      good: 'clean := filepath.Clean(filepath.Join(baseDir, c.Params("filename")))\nrelative, err := filepath.Rel(baseDir, clean)\nif err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(os.PathSeparator)) { return c.Status(403).SendString("Akses ditolak") }\ndata, err := os.ReadFile(clean)'
     }
   },
   {
@@ -258,10 +258,10 @@ export const AUDIT_CRITERIA: AuditCriterion[] = [
     severity: 'warning',
     rule: 'Rute yang mengubah kondisi data sistem (POST, PUT, PATCH, DELETE) wajib dilindungi oleh middleware autentikasi (JWT / Session Guard), kecuali endpoint publik yang sengaja dikecualikan (login, register, webhook).',
     rationale: 'Rute mutasi publik memungkinkan pengguna tanpa kredensial memasukkan data sampah, memodifikasi resource, atau menghapus entitas sistem.',
-    inspection_check: 'Pindai definisi rute POST/PUT/DELETE yang tidak memuat handler middleware Auth.',
+    inspection_check: 'Pindai definisi rute POST/PUT/PATCH/DELETE pada kode aplikasi yang tidak memuat handler middleware Auth. Kecualikan string di dalam properti example_code (blok contoh adalah dokumentasi, bukan rute yang terdaftar).',
     suggested_action: 'Pasang middleware pelindung sebelum handler: api.Post("/items", authMiddleware, createItem).',
     example_code: {
-      bad: 'app.Post("/api/users/update-role", updateRoleHandler)',
+      bad: 'Rute mutasi pengubah role didaftarkan tanpa middleware autentikasi sebelum handler.',
       good: 'app.Post("/api/users/update-role", authMiddleware, adminOnlyGuard, updateRoleHandler)'
     }
   },
@@ -277,7 +277,7 @@ export const AUDIT_CRITERIA: AuditCriterion[] = [
     suggested_action: 'Tentukan origin domain frontend secara spesifik (misal: "http://localhost:3000, https://app.example.com").',
     example_code: {
       bad: 'cors.New(cors.Config{ AllowOrigins: "*" })',
-      good: 'cors.New(cors.Config{\n    AllowOrigins: "http://localhost:3000, https://app.mycompany.com",\n    AllowCredentials: true,\n})'
+      good: 'cors.New(cors.Config{\n    AllowOrigins: []string{"http://localhost:3000", "https://app.mycompany.com"},\n    AllowCredentials: true,\n})'
     }
   },
   {
@@ -321,8 +321,8 @@ export const AUDIT_CRITERIA: AuditCriterion[] = [
     inspection_check: 'Pindai pola rute HTTP yang mengandung get, fetch, delete, remove, create, add di dalam URL path.',
     suggested_action: 'Ubah pola URL: ganti GET /getUser/:id menjadi GET /users/:id, dan POST /deleteUser menjadi DELETE /users/:id.',
     example_code: {
-      bad: 'app.Get("/getUser/:id", handler)\napp.Post("/deleteItem/:id", handler)',
-      good: 'app.Get("/users/:id", handler)\napp.Delete("/items/:id", handler)'
+      bad: 'Rute dengan kata kerja di path: GET /getUser/:id dan POST /deleteItem/:id.',
+      good: 'Rute berbasis resource: GET /users/:id dan DELETE /items/:id.'
     }
   },
   {
