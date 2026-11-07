@@ -4,7 +4,8 @@ Pusat Pengetahuan adalah kumpulan panduan, checklist audit, dan teori desain yan
 Isinya tumbuh bersama pengguna, tetapi **pencarian selalu berjalan di laptop Anda**, sehingga server tetap ringan
 dan konteks proyek Anda tidak keluar dari komputer.
 
-> **Berlaku mulai v0.2.0.** Versi v0.1.0 masih memakai usulan yang disetujui satu per satu.
+> **Berlaku mulai v0.2.0** (pencabutan kiriman, karantina server, dan layar Studio mulai v0.3.0). Versi v0.1.0 masih
+> memakai usulan yang disetujui satu per satu.
 >
 > **Prinsip utama.** Data koding Anda tetap di laptop atau server Anda. vibeasik adalah auditor lokal dan aplikasi
 > manajemen proyek; yang dikumpulkan hanya *pokok ilmu* (node pengetahuan yang lolos penyaringan), dan hanya itu yang
@@ -47,7 +48,8 @@ vibeasik knowledge status             # versi paket terpasang dan status sinkron
 vibeasik knowledge auto status        # mode kirim, persetujuan, jumlah kiriman
 vibeasik knowledge auto preview       # node yang AKAN dikirim dan yang dilewati (tidak mengirim apa pun)
 vibeasik knowledge auto on|ask|off    # mengubah mode: hanya paket Pro
-vibeasik knowledge ledger             # riwayat kiriman dan alasan node dilewati
+vibeasik knowledge ledger [--sync]    # riwayat kiriman dan alasan node dilewati; --sync memperbarui status dari server
+vibeasik knowledge revoke <id-server> # cabut kiriman yang belum terbit (angka server#N di ledger)
 vibeasik knowledge signals            # kirim angka helpful/harmful (anonim, wajib login)
 vibeasik knowledge contribute         # tinjau usulan; kirim manual: contribute --send 12,15
 ```
@@ -69,7 +71,16 @@ Paling banyak **5 node per hari** per perangkat, dengan jeda acak. Hanya berjala
 login. Setiap kiriman dicatat di `~/.vibeasik/contributions.json` (hash isi, judul, waktu; bukan salinan isi), dan
 `vibeasik knowledge ledger` menampilkan juga mengapa suatu node dilewati.
 
-Di server, kiriman masuk **karantina**: ditinjau sebelum dipakai pengguna lain, dan tidak langsung menjadi isi paket.
+Di server, kiriman masuk **karantina** dan tidak langsung menjadi isi paket:
+
+1. **Disaring ulang** (klien tidak dipercaya): path, IP, host internal, email, telepon, kartu, token/kunci, string acak,
+   dan kata kepemilikan ditolak otomatis; begitu pula teks yang berisi instruksi untuk agent AI (*prompt injection*),
+   perintah berbahaya, skrip aktif, atau ajakan mengirim data keluar. Isi yang ditolak **tidak disimpan**.
+2. **Duplikat dibuang** dan kiriman yang mirip dikelompokkan dalam satu klaster.
+3. Diberi **skor risiko** untuk menentukan prioritas kurasi; hanya yang **disetujui kurator** yang masuk paket berikutnya.
+
+Anda dapat melihat status tiap kiriman (`knowledge ledger --sync`) dan mencabut yang belum terbit (`knowledge revoke`).
+Layar **Berbagi Pengetahuan** di Studio menampilkan persetujuan, mode, pratinjau, riwayat, dan tombol cabut.
 
 | Paket | Mode |
 |---|---|
@@ -87,9 +98,8 @@ Di server, kiriman masuk **karantina**: ditinjau sebelum dipakai pengguna lain, 
 | Angka *helpful* / *harmful* per node paket | Ya, anonim, tanpa teks, wajib login (`knowledge signals`) |
 | Judul dan isi node yang lolos semua syarat di atas | Ya, otomatis (Free) atau sesuai mode Anda (Pro) |
 
-Kiriman ditinjau sebelum dipakai pengguna lain. Anda dapat melihat pratinjau dan riwayat kapan saja. Perintah
-`vibeasik knowledge revoke` untuk meminta penghapusan kiriman yang belum terbit menyusul pada pembaruan berikutnya.
-Data terbit tidak memuat identitas akun.
+Kiriman ditinjau sebelum dipakai pengguna lain. Anda dapat melihat pratinjau dan riwayat kapan saja dan mencabut
+kiriman yang belum terbit (`vibeasik knowledge revoke`). Data terbit tidak memuat identitas akun.
 
 ## Lisensi
 
