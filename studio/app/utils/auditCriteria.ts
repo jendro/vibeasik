@@ -5,7 +5,7 @@ export interface AuditCriterion {
   id: string
   category: 'security' | 'critical_logic' | 'backend' | 'frontend' | 'mobile' | 'smelly_design' | 'code_smell' | 'deployment'
   title: string
-  scope: 'Backend (BE)' | 'Frontend (FE)' | 'Mobile' | 'Database' | 'Universal'
+  scope: 'Backend (BE)' | 'Frontend (FE)' | 'Mobile' | 'Database' | 'Universal' | 'Backend, Mobile & Skrip (bukan UI Frontend)'
   severity: 'critical' | 'high' | 'warning' | 'info'
   rule: string
   rationale: string
@@ -92,8 +92,8 @@ export const AUDIT_CRITERIA: AuditCriterion[] = [
     inspection_check: 'Pindai string literal yang memuat pola jwt_secret, api_key, db_password, private_key dengan string token >12 karakter.',
     suggested_action: 'Pindahkan seluruh secret ke file .env dan baca via os.Getenv() atau process.env.',
     example_code: {
-      bad: 'const jwtSecret = "super-secret-key-1234567890"',
-      good: 'const jwtSecret = process.env.JWT_SECRET || os.Getenv("JWT_SECRET")'
+      bad: 'const jwtSecret = "<EXAMPLE_ONLY_NOT_A_SECRET>"\n// Go: jwtSecret := "<EXAMPLE_ONLY_NOT_A_SECRET>"',
+      good: '// TypeScript/Node (backend saja; jangan masuk bundle client)\nconst jwtSecret = process.env.JWT_SECRET\n\n// Go\njwtSecret := os.Getenv("JWT_SECRET")'
     }
   },
   {
