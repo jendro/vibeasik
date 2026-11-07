@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Tolak berkas terlarang & rahasia sebelum masuk riwayat.
+set -e
+bad=$(git diff --cached --name-only --diff-filter=ACM | grep -E '(^|/)(\.env(\..+)?|.*\.(db|sqlite|sqlite3|pem|key|p12|exe|log)|node_modules/.*|\.output/.*|\.nuxt/.*|bin/.*|dist/.*)$' | grep -vE '(^|/)\.env\.example$' || true)
+if [ -n "$bad" ]; then
+  echo "✖ Berkas berikut tidak boleh di-commit:" >&2; echo "$bad" | sed 's/^/  /' >&2; exit 1
+fi
+# Berkas biner besar (> 1 MB)
+for f in $(git diff --cached --name-only --diff-filter=ACM); do
+  [ -f "$f" ] || continue
+  size=$(wc -c < "$f")
+  if [ "$size" -gt 1048576 ]; then echo "✖ $f lebih dari 1 MB — simpan di luar repo." >&2; exit 1; fi
+done
+# Pola rahasia sederhana
+if git diff --cached -U0 --diff-filter=ACM | grep -E '^\+' | grep -qE '(sk-ant-[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9]{32,}|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36}|-----BEGIN [A-Z ]*PRIVATE KEY-----)'; then
+  echo "✖ Terdeteksi pola kunci/rahasia di perubahan staged." >&2; exit 1
+fi
+if command -v gitleaks >/dev/null 2>&1; then gitleaks protect --staged --no-banner; fi

@@ -1,0 +1,38 @@
+# Rahasia & env per mesin
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Data lokal
+*.db
+*.sqlite
+*.sqlite3
+data/
+.vibeasik/
+
+# Hasil build
+bin/
+dist/
+*.exe
+/vibeasik
+coverage.out
+
+# Node / Nuxt
+node_modules/
+.nuxt/
+.output/
+.data/
+
+# Log & proses
+*.log
+.logs/
+.pids/
+
+# Editor & OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+*.swp
