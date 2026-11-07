@@ -36,6 +36,9 @@ func Execute() {
 // AddCommand memungkinkan build Official menambah perintah Pro.
 func AddCommand(cmds ...*cobra.Command) { rootCmd.AddCommand(cmds...) }
 
+// DBPath nilai flag --db (kosong = lokasi bawaan), untuk perintah tambahan dari build Official.
+func DBPath() string { return dbPath }
+
 func init() {
 	rootCmd.PersistentFlags().StringVar(&dbPath, "db", "", "Path berkas database SQLite (bawaan ~/.vibeasik/projects.db)")
 	rootCmd.AddCommand(&cobra.Command{
