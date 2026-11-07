@@ -23,7 +23,11 @@ func accountView() fiber.Map {
 	return fiber.Map{"account": account.Current(), "edition": registry.Edition, "features": registry.Features()}
 }
 
-func (s *Server) getAccount(c *fiber.Ctx) error { return c.JSON(accountView()) }
+func (s *Server) getAccount(c *fiber.Ctx) error {
+	// Login/logout lewat CLI mengubah berkas akun saat engine berjalan: muat ulang agar Studio sinkron.
+	account.Activate()
+	return c.JSON(accountView())
+}
 
 func (s *Server) startAccountLogin(c *fiber.Ctx) error {
 	host, _ := os.Hostname()
