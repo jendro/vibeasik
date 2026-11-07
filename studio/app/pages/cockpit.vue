@@ -416,37 +416,6 @@ const handleDelete = async (id: number) => {
       </div>
     </div>
 
-    <!-- Banner Pengumuman Desktop Executable untuk Vibecoders -->
-    <div class="rounded-xl border border-sky-500/30 bg-sky-50/50 dark:bg-sky-950/20 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-sky-500/15 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
-          <UIcon name="i-lucide-download" class="w-5 h-5" />
-        </div>
-        <div>
-          <div class="text-sm font-semibold text-neutral-900 dark:text-white flex items-center gap-2">
-            <span>Aplikasi Desktop vibeasik v1.0.0 Resmi Dirilis</span>
-            <UBadge color="primary" variant="subtle" size="xs">
-              Desktop App
-            </UBadge>
-          </div>
-          <p class="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5">
-            Khusus vibecoders: pastikan kode hasil prompting AI aman, port tidak bentrok, dan mudah dimaintenance.
-          </p>
-        </div>
-      </div>
-      <UButton
-        to="/download"
-        color="primary"
-        variant="solid"
-        size="xs"
-        icon="i-lucide-arrow-right"
-        trailing
-        class="shrink-0"
-      >
-        Halaman Download
-      </UButton>
-    </div>
-
     <!-- Quick Metrics Row Component -->
     <ProjectsProjectMetrics :stats="stats" />
 

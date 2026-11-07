@@ -63,7 +63,7 @@ const pageTitle = computed(() => {
   if (route.path === '/mcp') return 'AI & MCP Protocol Hub'
   if (route.path === '/ports') return 'Monitor Port Lokal'
   if (route.path === '/queue') return 'Antrean Tugas & Pipeline'
-  if (route.path === '/download') return 'Download vibeasik Desktop (v1.0.0)'
+  if (route.path === '/download') return 'Pasang vibeasik'
   if (route.path === '/settings') return 'Pengaturan LLM & System One'
   if (route.path === '/design-library') return 'Galeri Desain (Referensi Tampilan untuk AI)'
   if (route.path === '/design-lessons') return 'Pelajaran Desain (Before / After)'
@@ -255,7 +255,7 @@ const pageTitle = computed(() => {
           Web Publik
         </UButton>
 
-        <!-- Download Desktop App Action -->
+        <!-- Pasang vibeasik -->
         <UButton
           to="/download"
           icon="i-lucide-download"
@@ -264,7 +264,7 @@ const pageTitle = computed(() => {
           size="sm"
           class="hidden md:inline-flex"
         >
-          Download Desktop
+          Pasang vibeasik
         </UButton>
 
         <!-- Quick Import Action -->

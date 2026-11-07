@@ -31,7 +31,7 @@
               <NuxtLink to="/" class="hover:text-sky-500 dark:hover:text-sky-300 transition-colors">Beranda Publik</NuxtLink>
             </li>
             <li>
-              <NuxtLink to="/download" class="hover:text-sky-500 dark:hover:text-sky-300 transition-colors">Download Desktop (Linux & Win)</NuxtLink>
+              <NuxtLink to="/download" class="hover:text-sky-500 dark:hover:text-sky-300 transition-colors">Pasang vibeasik</NuxtLink>
             </li>
             <li>
               <NuxtLink to="/cockpit" class="hover:text-sky-500 dark:hover:text-sky-300 transition-colors">Cockpit Proyek (Admin)</NuxtLink>
@@ -74,7 +74,7 @@
       <div class="pt-8 mt-8 border-t border-neutral-100 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-400 dark:text-slate-400">
         <p>© 2026 vibeasik.com • Dibuat dengan penuh dedikasi untuk Vibecoders.</p>
         <div class="flex items-center gap-4">
-          <NuxtLink to="/download" class="hover:text-neutral-600 dark:hover:text-white transition-colors">Rilis v1.0.0</NuxtLink>
+          <NuxtLink to="/download" class="hover:text-neutral-600 dark:hover:text-white transition-colors">Pasang</NuxtLink>
           <NuxtLink to="/login" class="hover:text-neutral-600 dark:hover:text-white transition-colors">Portal Masuk</NuxtLink>
         </div>
       </div>

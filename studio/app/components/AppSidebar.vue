@@ -298,10 +298,9 @@ const globalNavItems: NavItem[] = [
   {
     id: 'download',
     to: '/download',
-    label: 'Download Desktop',
-    desc: 'Linux (.deb, AppImage) & Win',
+    label: 'Pasang vibeasik',
+    desc: 'Instal satu baris & MCP',
     icon: 'i-lucide-download',
-    badge: 'v1.0.0',
     exact: false
   },
   {

@@ -285,7 +285,7 @@ useHead({
             to="/download"
             class="w-full sm:w-auto px-7 py-3 rounded-xl font-bold text-white bg-sky-600 hover:bg-sky-500 transition-colors shadow-sm text-sm"
           >
-            Halaman Download Resmi
+            Pasang vibeasik
           </NuxtLink>
           <NuxtLink
             to="/register"
