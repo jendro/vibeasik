@@ -40,12 +40,13 @@ var client = &http.Client{Timeout: 60 * time.Second}
 
 // State catatan sinkronisasi di ~/.vibeasik/knowledge.json.
 type State struct {
-	Version      string    `json:"version"`
-	Tier         string    `json:"tier"`
-	PulledAt     time.Time `json:"pulled_at"`
-	Nodes        int       `json:"nodes"`
-	Contributed  []uint    `json:"contributed,omitempty"` // id node lokal yang sudah dikirim sebagai usulan
-	LastSignalAt time.Time `json:"last_signal_at"`
+	Version      string      `json:"version"`
+	Tier         string      `json:"tier"`
+	PulledAt     time.Time   `json:"pulled_at"`
+	Nodes        int         `json:"nodes"`
+	License      PackLicense `json:"license"`               // lisensi isi paket yang terpasang (dari berkas paket bertanda tangan)
+	Contributed  []uint      `json:"contributed,omitempty"` // id node lokal yang sudah dikirim sebagai usulan
+	LastSignalAt time.Time   `json:"last_signal_at"`
 
 	// Kirim otomatis (auto.go): mode pilihan (hanya berlaku untuk paket yang boleh mengubahnya) dan persetujuan S&K.
 	AutoMode       string    `json:"auto_mode,omitempty"`
@@ -91,11 +92,21 @@ type packLink struct {
 	Strength float64 `json:"strength"`
 }
 
+// PackLicense lisensi isi paket (tertulis di dalam berkas paket yang ditandatangani server).
+type PackLicense struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	URL         string `json:"url"`
+	Attribution string `json:"attribution"`
+	Notice      string `json:"notice"`
+}
+
 type pack struct {
-	Format int        `json:"format"`
-	Tier   string     `json:"tier"`
-	Nodes  []packNode `json:"nodes"`
-	Links  []packLink `json:"links"`
+	Format  int         `json:"format"`
+	Tier    string      `json:"tier"`
+	License PackLicense `json:"license"`
+	Nodes   []packNode  `json:"nodes"`
+	Links   []packLink  `json:"links"`
 }
 
 // Result ringkasan hasil Pull.
@@ -107,6 +118,8 @@ type Result struct {
 	Skipped  int    `json:"skipped"`
 	Links    int    `json:"links"`
 	UpToDate bool   `json:"up_to_date"`
+
+	License PackLicense `json:"license"`
 }
 
 // Pull menarik paket terbaru. Tanpa login mendapat tier free; akun berhak mendapat full.
@@ -132,7 +145,7 @@ func Pull(db *gorm.DB, force bool) (*Result, error) {
 	}
 	st := LoadState()
 	if !force && st.Version == latest.Version && st.Tier == latest.Tier {
-		return &Result{Version: st.Version, Tier: st.Tier, UpToDate: true}, nil
+		return &Result{Version: st.Version, Tier: st.Tier, UpToDate: true, License: st.License}, nil
 	}
 	raw, err := download(latest.URL)
 	if err != nil {
@@ -153,8 +166,8 @@ func Pull(db *gorm.DB, force bool) (*Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	res.Version, res.Tier = latest.Version, latest.Tier
-	st.Version, st.Tier, st.PulledAt, st.Nodes = latest.Version, latest.Tier, time.Now(), len(p.Nodes)
+	res.Version, res.Tier, res.License = latest.Version, latest.Tier, p.License
+	st.Version, st.Tier, st.PulledAt, st.Nodes, st.License = latest.Version, latest.Tier, time.Now(), len(p.Nodes), p.License
 	return res, saveState(st)
 }
 

@@ -34,7 +34,7 @@ const (
 const FeatureAutoControl = "knowledge.auto_control"
 
 // ConsentVersion versi Syarat & Ketentuan Pusat Pengetahuan yang harus disetujui. Naikkan bila pasal 4 berubah.
-const ConsentVersion = "2026-11-draf-1"
+const ConsentVersion = "2026-11-draf-2"
 
 // Syarat kelayakan node (lihat rancangan §3).
 const (
@@ -235,6 +235,13 @@ Tidak dikirim: kode proyek, nama proyek/komponen/repo, path berkas, IP/hostname,
                pribadi pegawai AI Anda. Node yang perlu disunting penyensor tidak dikirim sama sekali.
 
 Kiriman masuk karantina dan ditinjau sebelum dipakai pengguna lain. Anda dapat melihat pratinjau
-(vibeasik knowledge auto preview) dan riwayat (vibeasik knowledge ledger), dan meminta penghapusan kiriman yang
-belum terbit. Dengan menyetujui, Anda menyatakan isi yang Anda kirim bukan rahasia pihak mana pun dan memberi
-vibeasik lisensi untuk memakai, mengubah, dan menerbitkan ulangnya dalam paket pengetahuan.`
+(vibeasik knowledge auto preview) dan riwayat (vibeasik knowledge ledger).
+
+Lisensi:
+  • Isi yang Anda kirim: Anda menyatakan isinya bukan rahasia pihak mana pun dan memberi vibeasik lisensi di seluruh
+    dunia, selamanya, tidak dapat ditarik untuk bagian yang sudah terbit, boleh disublisensikan dan diubah, untuk
+    memakai dan menerbitkannya dalam paket pengetahuan (paket gratis maupun paket penuh). Hak cipta tetap pada Anda.
+  • Paket gratis: CC BY 4.0 (boleh dipakai dan diterbitkan ulang dengan menyebut vibeasik).
+  • Paket penuh: milik vibeasik, penggunaan terbatas (Lisensi Pengetahuan vibeasik: tidak boleh diterbitkan ulang,
+    dijual, disalin massal, atau dipakai melatih model AI yang bersaing).
+  • Kode vibeasik: Apache-2.0.`

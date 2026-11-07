@@ -1,7 +1,10 @@
 package knowledgesync
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -225,5 +228,31 @@ func TestConsentVersionMustMatch(t *testing.T) {
 	_ = Consent()
 	if !HasConsent() {
 		t.Fatal("persetujuan versi sekarang harus berlaku")
+	}
+}
+
+func TestParsePackKeepsLicense(t *testing.T) {
+	var buf bytes.Buffer
+	zw := gzip.NewWriter(&buf)
+	_ = json.NewEncoder(zw).Encode(map[string]any{
+		"format": 1, "tier": "free",
+		"license": map[string]string{"id": "CC-BY-4.0", "name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/"},
+		"nodes":   []any{},
+	})
+	_ = zw.Close()
+	p, err := parse(buf.Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.License.ID != "CC-BY-4.0" || p.License.URL == "" {
+		t.Fatalf("lisensi paket tidak terbaca: %+v", p.License)
+	}
+	// paket lama tanpa lisensi tetap terbaca, dengan lisensi kosong (klien menampilkan "tidak dinyatakan")
+	buf.Reset()
+	zw = gzip.NewWriter(&buf)
+	_ = json.NewEncoder(zw).Encode(map[string]any{"format": 1, "tier": "free", "nodes": []any{}})
+	_ = zw.Close()
+	if p, err = parse(buf.Bytes()); err != nil || p.License.ID != "" {
+		t.Fatalf("paket tanpa lisensi: err=%v lisensi=%+v", err, p.License)
 	}
 }

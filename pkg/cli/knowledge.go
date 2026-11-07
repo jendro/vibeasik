@@ -30,10 +30,12 @@ var knowledgePullCmd = &cobra.Command{
 		}
 		if res.UpToDate {
 			fmt.Printf("Sudah terbaru: paket %s (%s)\n", res.Version, res.Tier)
+			printLicense(res.License)
 			return nil
 		}
 		fmt.Printf("Paket %s (%s): %d baru, %d diperbarui, %d dilewati (sudah ada), %d tautan\n",
 			res.Version, res.Tier, res.Added, res.Updated, res.Skipped, res.Links)
+		printLicense(res.License)
 		return nil
 	},
 }
@@ -48,6 +50,7 @@ var knowledgeStatusCmd = &cobra.Command{
 			return nil
 		}
 		fmt.Printf("Paket:  %s (%s), %d node\nDitarik: %s\n", st.Version, st.Tier, st.Nodes, st.PulledAt.Format(time.RFC3339))
+		printLicense(st.License)
 		fmt.Printf("Usulan terkirim: %d (mode %s; lihat `vibeasik knowledge auto status`)\n", len(st.Contributed), knowledgesync.EffectiveMode())
 		return nil
 	},
@@ -103,6 +106,15 @@ dan tanpa path/email. Tidak ada yang dikirim kecuali Anda memilihnya lewat --sen
 		fmt.Printf("%d usulan terkirim untuk dikurasi.\n", n)
 		return nil
 	},
+}
+
+// printLicense menampilkan lisensi isi paket (dari berkas paket yang ditandatangani).
+func printLicense(l knowledgesync.PackLicense) {
+	if l.ID == "" {
+		fmt.Println("Lisensi isi: tidak dinyatakan dalam paket ini.")
+		return
+	}
+	fmt.Printf("Lisensi isi: %s (%s)\n  %s\n  %s\n", l.Name, l.ID, l.Notice, l.URL)
 }
 
 func shortText(s string, n int) string {
