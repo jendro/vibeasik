@@ -459,6 +459,329 @@ func fallbackHeuristic(result *models.FastScanResult, absDir string, comp *model
 	}
 }
 
+const (
+	envDBNone   = "None detected"
+	envORMNone  = "Native / Standard"
+	gormORMName = "GORM (Go Object Relational Mapping)"
+)
+
+// envScan: keadaan sementara selama ekstraksi environment/database satu direktori.
+type envScan struct {
+	info   *models.ExtractedEnvInfo
+	dbType string
+	orm    string
+	dbName string
+	dir    string
+}
+
+// envKeyRule mengklasifikasi nama variabel environment: cocok bila nama (huruf besar) sama dengan exact
+// atau memuat salah satu keys; apply (opsional) memperbarui keadaan ekstraksi.
+type envKeyRule struct {
+	exact   string
+	keys    []string
+	purpose string
+	apply   func(st *envScan, v string)
+}
+
+func (r envKeyRule) match(u string) bool {
+	return (r.exact != "" && u == r.exact) || containsAny(u, r.keys...)
+}
+
+func envMeta(name string) func(st *envScan, v string) {
+	return func(st *envScan, v string) { st.info.DynamicMetadata[name] = v }
+}
+
+func envService(name, purpose string) func(st *envScan, v string) {
+	return func(st *envScan, v string) {
+		st.info.ThirdPartyServices = append(st.info.ThirdPartyServices, models.DetectedService{Name: name, Purpose: purpose})
+	}
+}
+
+var envKeyRules = []envKeyRule{
+	{exact: "DB_DATABASE", keys: []string{"DATABASE.DEFAULT.DATABASE", "DB_NAME", "DATABASE_NAME"}, purpose: "Nama skema / database utama",
+		apply: func(st *envScan, v string) {
+			st.dbName = v
+			st.info.DynamicMetadata["Database Name"] = v
+		}},
+	{exact: "DB_CONNECTION", keys: []string{"DATABASE.DEFAULT.DBDRIVER", "DB_DRIVER"}, purpose: "Driver koneksi database",
+		apply: func(st *envScan, v string) {
+			st.dbType = strings.ToUpper(v)
+			if strings.EqualFold(v, "mysqli") || strings.EqualFold(v, "mysql") {
+				st.dbType = "MySQL"
+				st.orm = "CodeIgniter Model / MySQLi"
+			} else if strings.EqualFold(v, "postgre") || strings.EqualFold(v, "postgres") {
+				st.dbType = "PostgreSQL"
+				st.orm = "CodeIgniter Model / Postgre"
+			}
+		}},
+	{keys: []string{"DATABASE.DEFAULT.HOSTNAME", "DB_HOST", "DATABASE_HOST"}, purpose: "Host alamat server database", apply: envMeta("Database Host")},
+	{keys: []string{"DATABASE.DEFAULT.PORT", "DB_PORT"}, purpose: "Port jaringan listening service database", apply: envMeta("Database Port")},
+	{keys: []string{"APP.BASEURL", "APP_URL"}, purpose: "Base URL aplikasi", apply: envMeta("Base URL")},
+	{keys: []string{"CI_ENVIRONMENT", "APP_ENV"}, purpose: "Environment runtime aplikasi (development/production)", apply: envMeta("Environment")},
+	{keys: []string{"PORT"}, purpose: "Port jaringan listening service", apply: envMeta("Port")},
+	{keys: []string{"JWT"}, purpose: "Kunci rahasia enkripsi JWT token autentikasi",
+		apply: func(st *envScan, v string) {
+			if !containsString(st.info.AuthMethods, "JWT Bearer Token") {
+				st.info.AuthMethods = append(st.info.AuthMethods, "JWT Bearer Token")
+			}
+		}},
+	{keys: []string{"REDIS"}, purpose: "Koneksi cache dan queue in-memory Redis", apply: envService("Redis", "In-Memory Caching & Session")},
+	{keys: []string{"OPENAI", "AI_"}, purpose: "Kredensial API AI / LLM", apply: envService("OpenAI / AI Engine", "Integrasi Kecerdasan Buatan")},
+	{keys: []string{"FIREBASE"}, purpose: "Kredensial layanan Firebase Admin SDK", apply: envService("Firebase", "Push Notification & Admin Auth")},
+}
+
+// findEnvFile mengembalikan path berkas .env pertama yang ada di dir ("" bila tak ada).
+func findEnvFile(dir string) string {
+	for _, ef := range []string{".env", ".env.example", ".env.server", ".env.local", ".env.development"} {
+		p := filepath.Join(dir, ef)
+		if util.PathExists(p) {
+			return p
+		}
+	}
+	return ""
+}
+
+// scanEnvFile membaca berkas env baris demi baris dan mengisi EnvironmentKeys serta keadaan ekstraksi.
+func (st *envScan) scanEnvFile(path string) {
+	f, err := os.Open(path)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) == 2 {
+			st.addEnvKey(strings.TrimSpace(parts[0]), strings.Trim(strings.TrimSpace(parts[1]), `"'`))
+		}
+	}
+}
+
+func (st *envScan) addEnvKey(key, rawVal string) {
+	cleanVal := security.SanitizeText(rawVal)
+	upperKey := strings.ToUpper(key)
+	isSecret := containsAny(upperKey, "KEY", "SECRET", "PASS", "TOKEN")
+
+	purpose := "Konfigurasi runtime lingkungan"
+	for _, r := range envKeyRules {
+		if r.match(upperKey) {
+			purpose = r.purpose
+			if r.apply != nil {
+				r.apply(st, cleanVal)
+			}
+			break
+		}
+	}
+
+	st.info.EnvironmentKeys = append(st.info.EnvironmentKeys, models.EnvKeyDescription{
+		Key:         key,
+		Purpose:     purpose,
+		Required:    true,
+		IsSecret:    isSecret,
+		SafeExample: cleanVal,
+	})
+}
+
+var dbSourceFiles = []string{
+	"database/database.go",
+	"database/db.go",
+	"db/database.go",
+	"db/db.go",
+	"database.go",
+	"db.go",
+	"internal/database/db.go",
+	"internal/database/database.go",
+}
+
+var dbSourceNameRe = regexp.MustCompile(`dbName\s*:=\s*os\.Getenv\("DB_NAME"\)\s*\n\s*if\s*dbName\s*==\s*""\s*\{\s*dbName\s*=\s*"([^"]+)"`)
+
+// dbKeyword memetakan kata kunci isi sumber ke nama mesin database (urut, pertama cocok).
+type dbKeyword struct {
+	keys   []string
+	dbType string
+}
+
+var dbSourceKeywords = []dbKeyword{
+	{[]string{"mysql", "driver/mysql"}, "MySQL"},
+	{[]string{"postgres", "lib/pq", "pgx"}, "PostgreSQL"},
+	{[]string{"sqlite"}, "SQLite"},
+}
+
+// scanDBSource mendeteksi database dari berkas sumber database pertama yang ada.
+func (st *envScan) scanDBSource() {
+	for _, dbf := range dbSourceFiles {
+		p := filepath.Join(st.dir, dbf)
+		if !util.PathExists(p) {
+			continue
+		}
+		if content, err := os.ReadFile(p); err == nil {
+			st.applyDBSource(string(content))
+		}
+		return
+	}
+}
+
+func (st *envScan) applyDBSource(content string) {
+	for _, k := range dbSourceKeywords {
+		if containsAny(content, k.keys...) {
+			st.dbType = k.dbType
+			if strings.Contains(content, "gorm") {
+				st.orm = gormORMName
+			}
+			break
+		}
+	}
+	if st.dbName == "" {
+		if m := dbSourceNameRe.FindStringSubmatch(content); len(m) > 1 {
+			st.dbName = m[1]
+		}
+	}
+}
+
+var goModDBKeywords = []dbKeyword{
+	{[]string{"gorm.io/driver/mysql", "go-sql-driver/mysql"}, "MySQL"},
+	{[]string{"gorm.io/driver/postgres", "lib/pq", "pgx"}, "PostgreSQL"},
+	{[]string{"sqlite"}, "SQLite"},
+}
+
+var prismaProviders = []dbKeyword{
+	{[]string{`provider = "postgresql"`}, "PostgreSQL"},
+	{[]string{`provider = "mysql"`}, "MySQL"},
+	{[]string{`provider = "sqlite"`}, "SQLite"},
+}
+
+// scanManifestDB mendeteksi database/ORM dari go.mod atau skema Prisma.
+func (st *envScan) scanManifestDB() {
+	if util.PathExists(filepath.Join(st.dir, "go.mod")) {
+		modContent, _ := os.ReadFile(filepath.Join(st.dir, "go.mod"))
+		sMod := string(modContent)
+		if strings.Contains(sMod, "gorm.io/gorm") {
+			st.orm = gormORMName
+		}
+		for _, k := range goModDBKeywords {
+			if containsAny(sMod, k.keys...) && st.dbType == envDBNone {
+				st.dbType = k.dbType
+			}
+		}
+	} else if util.PathExists(filepath.Join(st.dir, "prisma/schema.prisma")) {
+		st.orm = "Prisma ORM"
+		prismaContent, _ := os.ReadFile(filepath.Join(st.dir, "prisma/schema.prisma"))
+		for _, k := range prismaProviders {
+			if containsAny(string(prismaContent), k.keys...) {
+				st.dbType = k.dbType
+				break
+			}
+		}
+	}
+}
+
+// detectAuth mengisi metode autentikasi bawaan bila env belum menyebutkannya.
+func (st *envScan) detectAuth() {
+	if len(st.info.AuthMethods) != 0 {
+		return
+	}
+	if util.PathExists(filepath.Join(st.dir, "server/api/auth.ts")) || util.PathExists(filepath.Join(st.dir, "server/api/auth/[...].ts")) {
+		st.info.AuthMethods = append(st.info.AuthMethods, "Nuxt Auth / OAuth")
+		st.info.LoginEndpoints = append(st.info.LoginEndpoints, "/api/auth/login")
+	} else {
+		st.info.AuthMethods = append(st.info.AuthMethods, "JWT Bearer Token")
+	}
+}
+
+// isFrontendDir: direktori berisi penanda proyek frontend (Node/Nuxt/Next/Flutter).
+func isFrontendDir(dir string) bool {
+	for _, f := range []string{"package.json", "nuxt.config.ts", "nuxt.config.js", "next.config.js", "pubspec.yaml"} {
+		if util.PathExists(filepath.Join(dir, f)) {
+			return true
+		}
+	}
+	return false
+}
+
+// applyFrontendDefaults mengisi nilai bawaan komponen frontend yang tidak punya database.
+func (st *envScan) applyFrontendDefaults() {
+	if st.dbType != envDBNone && st.dbType != "" {
+		return
+	}
+	st.dbType = "Client Cache & Remote REST API"
+	st.orm = "Typed HTTP Composables ($fetch / useApi)"
+	st.dbName = "Client Reactive State"
+	st.info.AuthMethods = []string{"Client Bearer Token Storage", "Route Navigation Guard Middleware", "Reactive Session State"}
+	st.info.LoginEndpoints = []string{"/login (Form UI)", "/auth/login"}
+	st.info.LoginAndAccessGuide = "Aplikasi frontend mengelola token otentikasi di client storage/cookies dan menerapkan Route Navigation Guards sebelum mengakses halaman terlindungi."
+}
+
+// frontendCap: kemampuan frontend yang dideteksi dari dependency package.json; meta (opsional) = entri DynamicMetadata.
+type frontendCap struct {
+	deps     []string
+	label    string
+	metaKey  string
+	metaText string
+}
+
+var frontendCaps = []frontendCap{
+	{[]string{"pinia", "@pinia/nuxt"}, "State Management (Pinia)", "State Management", "Pinia Reactive Store"},
+	{[]string{"tailwindcss", "@nuxtjs/tailwindcss"}, "Responsive Layout (Tailwind CSS)", "Styling Engine", "Tailwind CSS Utility-First"},
+	{[]string{"@nuxt/ui"}, "Nuxt UI Design System", "UI Framework", "Nuxt UI Component Suite"},
+	{[]string{"zod"}, "Schema Validation (Zod)", "", ""},
+	{[]string{"chart.js", "vue-chartjs"}, "Interactive Charts & Data Visualization", "", ""},
+	{[]string{"@vueuse/core"}, "Vue Composition Utilities (@vueuse)", "", ""},
+}
+
+func (p packageJSON) hasDep(name string) bool {
+	if _, ok := p.Dependencies[name]; ok {
+		return true
+	}
+	_, ok := p.DevDependencies[name]
+	return ok
+}
+
+func (p packageJSON) hasAnyDep(names ...string) bool {
+	for _, n := range names {
+		if p.hasDep(n) {
+			return true
+		}
+	}
+	return false
+}
+
+// scanFrontendCapabilities mengisi DynamicMetadata kemampuan frontend dari package.json.
+func (st *envScan) scanFrontendCapabilities() {
+	pkgPath := filepath.Join(st.dir, "package.json")
+	if !util.PathExists(pkgPath) {
+		return
+	}
+	data, err := os.ReadFile(pkgPath)
+	if err != nil {
+		return
+	}
+	var pkg packageJSON
+	if json.Unmarshal(data, &pkg) != nil {
+		return
+	}
+	caps := []string{}
+	for _, c := range frontendCaps {
+		if !pkg.hasAnyDep(c.deps...) {
+			continue
+		}
+		caps = append(caps, c.label)
+		if c.metaKey != "" {
+			st.info.DynamicMetadata[c.metaKey] = c.metaText
+		}
+	}
+	caps = append(caps, "Route Navigation Guards")
+	caps = append(caps, "Double Security Censored Keys Vault")
+
+	st.info.DynamicMetadata["Frontend Capabilities"] = strings.Join(caps, ", ")
+	if pkg.PackageManager != "" {
+		st.info.DynamicMetadata["Package Manager"] = pkg.PackageManager
+	}
+}
+
 func extractEnvHeuristic(dir string) models.ExtractedEnvInfo {
 	envInfo := models.ExtractedEnvInfo{
 		AuthMethods:        make([]string, 0),
@@ -467,270 +790,34 @@ func extractEnvHeuristic(dir string) models.ExtractedEnvInfo {
 		EnvironmentKeys:    make([]models.EnvKeyDescription, 0),
 		DynamicMetadata:    make(map[string]string),
 	}
+	st := &envScan{info: &envInfo, dbType: envDBNone, orm: envORMNone, dir: dir}
 
-	// Check .env, .env.example, .env.server, etc.
-	envFiles := []string{".env", ".env.example", ".env.server", ".env.local", ".env.development"}
-	foundEnvPath := ""
-	for _, ef := range envFiles {
-		p := filepath.Join(dir, ef)
-		if util.PathExists(p) {
-			foundEnvPath = p
-			break
-		}
+	if p := findEnvFile(dir); p != "" {
+		st.scanEnvFile(p)
 	}
+	st.scanDBSource()
+	st.scanManifestDB()
+	st.detectAuth()
 
-	dbType := "None detected"
-	ormDriver := "Native / Standard"
-	dbName := ""
-
-	if foundEnvPath != "" {
-		f, err := os.Open(foundEnvPath)
-		if err == nil {
-			defer f.Close()
-			scanner := bufio.NewScanner(f)
-			for scanner.Scan() {
-				line := strings.TrimSpace(scanner.Text())
-				if line == "" || strings.HasPrefix(line, "#") {
-					continue
-				}
-				parts := strings.SplitN(line, "=", 2)
-				if len(parts) == 2 {
-					key := strings.TrimSpace(parts[0])
-					rawVal := strings.Trim(strings.TrimSpace(parts[1]), `"'`)
-					cleanVal := security.SanitizeText(rawVal)
-					isSecret := strings.Contains(strings.ToUpper(key), "KEY") ||
-						strings.Contains(strings.ToUpper(key), "SECRET") ||
-						strings.Contains(strings.ToUpper(key), "PASS") ||
-						strings.Contains(strings.ToUpper(key), "TOKEN")
-
-					purpose := "Konfigurasi runtime lingkungan"
-					upperKey := strings.ToUpper(key)
-
-					if strings.Contains(upperKey, "DATABASE.DEFAULT.DATABASE") || upperKey == "DB_DATABASE" || strings.Contains(upperKey, "DB_NAME") || strings.Contains(upperKey, "DATABASE_NAME") {
-						purpose = "Nama skema / database utama"
-						dbName = cleanVal
-						envInfo.DynamicMetadata["Database Name"] = cleanVal
-					} else if strings.Contains(upperKey, "DATABASE.DEFAULT.DBDRIVER") || upperKey == "DB_CONNECTION" || strings.Contains(upperKey, "DB_DRIVER") {
-						purpose = "Driver koneksi database"
-						dbType = strings.ToUpper(cleanVal)
-						if strings.EqualFold(cleanVal, "mysqli") || strings.EqualFold(cleanVal, "mysql") {
-							dbType = "MySQL"
-							ormDriver = "CodeIgniter Model / MySQLi"
-						} else if strings.EqualFold(cleanVal, "postgre") || strings.EqualFold(cleanVal, "postgres") {
-							dbType = "PostgreSQL"
-							ormDriver = "CodeIgniter Model / Postgre"
-						}
-					} else if strings.Contains(upperKey, "DATABASE.DEFAULT.HOSTNAME") || strings.Contains(upperKey, "DB_HOST") || strings.Contains(upperKey, "DATABASE_HOST") {
-						purpose = "Host alamat server database"
-						envInfo.DynamicMetadata["Database Host"] = cleanVal
-					} else if strings.Contains(upperKey, "DATABASE.DEFAULT.PORT") || strings.Contains(upperKey, "DB_PORT") {
-						purpose = "Port jaringan listening service database"
-						envInfo.DynamicMetadata["Database Port"] = cleanVal
-					} else if strings.Contains(upperKey, "APP.BASEURL") || strings.Contains(upperKey, "APP_URL") {
-						purpose = "Base URL aplikasi"
-						envInfo.DynamicMetadata["Base URL"] = cleanVal
-					} else if strings.Contains(upperKey, "CI_ENVIRONMENT") || strings.Contains(upperKey, "APP_ENV") {
-						purpose = "Environment runtime aplikasi (development/production)"
-						envInfo.DynamicMetadata["Environment"] = cleanVal
-					} else if strings.Contains(upperKey, "PORT") {
-						purpose = "Port jaringan listening service"
-						envInfo.DynamicMetadata["Port"] = cleanVal
-					} else if strings.Contains(upperKey, "JWT") {
-						purpose = "Kunci rahasia enkripsi JWT token autentikasi"
-						if !containsString(envInfo.AuthMethods, "JWT Bearer Token") {
-							envInfo.AuthMethods = append(envInfo.AuthMethods, "JWT Bearer Token")
-						}
-					} else if strings.Contains(upperKey, "REDIS") {
-						purpose = "Koneksi cache dan queue in-memory Redis"
-						envInfo.ThirdPartyServices = append(envInfo.ThirdPartyServices, models.DetectedService{Name: "Redis", Purpose: "In-Memory Caching & Session"})
-					} else if strings.Contains(upperKey, "OPENAI") || strings.Contains(upperKey, "AI_") {
-						purpose = "Kredensial API AI / LLM"
-						envInfo.ThirdPartyServices = append(envInfo.ThirdPartyServices, models.DetectedService{Name: "OpenAI / AI Engine", Purpose: "Integrasi Kecerdasan Buatan"})
-					} else if strings.Contains(upperKey, "FIREBASE") {
-						purpose = "Kredensial layanan Firebase Admin SDK"
-						envInfo.ThirdPartyServices = append(envInfo.ThirdPartyServices, models.DetectedService{Name: "Firebase", Purpose: "Push Notification & Admin Auth"})
-					}
-
-					envInfo.EnvironmentKeys = append(envInfo.EnvironmentKeys, models.EnvKeyDescription{
-						Key:         key,
-						Purpose:     purpose,
-						Required:    true,
-						IsSecret:    isSecret,
-						SafeExample: cleanVal,
-					})
-				}
-			}
-		}
-	}
-
-	// Detect DB from database source code files (e.g. database/database.go, internal/database/db.go, etc.)
-	dbFiles := []string{
-		"database/database.go",
-		"database/db.go",
-		"db/database.go",
-		"db/db.go",
-		"database.go",
-		"db.go",
-		"internal/database/db.go",
-		"internal/database/database.go",
-	}
-	for _, dbf := range dbFiles {
-		p := filepath.Join(dir, dbf)
-		if util.PathExists(p) {
-			content, err := os.ReadFile(p)
-			if err == nil {
-				sContent := string(content)
-				if strings.Contains(sContent, "mysql") || strings.Contains(sContent, "driver/mysql") {
-					dbType = "MySQL"
-					if strings.Contains(sContent, "gorm") {
-						ormDriver = "GORM (Go Object Relational Mapping)"
-					}
-				} else if strings.Contains(sContent, "postgres") || strings.Contains(sContent, "lib/pq") || strings.Contains(sContent, "pgx") {
-					dbType = "PostgreSQL"
-					if strings.Contains(sContent, "gorm") {
-						ormDriver = "GORM (Go Object Relational Mapping)"
-					}
-				} else if strings.Contains(sContent, "sqlite") {
-					dbType = "SQLite"
-					if strings.Contains(sContent, "gorm") {
-						ormDriver = "GORM (Go Object Relational Mapping)"
-					}
-				}
-
-				if dbName == "" {
-					reDB := regexp.MustCompile(`dbName\s*:=\s*os\.Getenv\("DB_NAME"\)\s*\n\s*if\s*dbName\s*==\s*""\s*\{\s*dbName\s*=\s*"([^"]+)"`)
-					m := reDB.FindStringSubmatch(sContent)
-					if len(m) > 1 {
-						dbName = m[1]
-					}
-				}
-			}
-			break
-		}
-	}
-
-	// Detect DB from manifest
-	if util.PathExists(filepath.Join(dir, "go.mod")) {
-		modContent, _ := os.ReadFile(filepath.Join(dir, "go.mod"))
-		sMod := string(modContent)
-		if strings.Contains(sMod, "gorm.io/gorm") {
-			ormDriver = "GORM (Go Object Relational Mapping)"
-		}
-		if (strings.Contains(sMod, "gorm.io/driver/mysql") || strings.Contains(sMod, "go-sql-driver/mysql")) && dbType == "None detected" {
-			dbType = "MySQL"
-		}
-		if (strings.Contains(sMod, "gorm.io/driver/postgres") || strings.Contains(sMod, "lib/pq") || strings.Contains(sMod, "pgx")) && dbType == "None detected" {
-			dbType = "PostgreSQL"
-		}
-		if strings.Contains(sMod, "sqlite") && dbType == "None detected" {
-			dbType = "SQLite"
-		}
-	} else if util.PathExists(filepath.Join(dir, "prisma/schema.prisma")) {
-		ormDriver = "Prisma ORM"
-		prismaContent, _ := os.ReadFile(filepath.Join(dir, "prisma/schema.prisma"))
-		if strings.Contains(string(prismaContent), `provider = "postgresql"`) {
-			dbType = "PostgreSQL"
-		} else if strings.Contains(string(prismaContent), `provider = "mysql"`) {
-			dbType = "MySQL"
-		} else if strings.Contains(string(prismaContent), `provider = "sqlite"`) {
-			dbType = "SQLite"
-		}
-	}
-
-	// Detect Auth methods
-	if len(envInfo.AuthMethods) == 0 {
-		if util.PathExists(filepath.Join(dir, "server/api/auth.ts")) || util.PathExists(filepath.Join(dir, "server/api/auth/[...].ts")) {
-			envInfo.AuthMethods = append(envInfo.AuthMethods, "Nuxt Auth / OAuth")
-			envInfo.LoginEndpoints = append(envInfo.LoginEndpoints, "/api/auth/login")
-		} else {
-			envInfo.AuthMethods = append(envInfo.AuthMethods, "JWT Bearer Token")
-		}
-	}
-
-	// Detect if this is a Frontend component
-	isFrontend := util.PathExists(filepath.Join(dir, "package.json")) ||
-		util.PathExists(filepath.Join(dir, "nuxt.config.ts")) ||
-		util.PathExists(filepath.Join(dir, "nuxt.config.js")) ||
-		util.PathExists(filepath.Join(dir, "next.config.js")) ||
-		util.PathExists(filepath.Join(dir, "pubspec.yaml"))
-
-	if isFrontend && (dbType == "None detected" || dbType == "") {
-		dbType = "Client Cache & Remote REST API"
-		ormDriver = "Typed HTTP Composables ($fetch / useApi)"
-		dbName = "Client Reactive State"
-		envInfo.AuthMethods = []string{"Client Bearer Token Storage", "Route Navigation Guard Middleware", "Reactive Session State"}
-		envInfo.LoginEndpoints = []string{"/login (Form UI)", "/auth/login"}
-		envInfo.LoginAndAccessGuide = "Aplikasi frontend mengelola token otentikasi di client storage/cookies dan menerapkan Route Navigation Guards sebelum mengakses halaman terlindungi."
-	}
-
+	isFrontend := isFrontendDir(dir)
 	if isFrontend {
-		pkgPath := filepath.Join(dir, "package.json")
-		if util.PathExists(pkgPath) {
-			data, err := os.ReadFile(pkgPath)
-			if err == nil {
-				var pkg packageJSON
-				if json.Unmarshal(data, &pkg) == nil {
-					hasDepLocal := func(name string) bool {
-						if pkg.Dependencies != nil {
-							if _, ok := pkg.Dependencies[name]; ok {
-								return true
-							}
-						}
-						if pkg.DevDependencies != nil {
-							if _, ok := pkg.DevDependencies[name]; ok {
-								return true
-							}
-						}
-						return false
-					}
-
-					caps := []string{}
-					if hasDepLocal("pinia") || hasDepLocal("@pinia/nuxt") {
-						caps = append(caps, "State Management (Pinia)")
-						envInfo.DynamicMetadata["State Management"] = "Pinia Reactive Store"
-					}
-					if hasDepLocal("tailwindcss") || hasDepLocal("@nuxtjs/tailwindcss") {
-						caps = append(caps, "Responsive Layout (Tailwind CSS)")
-						envInfo.DynamicMetadata["Styling Engine"] = "Tailwind CSS Utility-First"
-					}
-					if hasDepLocal("@nuxt/ui") {
-						caps = append(caps, "Nuxt UI Design System")
-						envInfo.DynamicMetadata["UI Framework"] = "Nuxt UI Component Suite"
-					}
-					if hasDepLocal("zod") {
-						caps = append(caps, "Schema Validation (Zod)")
-					}
-					if hasDepLocal("chart.js") || hasDepLocal("vue-chartjs") {
-						caps = append(caps, "Interactive Charts & Data Visualization")
-					}
-					if hasDepLocal("@vueuse/core") {
-						caps = append(caps, "Vue Composition Utilities (@vueuse)")
-					}
-					caps = append(caps, "Route Navigation Guards")
-					caps = append(caps, "Double Security Censored Keys Vault")
-
-					envInfo.DynamicMetadata["Frontend Capabilities"] = strings.Join(caps, ", ")
-					if pkg.PackageManager != "" {
-						envInfo.DynamicMetadata["Package Manager"] = pkg.PackageManager
-					}
-				}
-			}
-		}
+		st.applyFrontendDefaults()
+		st.scanFrontendCapabilities()
 	}
 
 	if len(envInfo.LoginEndpoints) == 0 {
 		envInfo.LoginEndpoints = []string{"/api/auth/login", "/api/auth/register", "/api/auth/google"}
 	}
 
-	envInfo.DatabaseType = dbType
-	envInfo.ORMDriver = ormDriver
-	envInfo.DatabaseName = dbName
+	envInfo.DatabaseType = st.dbType
+	envInfo.ORMDriver = st.orm
+	envInfo.DatabaseName = st.dbName
 	if envInfo.LoginAndAccessGuide == "" {
 		envInfo.LoginAndAccessGuide = fmt.Sprintf("Aplikasi menggunakan autentikasi %s. Endpoint login dan registrasi publik berada di %s.", strings.Join(envInfo.AuthMethods, ", "), strings.Join(envInfo.LoginEndpoints, ", "))
 	}
-	envInfo.DynamicMetadata["Arsitektur Database"] = fmt.Sprintf("%s (%s)", dbType, ormDriver)
-	if dbName != "" {
-		envInfo.DynamicMetadata["Database Name"] = dbName
+	envInfo.DynamicMetadata["Arsitektur Database"] = fmt.Sprintf("%s (%s)", st.dbType, st.orm)
+	if st.dbName != "" {
+		envInfo.DynamicMetadata["Database Name"] = st.dbName
 	}
 
 	return envInfo
@@ -936,241 +1023,250 @@ func readSnippet(path string, maxLines int) (string, error) {
 	return string(data), nil
 }
 
+// pathExistsAll / pathExistsAny: pemeriksaan keberadaan beberapa path relatif terhadap dir.
+func pathExistsAll(dir string, names ...string) bool {
+	for _, n := range names {
+		if !util.PathExists(filepath.Join(dir, n)) {
+			return false
+		}
+	}
+	return true
+}
+
+func pathExistsAny(dir string, names ...string) bool {
+	for _, n := range names {
+		if util.PathExists(filepath.Join(dir, n)) {
+			return true
+		}
+	}
+	return false
+}
+
+// archFramework: kerangka kerja terdeteksi bila teks memuat salah satu keys (urut, pertama cocok).
+type archFramework struct {
+	keys      []string
+	framework string
+	fwType    string
+}
+
+var goFrameworks = []archFramework{
+	{[]string{"github.com/gofiber/fiber/v2"}, "Fiber v2", "FastHTTP Asynchronous High-Performance Web Engine"},
+	{[]string{"github.com/gofiber/fiber/v3"}, "Fiber v3", "FastHTTP Asynchronous High-Performance Web Engine"},
+	{[]string{"github.com/gin-gonic/gin"}, "Gin", "High-Performance HTTP Web Framework (HttpRouter Engine)"},
+	{[]string{"github.com/labstack/echo/v4", "github.com/labstack/echo"}, "Echo v4", "Minimalist High-Performance Web Framework"},
+	{[]string{"github.com/go-chi/chi/v5", "github.com/go-chi/chi"}, "Chi Router", "Lightweight, Idiomatic & Composable net/http Router"},
+	{[]string{"github.com/gorilla/mux"}, "Gorilla Mux", "Standard-Compliant net/http URL Router & Dispatcher"},
+	{[]string{"github.com/zeromicro/go-zero"}, "Go-Zero", "Microservice Web & RPC Framework with Built-in Tooling"},
+	{[]string{"github.com/kataras/iris"}, "Iris", "Expressive High-Performance Web Framework"},
+	{[]string{"github.com/beego/beego"}, "Beego", "Full-Stack MVC Framework for Go"},
+}
+
+// archPlugin: plugin terdeteksi bila teks memuat salah satu keys. group tak kosong = rantai else-if
+// (hanya anggota pertama yang cocok dalam grup yang dipakai).
+type archPlugin struct {
+	keys  []string
+	name  string
+	group string
+}
+
+var goPlugins = []archPlugin{
+	{[]string{"github.com/gofiber/contrib/jwt", "golang-jwt/jwt", "dgrijalva/jwt-go"}, "JWT Authentication (golang-jwt/jwt)", ""},
+	{[]string{"firebase.google.com/go/v4"}, "Firebase Admin SDK (FCM & Push Notifications)", ""},
+	{[]string{"gorm.io/gorm"}, "GORM v2 (Object-Relational Mapping)", ""},
+	{[]string{"gorm.io/driver/mysql", "go-sql-driver/mysql"}, "MySQL Database Driver", ""},
+	{[]string{"gorm.io/driver/postgres", "jackc/pgx", "lib/pq"}, "PostgreSQL Database Driver", ""},
+	{[]string{"gorm.io/driver/sqlite", "mattn/go-sqlite3"}, "SQLite Driver (Offline / Fallback Database)", ""},
+	{[]string{"github.com/jmoiron/sqlx"}, "SQLx (Database Extensions)", ""},
+	{[]string{"go.mongodb.org/mongo-driver"}, "MongoDB Official Driver", ""},
+	{[]string{"github.com/redis/go-redis", "go-redis/redis"}, "Redis Client (Cache & Session Storage)", ""},
+	{[]string{"golang.org/x/crypto"}, "bcrypt / Argon2 Cryptography (golang.org/x/crypto)", ""},
+	{[]string{"github.com/google/uuid", "gofrs/uuid"}, "Google UUID Generator", ""},
+	{[]string{"github.com/joho/godotenv"}, "Godotenv (.env Configuration Loader)", ""},
+	{[]string{"github.com/spf13/viper"}, "Viper (Configuration Management)", ""},
+	{[]string{"github.com/go-playground/validator"}, "Go-Playground Validator", ""},
+	{[]string{"github.com/klauspost/compress", "fasthttp"}, "Klauspost Compress (LevelBestSpeed HTTP Compression)", ""},
+	{[]string{"github.com/gorilla/websocket"}, "Gorilla WebSocket (Bi-directional Streaming)", ""},
+	{[]string{"go.uber.org/zap"}, "Uber Zap (Structured Fast Logger)", "logger"},
+	{[]string{"github.com/sirupsen/logrus"}, "Logrus Structured Logger", "logger"},
+	{[]string{"github.com/rs/zerolog"}, "Zerolog JSON Logger", "logger"},
+	{[]string{"github.com/swaggo/swag"}, "Swagger / OpenAPI Specification", ""},
+	{[]string{"github.com/prometheus/client_golang"}, "Prometheus Metrics Client", ""},
+}
+
+// goMainMiddlewares: middleware bawaan yang terlihat di main.go.
+var goMainMiddlewares = []archPlugin{
+	{[]string{"cors.New", "middleware.CORS"}, "CORS Security Middleware", ""},
+	{[]string{"logger.New"}, "Fiber Logger Middleware", ""},
+	{[]string{"recover.New"}, "Panic Recovery Middleware", ""},
+}
+
+// addUnique menambahkan val ke slice bila belum ada.
+func addUnique(slice []string, val string) []string {
+	if containsString(slice, val) {
+		return slice
+	}
+	return append(slice, val)
+}
+
+// matchPlugins mengembalikan nama plugin (urut tabel) yang cocok dengan teks, menghormati grup else-if.
+func matchPlugins(text string, table []archPlugin) []string {
+	var out []string
+	seenGroup := map[string]bool{}
+	for _, p := range table {
+		if p.group != "" && seenGroup[p.group] {
+			continue
+		}
+		if containsAny(text, p.keys...) {
+			out = append(out, p.name)
+			if p.group != "" {
+				seenGroup[p.group] = true
+			}
+		}
+	}
+	return out
+}
+
+// goHasE2EE: proyek memakai vault E2EE/Zero-Knowledge (dokumen penanda atau controller key/asset terenkripsi).
+func goHasE2EE(dir string) bool {
+	if pathExistsAny(dir, "MEKANISME_ENKRIPSI.md", "KEAMANAN_DAN_PEMULIHAN_AKUN.md") {
+		return true
+	}
+	ctrlPath := filepath.Join(dir, "controllers")
+	cEntries, err := os.ReadDir(ctrlPath)
+	if err != nil {
+		return false
+	}
+	for _, ce := range cEntries {
+		if !containsAny(ce.Name(), "key", "asset") {
+			continue
+		}
+		data, _ := os.ReadFile(filepath.Join(ctrlPath, ce.Name()))
+		if containsAny(string(data), "encrypted_", "family_key", "AES") {
+			return true
+		}
+	}
+	return false
+}
+
+// goDesignPattern menentukan pola desain proyek Go dari hierarki direktori.
+func goDesignPattern(dir string) (string, string) {
+	hasCleanArch := pathExistsAll(dir, "domain") && pathExistsAny(dir, "usecase", "usecases") && pathExistsAny(dir, "repository", "repositories")
+	hasMVC := pathExistsAll(dir, "controllers", "models")
+	has3Tier := pathExistsAll(dir, "handlers", "services")
+	hasStdLayout := pathExistsAll(dir, "cmd", "internal")
+	hasE2EE := goHasE2EE(dir)
+
+	switch {
+	case hasCleanArch:
+		return "Clean Architecture (Hexagonal / Ports & Adapters)",
+			"Memisahkan software menjadi 4 lapisan independen: Domain (entitas bisnis), Use Cases (aturan aplikasi spesifik), Repositories (abstraksi database), dan Delivery / HTTP Handlers. Sangat modular, minim coupling, dan memudahkan testing otomatis secara terisolasi."
+	case hasMVC && hasE2EE:
+		return "Headless MVC with Zero-Knowledge E2EE Vault",
+			"Kombinasi Headless Model-Controller dengan Zero-Knowledge End-to-End Encryption (E2EE) Vault. Server bertindak sebagai perantara sinkronisasi dan penyimpanan payload cipher (.enc), di mana seluruh kunci privat dan enkripsi data dikelola eksklusif pada sisi klien. Model mengorganisir entitas database & delta-sync, Controller menangani orkestrasi HTTP dan validasi, serta Middleware mengamankan rute via JWT."
+	case hasMVC:
+		return "MVC (Model-View-Controller / Model-Controller Pattern)",
+			"Pemisahan tanggung jawab modular: Models menangani skema database dan persistensi ORM, Controllers mengeksekusi logika bisnis dan formatting respons HTTP, Routes mengelola pemetaan URL, serta Middleware menangani otentikasi lintas endpoint."
+	case has3Tier:
+		return "3-Tier Layered Architecture (Handler - Service - Repository)",
+			"Arsitektur berlapis berorientasi service: Handlers mengelola serialisasi request/response HTTP, Services mengisolasi proses bisnis utama, dan Repositories bertanggung jawab atas query database serta transaksi data."
+	case hasStdLayout:
+		return "Standard Go Project Layout (cmd/internal/pkg)",
+			"Mengikuti arsitektur idiomatik Standard Go: cmd/ berisi file entrypoint aplikasi, internal/ memuat seluruh kode privat yang terlindungi dari import luar, dan pkg/ memuat pustaka yang dapat digunakan kembali."
+	}
+	return "Modular Flat / Package-Oriented Architecture",
+		"Struktur paket terorganisir per domain fungsional dengan dependensi langsung pada standar pustaka Go untuk throughput maksimal."
+}
+
+// detectGoArchitecture: framework, plugin, dan pola desain proyek Go (dir berisi go.mod).
+func detectGoArchitecture(dir, goModPath string, arch models.ArchitectureInfo) models.ArchitectureInfo {
+	if modBytes, err := os.ReadFile(goModPath); err == nil {
+		sMod := string(modBytes)
+		arch.Framework = "Standard net/http"
+		arch.FrameworkType = "Go Standard Library HTTP Multiplexer (Go 1.22+ Enhanced)"
+		for _, f := range goFrameworks {
+			if containsAny(sMod, f.keys...) {
+				arch.Framework, arch.FrameworkType = f.framework, f.fwType
+				break
+			}
+		}
+		for _, name := range matchPlugins(sMod, goPlugins) {
+			arch.Plugins = addUnique(arch.Plugins, name)
+		}
+	}
+
+	// Also check built-in middlewares in main.go or routes
+	if mainBytes, err := os.ReadFile(filepath.Join(dir, "main.go")); err == nil {
+		arch.Plugins = append(arch.Plugins, matchPlugins(string(mainBytes), goMainMiddlewares)...)
+	}
+
+	arch.DesignPattern, arch.PatternDetails = goDesignPattern(dir)
+	return arch
+}
+
+// phpArchRule: kerangka PHP yang dikenali dari berkas penanda atau isi composer.json.
+type phpArchRule struct {
+	paths    []string
+	composer []string
+	arch     models.ArchitectureInfo
+}
+
+var phpArchRules = []phpArchRule{
+	{[]string{"spark", "app/Config/Routes.php"}, []string{"codeigniter4"}, models.ArchitectureInfo{
+		Framework: "CodeIgniter 4", FrameworkType: "Lightweight High-Performance PHP MVC Framework",
+		DesignPattern:  "MVC (Model-View-Controller)",
+		PatternDetails: "Struktur MVC modular: Controllers menangani orkestrasi HTTP dan validasi, Models mengorganisir entitas database dan migrasi via Spark CLI, serta Filters mengamankan rute via JWT dan Middleware."}},
+	{[]string{"application/config/routes.php", "system/core/CodeIgniter.php"}, nil, models.ArchitectureInfo{
+		Framework: "CodeIgniter 3", FrameworkType: "Classic PHP MVC Framework",
+		DesignPattern:  "MVC (Model-View-Controller)",
+		PatternDetails: "Arsitektur MVC klasik CodeIgniter: Controllers mengeksekusi request HTTP, Models menangani persistensi Active Record, dan Views merender antarmuka."}},
+	{[]string{"artisan"}, []string{"laravel"}, models.ArchitectureInfo{
+		Framework: "Laravel", FrameworkType: "Fullstack PHP Framework (Eloquent ORM & Artisan CLI)",
+		DesignPattern:  "MVC (Model-View-Controller)",
+		PatternDetails: "Arsitektur MVC modern Laravel: Eloquent Models mengelola relasi database, Controllers mengelola alur bisnis, Routes memetakan endpoint REST, serta Middleware menangani autentikasi & otorisasi."}},
+}
+
+// detectPHPArchitecture mengenali CodeIgniter 4/3, Laravel, atau mengembalikan arsitektur generik.
+func detectPHPArchitecture(dir string, arch models.ArchitectureInfo) models.ArchitectureInfo {
+	composerContent := ""
+	if composerPath := filepath.Join(dir, "composer.json"); util.PathExists(composerPath) {
+		composerContent = util.ReadFileString(composerPath)
+	}
+	for _, r := range phpArchRules {
+		if pathExistsAny(dir, r.paths...) || containsAny(composerContent, r.composer...) {
+			found := r.arch
+			found.Plugins = arch.Plugins
+			return found
+		}
+	}
+	arch.Framework = "Custom / Standard"
+	arch.FrameworkType = "Modular Application"
+	arch.DesignPattern = "Component-Based Architecture"
+	arch.PatternDetails = "Aplikasi modular mandiri."
+	return arch
+}
+
 // detectArchitecture analyzes manifests, go.mod, directory hierarchy, and key files to identify framework, plugins, and design patterns
 func detectArchitecture(dir string) models.ArchitectureInfo {
 	var arch models.ArchitectureInfo
 	arch.Plugins = make([]string, 0)
 
 	// 1. Check Go projects
-	goModPath := filepath.Join(dir, "go.mod")
-	if util.PathExists(goModPath) {
-		modBytes, err := os.ReadFile(goModPath)
-		if err == nil {
-			sMod := string(modBytes)
-
-			// Framework Detection
-			if strings.Contains(sMod, "github.com/gofiber/fiber/v2") {
-				arch.Framework = "Fiber v2"
-				arch.FrameworkType = "FastHTTP Asynchronous High-Performance Web Engine"
-			} else if strings.Contains(sMod, "github.com/gofiber/fiber/v3") {
-				arch.Framework = "Fiber v3"
-				arch.FrameworkType = "FastHTTP Asynchronous High-Performance Web Engine"
-			} else if strings.Contains(sMod, "github.com/gin-gonic/gin") {
-				arch.Framework = "Gin"
-				arch.FrameworkType = "High-Performance HTTP Web Framework (HttpRouter Engine)"
-			} else if strings.Contains(sMod, "github.com/labstack/echo/v4") || strings.Contains(sMod, "github.com/labstack/echo") {
-				arch.Framework = "Echo v4"
-				arch.FrameworkType = "Minimalist High-Performance Web Framework"
-			} else if strings.Contains(sMod, "github.com/go-chi/chi/v5") || strings.Contains(sMod, "github.com/go-chi/chi") {
-				arch.Framework = "Chi Router"
-				arch.FrameworkType = "Lightweight, Idiomatic & Composable net/http Router"
-			} else if strings.Contains(sMod, "github.com/gorilla/mux") {
-				arch.Framework = "Gorilla Mux"
-				arch.FrameworkType = "Standard-Compliant net/http URL Router & Dispatcher"
-			} else if strings.Contains(sMod, "github.com/zeromicro/go-zero") {
-				arch.Framework = "Go-Zero"
-				arch.FrameworkType = "Microservice Web & RPC Framework with Built-in Tooling"
-			} else if strings.Contains(sMod, "github.com/kataras/iris") {
-				arch.Framework = "Iris"
-				arch.FrameworkType = "Expressive High-Performance Web Framework"
-			} else if strings.Contains(sMod, "github.com/beego/beego") {
-				arch.Framework = "Beego"
-				arch.FrameworkType = "Full-Stack MVC Framework for Go"
-			} else {
-				arch.Framework = "Standard net/http"
-				arch.FrameworkType = "Go Standard Library HTTP Multiplexer (Go 1.22+ Enhanced)"
-			}
-
-			// Plugins & Libraries Detection
-			addPlugin := func(name string) {
-				for _, p := range arch.Plugins {
-					if p == name {
-						return
-					}
-				}
-				arch.Plugins = append(arch.Plugins, name)
-			}
-
-			if strings.Contains(sMod, "github.com/gofiber/contrib/jwt") || strings.Contains(sMod, "golang-jwt/jwt") || strings.Contains(sMod, "dgrijalva/jwt-go") {
-				addPlugin("JWT Authentication (golang-jwt/jwt)")
-			}
-			if strings.Contains(sMod, "firebase.google.com/go/v4") {
-				addPlugin("Firebase Admin SDK (FCM & Push Notifications)")
-			}
-			if strings.Contains(sMod, "gorm.io/gorm") {
-				addPlugin("GORM v2 (Object-Relational Mapping)")
-			}
-			if strings.Contains(sMod, "gorm.io/driver/mysql") || strings.Contains(sMod, "go-sql-driver/mysql") {
-				addPlugin("MySQL Database Driver")
-			}
-			if strings.Contains(sMod, "gorm.io/driver/postgres") || strings.Contains(sMod, "jackc/pgx") || strings.Contains(sMod, "lib/pq") {
-				addPlugin("PostgreSQL Database Driver")
-			}
-			if strings.Contains(sMod, "gorm.io/driver/sqlite") || strings.Contains(sMod, "mattn/go-sqlite3") {
-				addPlugin("SQLite Driver (Offline / Fallback Database)")
-			}
-			if strings.Contains(sMod, "github.com/jmoiron/sqlx") {
-				addPlugin("SQLx (Database Extensions)")
-			}
-			if strings.Contains(sMod, "go.mongodb.org/mongo-driver") {
-				addPlugin("MongoDB Official Driver")
-			}
-			if strings.Contains(sMod, "github.com/redis/go-redis") || strings.Contains(sMod, "go-redis/redis") {
-				addPlugin("Redis Client (Cache & Session Storage)")
-			}
-			if strings.Contains(sMod, "golang.org/x/crypto") {
-				addPlugin("bcrypt / Argon2 Cryptography (golang.org/x/crypto)")
-			}
-			if strings.Contains(sMod, "github.com/google/uuid") || strings.Contains(sMod, "gofrs/uuid") {
-				addPlugin("Google UUID Generator")
-			}
-			if strings.Contains(sMod, "github.com/joho/godotenv") {
-				addPlugin("Godotenv (.env Configuration Loader)")
-			}
-			if strings.Contains(sMod, "github.com/spf13/viper") {
-				addPlugin("Viper (Configuration Management)")
-			}
-			if strings.Contains(sMod, "github.com/go-playground/validator") {
-				addPlugin("Go-Playground Validator")
-			}
-			if strings.Contains(sMod, "github.com/klauspost/compress") || strings.Contains(sMod, "fasthttp") {
-				addPlugin("Klauspost Compress (LevelBestSpeed HTTP Compression)")
-			}
-			if strings.Contains(sMod, "github.com/gorilla/websocket") {
-				addPlugin("Gorilla WebSocket (Bi-directional Streaming)")
-			}
-			if strings.Contains(sMod, "go.uber.org/zap") {
-				addPlugin("Uber Zap (Structured Fast Logger)")
-			} else if strings.Contains(sMod, "github.com/sirupsen/logrus") {
-				addPlugin("Logrus Structured Logger")
-			} else if strings.Contains(sMod, "github.com/rs/zerolog") {
-				addPlugin("Zerolog JSON Logger")
-			}
-			if strings.Contains(sMod, "github.com/swaggo/swag") {
-				addPlugin("Swagger / OpenAPI Specification")
-			}
-			if strings.Contains(sMod, "github.com/prometheus/client_golang") {
-				addPlugin("Prometheus Metrics Client")
-			}
-		}
-
-		// Also check built-in middlewares in main.go or routes
-		mainPath := filepath.Join(dir, "main.go")
-		if mainBytes, err := os.ReadFile(mainPath); err == nil {
-			sMain := string(mainBytes)
-			if strings.Contains(sMain, "cors.New") || strings.Contains(sMain, "middleware.CORS") {
-				arch.Plugins = append(arch.Plugins, "CORS Security Middleware")
-			}
-			if strings.Contains(sMain, "logger.New") {
-				arch.Plugins = append(arch.Plugins, "Fiber Logger Middleware")
-			}
-			if strings.Contains(sMain, "recover.New") {
-				arch.Plugins = append(arch.Plugins, "Panic Recovery Middleware")
-			}
-		}
-
-		// Design Pattern Detection
-		hasCleanArch := util.PathExists(filepath.Join(dir, "domain")) &&
-			(util.PathExists(filepath.Join(dir, "usecase")) || util.PathExists(filepath.Join(dir, "usecases"))) &&
-			(util.PathExists(filepath.Join(dir, "repository")) || util.PathExists(filepath.Join(dir, "repositories")))
-
-		hasMVC := util.PathExists(filepath.Join(dir, "controllers")) && util.PathExists(filepath.Join(dir, "models"))
-		has3Tier := util.PathExists(filepath.Join(dir, "handlers")) && util.PathExists(filepath.Join(dir, "services"))
-		hasStdLayout := util.PathExists(filepath.Join(dir, "cmd")) && util.PathExists(filepath.Join(dir, "internal"))
-
-		// Check for E2EE or Zero-Knowledge vault
-		hasE2EE := util.PathExists(filepath.Join(dir, "MEKANISME_ENKRIPSI.md")) ||
-			util.PathExists(filepath.Join(dir, "KEAMANAN_DAN_PEMULIHAN_AKUN.md"))
-
-		if !hasE2EE {
-			ctrlPath := filepath.Join(dir, "controllers")
-			if cEntries, err := os.ReadDir(ctrlPath); err == nil {
-				for _, ce := range cEntries {
-					if strings.Contains(ce.Name(), "key") || strings.Contains(ce.Name(), "asset") {
-						data, _ := os.ReadFile(filepath.Join(ctrlPath, ce.Name()))
-						if strings.Contains(string(data), "encrypted_") || strings.Contains(string(data), "family_key") || strings.Contains(string(data), "AES") {
-							hasE2EE = true
-							break
-						}
-					}
-				}
-			}
-		}
-
-		if hasCleanArch {
-			arch.DesignPattern = "Clean Architecture (Hexagonal / Ports & Adapters)"
-			arch.PatternDetails = "Memisahkan software menjadi 4 lapisan independen: Domain (entitas bisnis), Use Cases (aturan aplikasi spesifik), Repositories (abstraksi database), dan Delivery / HTTP Handlers. Sangat modular, minim coupling, dan memudahkan testing otomatis secara terisolasi."
-		} else if hasMVC {
-			if hasE2EE {
-				arch.DesignPattern = "Headless MVC with Zero-Knowledge E2EE Vault"
-				arch.PatternDetails = "Kombinasi Headless Model-Controller dengan Zero-Knowledge End-to-End Encryption (E2EE) Vault. Server bertindak sebagai perantara sinkronisasi dan penyimpanan payload cipher (.enc), di mana seluruh kunci privat dan enkripsi data dikelola eksklusif pada sisi klien. Model mengorganisir entitas database & delta-sync, Controller menangani orkestrasi HTTP dan validasi, serta Middleware mengamankan rute via JWT."
-			} else {
-				arch.DesignPattern = "MVC (Model-View-Controller / Model-Controller Pattern)"
-				arch.PatternDetails = "Pemisahan tanggung jawab modular: Models menangani skema database dan persistensi ORM, Controllers mengeksekusi logika bisnis dan formatting respons HTTP, Routes mengelola pemetaan URL, serta Middleware menangani otentikasi lintas endpoint."
-			}
-		} else if has3Tier {
-			arch.DesignPattern = "3-Tier Layered Architecture (Handler - Service - Repository)"
-			arch.PatternDetails = "Arsitektur berlapis berorientasi service: Handlers mengelola serialisasi request/response HTTP, Services mengisolasi proses bisnis utama, dan Repositories bertanggung jawab atas query database serta transaksi data."
-		} else if hasStdLayout {
-			arch.DesignPattern = "Standard Go Project Layout (cmd/internal/pkg)"
-			arch.PatternDetails = "Mengikuti arsitektur idiomatik Standard Go: cmd/ berisi file entrypoint aplikasi, internal/ memuat seluruh kode privat yang terlindungi dari import luar, dan pkg/ memuat pustaka yang dapat digunakan kembali."
-		} else {
-			arch.DesignPattern = "Modular Flat / Package-Oriented Architecture"
-			arch.PatternDetails = "Struktur paket terorganisir per domain fungsional dengan dependensi langsung pada standar pustaka Go untuk throughput maksimal."
-		}
-
-		return arch
+	if goModPath := filepath.Join(dir, "go.mod"); util.PathExists(goModPath) {
+		return detectGoArchitecture(dir, goModPath, arch)
 	}
 
 	// 2. Check Node / Nuxt / Next / Vue / React / Svelte / Angular projects
-	pkgJsonPath := filepath.Join(dir, "package.json")
-	if util.PathExists(pkgJsonPath) {
+	if pkgJsonPath := filepath.Join(dir, "package.json"); util.PathExists(pkgJsonPath) {
 		return detectNodeAndFrontendArchitecture(dir, pkgJsonPath)
 	}
 
 	// 3. Check Flutter / Dart projects
-	pubspecPath := filepath.Join(dir, "pubspec.yaml")
-	if util.PathExists(pubspecPath) {
+	if pubspecPath := filepath.Join(dir, "pubspec.yaml"); util.PathExists(pubspecPath) {
 		return detectFlutterArchitecture(dir, pubspecPath)
 	}
 
 	// 4. Check PHP projects (CodeIgniter, Laravel, etc.)
-	composerPath := filepath.Join(dir, "composer.json")
-	composerContent := ""
-	if util.PathExists(composerPath) {
-		composerContent = util.ReadFileString(composerPath)
-	}
-
-	if util.PathExists(filepath.Join(dir, "spark")) || util.PathExists(filepath.Join(dir, "app/Config/Routes.php")) || strings.Contains(composerContent, "codeigniter4") {
-		arch.Framework = "CodeIgniter 4"
-		arch.FrameworkType = "Lightweight High-Performance PHP MVC Framework"
-		arch.DesignPattern = "MVC (Model-View-Controller)"
-		arch.PatternDetails = "Struktur MVC modular: Controllers menangani orkestrasi HTTP dan validasi, Models mengorganisir entitas database dan migrasi via Spark CLI, serta Filters mengamankan rute via JWT dan Middleware."
-		return arch
-	}
-
-	if util.PathExists(filepath.Join(dir, "application/config/routes.php")) || util.PathExists(filepath.Join(dir, "system/core/CodeIgniter.php")) {
-		arch.Framework = "CodeIgniter 3"
-		arch.FrameworkType = "Classic PHP MVC Framework"
-		arch.DesignPattern = "MVC (Model-View-Controller)"
-		arch.PatternDetails = "Arsitektur MVC klasik CodeIgniter: Controllers mengeksekusi request HTTP, Models menangani persistensi Active Record, dan Views merender antarmuka."
-		return arch
-	}
-
-	if util.PathExists(filepath.Join(dir, "artisan")) || strings.Contains(composerContent, "laravel") {
-		arch.Framework = "Laravel"
-		arch.FrameworkType = "Fullstack PHP Framework (Eloquent ORM & Artisan CLI)"
-		arch.DesignPattern = "MVC (Model-View-Controller)"
-		arch.PatternDetails = "Arsitektur MVC modern Laravel: Eloquent Models mengelola relasi database, Controllers mengelola alur bisnis, Routes memetakan endpoint REST, serta Middleware menangani autentikasi & otorisasi."
-		return arch
-	}
-
-	// Fallback generic
-	arch.Framework = "Custom / Standard"
-	arch.FrameworkType = "Modular Application"
-	arch.DesignPattern = "Component-Based Architecture"
-	arch.PatternDetails = "Aplikasi modular mandiri."
-	return arch
+	return detectPHPArchitecture(dir, arch)
 }
 
 type packageJSON struct {
@@ -1180,18 +1276,109 @@ type packageJSON struct {
 	PackageManager  string            `json:"packageManager"`
 }
 
+// nodePlugins: plugin frontend terdeteksi bila salah satu dependency ada (urut = urutan tampil).
+var nodePlugins = []struct {
+	deps []string
+	name string
+}{
+	{[]string{"@nuxt/ui"}, "Nuxt UI (Design System & Headless Components)"},
+	{[]string{"tailwindcss", "@nuxtjs/tailwindcss"}, "Tailwind CSS (Utility-First Design Engine)"},
+	{[]string{"unocss"}, "UnoCSS (Instant Atomic CSS Engine)"},
+	{[]string{"primevue"}, "PrimeVue Component Suite"},
+	{[]string{"vuetify"}, "Vuetify Material Design 3 Framework"},
+	{[]string{"radix-vue", "shadcn-vue", "@radix-ui/react-dialog"}, "Radix / Shadcn UI Primitives"},
+	{[]string{"element-plus"}, "Element Plus Desktop UI Kit"},
+	{[]string{"ant-design-vue", "antd"}, "Ant Design Enterprise Kit"},
+	{[]string{"daisyui"}, "DaisyUI Semantic Components"},
+	{[]string{"@headlessui/vue", "@headlessui/react"}, "Headless UI Accessible Components"},
+	{[]string{"@iconify-json/lucide", "lucide-vue-next", "lucide-react"}, "Lucide Icons (Vector Iconography)"},
+	{[]string{"@iconify-json/simple-icons"}, "Simple Icons (Brand & Tech Vectors)"},
+	{[]string{"@heroicons/vue", "@heroicons/react"}, "Heroicons SVG Icons"},
+	{[]string{"pinia", "@pinia/nuxt"}, "Pinia (Reactive Central Store & Persistence)"},
+	{[]string{"vuex"}, "Vuex Centralized Store"},
+	{[]string{"@reduxjs/toolkit", "redux"}, "Redux Toolkit State Container"},
+	{[]string{"zustand"}, "Zustand Lightweight State Manager"},
+	{[]string{"ofetch"}, "OFetch (Resilient HTTP Client)"},
+	{[]string{"axios"}, "Axios HTTP Client with Interceptors"},
+	{[]string{"@tanstack/vue-query", "@tanstack/react-query"}, "TanStack Query (Async Cache & Sync)"},
+	{[]string{"@trpc/client"}, "tRPC TypeSafe API Client"},
+	{[]string{"socket.io-client"}, "Socket.IO Real-Time WebSocket Client"},
+	{[]string{"zod"}, "Zod (TypeScript-First Schema Validation)"},
+	{[]string{"vee-validate"}, "VeeValidate Form Validation"},
+	{[]string{"@formkit/vue"}, "FormKit Form Builder"},
+	{[]string{"chart.js", "vue-chartjs"}, "Chart.js (Interactive Data Visualization)"},
+	{[]string{"echarts", "vue-echarts"}, "Apache ECharts Visualizations"},
+	{[]string{"apexcharts", "vue3-apexcharts"}, "ApexCharts Modern SVG Charts"},
+	{[]string{"@vueuse/core"}, "VueUse (Composition API Utilities)"},
+	{[]string{"date-fns", "dayjs"}, "Dayjs / Date-fns Timezone Formatter"},
+	{[]string{"typescript", "vue-tsc"}, "TypeScript Strict Typing Engine"},
+	{[]string{"eslint", "@nuxt/eslint"}, "ESLint Code Quality & Hygiene"},
+	{[]string{"vitest"}, "Vitest Unit Testing Framework"},
+	{[]string{"@playwright/test"}, "Playwright End-to-End Automation"},
+}
+
+// nodeFrameworkName menentukan framework frontend (nama, tipe) dari flag deteksi, urut prioritas.
+func nodeFrameworkName(pkg packageJSON, dir string) (fw, fwType string, isNuxt, isNext bool) {
+	isNuxt = pkg.hasDep("nuxt") || pathExistsAny(dir, "nuxt.config.ts", "nuxt.config.js")
+	isNext = pkg.hasDep("next") || pathExistsAny(dir, "next.config.js", "next.config.mjs", "next.config.ts")
+	switch {
+	case isNuxt:
+		nuxtVer := "Nuxt 3"
+		if v, ok := pkg.Dependencies["nuxt"]; ok && strings.Contains(v, "4.") {
+			nuxtVer = "Nuxt 4"
+		} else if v, ok := pkg.DevDependencies["nuxt"]; ok && strings.Contains(v, "4.") {
+			nuxtVer = "Nuxt 4"
+		}
+		return nuxtVer + " (Vue 3.5+)", "Vue 3 Universal Fullstack SSR & Nitro Web Engine", isNuxt, isNext
+	case isNext:
+		return "Next.js (React 18/19)", "React Fullstack SSR & React Server Components (Turbopack Engine)", isNuxt, isNext
+	case pkg.hasAnyDep("@sveltejs/kit", "svelte"):
+		return "SvelteKit", "Compiling Reactive Web Framework (Vite Bundler)", isNuxt, isNext
+	case pkg.hasDep("vue"):
+		return "Vue 3 SPA", "Declarative Component-Based SPA (Vite Bundler)", isNuxt, isNext
+	case pkg.hasDep("react"):
+		return "React SPA", "Component-Based Reactive SPA (Vite/Webpack Bundler)", isNuxt, isNext
+	case pkg.hasDep("@angular/core"):
+		return "Angular", "Enterprise TypeScript Web Platform", isNuxt, isNext
+	}
+	return "Node.js Web App", "JavaScript / TypeScript Application", isNuxt, isNext
+}
+
+// nodeDesignPattern menentukan pola desain frontend dari hierarki direktori.
+func nodeDesignPattern(dir string, isNuxt, isNext bool) (string, string) {
+	hasPages := pathExistsAny(dir, "pages", "app/pages")
+	hasComposables := pathExistsAny(dir, "composables", "app/composables")
+	hasComponents := pathExistsAny(dir, "components", "app/components")
+	hasServerApi := pathExistsAny(dir, "server/api", "server/routes")
+	hasMiddleware := pathExistsAny(dir, "middleware", "app/middleware")
+
+	var pattern, details string
+	switch {
+	case isNuxt && hasPages && hasComposables:
+		pattern = "Vue 3 Composition API with Feature-Driven Architecture & File-Based Routing"
+		details = "Arsitektur frontend modern berbasis konvensi direktori: app/pages/ untuk routing file deklaratif, app/composables/ untuk pemanggilan API terisolasi (useApi) dan reusable state, app/components/ untuk antarmuka atomik & modular (Nuxt UI/Tailwind), serta middleware untuk proteksi rute navigasi klien."
+	case isNext:
+		pattern = "Next.js App Router Architecture (React Server Components)"
+		details = "Arsitektur modular React berbasis Server Components, Client Hooks, dan Server Actions dengan rute direktori app/."
+	case hasComposables || hasComponents:
+		pattern = "Component-Driven Reactive SPA Architecture"
+		details = "Pemisahan lapisan presentasi deklaratif dengan manajemen state reaktif, isolasi komponen visual, dan pemanggilan API terstruktur."
+	default:
+		pattern = "Modular Frontend Web Architecture"
+		details = "Struktur paket terorganisir per modul fungsional antarmuka."
+	}
+	if hasServerApi {
+		details += " Dilengkapi Nitro Serverless Engine (server/api) untuk endpoint API fullstack hybrid."
+	}
+	if hasMiddleware {
+		details += " Memanfaatkan Route Navigation Guards untuk otorisasi akses sebelum pergantian halaman."
+	}
+	return pattern, details
+}
+
 func detectNodeAndFrontendArchitecture(dir, pkgPath string) models.ArchitectureInfo {
 	var arch models.ArchitectureInfo
 	arch.Plugins = make([]string, 0)
-
-	addPlugin := func(name string) {
-		for _, p := range arch.Plugins {
-			if p == name {
-				return
-			}
-		}
-		arch.Plugins = append(arch.Plugins, name)
-	}
 
 	data, err := os.ReadFile(pkgPath)
 	var pkg packageJSON
@@ -1199,201 +1386,39 @@ func detectNodeAndFrontendArchitecture(dir, pkgPath string) models.ArchitectureI
 		_ = json.Unmarshal(data, &pkg)
 	}
 
-	hasDep := func(name string) bool {
-		if pkg.Dependencies != nil {
-			if _, ok := pkg.Dependencies[name]; ok {
-				return true
-			}
+	var isNuxt, isNext bool
+	arch.Framework, arch.FrameworkType, isNuxt, isNext = nodeFrameworkName(pkg, dir)
+
+	for _, p := range nodePlugins {
+		if pkg.hasAnyDep(p.deps...) {
+			arch.Plugins = addUnique(arch.Plugins, p.name)
 		}
-		if pkg.DevDependencies != nil {
-			if _, ok := pkg.DevDependencies[name]; ok {
-				return true
-			}
-		}
-		return false
 	}
 
-	isNuxt := hasDep("nuxt") || util.PathExists(filepath.Join(dir, "nuxt.config.ts")) || util.PathExists(filepath.Join(dir, "nuxt.config.js"))
-	isNext := hasDep("next") || util.PathExists(filepath.Join(dir, "next.config.js")) || util.PathExists(filepath.Join(dir, "next.config.mjs")) || util.PathExists(filepath.Join(dir, "next.config.ts"))
-	isSvelte := hasDep("@sveltejs/kit") || hasDep("svelte")
-	isVue := hasDep("vue")
-	isReact := hasDep("react")
-	isAngular := hasDep("@angular/core")
-
-	if isNuxt {
-		nuxtVer := "Nuxt 3"
-		if v, ok := pkg.Dependencies["nuxt"]; ok && strings.Contains(v, "4.") {
-			nuxtVer = "Nuxt 4"
-		} else if v, ok := pkg.DevDependencies["nuxt"]; ok && strings.Contains(v, "4.") {
-			nuxtVer = "Nuxt 4"
-		}
-		arch.Framework = nuxtVer + " (Vue 3.5+)"
-		arch.FrameworkType = "Vue 3 Universal Fullstack SSR & Nitro Web Engine"
-	} else if isNext {
-		arch.Framework = "Next.js (React 18/19)"
-		arch.FrameworkType = "React Fullstack SSR & React Server Components (Turbopack Engine)"
-	} else if isSvelte {
-		arch.Framework = "SvelteKit"
-		arch.FrameworkType = "Compiling Reactive Web Framework (Vite Bundler)"
-	} else if isVue {
-		arch.Framework = "Vue 3 SPA"
-		arch.FrameworkType = "Declarative Component-Based SPA (Vite Bundler)"
-	} else if isReact {
-		arch.Framework = "React SPA"
-		arch.FrameworkType = "Component-Based Reactive SPA (Vite/Webpack Bundler)"
-	} else if isAngular {
-		arch.Framework = "Angular"
-		arch.FrameworkType = "Enterprise TypeScript Web Platform"
-	} else {
-		arch.Framework = "Node.js Web App"
-		arch.FrameworkType = "JavaScript / TypeScript Application"
-	}
-
-	// Detect UI Toolkits & Design Systems
-	if hasDep("@nuxt/ui") {
-		addPlugin("Nuxt UI (Design System & Headless Components)")
-	}
-	if hasDep("tailwindcss") || hasDep("@nuxtjs/tailwindcss") {
-		addPlugin("Tailwind CSS (Utility-First Design Engine)")
-	}
-	if hasDep("unocss") {
-		addPlugin("UnoCSS (Instant Atomic CSS Engine)")
-	}
-	if hasDep("primevue") {
-		addPlugin("PrimeVue Component Suite")
-	}
-	if hasDep("vuetify") {
-		addPlugin("Vuetify Material Design 3 Framework")
-	}
-	if hasDep("radix-vue") || hasDep("shadcn-vue") || hasDep("@radix-ui/react-dialog") {
-		addPlugin("Radix / Shadcn UI Primitives")
-	}
-	if hasDep("element-plus") {
-		addPlugin("Element Plus Desktop UI Kit")
-	}
-	if hasDep("ant-design-vue") || hasDep("antd") {
-		addPlugin("Ant Design Enterprise Kit")
-	}
-	if hasDep("daisyui") {
-		addPlugin("DaisyUI Semantic Components")
-	}
-	if hasDep("@headlessui/vue") || hasDep("@headlessui/react") {
-		addPlugin("Headless UI Accessible Components")
-	}
-
-	// Detect Vector Iconography
-	if hasDep("@iconify-json/lucide") || hasDep("lucide-vue-next") || hasDep("lucide-react") {
-		addPlugin("Lucide Icons (Vector Iconography)")
-	}
-	if hasDep("@iconify-json/simple-icons") {
-		addPlugin("Simple Icons (Brand & Tech Vectors)")
-	}
-	if hasDep("@heroicons/vue") || hasDep("@heroicons/react") {
-		addPlugin("Heroicons SVG Icons")
-	}
-
-	// Detect State Management
-	if hasDep("pinia") || hasDep("@pinia/nuxt") {
-		addPlugin("Pinia (Reactive Central Store & Persistence)")
-	}
-	if hasDep("vuex") {
-		addPlugin("Vuex Centralized Store")
-	}
-	if hasDep("@reduxjs/toolkit") || hasDep("redux") {
-		addPlugin("Redux Toolkit State Container")
-	}
-	if hasDep("zustand") {
-		addPlugin("Zustand Lightweight State Manager")
-	}
-
-	// Detect HTTP & Communication
-	if hasDep("ofetch") {
-		addPlugin("OFetch (Resilient HTTP Client)")
-	}
-	if hasDep("axios") {
-		addPlugin("Axios HTTP Client with Interceptors")
-	}
-	if hasDep("@tanstack/vue-query") || hasDep("@tanstack/react-query") {
-		addPlugin("TanStack Query (Async Cache & Sync)")
-	}
-	if hasDep("@trpc/client") {
-		addPlugin("tRPC TypeSafe API Client")
-	}
-	if hasDep("socket.io-client") {
-		addPlugin("Socket.IO Real-Time WebSocket Client")
-	}
-
-	// Detect Validation & Forms
-	if hasDep("zod") {
-		addPlugin("Zod (TypeScript-First Schema Validation)")
-	}
-	if hasDep("vee-validate") {
-		addPlugin("VeeValidate Form Validation")
-	}
-	if hasDep("@formkit/vue") {
-		addPlugin("FormKit Form Builder")
-	}
-
-	// Detect Visualization & Utilities
-	if hasDep("chart.js") || hasDep("vue-chartjs") {
-		addPlugin("Chart.js (Interactive Data Visualization)")
-	}
-	if hasDep("echarts") || hasDep("vue-echarts") {
-		addPlugin("Apache ECharts Visualizations")
-	}
-	if hasDep("apexcharts") || hasDep("vue3-apexcharts") {
-		addPlugin("ApexCharts Modern SVG Charts")
-	}
-	if hasDep("@vueuse/core") {
-		addPlugin("VueUse (Composition API Utilities)")
-	}
-	if hasDep("date-fns") || hasDep("dayjs") {
-		addPlugin("Dayjs / Date-fns Timezone Formatter")
-	}
-
-	// Detect Tooling & Quality
-	if hasDep("typescript") || hasDep("vue-tsc") {
-		addPlugin("TypeScript Strict Typing Engine")
-	}
-	if hasDep("eslint") || hasDep("@nuxt/eslint") {
-		addPlugin("ESLint Code Quality & Hygiene")
-	}
-	if hasDep("vitest") {
-		addPlugin("Vitest Unit Testing Framework")
-	}
-	if hasDep("@playwright/test") {
-		addPlugin("Playwright End-to-End Automation")
-	}
-
-	// Design Pattern Detection based on directory hierarchy
-	hasPages := util.PathExists(filepath.Join(dir, "pages")) || util.PathExists(filepath.Join(dir, "app/pages"))
-	hasComposables := util.PathExists(filepath.Join(dir, "composables")) || util.PathExists(filepath.Join(dir, "app/composables"))
-	hasComponents := util.PathExists(filepath.Join(dir, "components")) || util.PathExists(filepath.Join(dir, "app/components"))
-	hasServerApi := util.PathExists(filepath.Join(dir, "server/api")) || util.PathExists(filepath.Join(dir, "server/routes"))
-	hasMiddleware := util.PathExists(filepath.Join(dir, "middleware")) || util.PathExists(filepath.Join(dir, "app/middleware"))
-
-	if isNuxt && hasPages && hasComposables {
-		arch.DesignPattern = "Vue 3 Composition API with Feature-Driven Architecture & File-Based Routing"
-		arch.PatternDetails = "Arsitektur frontend modern berbasis konvensi direktori: app/pages/ untuk routing file deklaratif, app/composables/ untuk pemanggilan API terisolasi (useApi) dan reusable state, app/components/ untuk antarmuka atomik & modular (Nuxt UI/Tailwind), serta middleware untuk proteksi rute navigasi klien."
-	} else if isNext {
-		arch.DesignPattern = "Next.js App Router Architecture (React Server Components)"
-		arch.PatternDetails = "Arsitektur modular React berbasis Server Components, Client Hooks, dan Server Actions dengan rute direktori app/."
-	} else if hasComposables || hasComponents {
-		arch.DesignPattern = "Component-Driven Reactive SPA Architecture"
-		arch.PatternDetails = "Pemisahan lapisan presentasi deklaratif dengan manajemen state reaktif, isolasi komponen visual, dan pemanggilan API terstruktur."
-	} else {
-		arch.DesignPattern = "Modular Frontend Web Architecture"
-		arch.PatternDetails = "Struktur paket terorganisir per modul fungsional antarmuka."
-	}
-
-	if hasServerApi {
-		arch.PatternDetails += " Dilengkapi Nitro Serverless Engine (server/api) untuk endpoint API fullstack hybrid."
-	}
-	if hasMiddleware {
-		arch.PatternDetails += " Memanfaatkan Route Navigation Guards untuk otorisasi akses sebelum pergantian halaman."
-	}
-
+	arch.DesignPattern, arch.PatternDetails = nodeDesignPattern(dir, isNuxt, isNext)
 	return arch
+}
+
+// flutterStateRule: state management Flutter dari isi pubspec (urut, pertama cocok); plugin kosong = tanpa plugin.
+type flutterStateRule struct {
+	keys    []string
+	plugin  string
+	pattern string
+	details string
+}
+
+var flutterStateRules = []flutterStateRule{
+	{[]string{"flutter_bloc", "bloc:"}, "BLoC Pattern State Management", "BLoC (Business Logic Component) Architecture", "Pemisahan tegas antara UI Presentasi, Business Logic (BLoC Events/States), dan Data Repositories."},
+	{[]string{"flutter_riverpod", "riverpod:"}, "Riverpod Reactive State Management", "Riverpod Unidirectional Data Flow Architecture", "State management reaktif compile-time safe dengan dependency injection deklaratif."},
+	{[]string{"provider:"}, "Provider State Management", "Provider & ChangeNotifier Architecture", "Pengelolaan state deklaratif berbasis inherited widgets dan model notifikasi perubahan."},
+	{[]string{"get:"}, "GetX Ecosystem", "GetX Reactive Micro-Framework", "Navigasi tanpa konteks, dependency injection ringan, dan reactive state management."},
+}
+
+var flutterExtraPlugins = []archPlugin{
+	{[]string{"dio:"}, "Dio HTTP Networking Client", ""},
+	{[]string{"go_router:"}, "GoRouter Declarative Routing", ""},
+	{[]string{"hive:", "isar:"}, "Hive / Isar Fast Local NoSQL Database", ""},
+	{[]string{"shared_preferences:"}, "SharedPreferences Key-Value Storage", ""},
 }
 
 func detectFlutterArchitecture(dir, pubspecPath string) models.ArchitectureInfo {
@@ -1403,43 +1428,20 @@ func detectFlutterArchitecture(dir, pubspecPath string) models.ArchitectureInfo 
 	arch.Plugins = []string{"Flutter SDK", "Dart SDK", "Material Design 3"}
 
 	content, err := os.ReadFile(pubspecPath)
-	if err == nil {
-		s := string(content)
-		if strings.Contains(s, "flutter_bloc") || strings.Contains(s, "bloc:") {
-			arch.Plugins = append(arch.Plugins, "BLoC Pattern State Management")
-			arch.DesignPattern = "BLoC (Business Logic Component) Architecture"
-			arch.PatternDetails = "Pemisahan tegas antara UI Presentasi, Business Logic (BLoC Events/States), dan Data Repositories."
-		} else if strings.Contains(s, "flutter_riverpod") || strings.Contains(s, "riverpod:") {
-			arch.Plugins = append(arch.Plugins, "Riverpod Reactive State Management")
-			arch.DesignPattern = "Riverpod Unidirectional Data Flow Architecture"
-			arch.PatternDetails = "State management reaktif compile-time safe dengan dependency injection deklaratif."
-		} else if strings.Contains(s, "provider:") {
-			arch.Plugins = append(arch.Plugins, "Provider State Management")
-			arch.DesignPattern = "Provider & ChangeNotifier Architecture"
-			arch.PatternDetails = "Pengelolaan state deklaratif berbasis inherited widgets dan model notifikasi perubahan."
-		} else if strings.Contains(s, "get:") {
-			arch.Plugins = append(arch.Plugins, "GetX Ecosystem")
-			arch.DesignPattern = "GetX Reactive Micro-Framework"
-			arch.PatternDetails = "Navigasi tanpa konteks, dependency injection ringan, dan reactive state management."
-		} else {
-			arch.DesignPattern = "Clean Architecture for Flutter (lib/domain/data/presentation)"
-			arch.PatternDetails = "Pemisahan UI deklaratif dengan state management dan repository layer pada direktori lib/."
-		}
-
-		if strings.Contains(s, "dio:") {
-			arch.Plugins = append(arch.Plugins, "Dio HTTP Networking Client")
-		}
-		if strings.Contains(s, "go_router:") {
-			arch.Plugins = append(arch.Plugins, "GoRouter Declarative Routing")
-		}
-		if strings.Contains(s, "hive:") || strings.Contains(s, "isar:") {
-			arch.Plugins = append(arch.Plugins, "Hive / Isar Fast Local NoSQL Database")
-		}
-		if strings.Contains(s, "shared_preferences:") {
-			arch.Plugins = append(arch.Plugins, "SharedPreferences Key-Value Storage")
+	if err != nil {
+		return arch
+	}
+	s := string(content)
+	arch.DesignPattern = "Clean Architecture for Flutter (lib/domain/data/presentation)"
+	arch.PatternDetails = "Pemisahan UI deklaratif dengan state management dan repository layer pada direktori lib/."
+	for _, r := range flutterStateRules {
+		if containsAny(s, r.keys...) {
+			arch.Plugins = append(arch.Plugins, r.plugin)
+			arch.DesignPattern, arch.PatternDetails = r.pattern, r.details
+			break
 		}
 	}
-
+	arch.Plugins = append(arch.Plugins, matchPlugins(s, flutterExtraPlugins)...)
 	return arch
 }
 
