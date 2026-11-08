@@ -79,10 +79,9 @@ var (
 	routeReceiverRegex = regexp.MustCompile(`^([A-Za-z_][A-Za-z0-9_]*)\.(?i:Post|Put|Delete|Patch)\s*\(`)
 	routeMutationRegex = regexp.MustCompile(`(?i)\.(Post|Put|Delete|Patch)\s*\(\s*["']([^"']+)["']\s*,\s*([a-zA-Z0-9_.]+)`)
 	wildcardCorsRegex  = regexp.MustCompile(`(?i)(AllowOrigins\s*:\s*["']\*["']|AllowOrigins\s*:\s*\[\]string\{["']\*["']\}|origin\s*:\s*["']\*["'])`)
-	// stubHandlerRegex mendeteksi handler stub/placeholder yang belum diimplementasi.
-	// Cabang: komentar TODO, c.SendString("TODO"), panic("not implemented"),
-	// return singkat (<=80 karakter, satu baris) berisi "not implemented",
-	// http.StatusNotImplemented, TODO(), dan throw stub yang di-anchor ke "(" atau ";".
+	// stubHandlerRegex mendeteksi pola handler yang belum tersedia atau masih berupa placeholder.
+	// Pola yang diperiksa mencakup komentar penanda pekerjaan, respons placeholder,
+	// panic/exception implementasi yang belum tersedia, dan status HTTP khusus.
 	stubHandlerRegex = regexp.MustCompile(
 		`(?i)(` +
 			`//\s*TODO:?\s*(?:implement|fix|handle)\b` +
