@@ -394,44 +394,7 @@ func getGitStatusShort(dir string) string {
 }
 
 func generateFolderTree(root string, maxDepth int) string {
-	var sb strings.Builder
-	var walk func(path string, depth int, prefix string)
-
-	walk = func(current string, depth int, prefix string) {
-		if depth > maxDepth {
-			return
-		}
-		entries, err := os.ReadDir(current)
-		if err != nil {
-			return
-		}
-		for i, entry := range entries {
-			name := entry.Name()
-			if strings.HasPrefix(name, ".") || name == "node_modules" || name == "vendor" || name == "dist" {
-				continue
-			}
-			isLast := i == len(entries)-1
-			connector := "├── "
-			if isLast {
-				connector = "└── "
-			}
-
-			if entry.IsDir() {
-				sb.WriteString(fmt.Sprintf("%s%s%s/\n", prefix, connector, name))
-				newPrefix := prefix + "│   "
-				if isLast {
-					newPrefix = prefix + "    "
-				}
-				walk(filepath.Join(current, name), depth+1, newPrefix)
-			} else {
-				sb.WriteString(fmt.Sprintf("%s%s%s\n", prefix, connector, name))
-			}
-		}
-	}
-
-	sb.WriteString(fmt.Sprintf("%s/\n", filepath.Base(root)))
-	walk(root, 1, "")
-	return sb.String()
+	return util.GenerateFolderTree(root, maxDepth)
 }
 
 // componentPathFindings memeriksa path komponen; bila ada, juga env, test, dan status git-nya.

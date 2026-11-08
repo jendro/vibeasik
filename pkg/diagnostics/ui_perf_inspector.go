@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/vibeasik/vibeasik/pkg/models"
+	"github.com/vibeasik/vibeasik/pkg/util"
 )
 
 // Ambang batas ukuran berkas UI (baris kode)
@@ -514,14 +515,14 @@ func renderIssueSet(set *uiIssueSet, rules map[string]uiRule, relPath string) []
 }
 
 func isAndroidScreenFile(base string, isAndroid bool) bool {
-	return isAndroid && containsAny(base, "Activity", "Fragment", "Screen", "Adapter", "ViewModel")
+	return isAndroid && util.ContainsAny(base, "Activity", "Fragment", "Screen", "Adapter", "ViewModel")
 }
 
 func isFlutterWidgetFile(lang, lowerPath, base string) bool {
 	if lang != "dart" {
 		return false
 	}
-	return containsAny(lowerPath, "/screens/", "/pages/", "/widgets/", "/views/") ||
+	return util.ContainsAny(lowerPath, "/screens/", "/pages/", "/widgets/", "/views/") ||
 		strings.HasSuffix(base, "_screen.dart") || strings.HasSuffix(base, "_page.dart") || strings.HasSuffix(base, "_widget.dart")
 }
 
@@ -800,7 +801,7 @@ func (s *feScan) checkVFor(idx int, line string) {
 		return
 	}
 	tag := s.vForTag(idx, pos)
-	if !containsAny(tag, ":key", "v-bind:key", " key=") {
+	if !util.ContainsAny(tag, ":key", "v-bind:key", " key=") {
 		s.set.hit("FE-VFOR-MISSING-KEY", idx)
 	}
 	if strings.Contains(tag, "v-if=") {
@@ -832,7 +833,7 @@ func (s *feScan) checkClickable(idx int, line string) {
 		return
 	}
 	tag := tagSpan(s.lines, idx, m[0])
-	if !strings.Contains(tag, "role=") || !containsAny(tag, "tabindex", "tabIndex") {
+	if !strings.Contains(tag, "role=") || !util.ContainsAny(tag, "tabindex", "tabIndex") {
 		s.set.hit("FE-CLICKABLE-NON-INTERACTIVE", idx)
 	}
 }
@@ -926,10 +927,10 @@ func newAndroidCodeScan(set *uiIssueSet, content, relPath string) *androidCodeSc
 	base := filepath.Base(relPath)
 	return &androidCodeScan{
 		set:          set,
-		isUILayer:    containsAny(base, "Activity", "Fragment", "Screen") || strings.Contains(content, "@Composable"),
+		isUILayer:    util.ContainsAny(base, "Activity", "Fragment", "Screen") || strings.Contains(content, "@Composable"),
 		isComposable: strings.Contains(content, "@Composable"),
 		isViewModel:  strings.Contains(base, "ViewModel"),
-		hasLazyList:  containsAny(content, "LazyColumn", "LazyRow", "LazyVerticalGrid"),
+		hasLazyList:  util.ContainsAny(content, "LazyColumn", "LazyRow", "LazyVerticalGrid"),
 	}
 }
 
@@ -976,7 +977,7 @@ func (a *androidCodeScan) scanCompose(idx int, trimmed string) {
 		!strings.Contains(trimmed, "remember") && !strings.HasPrefix(trimmed, "private val _") {
 		a.set.hit("AND-COMPOSE-STATE-NO-REMEMBER", idx)
 	}
-	if a.hasLazyList && andLazyItemsRegex.MatchString(trimmed) && !containsAny(trimmed, "key =", "key=") {
+	if a.hasLazyList && andLazyItemsRegex.MatchString(trimmed) && !util.ContainsAny(trimmed, "key =", "key=") {
 		a.set.hit("AND-COMPOSE-LAZY-NO-KEY", idx)
 	}
 	if a.isUILayer && andBitmapDecodeRegex.MatchString(trimmed) {

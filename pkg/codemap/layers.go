@@ -11,6 +11,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/vibeasik/vibeasik/pkg/models"
+	"github.com/vibeasik/vibeasik/pkg/util"
 )
 
 // Layer arsitektur yang dipakai panduan penempatan logika (urut dari luar ke dalam).
@@ -113,7 +114,7 @@ func LayerOf(e models.CodeMapEntry) string {
 	case LayerHandler, LayerRoute, LayerMiddleware, LayerService, LayerRepository, LayerModel, LayerUtil:
 		return e.Kind
 	case "module":
-		if containsAny(p, []string{"/domain/", "/domains/", "/usecase", "/application/", "/core/", "/business/", "/logic/", "/services/"}) {
+		if util.ContainsAny(p, "/domain/", "/domains/", "/usecase", "/application/", "/core/", "/business/", "/logic/", "/services/") {
 			return LayerService
 		}
 	}

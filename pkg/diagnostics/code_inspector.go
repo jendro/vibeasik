@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/vibeasik/vibeasik/pkg/models"
+	"github.com/vibeasik/vibeasik/pkg/util"
 )
 
 // Ignored directory names for code auditing
@@ -424,15 +425,6 @@ func firstLineContaining(lines []string, needle string) int {
 	return -1
 }
 
-func containsAny(s string, subs ...string) bool {
-	for _, sub := range subs {
-		if strings.Contains(s, sub) {
-			return true
-		}
-	}
-	return false
-}
-
 // overfetchingFinding: komponen tab memanggil getProjectBaseKnowledge tanpa perlu.
 func overfetchingFinding(content, relPath string, lines []string, isTabComponent bool) []models.Finding {
 	if !strings.Contains(content, "getProjectBaseKnowledge") || !isTabComponent {
@@ -465,8 +457,8 @@ func uncachedReloadFinding(content, relPath string, lines []string, isTabCompone
 	if !isTabComponent || !strings.Contains(content, "onMounted") {
 		return nil
 	}
-	hasApiCallInMount := containsAny(content, "loadBaseKnowledge(", "loadInitialData(", "fetchData(", "loadData(", "getProject(", "$fetch(")
-	hasCacheCheck := containsAny(content, "cachedData", "cachedBaseKnowledge", "cache", "if (!data.value)", "if (!props.", "v-model:cached")
+	hasApiCallInMount := util.ContainsAny(content, "loadBaseKnowledge(", "loadInitialData(", "fetchData(", "loadData(", "getProject(", "$fetch(")
+	hasCacheCheck := util.ContainsAny(content, "cachedData", "cachedBaseKnowledge", "cache", "if (!data.value)", "if (!props.", "v-model:cached")
 	if !hasApiCallInMount || hasCacheCheck {
 		return nil
 	}
