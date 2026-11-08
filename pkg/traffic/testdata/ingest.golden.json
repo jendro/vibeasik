@@ -1,0 +1,586 @@
+{
+ "dims": [
+  {
+   "bucket": 1767268800,
+   "dim": "auth_ip",
+   "value": "8.8.8.8",
+   "count": 2,
+   "err": 2
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "client",
+   "value": "-",
+   "count": 4,
+   "err": 1
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "client",
+   "value": "Chrome",
+   "count": 2,
+   "err": 0
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "client",
+   "value": "curl",
+   "count": 2,
+   "err": 0
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "client",
+   "value": "googlebot",
+   "count": 1,
+   "err": 1
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "client",
+   "value": "python-requests",
+   "count": 2,
+   "err": 2
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "country",
+   "value": "ID",
+   "count": 2,
+   "err": 0
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "gpath",
+   "value": "/api/items/:id|/api/items/12",
+   "count": 2,
+   "err": 0
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "gpath",
+   "value": "/api/items/:id|/api/items/13",
+   "count": 2,
+   "err": 0
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "gpath",
+   "value": "/future|/future",
+   "count": 1,
+   "err": 0
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "gpath",
+   "value": "/zero|/zero",
+   "count": 1,
+   "err": 0
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "gpath",
+   "value": "static:*.css|/ancient.css",
+   "count": 1,
+   "err": 0
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "instance",
+   "value": "default-inst",
+   "count": 9,
+   "err": 4
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "instance",
+   "value": "web-1",
+   "count": 2,
+   "err": 0
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "ip",
+   "value": "7.7.7.7",
+   "count": 1,
+   "err": 1
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "ip",
+   "value": "8.8.8.8",
+   "count": 3,
+   "err": 3
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "ip",
+   "value": "9.9.9.9",
+   "count": 4,
+   "err": 0
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "notfound",
+   "value": "/nothing",
+   "count": 1,
+   "err": 1
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "referer",
+   "value": "example.com",
+   "count": 2,
+   "err": 0
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "status",
+   "value": "200",
+   "count": 7,
+   "err": 0
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "status",
+   "value": "401",
+   "count": 2,
+   "err": 2
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "status",
+   "value": "404",
+   "count": 1,
+   "err": 1
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "status",
+   "value": "503",
+   "count": 1,
+   "err": 1
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "ua",
+   "value": "api",
+   "count": 4,
+   "err": 2
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "ua",
+   "value": "bot",
+   "count": 1,
+   "err": 1
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "ua",
+   "value": "desktop",
+   "count": 2,
+   "err": 0
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "ua",
+   "value": "unknown",
+   "count": 4,
+   "err": 1
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "auth_ip",
+   "value": "8.8.8.8",
+   "count": 2,
+   "err": 2
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "instance",
+   "value": "default-inst",
+   "count": 9,
+   "err": 4
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "instance",
+   "value": "web-1",
+   "count": 2,
+   "err": 0
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "ip",
+   "value": "7.7.7.7",
+   "count": 1,
+   "err": 1
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "ip",
+   "value": "8.8.8.8",
+   "count": 3,
+   "err": 3
+  },
+  {
+   "bucket": 1767268800,
+   "dim": "ip",
+   "value": "9.9.9.9",
+   "count": 4,
+   "err": 0
+  }
+ ],
+ "inst": "default-inst",
+ "last": "2026-01-01T19:00:27+07:00",
+ "recent": [
+  {
+   "id": 1,
+   "at": "2026-01-01T19:00:25+07:00",
+   "method": "GET",
+   "route": "/api/items/:id",
+   "path": "/api/items/12",
+   "status": 200,
+   "dur_ms": 12,
+   "bytes_out": 200,
+   "ip": "9.9.9.9",
+   "country": "ID",
+   "ua_class": "desktop",
+   "client": "Chrome",
+   "referer": "example.com",
+   "instance": "web-1"
+  },
+  {
+   "id": 2,
+   "at": "2026-01-01T19:00:26+07:00",
+   "method": "GET",
+   "route": "/api/items/:id",
+   "path": "/api/items/13",
+   "status": 200,
+   "dur_ms": 300,
+   "bytes_out": -5,
+   "ip": "9.9.9.9",
+   "country": "",
+   "ua_class": "api",
+   "client": "curl",
+   "referer": "",
+   "instance": "default-inst"
+  },
+  {
+   "id": 3,
+   "at": "2026-01-01T19:00:27+07:00",
+   "method": "POST",
+   "route": "/api/auth/login",
+   "path": "/api/auth/login",
+   "status": 401,
+   "dur_ms": 40,
+   "bytes_out": 0,
+   "ip": "8.8.8.8",
+   "country": "",
+   "ua_class": "api",
+   "client": "python-requests",
+   "referer": "",
+   "instance": "default-inst"
+  },
+  {
+   "id": 4,
+   "at": "2026-01-01T19:00:28+07:00",
+   "method": "GET",
+   "route": "(404)",
+   "path": "/nothing",
+   "status": 404,
+   "dur_ms": 0,
+   "bytes_out": 0,
+   "ip": "8.8.8.8",
+   "country": "",
+   "ua_class": "bot",
+   "client": "googlebot",
+   "referer": "",
+   "instance": "default-inst"
+  },
+  {
+   "id": 5,
+   "at": "2026-01-01T19:00:29+07:00",
+   "method": "GET",
+   "route": "/boom",
+   "path": "/boom",
+   "status": 503,
+   "dur_ms": 6000,
+   "bytes_out": 0,
+   "ip": "7.7.7.7",
+   "country": "",
+   "ua_class": "unknown",
+   "client": "-",
+   "referer": "",
+   "instance": "default-inst"
+  },
+  {
+   "id": 6,
+   "at": "2026-01-01T12:00:30Z",
+   "method": "GET",
+   "route": "/zero",
+   "path": "/zero",
+   "status": 200,
+   "dur_ms": 1,
+   "bytes_out": 0,
+   "ip": "",
+   "country": "",
+   "ua_class": "unknown",
+   "client": "-",
+   "referer": "",
+   "instance": "default-inst"
+  },
+  {
+   "id": 7,
+   "at": "2026-01-01T12:00:30Z",
+   "method": "GET",
+   "route": "/future",
+   "path": "/future",
+   "status": 200,
+   "dur_ms": 1,
+   "bytes_out": 0,
+   "ip": "",
+   "country": "",
+   "ua_class": "unknown",
+   "client": "-",
+   "referer": "",
+   "instance": "default-inst"
+  },
+  {
+   "id": 8,
+   "at": "2026-01-01T12:00:30Z",
+   "method": "GET",
+   "route": "static:*.css",
+   "path": "/ancient.css",
+   "status": 200,
+   "dur_ms": 1,
+   "bytes_out": 0,
+   "ip": "",
+   "country": "",
+   "ua_class": "unknown",
+   "client": "-",
+   "referer": "",
+   "instance": "default-inst"
+  },
+  {
+   "id": 9,
+   "at": "2026-01-01T19:00:25+07:00",
+   "method": "GET",
+   "route": "/api/items/:id",
+   "path": "/api/items/12",
+   "status": 200,
+   "dur_ms": 12,
+   "bytes_out": 200,
+   "ip": "9.9.9.9",
+   "country": "ID",
+   "ua_class": "desktop",
+   "client": "Chrome",
+   "referer": "example.com",
+   "instance": "web-1"
+  },
+  {
+   "id": 10,
+   "at": "2026-01-01T19:00:26+07:00",
+   "method": "GET",
+   "route": "/api/items/:id",
+   "path": "/api/items/13",
+   "status": 200,
+   "dur_ms": 300,
+   "bytes_out": -5,
+   "ip": "9.9.9.9",
+   "country": "",
+   "ua_class": "api",
+   "client": "curl",
+   "referer": "",
+   "instance": "default-inst"
+  },
+  {
+   "id": 11,
+   "at": "2026-01-01T19:00:27+07:00",
+   "method": "POST",
+   "route": "/api/auth/login",
+   "path": "/api/auth/login",
+   "status": 401,
+   "dur_ms": 40,
+   "bytes_out": 0,
+   "ip": "8.8.8.8",
+   "country": "",
+   "ua_class": "api",
+   "client": "python-requests",
+   "referer": "",
+   "instance": "default-inst"
+  }
+ ],
+ "routes": [
+  {
+   "bucket": 1767268800,
+   "method": "GET",
+   "route": "(404)",
+   "count": 1,
+   "err_4xx": 1,
+   "err_5xx": 0,
+   "sum_ms": 0,
+   "max_ms": 0,
+   "sum_in": 0,
+   "sum_out": 0
+  },
+  {
+   "bucket": 1767268800,
+   "method": "GET",
+   "route": "/api/items/:id",
+   "count": 4,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "sum_ms": 624,
+   "max_ms": 300,
+   "sum_in": 20,
+   "sum_out": 400
+  },
+  {
+   "bucket": 1767268800,
+   "method": "GET",
+   "route": "/boom",
+   "count": 1,
+   "err_4xx": 0,
+   "err_5xx": 1,
+   "sum_ms": 6000,
+   "max_ms": 6000,
+   "sum_in": 0,
+   "sum_out": 0
+  },
+  {
+   "bucket": 1767268800,
+   "method": "GET",
+   "route": "/future",
+   "count": 1,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "sum_ms": 1,
+   "max_ms": 1,
+   "sum_in": 0,
+   "sum_out": 0
+  },
+  {
+   "bucket": 1767268800,
+   "method": "GET",
+   "route": "/zero",
+   "count": 1,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "sum_ms": 1,
+   "max_ms": 1,
+   "sum_in": 0,
+   "sum_out": 0
+  },
+  {
+   "bucket": 1767268800,
+   "method": "GET",
+   "route": "static:*.css",
+   "count": 1,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "sum_ms": 1,
+   "max_ms": 1,
+   "sum_in": 0,
+   "sum_out": 0
+  },
+  {
+   "bucket": 1767268800,
+   "method": "POST",
+   "route": "/api/auth/login",
+   "count": 2,
+   "err_4xx": 2,
+   "err_5xx": 0,
+   "sum_ms": 80,
+   "max_ms": 40,
+   "sum_in": 0,
+   "sum_out": 0
+  },
+  {
+   "bucket": 1767268800,
+   "method": "GET",
+   "route": "(404)",
+   "count": 1,
+   "err_4xx": 1,
+   "err_5xx": 0,
+   "sum_ms": 0,
+   "max_ms": 0,
+   "sum_in": 0,
+   "sum_out": 0
+  },
+  {
+   "bucket": 1767268800,
+   "method": "GET",
+   "route": "/api/items/:id",
+   "count": 4,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "sum_ms": 624,
+   "max_ms": 300,
+   "sum_in": 20,
+   "sum_out": 400
+  },
+  {
+   "bucket": 1767268800,
+   "method": "GET",
+   "route": "/boom",
+   "count": 1,
+   "err_4xx": 0,
+   "err_5xx": 1,
+   "sum_ms": 6000,
+   "max_ms": 6000,
+   "sum_in": 0,
+   "sum_out": 0
+  },
+  {
+   "bucket": 1767268800,
+   "method": "GET",
+   "route": "/future",
+   "count": 1,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "sum_ms": 1,
+   "max_ms": 1,
+   "sum_in": 0,
+   "sum_out": 0
+  },
+  {
+   "bucket": 1767268800,
+   "method": "GET",
+   "route": "/zero",
+   "count": 1,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "sum_ms": 1,
+   "max_ms": 1,
+   "sum_in": 0,
+   "sum_out": 0
+  },
+  {
+   "bucket": 1767268800,
+   "method": "GET",
+   "route": "static:*.css",
+   "count": 1,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "sum_ms": 1,
+   "max_ms": 1,
+   "sum_in": 0,
+   "sum_out": 0
+  },
+  {
+   "bucket": 1767268800,
+   "method": "POST",
+   "route": "/api/auth/login",
+   "count": 2,
+   "err_4xx": 2,
+   "err_5xx": 0,
+   "sum_ms": 80,
+   "max_ms": 40,
+   "sum_in": 0,
+   "sum_out": 0
+  }
+ ],
+ "total": 11
+}

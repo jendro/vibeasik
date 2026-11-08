@@ -1,0 +1,212 @@
+[
+ {
+  "UA": "",
+  "Class": "unknown",
+  "Family": "-"
+ },
+ {
+  "UA": "Googlebot/2.1",
+  "Class": "bot",
+  "Family": "googlebot"
+ },
+ {
+  "UA": "Mozilla/5.0 (compatible; bingbot/2.0)",
+  "Class": "bot",
+  "Family": "bingbot"
+ },
+ {
+  "UA": "SomeCrawler",
+  "Class": "bot",
+  "Family": "bot lain"
+ },
+ {
+  "UA": "Slurp",
+  "Class": "bot",
+  "Family": "bot lain"
+ },
+ {
+  "UA": "facebookexternalhit/1.1",
+  "Class": "bot",
+  "Family": "facebookexternalhit"
+ },
+ {
+  "UA": "HeadlessChrome/120",
+  "Class": "bot",
+  "Family": "headless"
+ },
+ {
+  "UA": "Lighthouse",
+  "Class": "bot",
+  "Family": "lighthouse"
+ },
+ {
+  "UA": "UptimeRobot",
+  "Class": "bot",
+  "Family": "uptime"
+ },
+ {
+  "UA": "mystery spider",
+  "Class": "bot",
+  "Family": "bot lain"
+ },
+ {
+  "UA": "curl/8.0",
+  "Class": "api",
+  "Family": "curl"
+ },
+ {
+  "UA": "Wget/1.2",
+  "Class": "api",
+  "Family": "wget"
+ },
+ {
+  "UA": "python-requests/2.31",
+  "Class": "api",
+  "Family": "python-requests"
+ },
+ {
+  "UA": "python-urllib3",
+  "Class": "api",
+  "Family": "python"
+ },
+ {
+  "UA": "aiohttp/3",
+  "Class": "api",
+  "Family": "python"
+ },
+ {
+  "UA": "Go-http-client/1.1",
+  "Class": "api",
+  "Family": "go"
+ },
+ {
+  "UA": "okhttp/4",
+  "Class": "api",
+  "Family": "okhttp (android)"
+ },
+ {
+  "UA": "axios/1.6",
+  "Class": "api",
+  "Family": "axios"
+ },
+ {
+  "UA": "node-fetch/2",
+  "Class": "api",
+  "Family": "node"
+ },
+ {
+  "UA": "undici",
+  "Class": "api",
+  "Family": "node"
+ },
+ {
+  "UA": "Dart/3",
+  "Class": "api",
+  "Family": "dart/flutter"
+ },
+ {
+  "UA": "PostmanRuntime/7",
+  "Class": "api",
+  "Family": "postman"
+ },
+ {
+  "UA": "insomnia/8",
+  "Class": "api",
+  "Family": "insomnia"
+ },
+ {
+  "UA": "Java/17",
+  "Class": "api",
+  "Family": "java"
+ },
+ {
+  "UA": "GuzzleHttp/7",
+  "Class": "api",
+  "Family": "php"
+ },
+ {
+  "UA": "MyApp CFNetwork/1",
+  "Class": "api",
+  "Family": "ios app"
+ },
+ {
+  "UA": "Alamofire/5",
+  "Class": "api",
+  "Family": "ios app"
+ },
+ {
+  "UA": "k6/0.4",
+  "Class": "api",
+  "Family": "k6"
+ },
+ {
+  "UA": "ApacheBench/2.3",
+  "Class": "api",
+  "Family": "ab"
+ },
+ {
+  "UA": "Mozilla/5.0 (Windows NT 10.0) Chrome/120 Edg/120",
+  "Class": "desktop",
+  "Family": "Edge"
+ },
+ {
+  "UA": "Mozilla/5.0 OPR/100 Chrome/120",
+  "Class": "desktop",
+  "Family": "Opera"
+ },
+ {
+  "UA": "Mozilla/5.0 Opera",
+  "Class": "desktop",
+  "Family": "Opera"
+ },
+ {
+  "UA": "Mozilla/5.0 SamsungBrowser/20 Chrome/110 Mobile",
+  "Class": "mobile",
+  "Family": "Samsung"
+ },
+ {
+  "UA": "Mozilla/5.0 Firefox/120",
+  "Class": "desktop",
+  "Family": "Firefox"
+ },
+ {
+  "UA": "Mozilla/5.0 CriOS/120 iPhone",
+  "Class": "mobile",
+  "Family": "Chrome"
+ },
+ {
+  "UA": "Mozilla/5.0 Chrome/120 Safari/537",
+  "Class": "desktop",
+  "Family": "Chrome"
+ },
+ {
+  "UA": "Mozilla/5.0 Version/17 Safari/605",
+  "Class": "desktop",
+  "Family": "Safari"
+ },
+ {
+  "UA": "Mozilla/5.0 (X11)",
+  "Class": "desktop",
+  "Family": "lainnya"
+ },
+ {
+  "UA": "Mozilla/5.0 Android",
+  "Class": "mobile",
+  "Family": "lainnya"
+ },
+ {
+  "UA": "Mozilla/5.0 iPad",
+  "Class": "mobile",
+  "Family": "lainnya"
+ },
+ {
+  "UA": "something/1.0 extra",
+  "Class": "unknown",
+  "Family": "something/1.0"
+ },
+ {
+  "UA": "x",
+  "Class": "unknown",
+  "Family": "x"
+ }
+]

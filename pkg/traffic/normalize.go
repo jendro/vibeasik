@@ -68,24 +68,33 @@ func NormalizeRoute(route, p string, status int) string {
 	}
 	segs := strings.Split(strings.Trim(p, "/"), "/")
 	for i, s := range segs {
-		switch {
-		case s == "":
-		case reNum.MatchString(s):
-			segs[i] = ":id"
-		case reUUID.MatchString(s):
-			segs[i] = ":uuid"
-		case reHex.MatchString(s):
-			segs[i] = ":hash"
-		case reToken.MatchString(s) && reHasNum.MatchString(s):
-			segs[i] = ":token"
-		case len(s) > 40:
-			segs[i] = ":slug"
+		if ph := segmentPlaceholder(s); ph != "" {
+			segs[i] = ph
 		}
 	}
 	if len(segs) > 8 {
 		segs = append(segs[:8], "*")
 	}
 	return clip("/"+strings.Join(segs, "/"), 255)
+}
+
+// segmentPlaceholder mengembalikan placeholder untuk segmen ber-id, atau "" bila segmen dibiarkan.
+func segmentPlaceholder(s string) string {
+	switch {
+	case s == "":
+		return ""
+	case reNum.MatchString(s):
+		return ":id"
+	case reUUID.MatchString(s):
+		return ":uuid"
+	case reHex.MatchString(s):
+		return ":hash"
+	case reToken.MatchString(s) && reHasNum.MatchString(s):
+		return ":token"
+	case len(s) > 40:
+		return ":slug"
+	}
+	return ""
 }
 
 func IsStatic(p string) bool {
@@ -113,42 +122,64 @@ func RouteGroup(route string) string {
 	return "/"
 }
 
+var botMarkers = []string{"bot", "crawl", "spider", "slurp", "facebookexternalhit", "headless", "lighthouse", "uptime"}
+
+var apiClients = []struct{ key, name string }{
+	{"curl/", "curl"}, {"wget", "wget"}, {"python-requests", "python-requests"}, {"python-urllib", "python"}, {"aiohttp", "python"},
+	{"go-http-client", "go"}, {"okhttp", "okhttp (android)"}, {"axios", "axios"}, {"node-fetch", "node"}, {"undici", "node"},
+	{"dart", "dart/flutter"}, {"postman", "postman"}, {"insomnia", "insomnia"}, {"java/", "java"}, {"guzzle", "php"},
+	{"cfnetwork", "ios app"}, {"alamofire", "ios app"}, {"k6", "k6"}, {"apachebench", "ab"},
+}
+
+// browserFamilies diperiksa berurutan; kecocokan pertama menang.
+var browserFamilies = []struct {
+	keys []string
+	name string
+}{
+	{[]string{"edg/"}, "Edge"},
+	{[]string{"opr/", "opera"}, "Opera"},
+	{[]string{"samsungbrowser"}, "Samsung"},
+	{[]string{"firefox/"}, "Firefox"},
+	{[]string{"chrome/", "crios/"}, "Chrome"},
+	{[]string{"safari/"}, "Safari"},
+}
+
+var mobileMarkers = []string{"mobile", "android", "iphone", "ipad"}
+
+func containsAny(l string, keys []string) bool {
+	for _, k := range keys {
+		if strings.Contains(l, k) {
+			return true
+		}
+	}
+	return false
+}
+
+func browserFamily(l string) string {
+	for _, f := range browserFamilies {
+		if containsAny(l, f.keys) {
+			return f.name
+		}
+	}
+	return "lainnya"
+}
+
 // ClassifyUA → (kelas, keluarga): kelas bot | api | mobile | desktop | unknown.
 func ClassifyUA(ua string) (string, string) {
 	l := strings.ToLower(ua)
-	switch {
-	case l == "":
+	if l == "" {
 		return "unknown", "-"
-	case strings.Contains(l, "bot") || strings.Contains(l, "crawl") || strings.Contains(l, "spider") || strings.Contains(l, "slurp") ||
-		strings.Contains(l, "facebookexternalhit") || strings.Contains(l, "headless") || strings.Contains(l, "lighthouse") || strings.Contains(l, "uptime"):
+	}
+	if containsAny(l, botMarkers) {
 		return "bot", botFamily(l)
 	}
-	for _, c := range []struct{ key, name string }{
-		{"curl/", "curl"}, {"wget", "wget"}, {"python-requests", "python-requests"}, {"python-urllib", "python"}, {"aiohttp", "python"},
-		{"go-http-client", "go"}, {"okhttp", "okhttp (android)"}, {"axios", "axios"}, {"node-fetch", "node"}, {"undici", "node"},
-		{"dart", "dart/flutter"}, {"postman", "postman"}, {"insomnia", "insomnia"}, {"java/", "java"}, {"guzzle", "php"},
-		{"cfnetwork", "ios app"}, {"alamofire", "ios app"}, {"k6", "k6"}, {"apachebench", "ab"},
-	} {
+	for _, c := range apiClients {
 		if strings.Contains(l, c.key) {
 			return "api", c.name
 		}
 	}
-	family := "lainnya"
-	switch {
-	case strings.Contains(l, "edg/"):
-		family = "Edge"
-	case strings.Contains(l, "opr/") || strings.Contains(l, "opera"):
-		family = "Opera"
-	case strings.Contains(l, "samsungbrowser"):
-		family = "Samsung"
-	case strings.Contains(l, "firefox/"):
-		family = "Firefox"
-	case strings.Contains(l, "chrome/") || strings.Contains(l, "crios/"):
-		family = "Chrome"
-	case strings.Contains(l, "safari/"):
-		family = "Safari"
-	}
-	if strings.Contains(l, "mobile") || strings.Contains(l, "android") || strings.Contains(l, "iphone") || strings.Contains(l, "ipad") {
+	family := browserFamily(l)
+	if containsAny(l, mobileMarkers) {
 		return "mobile", family
 	}
 	if strings.Contains(l, "mozilla/") {

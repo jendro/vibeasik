@@ -1,0 +1,442 @@
+[
+ {
+  "L": "",
+  "F": "",
+  "Out": "go-fiber"
+ },
+ {
+  "L": "",
+  "F": "fiber",
+  "Out": "go-fiber"
+ },
+ {
+  "L": "",
+  "F": "Nuxt 3",
+  "Out": "nitro"
+ },
+ {
+  "L": "",
+  "F": "nitro",
+  "Out": "nitro"
+ },
+ {
+  "L": "",
+  "F": "fastapi",
+  "Out": "python"
+ },
+ {
+  "L": "",
+  "F": "Flask",
+  "Out": "python"
+ },
+ {
+  "L": "",
+  "F": "django",
+  "Out": "python"
+ },
+ {
+  "L": "",
+  "F": "laravel",
+  "Out": "laravel"
+ },
+ {
+  "L": "",
+  "F": "express",
+  "Out": "node-express"
+ },
+ {
+  "L": "",
+  "F": "nestjs",
+  "Out": "node-express"
+ },
+ {
+  "L": "",
+  "F": "gin",
+  "Out": "go-fiber"
+ },
+ {
+  "L": "go",
+  "F": "",
+  "Out": "go-http"
+ },
+ {
+  "L": "go",
+  "F": "fiber",
+  "Out": "go-fiber"
+ },
+ {
+  "L": "go",
+  "F": "Nuxt 3",
+  "Out": "go-http"
+ },
+ {
+  "L": "go",
+  "F": "nitro",
+  "Out": "go-http"
+ },
+ {
+  "L": "go",
+  "F": "fastapi",
+  "Out": "go-http"
+ },
+ {
+  "L": "go",
+  "F": "Flask",
+  "Out": "go-http"
+ },
+ {
+  "L": "go",
+  "F": "django",
+  "Out": "go-http"
+ },
+ {
+  "L": "go",
+  "F": "laravel",
+  "Out": "go-http"
+ },
+ {
+  "L": "go",
+  "F": "express",
+  "Out": "go-http"
+ },
+ {
+  "L": "go",
+  "F": "nestjs",
+  "Out": "go-http"
+ },
+ {
+  "L": "go",
+  "F": "gin",
+  "Out": "go-http"
+ },
+ {
+  "L": "Go",
+  "F": "",
+  "Out": "go-http"
+ },
+ {
+  "L": "Go",
+  "F": "fiber",
+  "Out": "go-fiber"
+ },
+ {
+  "L": "Go",
+  "F": "Nuxt 3",
+  "Out": "go-http"
+ },
+ {
+  "L": "Go",
+  "F": "nitro",
+  "Out": "go-http"
+ },
+ {
+  "L": "Go",
+  "F": "fastapi",
+  "Out": "go-http"
+ },
+ {
+  "L": "Go",
+  "F": "Flask",
+  "Out": "go-http"
+ },
+ {
+  "L": "Go",
+  "F": "django",
+  "Out": "go-http"
+ },
+ {
+  "L": "Go",
+  "F": "laravel",
+  "Out": "go-http"
+ },
+ {
+  "L": "Go",
+  "F": "express",
+  "Out": "go-http"
+ },
+ {
+  "L": "Go",
+  "F": "nestjs",
+  "Out": "go-http"
+ },
+ {
+  "L": "Go",
+  "F": "gin",
+  "Out": "go-http"
+ },
+ {
+  "L": "python",
+  "F": "",
+  "Out": "python"
+ },
+ {
+  "L": "python",
+  "F": "fiber",
+  "Out": "python"
+ },
+ {
+  "L": "python",
+  "F": "Nuxt 3",
+  "Out": "nitro"
+ },
+ {
+  "L": "python",
+  "F": "nitro",
+  "Out": "nitro"
+ },
+ {
+  "L": "python",
+  "F": "fastapi",
+  "Out": "python"
+ },
+ {
+  "L": "python",
+  "F": "Flask",
+  "Out": "python"
+ },
+ {
+  "L": "python",
+  "F": "django",
+  "Out": "python"
+ },
+ {
+  "L": "python",
+  "F": "laravel",
+  "Out": "python"
+ },
+ {
+  "L": "python",
+  "F": "express",
+  "Out": "python"
+ },
+ {
+  "L": "python",
+  "F": "nestjs",
+  "Out": "python"
+ },
+ {
+  "L": "python",
+  "F": "gin",
+  "Out": "python"
+ },
+ {
+  "L": "php",
+  "F": "",
+  "Out": "laravel"
+ },
+ {
+  "L": "php",
+  "F": "fiber",
+  "Out": "laravel"
+ },
+ {
+  "L": "php",
+  "F": "Nuxt 3",
+  "Out": "nitro"
+ },
+ {
+  "L": "php",
+  "F": "nitro",
+  "Out": "nitro"
+ },
+ {
+  "L": "php",
+  "F": "fastapi",
+  "Out": "python"
+ },
+ {
+  "L": "php",
+  "F": "Flask",
+  "Out": "python"
+ },
+ {
+  "L": "php",
+  "F": "django",
+  "Out": "python"
+ },
+ {
+  "L": "php",
+  "F": "laravel",
+  "Out": "laravel"
+ },
+ {
+  "L": "php",
+  "F": "express",
+  "Out": "laravel"
+ },
+ {
+  "L": "php",
+  "F": "nestjs",
+  "Out": "laravel"
+ },
+ {
+  "L": "php",
+  "F": "gin",
+  "Out": "laravel"
+ },
+ {
+  "L": "typescript",
+  "F": "",
+  "Out": "node-express"
+ },
+ {
+  "L": "typescript",
+  "F": "fiber",
+  "Out": "node-express"
+ },
+ {
+  "L": "typescript",
+  "F": "Nuxt 3",
+  "Out": "nitro"
+ },
+ {
+  "L": "typescript",
+  "F": "nitro",
+  "Out": "nitro"
+ },
+ {
+  "L": "typescript",
+  "F": "fastapi",
+  "Out": "python"
+ },
+ {
+  "L": "typescript",
+  "F": "Flask",
+  "Out": "python"
+ },
+ {
+  "L": "typescript",
+  "F": "django",
+  "Out": "python"
+ },
+ {
+  "L": "typescript",
+  "F": "laravel",
+  "Out": "laravel"
+ },
+ {
+  "L": "typescript",
+  "F": "express",
+  "Out": "node-express"
+ },
+ {
+  "L": "typescript",
+  "F": "nestjs",
+  "Out": "node-express"
+ },
+ {
+  "L": "typescript",
+  "F": "gin",
+  "Out": "node-express"
+ },
+ {
+  "L": "javascript",
+  "F": "",
+  "Out": "node-express"
+ },
+ {
+  "L": "javascript",
+  "F": "fiber",
+  "Out": "node-express"
+ },
+ {
+  "L": "javascript",
+  "F": "Nuxt 3",
+  "Out": "nitro"
+ },
+ {
+  "L": "javascript",
+  "F": "nitro",
+  "Out": "nitro"
+ },
+ {
+  "L": "javascript",
+  "F": "fastapi",
+  "Out": "python"
+ },
+ {
+  "L": "javascript",
+  "F": "Flask",
+  "Out": "python"
+ },
+ {
+  "L": "javascript",
+  "F": "django",
+  "Out": "python"
+ },
+ {
+  "L": "javascript",
+  "F": "laravel",
+  "Out": "laravel"
+ },
+ {
+  "L": "javascript",
+  "F": "express",
+  "Out": "node-express"
+ },
+ {
+  "L": "javascript",
+  "F": "nestjs",
+  "Out": "node-express"
+ },
+ {
+  "L": "javascript",
+  "F": "gin",
+  "Out": "node-express"
+ },
+ {
+  "L": "rust",
+  "F": "",
+  "Out": "go-fiber"
+ },
+ {
+  "L": "rust",
+  "F": "fiber",
+  "Out": "go-fiber"
+ },
+ {
+  "L": "rust",
+  "F": "Nuxt 3",
+  "Out": "nitro"
+ },
+ {
+  "L": "rust",
+  "F": "nitro",
+  "Out": "nitro"
+ },
+ {
+  "L": "rust",
+  "F": "fastapi",
+  "Out": "python"
+ },
+ {
+  "L": "rust",
+  "F": "Flask",
+  "Out": "python"
+ },
+ {
+  "L": "rust",
+  "F": "django",
+  "Out": "python"
+ },
+ {
+  "L": "rust",
+  "F": "laravel",
+  "Out": "laravel"
+ },
+ {
+  "L": "rust",
+  "F": "express",
+  "Out": "node-express"
+ },
+ {
+  "L": "rust",
+  "F": "nestjs",
+  "Out": "node-express"
+ },
+ {
+  "L": "rust",
+  "F": "gin",
+  "Out": "go-fiber"
+ }
+]

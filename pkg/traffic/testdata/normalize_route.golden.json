@@ -1,0 +1,114 @@
+[
+ {
+  "In": {
+   "Route": "/api/x/:id",
+   "Path": "/api/x/1",
+   "Status": 200
+  },
+  "Out": "/api/x/:id"
+ },
+ {
+  "In": {
+   "Route": " * ",
+   "Path": "/a",
+   "Status": 200
+  },
+  "Out": "/a"
+ },
+ {
+  "In": {
+   "Route": "/*",
+   "Path": "/a/1",
+   "Status": 200
+  },
+  "Out": "/a/:id"
+ },
+ {
+  "In": {
+   "Route": "",
+   "Path": "/zzz",
+   "Status": 404
+  },
+  "Out": "(404)"
+ },
+ {
+  "In": {
+   "Route": "",
+   "Path": "/app.JS",
+   "Status": 200
+  },
+  "Out": "static:*.js"
+ },
+ {
+  "In": {
+   "Route": "",
+   "Path": "/img/logo.png",
+   "Status": 200
+  },
+  "Out": "static:*.png"
+ },
+ {
+  "In": {
+   "Route": "",
+   "Path": "/api/users/123/orders/550e8400-e29b-41d4-a716-446655440000",
+   "Status": 200
+  },
+  "Out": "/api/users/:id/orders/:uuid"
+ },
+ {
+  "In": {
+   "Route": "",
+   "Path": "/files/deadbeefdeadbeef0123",
+   "Status": 200
+  },
+  "Out": "/files/:hash"
+ },
+ {
+  "In": {
+   "Route": "",
+   "Path": "/t/abc123def456ghi789jkl012mno345pq",
+   "Status": 200
+  },
+  "Out": "/t/:token"
+ },
+ {
+  "In": {
+   "Route": "",
+   "Path": "/u/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "Status": 200
+  },
+  "Out": "/u/:hash"
+ },
+ {
+  "In": {
+   "Route": "",
+   "Path": "/a/b/c/d/e/f/g/h/i/j/k",
+   "Status": 200
+  },
+  "Out": "/a/b/c/d/e/f/g/h/*"
+ },
+ {
+  "In": {
+   "Route": "",
+   "Path": "/",
+   "Status": 200
+  },
+  "Out": "/"
+ },
+ {
+  "In": {
+   "Route": "",
+   "Path": "//a//b",
+   "Status": 200
+  },
+  "Out": "/a//b"
+ },
+ {
+  "In": {
+   "Route": "",
+   "Path": "/hello-world",
+   "Status": 200
+  },
+  "Out": "/hello-world"
+ }
+]

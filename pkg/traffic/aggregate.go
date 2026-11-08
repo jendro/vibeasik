@@ -83,6 +83,142 @@ type routeAcc struct {
 	hist                   []int64
 }
 
+// ingestAcc = akumulator batch: statistik rute dan hitungan dimensi per ember waktu.
+type ingestAcc struct {
+	routes map[routeKey]*routeAcc
+	dims   map[dimKey][2]int64
+}
+
+func (a *ingestAcc) addDim(gran string, bucket int64, dim, value string, isErr bool) {
+	if value == "" {
+		return
+	}
+	k := dimKey{gran, bucket, dim, clip(value, 255)}
+	v := a.dims[k]
+	v[0]++
+	if isErr {
+		v[1]++
+	}
+	a.dims[k] = v
+}
+
+// normEvent = event yang sudah dibersihkan dan diberi waktu/ember.
+type normEvent struct {
+	ev                        Event
+	at                        time.Time
+	method, path, route       string
+	instance, uaClass, client string
+	ref, country, ip          string
+	dur                       float64
+	isErr                     bool
+	minute, hour              int64
+}
+
+func normalizeEvent(ev Event, now time.Time, defaultInstance string) normEvent {
+	at := time.UnixMilli(ev.TS)
+	if ev.TS <= 0 || at.After(now.Add(5*time.Minute)) || at.Before(now.Add(-HourRetention)) {
+		at = now
+	}
+	method := strings.ToUpper(clip(strings.TrimSpace(ev.Method), 10))
+	if method == "" {
+		method = "GET"
+	}
+	p := CleanPath(ev.Path)
+	instance := clip(strings.TrimSpace(ev.Instance), 128)
+	if instance == "" {
+		instance = defaultInstance
+	}
+	uaClass, client := ClassifyUA(ev.UA)
+	dur := ev.DurMS
+	if dur < 0 {
+		dur = 0
+	}
+	return normEvent{
+		ev: ev, at: at, method: method, path: p, route: NormalizeRoute(ev.Route, p, ev.Status),
+		instance: instance, uaClass: uaClass, client: client, ref: RefererHost(ev.Referer),
+		country: strings.ToUpper(clip(strings.TrimSpace(ev.Country), 8)),
+		ip:      clip(strings.TrimSpace(ev.IP), 64), dur: dur, isErr: ev.Status >= 400,
+		minute: at.Unix() / 60 * 60, hour: at.Unix() / 3600 * 3600,
+	}
+}
+
+func (a *ingestAcc) addRoute(n normEvent) {
+	for _, g := range []struct {
+		gran   string
+		bucket int64
+	}{{models.TrafficGranMinute, n.minute}, {models.TrafficGranHour, n.hour}} {
+		k := routeKey{g.gran, g.bucket, n.method, n.route}
+		r := a.routes[k]
+		if r == nil {
+			r = &routeAcc{hist: make([]int64, len(LatencyBounds)+1)}
+			a.routes[k] = r
+		}
+		r.count++
+		if n.ev.Status >= 500 {
+			r.e5++
+		} else if n.ev.Status >= 400 {
+			r.e4++
+		}
+		r.sum += n.dur
+		if n.dur > r.max {
+			r.max = n.dur
+		}
+		r.in += max(n.ev.BytesIn, 0)
+		r.out += max(n.ev.BytesOut, 0)
+		r.hist[histIndex(n.dur)]++
+	}
+}
+
+func (a *ingestAcc) addDims(n normEvent) {
+	// ip, auth_ip & instance juga per menit: puncak per menit dipakai saran rate limit & load balancer.
+	a.addDim(models.TrafficGranMinute, n.minute, "ip", n.ip, n.isErr)
+	a.addDim(models.TrafficGranHour, n.hour, "ip", n.ip, n.isErr)
+	a.addDim(models.TrafficGranMinute, n.minute, "instance", n.instance, n.isErr)
+	a.addDim(models.TrafficGranHour, n.hour, "instance", n.instance, n.isErr)
+	if IsAuthRoute(n.route) {
+		a.addDim(models.TrafficGranMinute, n.minute, "auth_ip", n.ip, n.isErr)
+		a.addDim(models.TrafficGranHour, n.hour, "auth_ip", n.ip, n.isErr)
+	}
+	a.addDim(models.TrafficGranHour, n.hour, "country", n.country, n.isErr)
+	a.addDim(models.TrafficGranHour, n.hour, "ua", n.uaClass, n.isErr)
+	a.addDim(models.TrafficGranHour, n.hour, "client", n.client, n.isErr)
+	a.addDim(models.TrafficGranHour, n.hour, "referer", n.ref, n.isErr)
+	a.addDim(models.TrafficGranHour, n.hour, "status", strconv.Itoa(n.ev.Status), n.isErr)
+	if n.route == RouteNotFound {
+		a.addDim(models.TrafficGranHour, n.hour, "notfound", n.path, true)
+	} else if n.method == "GET" && !n.isErr {
+		// Path GET persis per rute → seberapa terkonsentrasi permintaan (petunjuk rasio hit cache).
+		a.addDim(models.TrafficGranHour, n.hour, "gpath", n.route+"|"+n.path, false)
+	}
+}
+
+func recentEventOf(srcID uint, n normEvent) models.TrafficRecentEvent {
+	return models.TrafficRecentEvent{
+		SourceID: srcID, At: n.at, Method: n.method, Route: n.route, Path: n.path, Status: n.ev.Status, DurMS: n.dur,
+		BytesOut: n.ev.BytesOut, IP: n.ip, Country: n.country, UAClass: n.uaClass, Client: clip(n.client, 32), Referer: n.ref, Instance: n.instance,
+	}
+}
+
+// persistIngest menyimpan hasil agregasi batch dalam satu transaksi.
+func persistIngest(db *gorm.DB, src *models.TrafficSource, acc *ingestAcc, recent []models.TrafficRecentEvent, total int, lastAt time.Time, lastInstance string) error {
+	return db.Transaction(func(tx *gorm.DB) error {
+		if err := mergeRoutes(tx, src.ID, acc.routes); err != nil {
+			return err
+		}
+		if err := mergeDims(tx, src.ID, acc.dims); err != nil {
+			return err
+		}
+		if err := tx.CreateInBatches(recent, 200).Error; err != nil {
+			return err
+		}
+		updates := map[string]any{"total_events": gorm.Expr("total_events + ?", total), "last_instance": lastInstance}
+		if src.LastEventAt == nil || lastAt.After(*src.LastEventAt) {
+			updates["last_event_at"] = lastAt
+		}
+		return tx.Model(&models.TrafficSource{}).Where("id = ?", src.ID).Updates(updates).Error
+	})
+}
+
 // Ingest merangkum batch event ke tabel per menit/jam & ekor live. Aman dipanggil paralel (kunci per sumber).
 func Ingest(db *gorm.DB, src *models.TrafficSource, events []Event, defaultInstance string) (int, error) {
 	if len(events) == 0 {
@@ -95,127 +231,24 @@ func Ingest(db *gorm.DB, src *models.TrafficSource, events []Event, defaultInsta
 	lk.Lock()
 	defer lk.Unlock()
 
-	routes := map[routeKey]*routeAcc{}
-	dims := map[dimKey][2]int64{}
-	addDim := func(gran string, bucket int64, dim, value string, isErr bool) {
-		if value == "" {
-			return
-		}
-		k := dimKey{gran, bucket, dim, clip(value, 255)}
-		v := dims[k]
-		v[0]++
-		if isErr {
-			v[1]++
-		}
-		dims[k] = v
-	}
-
-	now := time.Now()
+	acc := &ingestAcc{routes: map[routeKey]*routeAcc{}, dims: map[dimKey][2]int64{}}
+	now := timeNow()
 	recent := make([]models.TrafficRecentEvent, 0, 200)
 	var lastAt time.Time
 	lastInstance := ""
 	for i, ev := range events {
-		at := time.UnixMilli(ev.TS)
-		if ev.TS <= 0 || at.After(now.Add(5*time.Minute)) || at.Before(now.Add(-HourRetention)) {
-			at = now
-		}
-		method := strings.ToUpper(clip(strings.TrimSpace(ev.Method), 10))
-		if method == "" {
-			method = "GET"
-		}
-		p := CleanPath(ev.Path)
-		route := NormalizeRoute(ev.Route, p, ev.Status)
-		instance := clip(strings.TrimSpace(ev.Instance), 128)
-		if instance == "" {
-			instance = defaultInstance
-		}
-		uaClass, client := ClassifyUA(ev.UA)
-		ref := RefererHost(ev.Referer)
-		country := strings.ToUpper(clip(strings.TrimSpace(ev.Country), 8))
-		ip := clip(strings.TrimSpace(ev.IP), 64)
-		dur := ev.DurMS
-		if dur < 0 {
-			dur = 0
-		}
-		isErr := ev.Status >= 400
-
-		minute := at.Unix() / 60 * 60
-		hour := at.Unix() / 3600 * 3600
-		for _, g := range []struct {
-			gran   string
-			bucket int64
-		}{{models.TrafficGranMinute, minute}, {models.TrafficGranHour, hour}} {
-			k := routeKey{g.gran, g.bucket, method, route}
-			a := routes[k]
-			if a == nil {
-				a = &routeAcc{hist: make([]int64, len(LatencyBounds)+1)}
-				routes[k] = a
-			}
-			a.count++
-			if ev.Status >= 500 {
-				a.e5++
-			} else if ev.Status >= 400 {
-				a.e4++
-			}
-			a.sum += dur
-			if dur > a.max {
-				a.max = dur
-			}
-			a.in += max(ev.BytesIn, 0)
-			a.out += max(ev.BytesOut, 0)
-			a.hist[histIndex(dur)]++
-		}
-
-		// ip, auth_ip & instance juga per menit: puncak per menit dipakai saran rate limit & load balancer.
-		addDim(models.TrafficGranMinute, minute, "ip", ip, isErr)
-		addDim(models.TrafficGranHour, hour, "ip", ip, isErr)
-		addDim(models.TrafficGranMinute, minute, "instance", instance, isErr)
-		addDim(models.TrafficGranHour, hour, "instance", instance, isErr)
-		if IsAuthRoute(route) {
-			addDim(models.TrafficGranMinute, minute, "auth_ip", ip, isErr)
-			addDim(models.TrafficGranHour, hour, "auth_ip", ip, isErr)
-		}
-		addDim(models.TrafficGranHour, hour, "country", country, isErr)
-		addDim(models.TrafficGranHour, hour, "ua", uaClass, isErr)
-		addDim(models.TrafficGranHour, hour, "client", client, isErr)
-		addDim(models.TrafficGranHour, hour, "referer", ref, isErr)
-		addDim(models.TrafficGranHour, hour, "status", strconv.Itoa(ev.Status), isErr)
-		if route == RouteNotFound {
-			addDim(models.TrafficGranHour, hour, "notfound", p, true)
-		} else if method == "GET" && !isErr {
-			// Path GET persis per rute → seberapa terkonsentrasi permintaan (petunjuk rasio hit cache).
-			addDim(models.TrafficGranHour, hour, "gpath", route+"|"+p, false)
-		}
-
+		n := normalizeEvent(ev, now, defaultInstance)
+		acc.addRoute(n)
+		acc.addDims(n)
 		if i >= len(events)-200 {
-			recent = append(recent, models.TrafficRecentEvent{
-				SourceID: src.ID, At: at, Method: method, Route: route, Path: p, Status: ev.Status, DurMS: dur,
-				BytesOut: ev.BytesOut, IP: ip, Country: country, UAClass: uaClass, Client: clip(client, 32), Referer: ref, Instance: instance,
-			})
+			recent = append(recent, recentEventOf(src.ID, n))
 		}
-		if at.After(lastAt) {
-			lastAt = at
-			lastInstance = instance
+		if n.at.After(lastAt) {
+			lastAt = n.at
+			lastInstance = n.instance
 		}
 	}
-
-	err := db.Transaction(func(tx *gorm.DB) error {
-		if err := mergeRoutes(tx, src.ID, routes); err != nil {
-			return err
-		}
-		if err := mergeDims(tx, src.ID, dims); err != nil {
-			return err
-		}
-		if err := tx.CreateInBatches(recent, 200).Error; err != nil {
-			return err
-		}
-		updates := map[string]any{"total_events": gorm.Expr("total_events + ?", len(events)), "last_instance": lastInstance}
-		if src.LastEventAt == nil || lastAt.After(*src.LastEventAt) {
-			updates["last_event_at"] = lastAt
-		}
-		return tx.Model(&models.TrafficSource{}).Where("id = ?", src.ID).Updates(updates).Error
-	})
-	if err != nil {
+	if err := persistIngest(db, src, acc, recent, len(events), lastAt, lastInstance); err != nil {
 		return 0, err
 	}
 	trimRecent(db, src.ID)

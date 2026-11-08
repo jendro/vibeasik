@@ -81,22 +81,30 @@ func KitByID(id, module string) *SDKKit {
 	return nil
 }
 
+// kitRules diperiksa berurutan; kecocokan pertama menang (l = bahasa, f = framework, keduanya huruf kecil).
+var kitRules = []struct {
+	kit   string
+	match func(l, f string) bool
+}{
+	{"go-fiber", func(l, f string) bool { return l == "go" && strings.Contains(f, "fiber") }},
+	{"go-http", func(l, f string) bool { return l == "go" }},
+	{"nitro", func(l, f string) bool { return strings.Contains(f, "nuxt") || strings.Contains(f, "nitro") }},
+	{"python", func(l, f string) bool {
+		return l == "python" || strings.Contains(f, "fastapi") || strings.Contains(f, "flask") || strings.Contains(f, "django")
+	}},
+	{"laravel", func(l, f string) bool { return l == "php" || strings.Contains(f, "laravel") }},
+	{"node-express", func(l, f string) bool {
+		return l == "typescript" || l == "javascript" || strings.Contains(f, "express") || strings.Contains(f, "nest")
+	}},
+}
+
 // SuggestKit memilih SDK dari bahasa/framework komponen hasil scan.
 func SuggestKit(language, framework string) string {
 	l, f := strings.ToLower(language), strings.ToLower(framework)
-	switch {
-	case l == "go" && strings.Contains(f, "fiber"):
-		return "go-fiber"
-	case l == "go":
-		return "go-http"
-	case strings.Contains(f, "nuxt") || strings.Contains(f, "nitro"):
-		return "nitro"
-	case l == "python" || strings.Contains(f, "fastapi") || strings.Contains(f, "flask") || strings.Contains(f, "django"):
-		return "python"
-	case l == "php" || strings.Contains(f, "laravel"):
-		return "laravel"
-	case l == "typescript" || l == "javascript" || strings.Contains(f, "express") || strings.Contains(f, "nest"):
-		return "node-express"
+	for _, r := range kitRules {
+		if r.match(l, f) {
+			return r.kit
+		}
 	}
 	return "go-fiber"
 }
