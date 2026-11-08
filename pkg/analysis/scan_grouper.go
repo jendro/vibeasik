@@ -124,14 +124,7 @@ func parseLLMGrouping(raw, rootPath string, components []models.ComponentProposa
 	validGroups := make([]models.ScanGroupProposal, 0, len(parsed.Groups))
 	for i, g := range parsed.Groups {
 		g = normalizeLLMGroup(g, i, existingProjects)
-		var validIndices []int
-		for _, idx := range g.ComponentIndices {
-			if idx >= 0 && idx < len(components) && !assignedMap[idx] {
-				assignedMap[idx] = true
-				validIndices = append(validIndices, idx)
-			}
-		}
-		g.ComponentIndices = validIndices
+		g.ComponentIndices = extractValidIndices(g.ComponentIndices, len(components), assignedMap)
 		if len(g.ComponentIndices) > 0 {
 			validGroups = append(validGroups, g)
 		}
@@ -146,6 +139,17 @@ func parseLLMGrouping(raw, rootPath string, components []models.ComponentProposa
 		summary = fmt.Sprintf("LLM berhasil mengenali dan mengelompokkan %d komponen ke dalam %d project.", len(components), len(validGroups))
 	}
 	return &models.ScanGroupingResult{Groups: validGroups, LlmUsed: true, Summary: summary}
+}
+
+func extractValidIndices(indices []int, total int, assigned map[int]bool) []int {
+	var valid []int
+	for _, idx := range indices {
+		if idx >= 0 && idx < total && !assigned[idx] {
+			assigned[idx] = true
+			valid = append(valid, idx)
+		}
+	}
+	return valid
 }
 
 // attachUnassigned menempelkan komponen yang belum terkelompok ke grup pertama (atau grup baru bila belum ada grup).

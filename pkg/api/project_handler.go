@@ -37,73 +37,11 @@ func (s *Server) createProject(c *fiber.Ctx) error {
 		return badPayload(c, p)
 	}
 	p := payload.Project
-	if msg := firstProblem(needText("name", p.Name, 255), maxLen("slug", p.Slug, 255),
-		maxLen("root_path", p.RootPath, 1024), maxLen("short_description", p.ShortDescription, maxText),
-		maxLen("description", p.Description, maxText)); msg != "" {
-		return badPayload(c, msg)
-	}
-
-	devCommands := make([]string, 0, len(p.Components))
-	for _, comp := range p.Components {
-		devCommands = append(devCommands, comp.DevCommand)
-	}
-	if denied, resp := guardDevCommand(c, "", devCommands...); denied {
+	if denied, resp := validateCreateProject(c, &p); denied {
 		return resp
 	}
 
-	if p.Slug == "" {
-		p.Slug = service.Slugify(p.Name)
-	}
-
-	if p.RootPath == "" {
-		if len(p.Components) > 0 && p.Components[0].AbsolutePath != "" {
-			p.RootPath = p.Components[0].AbsolutePath
-		} else {
-			p.RootPath = "-"
-		}
-	}
-
-	if payload.CreateDirectories && p.RootPath != "" && p.RootPath != "-" {
-		_ = os.MkdirAll(p.RootPath, 0755)
-	}
-
-	for i := range p.Components {
-		comp := &p.Components[i]
-		if comp.RelativePath != "" && comp.AbsolutePath == "" {
-			if p.RootPath != "" && p.RootPath != "-" {
-				comp.AbsolutePath = filepath.Join(p.RootPath, comp.RelativePath)
-			} else {
-				comp.AbsolutePath = comp.RelativePath
-			}
-		}
-		if comp.AbsolutePath != "" && comp.RelativePath == "" {
-			comp.RelativePath = filepath.Base(comp.AbsolutePath)
-		}
-		if comp.Role == "" {
-			comp.Role = models.RoleOther
-		}
-		if comp.Name == "" {
-			if comp.RelativePath != "" {
-				comp.Name = comp.RelativePath
-			} else {
-				comp.Name = "App " + comp.Role
-			}
-		}
-		if comp.Language == "" {
-			if comp.Role == models.RoleBackend {
-				comp.Language = "go"
-			} else if strings.Contains(comp.Role, "mobile") {
-				comp.Language = "dart"
-			} else if strings.Contains(comp.Role, "front") {
-				comp.Language = "typescript"
-			} else {
-				comp.Language = "auto"
-			}
-		}
-		if payload.CreateDirectories && comp.AbsolutePath != "" {
-			_ = os.MkdirAll(comp.AbsolutePath, 0755)
-		}
-	}
+	provisionProjectDefaults(&p, payload.CreateDirectories)
 
 	if err := s.repos.Projects.Create(c.Context(), &p); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
@@ -113,6 +51,88 @@ func (s *Server) createProject(c *fiber.Ctx) error {
 	registry.ProjectCreated(s.db, &p)
 
 	return c.Status(fiber.StatusCreated).JSON(p)
+}
+
+func validateCreateProject(c *fiber.Ctx, p *models.Project) (bool, error) {
+	if msg := firstProblem(
+		needText("name", p.Name, 255),
+		maxLen("slug", p.Slug, 255),
+		maxLen("root_path", p.RootPath, 1024),
+		maxLen("short_description", p.ShortDescription, maxText),
+		maxLen("description", p.Description, maxText),
+	); msg != "" {
+		return true, badPayload(c, msg)
+	}
+
+	devCommands := make([]string, 0, len(p.Components))
+	for _, comp := range p.Components {
+		devCommands = append(devCommands, comp.DevCommand)
+	}
+	if denied, resp := guardDevCommand(c, "", devCommands...); denied {
+		return true, resp
+	}
+	return false, nil
+}
+
+func provisionProjectDefaults(p *models.Project, createDirectories bool) {
+	if p.Slug == "" {
+		p.Slug = service.Slugify(p.Name)
+	}
+	if p.RootPath == "" {
+		if len(p.Components) > 0 && p.Components[0].AbsolutePath != "" {
+			p.RootPath = p.Components[0].AbsolutePath
+		} else {
+			p.RootPath = "-"
+		}
+	}
+	if createDirectories && p.RootPath != "" && p.RootPath != "-" {
+		_ = os.MkdirAll(p.RootPath, 0755)
+	}
+	for i := range p.Components {
+		provisionComponentDefaults(&p.Components[i], p.RootPath, createDirectories)
+	}
+}
+
+func provisionComponentDefaults(comp *models.Component, rootPath string, createDirectories bool) {
+	if comp.RelativePath != "" && comp.AbsolutePath == "" {
+		if rootPath != "" && rootPath != "-" {
+			comp.AbsolutePath = filepath.Join(rootPath, comp.RelativePath)
+		} else {
+			comp.AbsolutePath = comp.RelativePath
+		}
+	}
+	if comp.AbsolutePath != "" && comp.RelativePath == "" {
+		comp.RelativePath = filepath.Base(comp.AbsolutePath)
+	}
+	if comp.Role == "" {
+		comp.Role = models.RoleOther
+	}
+	if comp.Name == "" {
+		if comp.RelativePath != "" {
+			comp.Name = comp.RelativePath
+		} else {
+			comp.Name = "App " + comp.Role
+		}
+	}
+	if comp.Language == "" {
+		comp.Language = defaultComponentLanguage(comp.Role)
+	}
+	if createDirectories && comp.AbsolutePath != "" {
+		_ = os.MkdirAll(comp.AbsolutePath, 0755)
+	}
+}
+
+func defaultComponentLanguage(role string) string {
+	if role == models.RoleBackend {
+		return "go"
+	}
+	if strings.Contains(role, "mobile") {
+		return "dart"
+	}
+	if strings.Contains(role, "front") {
+		return "typescript"
+	}
+	return "auto"
 }
 
 func (s *Server) getProject(c *fiber.Ctx) error {

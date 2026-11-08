@@ -262,34 +262,62 @@ func callsIn(lines []string, from, to int) []callRef {
 // resolve memetakan satu pemanggilan ke definisinya (maks. 2 kandidat) dengan prioritas: berkas sama →
 // berkas yang diimpor → petunjuk penerima ($this->userService->x → UserService) → direktori sama → nama unik.
 func (b *builder) resolve(c callRef, from *codemap.FileSymbols, self string) []def {
+	cands := b.eligibleCandidates(c, from, self)
+	if len(cands) == 0 {
+		return nil
+	}
+	qual := strings.ToLower(c.qual)
+	selfRecv := isSelfReceiver(qual)
+	tiers := resolutionTiers(from, c, qual, selfRecv)
+	if hit := matchFirstTier(cands, tiers); hit != nil {
+		return hit
+	}
+	if len(cands) == 1 && !commonNames[strings.ToLower(c.name)] && !selfRecv {
+		return cands
+	}
+	return nil
+}
+
+func (b *builder) eligibleCandidates(c callRef, from *codemap.FileSymbols, self string) []def {
 	var cands []def
 	for _, d := range b.defs[c.name] {
 		if !(d.file == from && d.sym.Name == self) {
 			cands = append(cands, d)
 		}
 	}
-	if len(cands) == 0 {
-		return nil
+	return cands
+}
+
+func isSelfReceiver(qual string) bool {
+	return qual == "this" || qual == "self" || qual == "static" || qual == "parent"
+}
+
+func matchesReceiverStem(filePath, qual string) bool {
+	if qual == "" || len(qual) < 3 {
+		return false
 	}
-	qual := strings.ToLower(c.qual)
-	selfRecv := qual == "this" || qual == "self" || qual == "static" || qual == "parent"
-	tiers := []func(d def) bool{
-		func(d def) bool { return d.file == from },
-		func(d def) bool { return !selfRecv && imports(from, d.file.Path) },
-		func(d def) bool {
-			if qual == "" || selfRecv || len(qual) < 3 {
-				return false
-			}
-			stem := strings.ToLower(strings.TrimSuffix(path.Base(d.file.Path), path.Ext(d.file.Path)))
-			return strings.Contains(strings.ReplaceAll(stem, "_", ""), strings.ReplaceAll(qual, "_", ""))
-		},
-		func(d def) bool {
-			return path.Dir(d.file.Path) == path.Dir(from.Path) && !commonNames[strings.ToLower(c.name)]
-		},
-	}
+	stem := strings.ToLower(strings.TrimSuffix(path.Base(filePath), path.Ext(filePath)))
+	return strings.Contains(strings.ReplaceAll(stem, "_", ""), strings.ReplaceAll(qual, "_", ""))
+}
+
+func matchesSameDir(candidatePath, fromPath, callName string) bool {
+	return path.Dir(candidatePath) == path.Dir(fromPath) && !commonNames[strings.ToLower(callName)]
+}
+
+func resolutionTiers(from *codemap.FileSymbols, c callRef, qual string, selfRecv bool) []func(d def) bool {
+	sameFile := func(d def) bool { return d.file == from }
 	if selfRecv {
-		tiers = tiers[:1]
+		return []func(d def) bool{sameFile}
 	}
+	return []func(d def) bool{
+		sameFile,
+		func(d def) bool { return imports(from, d.file.Path) },
+		func(d def) bool { return matchesReceiverStem(d.file.Path, qual) },
+		func(d def) bool { return matchesSameDir(d.file.Path, from.Path, c.name) },
+	}
+}
+
+func matchFirstTier(cands []def, tiers []func(d def) bool) []def {
 	for _, tier := range tiers {
 		var hit []def
 		for _, d := range cands {
@@ -303,9 +331,6 @@ func (b *builder) resolve(c callRef, from *codemap.FileSymbols, self string) []d
 			}
 			return hit
 		}
-	}
-	if len(cands) == 1 && !commonNames[strings.ToLower(c.name)] && !selfRecv {
-		return cands
 	}
 	return nil
 }
