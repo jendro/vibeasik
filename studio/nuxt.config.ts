@@ -1,4 +1,17 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { execSync } from 'node:child_process'
+
+// Versi build Studio (tampil di sidebar di bawah judul): STUDIO_BUILD_VERSION dari Makefile, selain itu git describe.
+const gitDescribe = () => {
+  try {
+    return execSync('git describe --tags --always --dirty', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
+  } catch {
+    return 'unknown'
+  }
+}
+const studioBuildVersion = process.env.STUDIO_BUILD_VERSION || gitDescribe()
+const studioBuildTime = new Date().toISOString()
+
 export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
@@ -15,7 +28,9 @@ export default defineNuxtConfig({
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8765',
       // Hanya untuk `nuxt dev`: token dari `vibeasik token` (Studio produksi memakai cookie).
-      apiToken: process.env.NUXT_PUBLIC_API_TOKEN || ''
+      apiToken: process.env.NUXT_PUBLIC_API_TOKEN || '',
+      studioBuildVersion,
+      studioBuildTime
     }
   },
 

@@ -265,8 +265,8 @@ export const GLOBAL_NAV_ITEMS: NavItem[] = [
   {
     id: 'settings',
     to: '/settings',
-    label: 'Pengaturan LLM',
-    desc: 'System One & model AI',
+    label: 'Pengaturan',
+    desc: 'LLM, folder & berbagi pengetahuan',
     icon: 'i-lucide-sliders-horizontal',
     exact: false
   }

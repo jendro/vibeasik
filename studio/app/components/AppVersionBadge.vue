@@ -8,16 +8,27 @@ const isDev = computed(() => !!info.value && (info.value.current.includes('-') |
 const label = computed(() => isDev.value ? 'dev' : info.value?.current || '')
 const busy = computed(() => stage.value !== 'idle')
 const canClick = computed(() => available.value && (!!info.value?.can_apply || ready.value))
+
+// Versi build Studio (dicap saat `nuxt generate`, lihat nuxt.config.ts), terpisah dari versi engine di atas.
+const cfg = useRuntimeConfig().public
+const studioVersion = String(cfg.studioBuildVersion || 'unknown')
+const studioBuiltAt = computed(() => {
+  const d = new Date(String(cfg.studioBuildTime || ''))
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
+})
 </script>
 
 <template>
-  <div v-if="info" class="flex items-center gap-1.5 min-w-0">
-    <span class="text-[11px] font-mono text-neutral-500 dark:text-slate-400 truncate" :title="`Versi terpasang: ${info.current}`">
-      {{ label }}
+  <div class="flex items-center gap-1.5 min-w-0">
+    <span
+      class="text-[11px] font-mono text-neutral-500 dark:text-slate-400 truncate"
+      :title="`${info ? `Engine: ${info.current}\n` : ''}Studio build: ${studioVersion}${studioBuiltAt ? ` (${studioBuiltAt})` : ''}`"
+    >
+      <template v-if="info">{{ label }} · </template>studio {{ studioVersion }}
     </span>
 
     <button
-      v-if="available && canClick"
+      v-if="info && available && canClick"
       type="button"
       class="inline-flex items-center gap-1 rounded-full bg-sky-600 hover:bg-sky-700 text-white px-1.5 py-px text-[10px] font-semibold transition-colors disabled:opacity-80 disabled:cursor-wait focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
       :disabled="busy"
@@ -41,7 +52,7 @@ const canClick = computed(() => available.value && (!!info.value?.can_apply || r
     </button>
 
     <a
-      v-else-if="available && info.url"
+      v-else-if="info && available && info.url"
       :href="info.url"
       target="_blank"
       rel="noopener"
