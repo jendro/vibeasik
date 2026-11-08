@@ -20,6 +20,17 @@ func (s *Server) setupKnowledgeSyncRoutes(api fiber.Router) {
 	api.Post("/knowledge-sync/ledger/sync", s.syncKnowledgeLedger)
 	api.Post("/knowledge-sync/revoke", s.revokeKnowledgeSync)
 	api.Post("/knowledge-sync/pull", s.pullKnowledgeSync)
+	api.Get("/knowledge-sync/impact", s.knowledgeImpact)
+}
+
+// knowledgeImpact dampak pengetahuan di seluruh pengguna (angka per jenis pekerjaan besar), dari server.
+func (s *Server) knowledgeImpact(c *fiber.Ctx) error {
+	account.Activate()
+	imp, err := knowledgesync.FetchImpact()
+	if err != nil {
+		return c.Status(502).JSON(fiber.Map{"error": "tidak dapat mengambil dampak dari server: " + err.Error()})
+	}
+	return c.JSON(imp)
 }
 
 func knowledgeSyncView() fiber.Map {

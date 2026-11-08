@@ -29,6 +29,10 @@ const galleryLink = computed(() => {
   return null
 })
 
+const { impact, load: loadImpact, forNode } = useKnowledgeImpact()
+onMounted(() => loadImpact())
+const community = computed(() => impact.value ? forNode(detail.value?.node.key) : null)
+
 const outcomeLabel: Record<string, string> = { helpful: '✓ membantu', harmful: '✗ merugikan', neutral: '· netral' }
 const when = (iso?: string) => iso ? new Date(iso).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''
 </script>
@@ -91,6 +95,19 @@ const when = (iso?: string) => iso ? new Date(iso).toLocaleString('id-ID', { day
           <span class="text-xs text-neutral-500">{{ n.domain }}</span>
           <span class="text-xs font-mono text-neutral-400">{{ n.strength.toFixed(2) }}</span>
         </button>
+      </div>
+
+      <div v-if="community">
+        <p class="text-xs font-semibold uppercase text-neutral-500 mb-1.5">
+          Dampak di komunitas
+        </p>
+        <p class="text-xs text-neutral-600 dark:text-neutral-300 mb-1">
+          Dipakai {{ community.uses }}× · ✓{{ community.helpful }} ✗{{ community.harmful }}{{ community.score >= 0 ? ` · ${community.score}% berguna` : '' }}
+        </p>
+        <div v-for="k in community.by_kind" :key="k.kind" class="flex items-center gap-2 text-xs py-0.5">
+          <span class="flex-1 text-neutral-600 dark:text-neutral-300">{{ k.label }}</span>
+          <span class="text-neutral-500">{{ k.uses }}× · ✓{{ k.helpful }} ✗{{ k.harmful }}</span>
+        </div>
       </div>
 
       <div>

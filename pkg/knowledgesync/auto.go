@@ -34,7 +34,7 @@ const (
 const FeatureAutoControl = "knowledge.auto_control"
 
 // ConsentVersion versi Syarat & Ketentuan Pusat Pengetahuan yang harus disetujui. Naikkan bila pasal 4 berubah.
-const ConsentVersion = "2026-11-draf-3"
+const ConsentVersion = "2026-11-draf-4"
 
 // Syarat kelayakan node (lihat rancangan §3).
 const (
@@ -249,6 +249,12 @@ Pusat Pengetahuan bekerja dua arah.
 Yang dikirim : judul dan isi node pengetahuan yang lolos penyaringan, serta angka helpful/harmful (anonim).
 Tidak dikirim: kode proyek, nama proyek/komponen/repo, path berkas, hostname, kunci & kredensial, pengetahuan
                pribadi pegawai AI Anda. Node yang perlu disunting penyensor tidak dikirim sama sekali.
+
+Dampak pengetahuan (angka saja):
+  • Untuk node dari paket, aplikasi mengirim berapa kali node itu dipakai, berapa kali terbukti berguna atau merugikan,
+    dan rinciannya per jenis pekerjaan besar (pengerjaan todo, audit kode, perencanaan proyek) beserta area node-nya.
+  • Server menampilkannya sebagai grafik "dampak di komunitas" dan hanya bila berasal dari beberapa perangkat berbeda.
+  • Tidak dikirim: nama atau isi pekerjaan, nama proyek, path, dan kode. Hanya jenis pekerjaan dari daftar baku.
 
 Data pemakaian (terpisah dari pengetahuan):
   • Aplikasi mengirim ping ringan ke server vibeasik saat dijalankan lalu tiap 24 jam, dengan atau tanpa akun:

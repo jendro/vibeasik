@@ -157,6 +157,8 @@ const pct = (v: number) => `${Math.round(v * 100)}%`
       </div>
     </div>
 
+    <KnowledgeImpact />
+
     <UTabs v-model="view" :items="viewTabs" size="sm" :content="false" class="w-full overflow-x-auto" />
 
     <section v-if="view === 'nodes'" class="space-y-3">

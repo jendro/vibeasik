@@ -258,22 +258,28 @@ func importPack(db *gorm.DB, p *pack) (*Result, error) {
 	return res, err
 }
 
-// SendSignals mengirim jumlah helpful/harmful node milik paket (hanya kunci & angka; tanpa teks).
+// SendSignals mengirim angka helpful/harmful, jumlah pemakaian, dan rincian per jenis pekerjaan besar untuk node
+// milik paket (hanya kunci & angka; tanpa teks node, tanpa nama/isi pekerjaan, proyek, atau path).
 func SendSignals(db *gorm.DB) (int, error) {
 	tok := account.DeviceToken()
 	if tok == "" {
 		return 0, errors.New("belum login: sinyal hanya dikirim dari perangkat yang masuk akun")
 	}
 	var nodes []models.KnowledgeNode
-	db.Where("source = ? AND (helpful > 0 OR harmful > 0)", models.KnowledgeSrcHub).Find(&nodes)
+	db.Where("source = ? AND (helpful > 0 OR harmful > 0 OR uses > 0)", models.KnowledgeSrcHub).Find(&nodes)
+	byWork := workByNode(db, nodes)
 	type sig struct {
-		NodeKey string `json:"node_key"`
-		Helpful int    `json:"helpful"`
-		Harmful int    `json:"harmful"`
+		NodeKey string              `json:"node_key"`
+		Helpful int                 `json:"helpful"`
+		Harmful int                 `json:"harmful"`
+		Uses    int                 `json:"uses"`
+		Domain  string              `json:"domain,omitempty"`
+		ByWork  map[string]WorkStat `json:"by_work,omitempty"`
 	}
 	out := make([]sig, 0, len(nodes))
 	for _, n := range nodes {
-		out = append(out, sig{NodeKey: strings.TrimPrefix(n.Key, "hub:"), Helpful: n.Helpful, Harmful: n.Harmful})
+		out = append(out, sig{NodeKey: strings.TrimPrefix(n.Key, "hub:"), Helpful: n.Helpful, Harmful: n.Harmful,
+			Uses: n.Uses, Domain: n.Domain, ByWork: byWork[n.ID]})
 	}
 	if len(out) == 0 {
 		return 0, nil

@@ -69,3 +69,15 @@ func TestVerifySignature(t *testing.T) {
 		t.Fatal("tampered data or bad signature must be rejected")
 	}
 }
+
+func TestWorkKindOnlyKeepsBakedKinds(t *testing.T) {
+	cases := map[string]string{
+		"todo:12": "todo", "audit:3:internal/secret/berkas.go": "audit", "plan:4": "plan",
+		"proyek-rahasia:9": "lain", "": "lain", "/home/budi/x": "lain",
+	}
+	for in, want := range cases {
+		if got := WorkKind(in); got != want {
+			t.Errorf("WorkKind(%q) = %q, mau %q", in, got, want)
+		}
+	}
+}
