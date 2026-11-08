@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -369,24 +368,6 @@ func (s *organizerService) ExecuteMoves(ctx context.Context, payload models.Exec
 
 	result.Message = fmt.Sprintf("Berhasil memindahkan %d folder, %d gagal, %d dilewati.", result.SuccessCount, result.FailedCount, result.SkippedCount)
 	return result, nil
-}
-
-// CopyFile helper for file copies if needed
-func copyFile(src, dst string) error {
-	in, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-
-	out, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	_, err = io.Copy(out, in)
-	return err
 }
 
 func getComponentSubfolder(c models.Component) string {

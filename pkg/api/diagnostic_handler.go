@@ -475,67 +475,6 @@ func deleteFindingInDeepCheck(db *gorm.DB, projectID uint, target models.Finding
 	return deleted
 }
 
-func updateFindingStatusInLatestDiag(db *gorm.DB, projectID uint, target models.Finding, newStatus string) (int, error) {
-	// 1. Sync in DeepCheckReport if present
-	syncFindingStatusInDeepCheck(db, projectID, target, newStatus)
-
-	// 2. Sync in Diagnostic record
-	var diag models.Diagnostic
-	if err := db.Where("project_id = ?", projectID).Order("created_at DESC").First(&diag).Error; err != nil {
-		return 0, err
-	}
-
-	var findings []models.Finding
-	if err := json.Unmarshal([]byte(diag.FindingsJSON), &findings); err != nil {
-		return diag.Score, err
-	}
-
-	findings = models.DeduplicateFindings(findings)
-
-	updated := false
-	targetKey := target.ID
-	if targetKey == "" {
-		targetKey = models.GenerateFindingKey(target)
-	}
-
-	for i := range findings {
-		if isMatchingFinding(findings[i], target, targetKey) {
-			findings[i].Status = newStatus
-			if findings[i].ID == "" {
-				findings[i].ID = targetKey
-			}
-			updated = true
-			break
-		}
-	}
-
-	// If not found in diag (e.g. was only in deep report), append it with newStatus
-	if !updated {
-		targetFinding := target
-		targetFinding.Status = newStatus
-		if targetFinding.ID == "" {
-			targetFinding.ID = targetKey
-		}
-		findings = append(findings, targetFinding)
-		updated = true
-	}
-
-	if updated {
-		diag.Score = diagnostics.CalculateHealthScore(findings)
-		data, err := json.Marshal(findings)
-		if err == nil {
-			diag.FindingsJSON = string(data)
-			_ = db.Model(&diag).Updates(map[string]interface{}{
-				"findings_json": diag.FindingsJSON,
-				"score":         diag.Score,
-			}).Error
-			_ = db.Model(&models.Project{}).Where("id = ?", projectID).Update("health_score", diag.Score).Error
-			return diag.Score, nil
-		}
-	}
-	return diag.Score, nil
-}
-
 func (s *Server) deleteDiagnosticFinding(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
