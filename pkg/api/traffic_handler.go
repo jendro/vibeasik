@@ -179,6 +179,9 @@ func (s *Server) updateTrafficSource(c *fiber.Ctx) error {
 	return c.JSON(src)
 }
 
+// deleteTrafficSource menghapus data traffic source beserta seluruh child records secara atomik.
+// Koreksi klasifikasi: loop model fixed sebelumnya merupakan fan-out konstan (K5151/K5152),
+// dirapikan menjadi transaksi berurutan (child sebelum parent) dengan rollback handling (K46/K1654).
 func (s *Server) deleteTrafficSource(c *fiber.Ctx) error {
 	src, err := s.trafficSource(c)
 	if src == nil {
