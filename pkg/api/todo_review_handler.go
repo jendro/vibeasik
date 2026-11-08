@@ -108,6 +108,71 @@ func (s *Server) getGuidelines(c *fiber.Ctx) error {
 	return c.JSON(categories)
 }
 
+func findProjectByID(projects []models.Project, id uint) *models.Project {
+	for i := range projects {
+		if projects[i].ID == id {
+			return &projects[i]
+		}
+	}
+	return nil
+}
+
+func (s *Server) collectProjectSuggestions(targetProject *models.Project, allProjects []models.Project) []models.Todo {
+	var suggestions []models.Todo
+	suggestions = append(suggestions, guidelines.GenerateSuggestionsForProject(targetProject, allProjects)...)
+	// Standar vibeasik (Aturan 45): port, env & todo pending dipastikan langsung, bukan saran
+	if r, _ := standard.Ensure(s.db, targetProject.ID); r != nil {
+		suggestions = append(suggestions, r.Todos...)
+	}
+	return suggestions
+}
+
+func (s *Server) collectAllSuggestions(allProjects []models.Project) []models.Todo {
+	var suggestions []models.Todo
+	suggestions = append(suggestions, guidelines.GenerateGlobalSuggestions(allProjects)...)
+	for i := range allProjects {
+		suggestions = append(suggestions, s.collectProjectSuggestions(&allProjects[i], allProjects)...)
+	}
+	return suggestions
+}
+
+func (s *Server) syncExistingSuggestion(existing *models.Todo, sugg models.Todo) {
+	updates := map[string]interface{}{}
+	if (existing.Category == "" || existing.Category == models.CategoryGeneral) && sugg.Category != "" {
+		existing.Category = sugg.Category
+		updates["category"] = sugg.Category
+	}
+	if existing.TargetApps == "" && sugg.TargetApps != "" {
+		existing.TargetApps = sugg.TargetApps
+		updates["target_apps"] = sugg.TargetApps
+	}
+	if len(updates) > 0 {
+		s.db.Model(existing).Updates(updates)
+	}
+}
+
+func (s *Server) processSuggestions(suggestions []models.Todo, saveToDB bool) ([]models.Todo, int) {
+	finalSuggestions := make([]models.Todo, 0, len(suggestions))
+	createdCount := 0
+	todoIdx := models.NewTodoIndex(s.db, suggestions)
+	for _, sugg := range suggestions {
+		existing, found := todoIdx.Find(sugg)
+		if !found {
+			if saveToDB {
+				if errCreate := s.db.Create(&sugg).Error; errCreate == nil {
+					createdCount++
+					todoIdx.Add(sugg)
+				}
+			}
+			finalSuggestions = append(finalSuggestions, sugg)
+		} else {
+			s.syncExistingSuggestion(&existing, sugg)
+			finalSuggestions = append(finalSuggestions, existing)
+		}
+	}
+	return finalSuggestions, createdCount
+}
+
 // suggestTodos analyzes projects against guidelines and generates actionable suggestions
 func (s *Server) suggestTodos(c *fiber.Ctx) error {
 	var body struct {
@@ -130,30 +195,12 @@ func (s *Server) suggestTodos(c *fiber.Ctx) error {
 	var targetProject *models.Project
 
 	if body.ProjectID > 0 {
-		for i := range allProjects {
-			if allProjects[i].ID == body.ProjectID {
-				targetProject = &allProjects[i]
-				break
-			}
-		}
+		targetProject = findProjectByID(allProjects, body.ProjectID)
 		if targetProject != nil {
-			suggestions = append(suggestions, guidelines.GenerateSuggestionsForProject(targetProject, allProjects)...)
-			// Standar vibeasik (Aturan 45): port, env & todo pending dipastikan langsung, bukan saran
-			if r, _ := standard.Ensure(s.db, targetProject.ID); r != nil {
-				suggestions = append(suggestions, r.Todos...)
-			}
+			suggestions = append(suggestions, s.collectProjectSuggestions(targetProject, allProjects)...)
 		}
 	} else {
-		// Global suggestions
-		suggestions = append(suggestions, guidelines.GenerateGlobalSuggestions(allProjects)...)
-		// Suggestions across all projects
-		for i := range allProjects {
-			suggestions = append(suggestions, guidelines.GenerateSuggestionsForProject(&allProjects[i], allProjects)...)
-			// Standar vibeasik (Aturan 45): port, env & todo pending dipastikan langsung, bukan saran
-			if r, _ := standard.Ensure(s.db, allProjects[i].ID); r != nil {
-				suggestions = append(suggestions, r.Todos...)
-			}
-		}
+		suggestions = append(suggestions, s.collectAllSuggestions(allProjects)...)
 	}
 
 	// Saran cerdas (rapat Project Manager / LLM) disediakan modul Pro; Community hanya saran rule.
@@ -161,37 +208,7 @@ func (s *Server) suggestTodos(c *fiber.Ctx) error {
 	pmJob, pmError := "", ""
 	suggestions = append(suggestions, registry.SuggestTodos(s.db, targetProject, allProjects)...)
 
-	// Filter out suggestions that already exist in DB with same title & project_id
-	finalSuggestions := make([]models.Todo, 0)
-	createdCount := 0
-	todoIdx := models.NewTodoIndex(s.db, suggestions)
-	for _, sugg := range suggestions {
-		existing, found := todoIdx.Find(sugg)
-		if !found {
-			if saveToDB {
-				if errCreate := s.db.Create(&sugg).Error; errCreate == nil {
-					createdCount++
-					todoIdx.Add(sugg)
-				}
-			}
-			finalSuggestions = append(finalSuggestions, sugg)
-		} else {
-			// Update category and target_apps if existing row was empty
-			updates := map[string]interface{}{}
-			if (existing.Category == "" || existing.Category == models.CategoryGeneral) && sugg.Category != "" {
-				existing.Category = sugg.Category
-				updates["category"] = sugg.Category
-			}
-			if existing.TargetApps == "" && sugg.TargetApps != "" {
-				existing.TargetApps = sugg.TargetApps
-				updates["target_apps"] = sugg.TargetApps
-			}
-			if len(updates) > 0 {
-				s.db.Model(&existing).Updates(updates)
-			}
-			finalSuggestions = append(finalSuggestions, existing)
-		}
-	}
+	finalSuggestions, createdCount := s.processSuggestions(suggestions, saveToDB)
 
 	return c.JSON(fiber.Map{
 		"count":       len(finalSuggestions),

@@ -82,28 +82,25 @@ type Filter struct {
 	Limit     int
 }
 
-// List mengembalikan node sesuai filter. Dengan Text, urutannya memakai Recall (skor lengkap, tanpa mencatat pemakaian).
-func List(db *gorm.DB, f Filter) []Hit {
-	if f.Limit <= 0 || f.Limit > 300 {
-		f.Limit = 100
+func listByRecall(db *gorm.DB, f Filter) []Hit {
+	q := Query{Text: f.Text, Limit: 50, EmployeeID: 0}
+	if f.Domain != "" {
+		q.Domains = []string{f.Domain}
 	}
-	if strings.TrimSpace(f.Text) != "" && (f.Status == "" || f.Status == models.KnowledgeNodeActive) {
-		q := Query{Text: f.Text, Limit: 50, EmployeeID: 0}
-		if f.Domain != "" {
-			q.Domains = []string{f.Domain}
-		}
-		if f.Kind != "" {
-			q.Kinds = []string{f.Kind}
-		}
-		hits := Recall(db, q).Hits
-		out := hits[:0]
-		for _, h := range hits {
-			if (f.Source == "" || h.Source == f.Source) && (f.ClusterID == 0 || h.ClusterID == f.ClusterID) {
-				out = append(out, h)
-			}
-		}
-		return out
+	if f.Kind != "" {
+		q.Kinds = []string{f.Kind}
 	}
+	hits := Recall(db, q).Hits
+	out := hits[:0]
+	for _, h := range hits {
+		if (f.Source == "" || h.Source == f.Source) && (f.ClusterID == 0 || h.ClusterID == f.ClusterID) {
+			out = append(out, h)
+		}
+	}
+	return out
+}
+
+func listByDB(db *gorm.DB, f Filter) []Hit {
 	q := db.Order("weight + 5 * (helpful - harmful) DESC, id DESC").Limit(f.Limit)
 	q = q.Where("status = ?", util.FirstNonBlank(f.Status, models.KnowledgeNodeActive))
 	if f.Domain != "" {
@@ -125,6 +122,17 @@ func List(db *gorm.DB, f Filter) []Hit {
 		out = append(out, Hit{KnowledgeNode: n, UtilityV: round3(n.Utility())})
 	}
 	return out
+}
+
+// List mengembalikan node sesuai filter. Dengan Text, urutannya memakai Recall (skor lengkap, tanpa mencatat pemakaian).
+func List(db *gorm.DB, f Filter) []Hit {
+	if f.Limit <= 0 || f.Limit > 300 {
+		f.Limit = 100
+	}
+	if strings.TrimSpace(f.Text) != "" && (f.Status == "" || f.Status == models.KnowledgeNodeActive) {
+		return listByRecall(db, f)
+	}
+	return listByDB(db, f)
 }
 
 // Detail: satu node beserta tetangga bertautnya & riwayat pemakaian.

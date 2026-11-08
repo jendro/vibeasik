@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/gofiber/fiber/v2"
@@ -106,12 +107,7 @@ func deleteFindingInDeepCheck(db *gorm.DB, projectID uint, target models.Finding
 	return deleted
 }
 
-func (s *Server) deleteDiagnosticFinding(c *fiber.Ctx) error {
-	id, err := c.ParamsInt("id")
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
-	}
-
+func resolveFindingTarget(c *fiber.Ctx) (FindingActionPayload, models.Finding, string) {
 	var payload FindingActionPayload
 	_ = c.BodyParser(&payload)
 
@@ -140,12 +136,81 @@ func (s *Server) deleteDiagnosticFinding(c *fiber.Ctx) error {
 	if targetKey == "" {
 		targetKey = models.GenerateFindingKey(target)
 	}
+	return payload, target, targetKey
+}
 
-	// Also delete from DeepCheckReport if present
+func (s *Server) loadDiagnosticFindings(projectID int) (*models.Diagnostic, []models.Finding, error) {
+	var diag models.Diagnostic
+	if err := s.db.Where("project_id = ?", projectID).Order("created_at DESC").First(&diag).Error; err != nil {
+		return nil, nil, err
+	}
+	var findings []models.Finding
+	if err := json.Unmarshal([]byte(diag.FindingsJSON), &findings); err != nil {
+		return &diag, nil, err
+	}
+	return &diag, models.DeduplicateFindings(findings), nil
+}
+
+func (s *Server) saveUpdatedDiagnostic(ctx context.Context, diag *models.Diagnostic, findings []models.Finding, projectID uint) error {
+	diag.Score = diagnostics.CalculateHealthScore(findings)
+	data, err := json.Marshal(findings)
+	if err != nil {
+		return err
+	}
+	diag.FindingsJSON = string(data)
+	if err := s.db.Model(diag).Updates(map[string]interface{}{
+		"findings_json": diag.FindingsJSON,
+		"score":         diag.Score,
+	}).Error; err != nil {
+		return err
+	}
+	_ = s.repos.Projects.UpdateHealthScore(ctx, projectID, diag.Score)
+	return nil
+}
+
+func filterDeletedFinding(findings []models.Finding, target models.Finding, targetKey string) ([]models.Finding, bool) {
+	filtered := make([]models.Finding, 0, len(findings))
+	deleted := false
+	for _, f := range findings {
+		if !deleted && isMatchingFinding(f, target, targetKey) {
+			deleted = true
+			continue
+		}
+		filtered = append(filtered, f)
+	}
+	return filtered, deleted
+}
+
+func updateFindingStatus(findings []models.Finding, target models.Finding, targetKey string, requestedStatus string) (string, bool) {
+	for i := range findings {
+		if isMatchingFinding(findings[i], target, targetKey) {
+			if requestedStatus != "" {
+				findings[i].Status = requestedStatus
+			} else if findings[i].Status == models.FindingStatusIgnored {
+				findings[i].Status = models.FindingStatusOpen
+			} else {
+				findings[i].Status = models.FindingStatusIgnored
+			}
+			if findings[i].ID == "" {
+				findings[i].ID = models.GenerateFindingKey(findings[i])
+			}
+			return findings[i].Status, true
+		}
+	}
+	return "", false
+}
+
+func (s *Server) deleteDiagnosticFinding(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
+	}
+
+	_, target, targetKey := resolveFindingTarget(c)
 	deletedFromDeep := deleteFindingInDeepCheck(s.db, uint(id), target, targetKey)
 
-	var diag models.Diagnostic
-	if err := s.db.Where("project_id = ?", id).Order("created_at DESC").First(&diag).Error; err != nil {
+	diag, findings, err := s.loadDiagnosticFindings(id)
+	if err != nil {
 		if deletedFromDeep {
 			return c.JSON(fiber.Map{
 				"success":        true,
@@ -155,49 +220,20 @@ func (s *Server) deleteDiagnosticFinding(c *fiber.Ctx) error {
 				"score":          100,
 			})
 		}
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "no diagnostic found for project"})
-	}
-
-	var findings []models.Finding
-	if err := json.Unmarshal([]byte(diag.FindingsJSON), &findings); err != nil {
+		if diag == nil {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "no diagnostic found for project"})
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to parse findings"})
 	}
 
-	findings = models.DeduplicateFindings(findings)
-
-	filtered := make([]models.Finding, 0, len(findings))
-	deleted := false
-
-	for _, f := range findings {
-		if !deleted && isMatchingFinding(f, target, targetKey) {
-			deleted = true
-			continue
-		}
-		filtered = append(filtered, f)
-	}
-
+	filtered, deleted := filterDeletedFinding(findings, target, targetKey)
 	if !deleted && !deletedFromDeep {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "finding not found in diagnostic report"})
 	}
 
-	// Recalculate health score accurately
-	diag.Score = diagnostics.CalculateHealthScore(filtered)
-
-	data, err := json.Marshal(filtered)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to encode findings"})
-	}
-	diag.FindingsJSON = string(data)
-
-	if err := s.db.Model(&diag).Updates(map[string]interface{}{
-		"findings_json": diag.FindingsJSON,
-		"score":         diag.Score,
-	}).Error; err != nil {
+	if err := s.saveUpdatedDiagnostic(c.Context(), diag, filtered, uint(id)); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save updated diagnostic"})
 	}
-
-	// Update project's cached health score
-	_ = s.repos.Projects.UpdateHealthScore(c.Context(), uint(id), diag.Score)
 
 	return c.JSON(fiber.Map{
 		"success":        true,
@@ -214,88 +250,24 @@ func (s *Server) ignoreDiagnosticFinding(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 
-	var payload FindingActionPayload
-	_ = c.BodyParser(&payload)
+	payload, target, targetKey := resolveFindingTarget(c)
 
-	findingKey := c.Params("findingKey")
-	if findingKey == "" {
-		findingKey = payload.FindingID
-	}
-
-	var target models.Finding
-	if payload.Finding != nil {
-		target = *payload.Finding
-	} else {
-		target = models.Finding{
-			ID:         findingKey,
-			RuleID:     payload.RuleID,
-			Title:      payload.Title,
-			TargetFile: payload.TargetFile,
-			Line:       payload.Line,
+	diag, findings, err := s.loadDiagnosticFindings(id)
+	if err != nil {
+		if diag == nil {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "no diagnostic found for project"})
 		}
-	}
-
-	var diag models.Diagnostic
-	if err := s.db.Where("project_id = ?", id).Order("created_at DESC").First(&diag).Error; err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "no diagnostic found for project"})
-	}
-
-	var findings []models.Finding
-	if err := json.Unmarshal([]byte(diag.FindingsJSON), &findings); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to parse findings"})
 	}
 
-	findings = models.DeduplicateFindings(findings)
-
-	targetKey := findingKey
-	if targetKey == "" {
-		targetKey = target.ID
-	}
-	if targetKey == "" {
-		targetKey = models.GenerateFindingKey(target)
-	}
-
-	found := false
-	var updatedStatus string
-	for i := range findings {
-		if isMatchingFinding(findings[i], target, targetKey) {
-			found = true
-			if payload.Status != "" {
-				findings[i].Status = payload.Status
-			} else if findings[i].Status == models.FindingStatusIgnored {
-				findings[i].Status = models.FindingStatusOpen
-			} else {
-				findings[i].Status = models.FindingStatusIgnored
-			}
-			if findings[i].ID == "" {
-				findings[i].ID = models.GenerateFindingKey(findings[i])
-			}
-			updatedStatus = findings[i].Status
-			break
-		}
-	}
-
+	updatedStatus, found := updateFindingStatus(findings, target, targetKey, payload.Status)
 	if !found {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "finding not found in diagnostic report"})
 	}
 
-	// Recalculate health score accurately based on active findings
-	diag.Score = diagnostics.CalculateHealthScore(findings)
-
-	data, err := json.Marshal(findings)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to encode findings"})
-	}
-	diag.FindingsJSON = string(data)
-
-	if err := s.db.Model(&diag).Updates(map[string]interface{}{
-		"findings_json": diag.FindingsJSON,
-		"score":         diag.Score,
-	}).Error; err != nil {
+	if err := s.saveUpdatedDiagnostic(c.Context(), diag, findings, uint(id)); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save updated diagnostic"})
 	}
-
-	_ = s.repos.Projects.UpdateHealthScore(c.Context(), uint(id), diag.Score)
 
 	msg := "Temuan audit berhasil diabaikan"
 	if updatedStatus == models.FindingStatusOpen {

@@ -24,33 +24,38 @@ func newCopilotCLIParser(path string) transcriptParser {
 	return &copilotCLIParser{sessionState{key: "copilot-cli:" + id, name: "Copilot CLI", client: "copilot-cli", transport: "transcript"}}
 }
 
+type copilotCLIData struct {
+	Context struct {
+		Cwd string `json:"cwd"`
+	} `json:"context"`
+	NewModel     string          `json:"newModel"`
+	Model        string          `json:"model"`
+	Content      string          `json:"content"`
+	ToolName     string          `json:"toolName"`
+	ToolTitle    string          `json:"toolTitle"`
+	Arguments    json.RawMessage `json:"arguments"`
+	ToolRequests []any           `json:"toolRequests"`
+	Message      string          `json:"message"`
+}
+
 func (p *copilotCLIParser) feed(line []byte) {
 	var e struct {
-		Type      string `json:"type"`
-		Timestamp string `json:"timestamp"`
-		Data      struct {
-			Context struct {
-				Cwd string `json:"cwd"`
-			} `json:"context"`
-			NewModel     string          `json:"newModel"`
-			Model        string          `json:"model"`
-			Content      string          `json:"content"`
-			ToolName     string          `json:"toolName"`
-			ToolTitle    string          `json:"toolTitle"`
-			Arguments    json.RawMessage `json:"arguments"`
-			ToolRequests []any           `json:"toolRequests"`
-			Message      string          `json:"message"`
-		} `json:"data"`
+		Type      string         `json:"type"`
+		Timestamp string         `json:"timestamp"`
+		Data      copilotCLIData `json:"data"`
 	}
 	if json.Unmarshal(line, &e) != nil {
 		return
 	}
 	p.at(e.Timestamp)
-	d := e.Data
-	if m := util.FirstNonEmpty(d.NewModel, d.Model); m != "" {
+	if m := util.FirstNonEmpty(e.Data.NewModel, e.Data.Model); m != "" {
 		p.model = m
 	}
-	switch e.Type {
+	p.handleEvent(e.Type, e.Data)
+}
+
+func (p *copilotCLIParser) handleEvent(eventType string, d copilotCLIData) {
+	switch eventType {
 	case "session.start", "session.resume":
 		p.workPath(d.Context.Cwd)
 		p.finished("Sesi dimulai")
@@ -59,23 +64,9 @@ func (p *copilotCLIParser) feed(line []byte) {
 	case "assistant.turn_start", "permission.completed":
 		p.status = models.WorkerStatusWorking
 	case "tool.execution_start":
-		var args map[string]interface{}
-		_ = json.Unmarshal(d.Arguments, &args)
-		detail := ""
-		for _, k := range []string{"description", "path", "command", "pattern", "query"} {
-			if v, ok := args[k].(string); ok && v != "" {
-				detail = v
-				break
-			}
-		}
-		p.todoCall(d.ToolName, args)
-		p.status = models.WorkerStatusWorking
-		p.action = util.FirstNonEmpty(d.ToolTitle, strings.TrimSpace(d.ToolName+" "+detail))
+		p.handleToolExecution(d)
 	case "assistant.message":
-		if len(d.ToolRequests) == 0 && strings.TrimSpace(d.Content) != "" {
-			p.done++
-			p.finished(actionWaiting)
-		}
+		p.handleAssistantMessage(d)
 	case "permission.requested":
 		p.finished(actionNeedsPermission)
 	case "abort":
@@ -84,6 +75,28 @@ func (p *copilotCLIParser) feed(line []byte) {
 		p.finished("Error: " + firstLine(d.Message))
 	case "session.shutdown":
 		p.status, p.action = models.WorkerStatusLeft, "Sesi berakhir"
+	}
+}
+
+func (p *copilotCLIParser) handleToolExecution(d copilotCLIData) {
+	var args map[string]interface{}
+	_ = json.Unmarshal(d.Arguments, &args)
+	detail := ""
+	for _, k := range []string{"description", "path", "command", "pattern", "query"} {
+		if v, ok := args[k].(string); ok && v != "" {
+			detail = v
+			break
+		}
+	}
+	p.todoCall(d.ToolName, args)
+	p.status = models.WorkerStatusWorking
+	p.action = util.FirstNonEmpty(d.ToolTitle, strings.TrimSpace(d.ToolName+" "+detail))
+}
+
+func (p *copilotCLIParser) handleAssistantMessage(d copilotCLIData) {
+	if len(d.ToolRequests) == 0 && strings.TrimSpace(d.Content) != "" {
+		p.done++
+		p.finished(actionWaiting)
 	}
 }
 
@@ -125,41 +138,65 @@ func (p *copilotChatParser) feed(line []byte) {
 	if json.Unmarshal(line, &e) != nil {
 		return
 	}
-	path := make([]string, len(e.K))
-	for i, k := range e.K {
-		if s, ok := k.(string); ok {
+	key := copilotPathKey(e.K)
+	p.handleKind(e.Kind, key, e.V)
+}
+
+func copilotPathKey(k []any) string {
+	path := make([]string, len(k))
+	for i, item := range k {
+		if s, ok := item.(string); ok {
 			path[i] = s
 		} else {
 			path[i] = "#"
 		}
 	}
-	key := strings.Join(path, "/")
+	return strings.Join(path, "/")
+}
+
+func (p *copilotChatParser) handleKind(kind int, key string, v json.RawMessage) {
 	switch {
-	case e.Kind == 0:
-		var snap struct {
-			Requests []chatRequest `json:"requests"`
-		}
-		if json.Unmarshal(e.V, &snap) == nil {
-			p.addRequests(snap.Requests)
-		}
-	case e.Kind == 2 && key == "requests":
-		var reqs []chatRequest
-		if json.Unmarshal(e.V, &reqs) == nil {
-			p.addRequests(reqs)
-		}
-	case e.Kind == 2 && key == "requests/#/response":
-		var parts []json.RawMessage
-		if json.Unmarshal(e.V, &parts) == nil {
-			p.responseParts(parts)
-		}
-	case e.Kind == 1 && key == "requests/#/modelState":
-		var st struct {
-			Value       int   `json:"value"`
-			CompletedAt int64 `json:"completedAt"`
-		}
-		if json.Unmarshal(e.V, &st) == nil && st.CompletedAt > 0 {
-			p.complete(st.Value, st.CompletedAt)
-		}
+	case kind == 0:
+		p.handleSnapshot(v)
+	case kind == 2 && key == "requests":
+		p.handleAppendRequests(v)
+	case kind == 2 && key == "requests/#/response":
+		p.handleAppendResponse(v)
+	case kind == 1 && key == "requests/#/modelState":
+		p.handleModelState(v)
+	}
+}
+
+func (p *copilotChatParser) handleSnapshot(v json.RawMessage) {
+	var snap struct {
+		Requests []chatRequest `json:"requests"`
+	}
+	if json.Unmarshal(v, &snap) == nil {
+		p.addRequests(snap.Requests)
+	}
+}
+
+func (p *copilotChatParser) handleAppendRequests(v json.RawMessage) {
+	var reqs []chatRequest
+	if json.Unmarshal(v, &reqs) == nil {
+		p.addRequests(reqs)
+	}
+}
+
+func (p *copilotChatParser) handleAppendResponse(v json.RawMessage) {
+	var parts []json.RawMessage
+	if json.Unmarshal(v, &parts) == nil {
+		p.responseParts(parts)
+	}
+}
+
+func (p *copilotChatParser) handleModelState(v json.RawMessage) {
+	var st struct {
+		Value       int   `json:"value"`
+		CompletedAt int64 `json:"completedAt"`
+	}
+	if json.Unmarshal(v, &st) == nil && st.CompletedAt > 0 {
+		p.complete(st.Value, st.CompletedAt)
 	}
 }
 

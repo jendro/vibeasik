@@ -189,6 +189,39 @@ func langFor(name string) string {
 	return langByExt[strings.ToLower(filepath.Ext(name))]
 }
 
+func isIgnoredWalkDir(p string, info os.FileInfo, r scanRoot, rootDirs map[string]bool) bool {
+	if p == r.absDir {
+		return false
+	}
+	name := info.Name()
+	if rootDirs[p] || ignoredDirs[name] {
+		return true
+	}
+	if strings.HasPrefix(name, ".") && name != ".github" {
+		return true
+	}
+	if r.componentID == 0 && exists(filepath.Join(p, ".git")) {
+		return true
+	}
+	return false
+}
+
+func isValidCandidateFile(p string, info os.FileInfo, seen map[string]bool) bool {
+	if seen[p] || info.Size() > maxFileSize || info.Size() == 0 || generatedFile.MatchString(info.Name()) {
+		return false
+	}
+	return true
+}
+
+func makeCandidate(r scanRoot, p string, info os.FileInfo, lang string) candidate {
+	rel, _ := filepath.Rel(r.absDir, p)
+	rel = filepath.ToSlash(rel)
+	if r.relBase != "" {
+		rel = r.relBase + "/" + rel
+	}
+	return candidate{root: r, abs: p, rel: rel, lang: lang, size: info.Size(), modTime: info.ModTime().Unix()}
+}
+
 func collect(roots []scanRoot) []candidate {
 	seen := map[string]bool{}
 	rootDirs := map[string]bool{}
@@ -202,10 +235,7 @@ func collect(roots []scanRoot) []candidate {
 				return nil
 			}
 			if info.IsDir() {
-				// Direktori komponen lain sudah dipindai sebagai root tersendiri; repo git bersarang di root
-				// proyek adalah proyek lain, bukan bagian peta ini.
-				if p != r.absDir && (rootDirs[p] || ignoredDirs[info.Name()] || strings.HasPrefix(info.Name(), ".") && info.Name() != ".github" ||
-					r.componentID == 0 && exists(filepath.Join(p, ".git"))) {
+				if isIgnoredWalkDir(p, info, r, rootDirs) {
 					return filepath.SkipDir
 				}
 				return nil
@@ -213,7 +243,7 @@ func collect(roots []scanRoot) []candidate {
 			if len(out) >= maxFiles {
 				return filepath.SkipAll
 			}
-			if seen[p] || info.Size() > maxFileSize || info.Size() == 0 || generatedFile.MatchString(info.Name()) {
+			if !isValidCandidateFile(p, info, seen) {
 				return nil
 			}
 			lang := langFor(info.Name())
@@ -221,12 +251,7 @@ func collect(roots []scanRoot) []candidate {
 				return nil
 			}
 			seen[p] = true
-			rel, _ := filepath.Rel(r.absDir, p)
-			rel = filepath.ToSlash(rel)
-			if r.relBase != "" {
-				rel = r.relBase + "/" + rel
-			}
-			out = append(out, candidate{root: r, abs: p, rel: rel, lang: lang, size: info.Size(), modTime: info.ModTime().Unix()})
+			out = append(out, makeCandidate(r, p, info, lang))
 			return nil
 		})
 	}
@@ -278,6 +303,135 @@ func toJSON(v interface{}) string {
 	return string(b)
 }
 
+func canReuseEntry(e *models.CodeMapEntry, f candidate, force bool) bool {
+	return e != nil && !force && e.ModTime == f.modTime && e.SizeBytes == f.size && e.AbsPath == f.abs
+}
+
+func populateParsedEntry(e *models.CodeMapEntry, f candidate, hash string, src string, p parsed) {
+	e.AbsPath, e.ComponentID, e.ComponentName = f.abs, f.root.componentID, f.root.componentName
+	e.Lang, e.Kind = f.lang, classify(f.rel, f.lang)
+	e.Lines = strings.Count(src, "\n") + 1
+	e.SizeBytes, e.ModTime, e.ContentHash = f.size, f.modTime, hash
+	e.SymbolsJSON, e.RefsJSON, e.RoutesJSON = toJSON(p.symbols), toJSON(p.refs), toJSON(nuxtPageRoute(f.rel, e.Kind, p.routes))
+	e.Summary = p.summary
+}
+
+func processCandidate(projectID uint, f candidate, e *models.CodeMapEntry, force bool) (*models.CodeMapEntry, bool, bool) {
+	if canReuseEntry(e, f, force) {
+		return e, false, false
+	}
+	data, err := os.ReadFile(f.abs)
+	if err != nil {
+		return nil, false, false
+	}
+	hash := hashBytes(data)
+	if e != nil && e.ContentHash == hash && !force {
+		e.ModTime, e.SizeBytes, e.AbsPath = f.modTime, f.size, f.abs
+		e.ComponentID, e.ComponentName = f.root.componentID, f.root.componentName
+		return e, true, false
+	}
+	if e == nil {
+		e = &models.CodeMapEntry{ProjectID: projectID, Path: f.rel}
+	}
+	src := string(data)
+	p := parseSource(f.lang, f.rel, src)
+	populateParsedEntry(e, f, hash, src, p)
+	return e, true, true
+}
+
+func scanCandidates(projectID uint, files []candidate, byPath map[string]*models.CodeMapEntry, force bool, res *BuildResult) ([]*models.CodeMapEntry, map[*models.CodeMapEntry]bool, map[string]bool) {
+	entries := make([]*models.CodeMapEntry, 0, len(files))
+	changed := map[*models.CodeMapEntry]bool{}
+	seen := map[string]bool{}
+	for _, f := range files {
+		seen[f.rel] = true
+		e, isChanged, isParsed := processCandidate(projectID, f, byPath[f.rel], force)
+		if e == nil {
+			continue
+		}
+		if isChanged {
+			changed[e] = true
+		}
+		if isParsed {
+			res.Parsed++
+		} else {
+			res.Unchanged++
+		}
+		entries = append(entries, e)
+	}
+	return entries, changed, seen
+}
+
+func resolveSingleEntryImports(e *models.CodeMapEntry, rs *resolver, goSyms map[string]map[string]string) []string {
+	var refs []string
+	_ = json.Unmarshal([]byte(e.RefsJSON), &refs)
+	var imports []string
+	sels := map[string]map[string]bool{}
+	for _, spec := range refs {
+		if strings.HasPrefix(spec, "sel:") {
+			pkg, name, _ := strings.Cut(spec[4:], ".")
+			if sels[pkg] == nil {
+				sels[pkg] = map[string]bool{}
+			}
+			sels[pkg][name] = true
+		}
+	}
+	for _, spec := range refs {
+		if strings.HasPrefix(spec, "sel:") {
+			continue
+		}
+		if strings.HasPrefix(spec, "goimp:") {
+			imports = append(imports, resolveGoImport(rs, goSyms, e.Path, spec[6:], sels)...)
+			continue
+		}
+		if t := rs.resolve(e.Path, spec); t != "" && t != e.Path {
+			imports = append(imports, t)
+		}
+	}
+	return imports
+}
+
+func resolveEntryImports(entries []*models.CodeMapEntry, roots []scanRoot, changed map[*models.CodeMapEntry]bool) {
+	paths := make([]string, len(entries))
+	for i, e := range entries {
+		paths[i] = e.Path
+	}
+	rs := newResolver(paths, rootInfos(roots))
+	goSyms := goSymbolIndex(entries)
+	for _, e := range entries {
+		imports := resolveSingleEntryImports(e, rs, goSyms)
+		sort.Strings(imports)
+		if js := toJSON(uniqueStrings(imports)); js != e.ImportsJSON {
+			e.ImportsJSON = js
+			changed[e] = true
+		}
+	}
+}
+
+func saveBuildTransaction(db *gorm.DB, projectID uint, proj models.Project, removed []uint, changed map[*models.CodeMapEntry]bool, entries []*models.CodeMapEntry, duration time.Duration) error {
+	return db.Transaction(func(tx *gorm.DB) error {
+		if len(removed) > 0 {
+			if err := tx.Where("id IN ?", removed).Delete(&models.CodeMapEntry{}).Error; err != nil {
+				return err
+			}
+		}
+		var fresh []*models.CodeMapEntry
+		for e := range changed {
+			if e.ID == 0 {
+				fresh = append(fresh, e)
+			} else if err := tx.Save(e).Error; err != nil {
+				return err
+			}
+		}
+		if len(fresh) > 0 {
+			if err := tx.CreateInBatches(fresh, 200).Error; err != nil {
+				return err
+			}
+		}
+		return saveMeta(tx, projectID, EffectiveRoot(proj), entries, duration)
+	})
+}
+
 // Build memindai proyek dan memperbarui peta kode secara inkremental. force memaksa parse ulang semua berkas.
 func Build(db *gorm.DB, projectID uint, force bool) (*BuildResult, error) {
 	mu := lockFor(projectID)
@@ -309,84 +463,10 @@ func Build(db *gorm.DB, projectID uint, force bool) (*BuildResult, error) {
 	}
 
 	res := &BuildResult{ProjectID: projectID, FileCount: len(files)}
-	entries := make([]*models.CodeMapEntry, 0, len(files))
-	changed := map[*models.CodeMapEntry]bool{}
-	seen := map[string]bool{}
-	for _, f := range files {
-		seen[f.rel] = true
-		e := byPath[f.rel]
-		if e != nil && !force && e.ModTime == f.modTime && e.SizeBytes == f.size && e.AbsPath == f.abs {
-			res.Unchanged++
-			entries = append(entries, e)
-			continue
-		}
-		data, err := os.ReadFile(f.abs)
-		if err != nil {
-			continue
-		}
-		hash := hashBytes(data)
-		if e == nil {
-			e = &models.CodeMapEntry{ProjectID: projectID, Path: f.rel}
-		} else if e.ContentHash == hash && !force {
-			e.ModTime, e.SizeBytes, e.AbsPath = f.modTime, f.size, f.abs
-			e.ComponentID, e.ComponentName = f.root.componentID, f.root.componentName
-			changed[e] = true
-			res.Unchanged++
-			entries = append(entries, e)
-			continue
-		}
-		src := string(data)
-		p := parseSource(f.lang, f.rel, src)
-		e.AbsPath, e.ComponentID, e.ComponentName = f.abs, f.root.componentID, f.root.componentName
-		e.Lang, e.Kind = f.lang, classify(f.rel, f.lang)
-		e.Lines = strings.Count(src, "\n") + 1
-		e.SizeBytes, e.ModTime, e.ContentHash = f.size, f.modTime, hash
-		e.SymbolsJSON, e.RefsJSON, e.RoutesJSON = toJSON(p.symbols), toJSON(p.refs), toJSON(nuxtPageRoute(f.rel, e.Kind, p.routes))
-		e.Summary = p.summary
-		changed[e] = true
-		res.Parsed++
-		entries = append(entries, e)
-	}
+	entries, changed, seen := scanCandidates(projectID, files, byPath, force, res)
 
 	// Resolusi impor diulang untuk semua berkas: berkas baru bisa melengkapi impor berkas lama.
-	paths := make([]string, len(entries))
-	for i, e := range entries {
-		paths[i] = e.Path
-	}
-	rs := newResolver(paths, rootInfos(roots))
-	goSyms := goSymbolIndex(entries)
-	for _, e := range entries {
-		var refs []string
-		_ = json.Unmarshal([]byte(e.RefsJSON), &refs)
-		var imports []string
-		sels := map[string]map[string]bool{}
-		for _, spec := range refs {
-			if strings.HasPrefix(spec, "sel:") {
-				pkg, name, _ := strings.Cut(spec[4:], ".")
-				if sels[pkg] == nil {
-					sels[pkg] = map[string]bool{}
-				}
-				sels[pkg][name] = true
-			}
-		}
-		for _, spec := range refs {
-			if strings.HasPrefix(spec, "sel:") {
-				continue
-			}
-			if strings.HasPrefix(spec, "goimp:") {
-				imports = append(imports, resolveGoImport(rs, goSyms, e.Path, spec[6:], sels)...)
-				continue
-			}
-			if t := rs.resolve(e.Path, spec); t != "" && t != e.Path {
-				imports = append(imports, t)
-			}
-		}
-		sort.Strings(imports)
-		if js := toJSON(uniqueStrings(imports)); js != e.ImportsJSON {
-			e.ImportsJSON = js
-			changed[e] = true
-		}
-	}
+	resolveEntryImports(entries, roots, changed)
 
 	var removed []uint
 	for p, e := range byPath {
@@ -396,30 +476,10 @@ func Build(db *gorm.DB, projectID uint, force bool) (*BuildResult, error) {
 	}
 	res.Removed = len(removed)
 
-	err := db.Transaction(func(tx *gorm.DB) error {
-		if len(removed) > 0 {
-			if err := tx.Where("id IN ?", removed).Delete(&models.CodeMapEntry{}).Error; err != nil {
-				return err
-			}
-		}
-		var fresh []*models.CodeMapEntry
-		for e := range changed {
-			if e.ID == 0 {
-				fresh = append(fresh, e)
-			} else if err := tx.Save(e).Error; err != nil {
-				return err
-			}
-		}
-		if len(fresh) > 0 {
-			if err := tx.CreateInBatches(fresh, 200).Error; err != nil {
-				return err
-			}
-		}
-		return saveMeta(tx, projectID, EffectiveRoot(proj), entries, time.Since(start))
-	})
-	if err != nil {
+	if err := saveBuildTransaction(db, projectID, proj, removed, changed, entries, time.Since(start)); err != nil {
 		return nil, err
 	}
+
 	invalidate(projectID)
 	res.DurationMs = time.Since(start).Milliseconds()
 	res.BuiltAt = time.Now()
