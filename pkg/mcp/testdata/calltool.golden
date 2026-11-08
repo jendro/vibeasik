@@ -1,0 +1,982 @@
+### no_such_tool
+ERR: unknown tool: no_such_tool
+### list_projects
+text: [
+  {
+    "id": 1,
+    "name": "Demo",
+    "slug": "demo",
+    "status": "active",
+    "project_type": "bundle",
+    "root_path": "<tmp>"
+  }
+]
+### list_projects
+text: [
+  {
+    "id": 1,
+    "name": "Demo",
+    "slug": "demo",
+    "short_description": "",
+    "description": "",
+    "root_path": "<tmp>",
+    "project_type": "bundle",
+    "status": "active",
+    "git_branch": "",
+    "git_remote": "",
+    "tags": "",
+    "health_score": 0,
+    "is_unified": false,
+    "autonomous": false,
+    "created_at": "<t>",
+    "updated_at": "<t>",
+    "components": []
+  }
+]
+### get_project_detail
+text: {
+  "id": 1,
+  "name": "Demo",
+  "slug": "demo",
+  "short_description": "",
+  "description": "",
+  "root_path": "<tmp>",
+  "project_type": "bundle",
+  "status": "active",
+  "git_branch": "",
+  "git_remote": "",
+  "tags": "",
+  "health_score": 0,
+  "is_unified": false,
+  "autonomous": false,
+  "created_at": "<t>",
+  "updated_at": "<t>",
+  "components": []
+}
+### get_project_detail
+ERR: project not found
+### scan_directory
+ERR: path is required
+### run_diagnostics
+ERR: project with ID 999 not found
+### get_ai_recommendations
+ERR: project not found
+### vibeasik_search_domain
+ERR: query is required
+### vibeasik_inject_ai_template
+ERR: template_id and target_path are required
+### vibeasik_check_ports
+ERR: ports array required
+### vibeasik_check_ports
+text: {}
+### vibeasik_rea_analyze
+ERR: target_path is required
+### link_project_workspace
+ERR: valid project_id is required
+### create_todo
+ERR: title is required
+### create_todo
+text: {
+  "id": 1,
+  "level": "project",
+  "category": "docs",
+  "project_id": 1,
+  "project_name": "Demo",
+  "title": "Tulis dokumentasi API",
+  "description": "",
+  "status": "pending",
+  "priority": "high",
+  "creator_type": "ai_agent",
+  "creator_name": "ai_agent",
+  "is_ai_suggestion": false,
+  "tags": "a,b",
+  "source": "ai_agent",
+  "complexity_logic": 2,
+  "complexity_coding": 1,
+  "complexity_scope": 3,
+  "complexity_risk": 2,
+  "complexity_score": 2,
+  "complexity_level": "quick",
+  "complexity_note": "Taksiran otomatis: 0 file disebut, 0 baris contoh kode, kategori docs, prioritas high",
+  "complexity_source": "heuristic",
+  "impact_ai_context": 2,
+  "impact_maintainability": 0,
+  "impact_reliability": 0,
+  "impact_security": 0,
+  "impact_speed": 0,
+  "impact_ux": 0,
+  "impact_feature": 0,
+  "impact_score": 19,
+  "impact_level": "minimal",
+  "impact_summary": "Meningkatkan Kejelasan untuk AI (2)",
+  "impact_source": "heuristic",
+  "created_at": "<t>",
+  "updated_at": "<t>"
+}
+### create_todo
+text: Todo TIDAK dibuat: kemungkinan besar duplikat. Todo serupa sudah ada di proyek ini — pastikan ini bukan pekerjaan ganda:
+- #1 [pending] Tulis dokumentasi API (kemiripan 1.00)
+Bila todo existing masih terbuka, kerjakan/perbarui itu. Bila memang pekerjaan berbeda, panggil create_todo lagi dengan force: true.
+### create_todo
+text: {
+  "id": 2,
+  "level": "global",
+  "category": "general",
+  "title": "Perbaiki login",
+  "description": "",
+  "status": "suggested",
+  "priority": "medium",
+  "creator_type": "ai_agent",
+  "creator_name": "ai_agent",
+  "is_ai_suggestion": true,
+  "source": "ai_agent",
+  "completed_at": "<t>",
+  "completed_by_agent": "x",
+  "complexity_logic": 2,
+  "complexity_coding": 1,
+  "complexity_scope": 4,
+  "complexity_risk": 1,
+  "complexity_score": 2,
+  "complexity_level": "quick",
+  "complexity_note": "Taksiran otomatis: 0 file disebut, 0 baris contoh kode, kategori general, prioritas medium",
+  "complexity_source": "heuristic",
+  "impact_ai_context": 0,
+  "impact_maintainability": 0,
+  "impact_reliability": 1,
+  "impact_security": 0,
+  "impact_speed": 0,
+  "impact_ux": 0,
+  "impact_feature": 0,
+  "impact_score": 10,
+  "impact_level": "minimal",
+  "impact_summary": "Meningkatkan Keandalan (1)",
+  "impact_source": "heuristic",
+  "created_at": "<t>",
+  "updated_at": "<t>"
+}
+### update_todo
+ERR: valid todo_id is required
+### update_todo
+ERR: todo with ID 9999 not found
+### update_todo
+text: {
+  "id": 1,
+  "level": "project",
+  "category": "backend",
+  "project_id": 1,
+  "project_name": "Demo",
+  "title": "Judul Baru",
+  "description": "",
+  "status": "in_progress",
+  "priority": "low",
+  "creator_type": "ai_agent",
+  "creator_name": "ai_agent",
+  "is_ai_suggestion": false,
+  "tags": "a,b",
+  "source": "ai_agent",
+  "complexity_logic": 2,
+  "complexity_coding": 1,
+  "complexity_scope": 3,
+  "complexity_risk": 2,
+  "complexity_score": 2,
+  "complexity_level": "quick",
+  "complexity_note": "Taksiran otomatis: 0 file disebut, 0 baris contoh kode, kategori docs, prioritas high",
+  "complexity_source": "heuristic",
+  "impact_ai_context": 2,
+  "impact_maintainability": 0,
+  "impact_reliability": 0,
+  "impact_security": 0,
+  "impact_speed": 0,
+  "impact_ux": 0,
+  "impact_feature": 0,
+  "impact_score": 13,
+  "impact_level": "minimal",
+  "impact_summary": "Meningkatkan Kejelasan untuk AI (2)",
+  "impact_source": "heuristic",
+  "created_at": "<t>",
+  "updated_at": "<t>"
+}
+### update_todo
+text: {
+  "id": 1,
+  "level": "project",
+  "category": "backend",
+  "project_id": 1,
+  "project_name": "Demo",
+  "title": "Judul Baru",
+  "description": "",
+  "status": "completed",
+  "priority": "low",
+  "creator_type": "ai_agent",
+  "creator_name": "ai_agent",
+  "is_ai_suggestion": false,
+  "tags": "a,b",
+  "rationale": "Catatan penyelesaian (bot, <date>): selesai",
+  "source": "ai_agent",
+  "completed_at": "<t>",
+  "completed_by_agent": "bot",
+  "memory": "Percobaan: 1 (<date>)\nTerakhir (bot, <date>): selesai",
+  "complexity_logic": 2,
+  "complexity_coding": 1,
+  "complexity_scope": 3,
+  "complexity_risk": 2,
+  "complexity_score": 2,
+  "complexity_level": "quick",
+  "complexity_note": "Taksiran otomatis: 0 file disebut, 0 baris contoh kode, kategori docs, prioritas high",
+  "complexity_source": "heuristic",
+  "impact_ai_context": 2,
+  "impact_maintainability": 0,
+  "impact_reliability": 0,
+  "impact_security": 0,
+  "impact_speed": 0,
+  "impact_ux": 0,
+  "impact_feature": 0,
+  "impact_score": 13,
+  "impact_level": "minimal",
+  "impact_summary": "Meningkatkan Kejelasan untuk AI (2)",
+  "impact_source": "heuristic",
+  "created_at": "<t>",
+  "updated_at": "<t>"
+}
+### update_todo
+text: {
+  "id": 1,
+  "level": "project",
+  "category": "backend",
+  "project_id": 1,
+  "project_name": "Demo",
+  "title": "Judul Baru",
+  "description": "",
+  "status": "pending",
+  "priority": "low",
+  "creator_type": "ai_agent",
+  "creator_name": "ai_agent",
+  "is_ai_suggestion": false,
+  "tags": "a,b",
+  "rationale": "Catatan penyelesaian (bot, <date>): selesai",
+  "source": "ai_agent",
+  "memory": "Percobaan: 1 (<date>)\nTerakhir (bot, <date>): selesai",
+  "complexity_logic": 2,
+  "complexity_coding": 1,
+  "complexity_scope": 3,
+  "complexity_risk": 2,
+  "complexity_score": 2,
+  "complexity_level": "quick",
+  "complexity_note": "Taksiran otomatis: 0 file disebut, 0 baris contoh kode, kategori docs, prioritas high",
+  "complexity_source": "heuristic",
+  "impact_ai_context": 2,
+  "impact_maintainability": 0,
+  "impact_reliability": 0,
+  "impact_security": 0,
+  "impact_speed": 0,
+  "impact_ux": 0,
+  "impact_feature": 0,
+  "impact_score": 13,
+  "impact_level": "minimal",
+  "impact_summary": "Meningkatkan Kejelasan untuk AI (2)",
+  "impact_source": "heuristic",
+  "created_at": "<t>",
+  "updated_at": "<t>"
+}
+### list_todos
+text: {
+  "returned": 2,
+  "todos": [
+    {
+      "id": 1,
+      "title": "Judul Baru",
+      "status": "pending",
+      "priority": "low",
+      "category": "backend",
+      "level": "project",
+      "project_id": 1,
+      "tags": "a,b",
+      "source": "ai_agent",
+      "complexity_level": "quick",
+      "impact_score": 13,
+      "created_at": "<t>",
+      "memory": "Percobaan: 1 (<date>) Terakhir (bot, <date>): selesai"
+    },
+    {
+      "id": 2,
+      "title": "Perbaiki login",
+      "status": "suggested",
+      "priority": "medium",
+      "category": "general",
+      "level": "global",
+      "source": "ai_agent",
+      "complexity_level": "quick",
+      "impact_score": 10,
+      "completed_by_agent": "x",
+      "completed_at": "<t>",
+      "created_at": "<t>"
+    }
+  ],
+  "total": 2
+}
+### list_todos
+text: {
+  "returned": 1,
+  "todos": [
+    {
+      "id": 1,
+      "level": "project",
+      "category": "backend",
+      "project_id": 1,
+      "project_name": "Demo",
+      "title": "Judul Baru",
+      "description": "",
+      "status": "pending",
+      "priority": "low",
+      "creator_type": "ai_agent",
+      "creator_name": "ai_agent",
+      "is_ai_suggestion": false,
+      "tags": "a,b",
+      "rationale": "Catatan penyelesaian (bot, <date>): selesai",
+      "source": "ai_agent",
+      "memory": "Percobaan: 1 (<date>)\nTerakhir (bot, <date>): selesai",
+      "complexity_logic": 2,
+      "complexity_coding": 1,
+      "complexity_scope": 3,
+      "complexity_risk": 2,
+      "complexity_score": 2,
+      "complexity_level": "quick",
+      "complexity_note": "Taksiran otomatis: 0 file disebut, 0 baris contoh kode, kategori docs, prioritas high",
+      "complexity_source": "heuristic",
+      "impact_ai_context": 2,
+      "impact_maintainability": 0,
+      "impact_reliability": 0,
+      "impact_security": 0,
+      "impact_speed": 0,
+      "impact_ux": 0,
+      "impact_feature": 0,
+      "impact_score": 13,
+      "impact_level": "minimal",
+      "impact_summary": "Meningkatkan Kejelasan untuk AI (2)",
+      "impact_source": "heuristic",
+      "created_at": "<t>",
+      "updated_at": "<t>"
+    }
+  ],
+  "total": 1
+}
+### list_todos
+text: {
+  "returned": 1,
+  "todos": [
+    {
+      "id": 1,
+      "title": "Judul Baru",
+      "status": "pending",
+      "priority": "low",
+      "category": "backend",
+      "level": "project",
+      "project_id": 1,
+      "tags": "a,b",
+      "source": "ai_agent",
+      "complexity_level": "quick",
+      "impact_score": 13,
+      "created_at": "<t>",
+      "memory": "Percobaan: 1 (<date>) Terakhir (bot, <date>): selesai"
+    }
+  ],
+  "total": 2
+}
+### list_todos
+text: {
+  "returned": 0,
+  "todos": [],
+  "total": 0
+}
+### list_todos
+text: {
+  "returned": 0,
+  "todos": [],
+  "total": 0
+}
+### list_guidelines
+text: null
+### suggest_todos
+text: {
+  "guideline_suggestions": [
+    {
+      "id": 0,
+      "level": "project",
+      "category": "security",
+      "project_id": 1,
+      "project_name": "Demo",
+      "target_apps": "Seluruh Aplikasi (Bundle Demo)",
+      "title": "Pasang .gitignore untuk mencegah kebocoran secret pada Demo",
+      "description": "Tambahkan .gitignore di root proyek dengan aturan mengabaikan .env, node_modules, log, dan kredensial lokal.",
+      "status": "suggested",
+      "priority": "critical",
+      "creator_type": "ai_agent",
+      "creator_name": "vibeasik-ai-advisor",
+      "is_ai_suggestion": true,
+      "guideline_ref": "SEC-001",
+      "rationale": "Patokan: [SEC-001] Repositori wajib memiliki .gitignore yang memfilter .env dan secrets agar tidak ter-commit ke remote git.",
+      "source": "ai_agent",
+      "complexity_logic": 0,
+      "complexity_coding": 0,
+      "complexity_scope": 0,
+      "complexity_risk": 0,
+      "complexity_score": 0,
+      "complexity_level": "",
+      "impact_ai_context": 0,
+      "impact_maintainability": 0,
+      "impact_reliability": 0,
+      "impact_security": 0,
+      "impact_speed": 0,
+      "impact_ux": 0,
+      "impact_feature": 0,
+      "impact_score": 0,
+      "impact_level": "",
+      "created_at": "<t>",
+      "updated_at": "<t>"
+    },
+    {
+      "id": 0,
+      "level": "project",
+      "category": "feature",
+      "project_id": 1,
+      "project_name": "Demo",
+      "target_apps": "Seluruh Aplikasi (Bundle Demo)",
+      "title": "Sediakan berkas AI_CONTEXT.md untuk panduan AI Agent pada Demo",
+      "description": "Dokumentasikan arsitektur bundle, konvensi kode, peran komponen, dan perintah run agar coding agent (Antigravity/Cursor) bekerja presisi.",
+      "status": "suggested",
+      "priority": "medium",
+      "creator_type": "ai_agent",
+      "creator_name": "vibeasik-ai-advisor",
+      "is_ai_suggestion": true,
+      "guideline_ref": "AI-002",
+      "rationale": "Patokan: [AI-002] File AI_CONTEXT.md mempercepat konteks agent otonom hingga 80% dan mengeliminasi halusinasi refactoring.",
+      "source": "ai_agent",
+      "complexity_logic": 0,
+      "complexity_coding": 0,
+      "complexity_scope": 0,
+      "complexity_risk": 0,
+      "complexity_score": 0,
+      "complexity_level": "",
+      "impact_ai_context": 0,
+      "impact_maintainability": 0,
+      "impact_reliability": 0,
+      "impact_security": 0,
+      "impact_speed": 0,
+      "impact_ux": 0,
+      "impact_feature": 0,
+      "impact_score": 0,
+      "impact_level": "",
+      "created_at": "<t>",
+      "updated_at": "<t>"
+    },
+    {
+      "id": 0,
+      "level": "project",
+      "category": "feature",
+      "project_id": 1,
+      "project_name": "Demo",
+      "target_apps": "Seluruh Aplikasi (Bundle Demo)",
+      "title": "Sediakan CHANGELOG.md untuk dokumentasi riwayat perubahan Demo",
+      "description": "Buat CHANGELOG.md menggunakan format Keep a Changelog untuk mendokumentasikan fitur baru, bugfix, dan breaking changes per versi rilis.",
+      "status": "suggested",
+      "priority": "medium",
+      "creator_type": "ai_agent",
+      "creator_name": "vibeasik-ai-advisor",
+      "is_ai_suggestion": true,
+      "guideline_ref": "DEV-004",
+      "rationale": "Patokan: [DEV-004] CHANGELOG memudahkan rollback target dan membantu pengguna mengetahui perubahan tanpa harus membaca git log.",
+      "source": "ai_agent",
+      "complexity_logic": 0,
+      "complexity_coding": 0,
+      "complexity_scope": 0,
+      "complexity_risk": 0,
+      "complexity_score": 0,
+      "complexity_level": "",
+      "impact_ai_context": 0,
+      "impact_maintainability": 0,
+      "impact_reliability": 0,
+      "impact_security": 0,
+      "impact_speed": 0,
+      "impact_ux": 0,
+      "impact_feature": 0,
+      "impact_score": 0,
+      "impact_level": "",
+      "created_at": "<t>",
+      "updated_at": "<t>"
+    },
+    {
+      "id": 3,
+      "level": "project",
+      "category": "devops",
+      "project_id": 1,
+      "project_name": "Demo",
+      "target_apps": "Seluruh Aplikasi (Bundle Demo)",
+      "title": "Lengkapi standar vibeasik: dev.sh, deploy.sh \u0026 env (Demo)",
+      "description": "Standar vibeasik (Aturan 45) untuk proyek Demo belum lengkap. Kerjakan semua butir dalam satu run, satu commit.\n\n1. **dev.sh Belum Ada di Root Proyek** — Proyek wajib punya dev.sh di root yang menyalakan semua komponen (BE, FE, mobile) dengan satu perintah, memakai port dari blok proyek di PORTS.md dan env FE→BE yang menunjuk port BE.\n   Langkah: Buat dev.sh: set PORT tiap komponen dari blok PORTS.md, ekspor URL API BE ke FE/mobile, jalankan semua komponen paralel, dan hentikan semuanya dengan trap saat Ctrl+C.\n2. **deploy.sh Belum Ada di Root Proyek** — Proyek wajib punya deploy.sh: pengguna cukup mengisi .env.server (atau .env.\u003cnama\u003e pilihannya), skrip memasangnya sebagai env aktif, build \u0026 upload ke server, lalu mengembalikan .env.local walau deploy gagal.\n   Langkah: Buat deploy.sh dengan argumen nama env (default server), salin .env.\u003cnama\u003e ke berkas env aktif, trap EXIT untuk memulihkan .env.local, dan pastikan .gitignore memuat .env / .env.* / !.env.example.\n\nFile Target: `dev.sh`, `deploy.sh`\n\nJangan membuat atau meng-commit .env, .env.local, .env.server: engine membuatnya sendiri (ter-ignore git); cukup pastikan .gitignore memuat `.env`, `.env.*`, `!.env.example` dan .env.example berisi semua kunci tanpa nilai rahasia.\n\nContoh deploy.sh (sesuaikan folder komponen \u0026 perintah build):\n```bash\n#!/usr/bin/env bash\n# ./deploy.sh [nama-env]  → pakai .env.\u003cnama-env\u003e (default: server), lalu kembali ke .env.local.\nset -e\nROOT=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" \u0026\u0026 pwd)\"\nTARGET=\"${1:-server}\"\nDIRS=(backend frontend)\nfor d in \"${DIRS[@]}\"; do\n  [ -f \"$ROOT/$d/.env.$TARGET\" ] || { echo \"Isi dulu $d/.env.$TARGET (salin dari .env.example)\"; exit 1; }\ndone\n# deploy pertama: simpan env dev sekarang sebagai .env.local agar tidak pernah hilang\nfor d in \"${DIRS[@]}\"; do [ -f \"$ROOT/$d/.env.local\" ] || [ ! -f \"$ROOT/$d/.env\" ] || cp \"$ROOT/$d/.env\" \"$ROOT/$d/.env.local\"; done\nrestore() { for d in \"${DIRS[@]}\"; do [ ! -f \"$ROOT/$d/.env.local\" ] || cp \"$ROOT/$d/.env.local\" \"$ROOT/$d/.env\"; done; }\ntrap restore EXIT\nfor d in \"${DIRS[@]}\"; do cp \"$ROOT/$d/.env.$TARGET\" \"$ROOT/$d/.env\"; done\n# build + upload; host \u0026 path server dibaca dari .env.$TARGET (DEPLOY_HOST, DEPLOY_PATH)\nset -a; . \"$ROOT/backend/.env.$TARGET\"; set +a\n(cd \"$ROOT/backend\" \u0026\u0026 GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o app .)\n(cd \"$ROOT/frontend\" \u0026\u0026 bun run build)\nrsync -az --delete \"$ROOT/backend/app\" \"$ROOT/frontend/.output\" \"$DEPLOY_HOST:$DEPLOY_PATH/\"\n```\n\nContoh dev.sh (sesuaikan folder komponen \u0026 perintah build):\n```bash\n#!/usr/bin/env bash\n# Jalankan semua komponen proyek sekaligus. Port dari blok PORTS.md (Aturan 35).\nset -e\nROOT=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" \u0026\u0026 pwd)\"\nBE_PORT=\"${BE_PORT:-4105}\"; FE_PORT=\"${FE_PORT:-4100}\"\nLAN_IP=\"$(hostname -I 2\u003e/dev/null | awk '{print $1}')\"; LAN_IP=\"${LAN_IP:-127.0.0.1}\"\ntrap 'kill 0' EXIT INT TERM\n(cd \"$ROOT/backend\" \u0026\u0026 PORT=$BE_PORT go run .) \u0026\n(cd \"$ROOT/frontend\" \u0026\u0026 PORT=$FE_PORT NUXT_PUBLIC_API_BASE=http://localhost:$BE_PORT bun run dev) \u0026\n# (cd \"$ROOT/mobile\" \u0026\u0026 flutter run --dart-define=API_BASE_URL=http://$LAN_IP:$BE_PORT) \u0026\nwait\n```\n",
+      "status": "pending",
+      "priority": "high",
+      "creator_type": "ai_agent",
+      "creator_name": "vibeasik-standard",
+      "is_ai_suggestion": false,
+      "guideline_ref": "ARCH-002",
+      "rationale": "Patokan: [ARCH-002][DEV-007][SEC-002] default proyek vibeasik (Aturan 45): dev.sh menjalankan semua komponen, dev-mobile.sh menjalankan Flutter ke HP (flutter-win/laptop, Aturan 49), deploy.sh memakai .env.\u003ctujuan\u003e lalu kembali ke .env.local, hanya .env.example yang di-commit.",
+      "source": "vibeasik_standard",
+      "complexity_logic": 2,
+      "complexity_coding": 2,
+      "complexity_scope": 3,
+      "complexity_risk": 2,
+      "complexity_score": 2.2,
+      "complexity_level": "quick",
+      "complexity_note": "Taksiran otomatis: 0 file disebut, 30 baris contoh kode, kategori devops, prioritas high",
+      "complexity_source": "heuristic",
+      "impact_ai_context": 2,
+      "impact_maintainability": 3,
+      "impact_reliability": 2,
+      "impact_security": 0,
+      "impact_speed": 0,
+      "impact_ux": 1,
+      "impact_feature": 1,
+      "impact_score": 44,
+      "impact_level": "low",
+      "impact_summary": "Meningkatkan Kemudahan Dirawat AI (3), Kejelasan untuk AI (2), Keandalan (2)",
+      "impact_source": "heuristic",
+      "created_at": "<t>",
+      "updated_at": "<t>"
+    }
+  ]
+}
+### suggest_todos
+text: [
+  {
+    "id": 0,
+    "level": "global",
+    "category": "feature",
+    "target_apps": "Global Platform (Semua Proyek)",
+    "title": "Standarisasi Model Context Protocol (MCP) di Seluruh Proyek Lokal",
+    "description": "Pastikan seluruh proyek lokal mendaftarkan berkas .vscode/mcp.json agar AI coding agent dapat langsung menginspeksi topologi kode.",
+    "status": "suggested",
+    "priority": "high",
+    "creator_type": "ai_agent",
+    "creator_name": "vibeasik-ai-advisor",
+    "is_ai_suggestion": true,
+    "guideline_ref": "AI-001",
+    "rationale": "Patokan: [AI-001] Integrasi MCP menyeluruh meningkatkan akurasi konteks AI agent dan mengeliminasi tebak-tebakan rute pada level perencanaan workspace.",
+    "source": "ai_agent",
+    "complexity_logic": 0,
+    "complexity_coding": 0,
+    "complexity_scope": 0,
+    "complexity_risk": 0,
+    "complexity_score": 0,
+    "complexity_level": "",
+    "impact_ai_context": 0,
+    "impact_maintainability": 0,
+    "impact_reliability": 0,
+    "impact_security": 0,
+    "impact_speed": 0,
+    "impact_ux": 0,
+    "impact_feature": 0,
+    "impact_score": 0,
+    "impact_level": "",
+    "created_at": "<t>",
+    "updated_at": "<t>"
+  },
+  {
+    "id": 0,
+    "level": "global",
+    "category": "security",
+    "target_apps": "Global Platform (Semua Proyek)",
+    "title": "Audit Rutin Sanitasi Kredensial \u0026 Secrets Lintas-Proyek",
+    "description": "Jalankan scanner keamanan berkala untuk memastikan tidak ada database password atau AI API key yang tertrack ke dalam git repositori.",
+    "status": "suggested",
+    "priority": "high",
+    "creator_type": "ai_agent",
+    "creator_name": "vibeasik-ai-advisor",
+    "is_ai_suggestion": true,
+    "guideline_ref": "SEC-001",
+    "rationale": "Patokan: [SEC-001] Menjaga integritas keamanan seluruh workspace dari kebocoran token rahasia secara otomatis.",
+    "source": "ai_agent",
+    "complexity_logic": 0,
+    "complexity_coding": 0,
+    "complexity_scope": 0,
+    "complexity_risk": 0,
+    "complexity_score": 0,
+    "complexity_level": "",
+    "impact_ai_context": 0,
+    "impact_maintainability": 0,
+    "impact_reliability": 0,
+    "impact_security": 0,
+    "impact_speed": 0,
+    "impact_ux": 0,
+    "impact_feature": 0,
+    "impact_score": 0,
+    "impact_level": "",
+    "created_at": "<t>",
+    "updated_at": "<t>"
+  },
+  {
+    "id": 0,
+    "level": "global",
+    "category": "performance",
+    "target_apps": "Global Network (Reverse Proxy Traefik/Caddy)",
+    "title": "Setup Reverse Proxy Lokal untuk DNS Subdomain Proyek (*.localhost)",
+    "description": "Konfigurasikan Traefik atau Caddy lokal untuk memetakan domain lokal (misal: app.localhost, api.localhost) ke port internal masing-masing servis.",
+    "status": "suggested",
+    "priority": "medium",
+    "creator_type": "ai_agent",
+    "creator_name": "vibeasik-ai-advisor",
+    "is_ai_suggestion": true,
+    "guideline_ref": "NET-002",
+    "rationale": "Patokan: [NET-002] Menghilangkan konflik nomor port statis secara permanen di tingkat jaringan lokal dan menyederhanakan akses multi-bundle.",
+    "source": "ai_agent",
+    "complexity_logic": 0,
+    "complexity_coding": 0,
+    "complexity_scope": 0,
+    "complexity_risk": 0,
+    "complexity_score": 0,
+    "complexity_level": "",
+    "impact_ai_context": 0,
+    "impact_maintainability": 0,
+    "impact_reliability": 0,
+    "impact_security": 0,
+    "impact_speed": 0,
+    "impact_ux": 0,
+    "impact_feature": 0,
+    "impact_score": 0,
+    "impact_level": "",
+    "created_at": "<t>",
+    "updated_at": "<t>"
+  },
+  {
+    "id": 0,
+    "level": "project",
+    "category": "security",
+    "project_id": 1,
+    "project_name": "Demo",
+    "target_apps": "Seluruh Aplikasi (Bundle Demo)",
+    "title": "Pasang .gitignore untuk mencegah kebocoran secret pada Demo",
+    "description": "Tambahkan .gitignore di root proyek dengan aturan mengabaikan .env, node_modules, log, dan kredensial lokal.",
+    "status": "suggested",
+    "priority": "critical",
+    "creator_type": "ai_agent",
+    "creator_name": "vibeasik-ai-advisor",
+    "is_ai_suggestion": true,
+    "guideline_ref": "SEC-001",
+    "rationale": "Patokan: [SEC-001] Repositori wajib memiliki .gitignore yang memfilter .env dan secrets agar tidak ter-commit ke remote git.",
+    "source": "ai_agent",
+    "complexity_logic": 0,
+    "complexity_coding": 0,
+    "complexity_scope": 0,
+    "complexity_risk": 0,
+    "complexity_score": 0,
+    "complexity_level": "",
+    "impact_ai_context": 0,
+    "impact_maintainability": 0,
+    "impact_reliability": 0,
+    "impact_security": 0,
+    "impact_speed": 0,
+    "impact_ux": 0,
+    "impact_feature": 0,
+    "impact_score": 0,
+    "impact_level": "",
+    "created_at": "<t>",
+    "updated_at": "<t>"
+  },
+  {
+    "id": 0,
+    "level": "project",
+    "category": "feature",
+    "project_id": 1,
+    "project_name": "Demo",
+    "target_apps": "Seluruh Aplikasi (Bundle Demo)",
+    "title": "Sediakan berkas AI_CONTEXT.md untuk panduan AI Agent pada Demo",
+    "description": "Dokumentasikan arsitektur bundle, konvensi kode, peran komponen, dan perintah run agar coding agent (Antigravity/Cursor) bekerja presisi.",
+    "status": "suggested",
+    "priority": "medium",
+    "creator_type": "ai_agent",
+    "creator_name": "vibeasik-ai-advisor",
+    "is_ai_suggestion": true,
+    "guideline_ref": "AI-002",
+    "rationale": "Patokan: [AI-002] File AI_CONTEXT.md mempercepat konteks agent otonom hingga 80% dan mengeliminasi halusinasi refactoring.",
+    "source": "ai_agent",
+    "complexity_logic": 0,
+    "complexity_coding": 0,
+    "complexity_scope": 0,
+    "complexity_risk": 0,
+    "complexity_score": 0,
+    "complexity_level": "",
+    "impact_ai_context": 0,
+    "impact_maintainability": 0,
+    "impact_reliability": 0,
+    "impact_security": 0,
+    "impact_speed": 0,
+    "impact_ux": 0,
+    "impact_feature": 0,
+    "impact_score": 0,
+    "impact_level": "",
+    "created_at": "<t>",
+    "updated_at": "<t>"
+  },
+  {
+    "id": 0,
+    "level": "project",
+    "category": "feature",
+    "project_id": 1,
+    "project_name": "Demo",
+    "target_apps": "Seluruh Aplikasi (Bundle Demo)",
+    "title": "Sediakan CHANGELOG.md untuk dokumentasi riwayat perubahan Demo",
+    "description": "Buat CHANGELOG.md menggunakan format Keep a Changelog untuk mendokumentasikan fitur baru, bugfix, dan breaking changes per versi rilis.",
+    "status": "suggested",
+    "priority": "medium",
+    "creator_type": "ai_agent",
+    "creator_name": "vibeasik-ai-advisor",
+    "is_ai_suggestion": true,
+    "guideline_ref": "DEV-004",
+    "rationale": "Patokan: [DEV-004] CHANGELOG memudahkan rollback target dan membantu pengguna mengetahui perubahan tanpa harus membaca git log.",
+    "source": "ai_agent",
+    "complexity_logic": 0,
+    "complexity_coding": 0,
+    "complexity_scope": 0,
+    "complexity_risk": 0,
+    "complexity_score": 0,
+    "complexity_level": "",
+    "impact_ai_context": 0,
+    "impact_maintainability": 0,
+    "impact_reliability": 0,
+    "impact_security": 0,
+    "impact_speed": 0,
+    "impact_ux": 0,
+    "impact_feature": 0,
+    "impact_score": 0,
+    "impact_level": "",
+    "created_at": "<t>",
+    "updated_at": "<t>"
+  },
+  {
+    "id": 3,
+    "level": "project",
+    "category": "devops",
+    "project_id": 1,
+    "project_name": "Demo",
+    "target_apps": "Seluruh Aplikasi (Bundle Demo)",
+    "title": "Lengkapi standar vibeasik: dev.sh, deploy.sh \u0026 env (Demo)",
+    "description": "Standar vibeasik (Aturan 45) untuk proyek Demo belum lengkap. Kerjakan semua butir dalam satu run, satu commit.\n\n1. **dev.sh Belum Ada di Root Proyek** — Proyek wajib punya dev.sh di root yang menyalakan semua komponen (BE, FE, mobile) dengan satu perintah, memakai port dari blok proyek di PORTS.md dan env FE→BE yang menunjuk port BE.\n   Langkah: Buat dev.sh: set PORT tiap komponen dari blok PORTS.md, ekspor URL API BE ke FE/mobile, jalankan semua komponen paralel, dan hentikan semuanya dengan trap saat Ctrl+C.\n2. **deploy.sh Belum Ada di Root Proyek** — Proyek wajib punya deploy.sh: pengguna cukup mengisi .env.server (atau .env.\u003cnama\u003e pilihannya), skrip memasangnya sebagai env aktif, build \u0026 upload ke server, lalu mengembalikan .env.local walau deploy gagal.\n   Langkah: Buat deploy.sh dengan argumen nama env (default server), salin .env.\u003cnama\u003e ke berkas env aktif, trap EXIT untuk memulihkan .env.local, dan pastikan .gitignore memuat .env / .env.* / !.env.example.\n\nFile Target: `dev.sh`, `deploy.sh`\n\nJangan membuat atau meng-commit .env, .env.local, .env.server: engine membuatnya sendiri (ter-ignore git); cukup pastikan .gitignore memuat `.env`, `.env.*`, `!.env.example` dan .env.example berisi semua kunci tanpa nilai rahasia.\n\nContoh deploy.sh (sesuaikan folder komponen \u0026 perintah build):\n```bash\n#!/usr/bin/env bash\n# ./deploy.sh [nama-env]  → pakai .env.\u003cnama-env\u003e (default: server), lalu kembali ke .env.local.\nset -e\nROOT=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" \u0026\u0026 pwd)\"\nTARGET=\"${1:-server}\"\nDIRS=(backend frontend)\nfor d in \"${DIRS[@]}\"; do\n  [ -f \"$ROOT/$d/.env.$TARGET\" ] || { echo \"Isi dulu $d/.env.$TARGET (salin dari .env.example)\"; exit 1; }\ndone\n# deploy pertama: simpan env dev sekarang sebagai .env.local agar tidak pernah hilang\nfor d in \"${DIRS[@]}\"; do [ -f \"$ROOT/$d/.env.local\" ] || [ ! -f \"$ROOT/$d/.env\" ] || cp \"$ROOT/$d/.env\" \"$ROOT/$d/.env.local\"; done\nrestore() { for d in \"${DIRS[@]}\"; do [ ! -f \"$ROOT/$d/.env.local\" ] || cp \"$ROOT/$d/.env.local\" \"$ROOT/$d/.env\"; done; }\ntrap restore EXIT\nfor d in \"${DIRS[@]}\"; do cp \"$ROOT/$d/.env.$TARGET\" \"$ROOT/$d/.env\"; done\n# build + upload; host \u0026 path server dibaca dari .env.$TARGET (DEPLOY_HOST, DEPLOY_PATH)\nset -a; . \"$ROOT/backend/.env.$TARGET\"; set +a\n(cd \"$ROOT/backend\" \u0026\u0026 GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o app .)\n(cd \"$ROOT/frontend\" \u0026\u0026 bun run build)\nrsync -az --delete \"$ROOT/backend/app\" \"$ROOT/frontend/.output\" \"$DEPLOY_HOST:$DEPLOY_PATH/\"\n```\n\nContoh dev.sh (sesuaikan folder komponen \u0026 perintah build):\n```bash\n#!/usr/bin/env bash\n# Jalankan semua komponen proyek sekaligus. Port dari blok PORTS.md (Aturan 35).\nset -e\nROOT=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" \u0026\u0026 pwd)\"\nBE_PORT=\"${BE_PORT:-4105}\"; FE_PORT=\"${FE_PORT:-4100}\"\nLAN_IP=\"$(hostname -I 2\u003e/dev/null | awk '{print $1}')\"; LAN_IP=\"${LAN_IP:-127.0.0.1}\"\ntrap 'kill 0' EXIT INT TERM\n(cd \"$ROOT/backend\" \u0026\u0026 PORT=$BE_PORT go run .) \u0026\n(cd \"$ROOT/frontend\" \u0026\u0026 PORT=$FE_PORT NUXT_PUBLIC_API_BASE=http://localhost:$BE_PORT bun run dev) \u0026\n# (cd \"$ROOT/mobile\" \u0026\u0026 flutter run --dart-define=API_BASE_URL=http://$LAN_IP:$BE_PORT) \u0026\nwait\n```\n",
+    "status": "pending",
+    "priority": "high",
+    "creator_type": "ai_agent",
+    "creator_name": "vibeasik-standard",
+    "is_ai_suggestion": false,
+    "guideline_ref": "ARCH-002",
+    "rationale": "Patokan: [ARCH-002][DEV-007][SEC-002] default proyek vibeasik (Aturan 45): dev.sh menjalankan semua komponen, dev-mobile.sh menjalankan Flutter ke HP (flutter-win/laptop, Aturan 49), deploy.sh memakai .env.\u003ctujuan\u003e lalu kembali ke .env.local, hanya .env.example yang di-commit.",
+    "source": "vibeasik_standard",
+    "complexity_logic": 2,
+    "complexity_coding": 2,
+    "complexity_scope": 3,
+    "complexity_risk": 2,
+    "complexity_score": 2.2,
+    "complexity_level": "quick",
+    "complexity_note": "Taksiran otomatis: 0 file disebut, 30 baris contoh kode, kategori devops, prioritas high",
+    "complexity_source": "heuristic",
+    "impact_ai_context": 2,
+    "impact_maintainability": 3,
+    "impact_reliability": 2,
+    "impact_security": 0,
+    "impact_speed": 0,
+    "impact_ux": 1,
+    "impact_feature": 1,
+    "impact_score": 44,
+    "impact_level": "low",
+    "impact_summary": "Meningkatkan Kemudahan Dirawat AI (3), Kejelasan untuk AI (2), Keandalan (2)",
+    "impact_source": "heuristic",
+    "created_at": "<t>",
+    "updated_at": "<t>"
+  }
+]
+### delete_todo
+ERR: valid todo_id is required
+### delete_todo
+ERR: todo with ID 9999 not found
+### update_project_status
+ERR: action must be one of: deprecate, undeprecate, hold, done, activate
+### update_project_status
+text: {
+  "id": 1,
+  "name": "Demo",
+  "slug": "demo",
+  "short_description": "",
+  "description": "",
+  "root_path": "<tmp>",
+  "port_slot": 0,
+  "project_type": "bundle",
+  "status": "hold",
+  "git_branch": "",
+  "git_remote": "",
+  "tags": "",
+  "health_score": 0,
+  "is_unified": false,
+  "autonomous": false,
+  "created_at": "<t>",
+  "updated_at": "<t>",
+  "components": []
+}
+### fast_scan
+ERR: component_id or project_id is required
+### evaluate_architecture
+ERR: component_id or project_id is required
+### consolidate_project
+ERR: consolidate_project memindahkan folder: tampilkan preview_consolidate_project ke pengguna lalu panggil lagi dengan confirm=true
+### set_finding_status
+ERR: status must be one of: ignored, resolved, open
+### get_latest_diagnostic
+ERR: project_id or component_id is required
+### get_todo_impact_dimensions
+text: {
+  "dimensions": [
+    {
+      "key": "ai_context",
+      "label": "Kejelasan untuk AI",
+      "audience": "ai_agent",
+      "hint": "Kode lebih mudah ditemukan \u0026 dipahami AI agent: file kecil, nama jelas, tanggung jawab tunggal, tipe/dokumentasi, hemat token konteks"
+    },
+    {
+      "key": "maintainability",
+      "label": "Kemudahan Dirawat AI",
+      "audience": "ai_agent",
+      "hint": "Perubahan berikutnya oleh AI agent lebih aman: modular, coupling rendah, ada test, duplikasi berkurang"
+    },
+    {
+      "key": "reliability",
+      "label": "Keandalan",
+      "audience": "app",
+      "hint": "Bug, crash, penanganan error, dan integritas data"
+    },
+    {
+      "key": "security",
+      "label": "Keamanan",
+      "audience": "app",
+      "hint": "Celah keamanan, kredensial, otorisasi, validasi input"
+    },
+    {
+      "key": "speed",
+      "label": "Kecepatan Loading",
+      "audience": "human",
+      "hint": "Waktu muat \u0026 respons yang dirasakan pengguna"
+    },
+    {
+      "key": "ux",
+      "label": "Tampilan \u0026 UX",
+      "audience": "human",
+      "hint": "Tampilan, kejelasan, dan kenyamanan pengguna"
+    },
+    {
+      "key": "feature",
+      "label": "Nilai Fitur",
+      "audience": "human",
+      "hint": "Kemampuan baru yang bisa dipakai pengguna"
+    }
+  ],
+  "formula": "skor = 100 × (0.6 × rata-rata berbobot + 0.4 × puncak berbobot), dimensi 0–5",
+  "levels": {
+    "high": 70,
+    "low": 20,
+    "medium": 45,
+    "minimal": 0
+  },
+  "weights": {
+    "architecture": [
+      0.3,
+      0.3,
+      0.15,
+      0.05,
+      0.05,
+      0.05,
+      0.1
+    ],
+    "backend": [
+      0.15,
+      0.2,
+      0.25,
+      0.15,
+      0.1,
+      0.05,
+      0.1
+    ],
+    "devops": [
+      0.2,
+      0.25,
+      0.25,
+      0.15,
+      0.1,
+      0,
+      0.05
+    ],
+    "feature": [
+      0.1,
+      0.1,
+      0.15,
+      0.05,
+      0.05,
+      0.15,
+      0.4
+    ],
+    "general": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "performance": [
+      0.1,
+      0.1,
+      0.15,
+      0.05,
+      0.4,
+      0.1,
+      0.1
+    ],
+    "security": [
+      0.05,
+      0.05,
+      0.2,
+      0.5,
+      0.05,
+      0.05,
+      0.1
+    ],
+    "ui_ux": [
+      0.1,
+      0.1,
+      0.05,
+      0.05,
+      0.25,
+      0.35,
+      0.1
+    ]
+  }
+}
+### vibeasik_assign_port
+ERR: valid component_id is required
+### vibeasik_run_component
+ERR: component_id or project_id is required
+### vibeasik_stop_component
+ERR: component_id or project_id is required
+### vibeasik_run_status
+text: {
+  "runs": []
+}
+### vibeasik_code_map_search
+ERR: query is required
+### vibeasik_code_map_status
+text: {
+  "built": false,
+  "hint": "Peta belum pernah dibangun: jalankan link_project_workspace (Init vibeasik) atau vibeasik_code_map_build.",
+  "project_id": 1
+}
+### vibeasik_code_map_file
+ERR: proyek Demo tidak punya direktori yang bisa dipindai (root/komponen tidak ditemukan di disk)
+### vibeasik_code_map_routes
+ERR: root proyek Demo tidak ditemukan di disk
+### vibeasik_code_map_unknown
+ERR: unknown tool: vibeasik_code_map_unknown
