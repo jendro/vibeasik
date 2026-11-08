@@ -75,7 +75,8 @@ func newGuardTestServer(t *testing.T) *Server {
 	sqlDB, _ := db.DB()
 	sqlDB.SetMaxOpenConns(1) // every :memory: connection is a separate database
 	if err := db.AutoMigrate(&models.Project{}, &models.Component{}, &models.ComponentRoute{}, &models.Diagnostic{},
-		&models.LocalAgentConfig{}, &models.Todo{}, &models.DeepCheckReport{}, &models.RuntimeSimReport{}, &models.StaffSettings{}); err != nil {
+		&models.LocalAgentConfig{}, &models.Todo{}, &models.DeepCheckReport{}, &models.RuntimeSimReport{}, &models.StaffSettings{},
+		&models.KnowledgeNode{}, &models.KnowledgeLink{}, &models.KnowledgeCluster{}, &models.KnowledgeUse{}, &models.KnowledgeGap{}); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}
 	// Agenda CLI otomatis dimatikan: menyalakannya dari LAN harus ditolak exec guard.

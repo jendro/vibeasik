@@ -136,7 +136,16 @@ func NewServer(db *gorm.DB) *Server {
 		runner:    runner.NewService(db),
 	}
 
-	// Token & Host diperiksa sebelum route mana pun (termasuk Studio statis).
+	// Perimeter Keamanan Global Fail-Closed (localAccess):
+	// Dipasang sebelum rute mana pun (termasuk Studio statis dan seluruh sub-group API).
+	// Mengamankan seluruh rute mutasi (POST/PUT/DELETE/PATCH) dan read tanpa perlu duplikasi middleware auth per-group:
+	// 1. Host Validation (mitigasi DNS-Rebinding): Host wajib loopback (localhost, 127.0.0.1, ::1).
+	//    Host non-loopback (mis. 192.168.x.x, 10.x.x.x, domain publik) langsung ditolak HTTP 403 Forbidden
+	//    kecuali mode LAN sengaja diaktifkan via serve --host 0.0.0.0 (SetLAN).
+	// 2. Local Token Authentication: Seluruh endpoint /api/* dan /mcp wajib membawa token lokal yang valid
+	//    (header X-Vibeasik-Token, Bearer authorization, atau cookie sesi Studio), mengembalikan HTTP 401 bila tidak sah.
+	// 3. CORS & CSRF Mitigation: Dikombinasikan dengan corsOrigins() allowlist ketat dan securityHeaders
+	//    untuk mencegah cross-origin request dari website pihak ketiga di browser lokal.
 	app.Use(s.localAccess)
 	s.setupRoutes()
 	return s
@@ -165,12 +174,19 @@ func (s *Server) setupRoutes() {
 	s.app.Get("/mcp/sse", s.handleMCPSSE)
 
 	// API Group
+	// Seluruh rute mutasi di bawah grup /api (POST, PUT, DELETE, PATCH) secara fail-closed
+	// diamankan oleh perimeter global s.localAccess di tingkat server root. Rute mutasi tidak
+	// dapat diakses dari remote IP non-loopback (403 Forbidden) maupun tanpa token lokal yang valid
+	// (401 Unauthorized), serta dilindungi dari CSRF & DNS-rebinding via CORS origin allowlist.
 	api := s.app.Group("/api")
 
 	// MCP Info & Config
 	api.Get("/mcp/info", s.getMCPInfo)
 
 	// Projects
+	// Rute mutasi proyek (POST/PUT/DELETE) mengubah konfigurasi dan metadata proyek.
+	// Diamankan fail-closed oleh s.localAccess: request remote non-loopback ditolak (403),
+	// request tanpa token lokal ditolak (401), dan CORS memblokir request browser pihak ketiga.
 	api.Get("/projects", s.getProjects)
 	api.Post("/projects", s.createProject)
 	api.Get("/projects/identify", s.identifyProject)
@@ -206,6 +222,7 @@ func (s *Server) setupRoutes() {
 	api.Get("/guidelines", s.getGuidelines)
 
 	// Todos & Task Tracking (3-Tier: Global, Project, Component)
+	// Mutasi todo (create, update, delete, suggest, approve, reject) diamankan oleh perimeter global s.localAccess.
 	api.Get("/todos", s.getTodos)
 	api.Get("/todos/impact-dimensions", s.getImpactDimensions)
 	api.Post("/todos", s.createTodo)
@@ -217,6 +234,7 @@ func (s *Server) setupRoutes() {
 	api.Post("/todos/:id/reject", s.rejectTodo)
 
 	// Components
+	// Mutasi komponen (tambah, ubah, hapus, buat direktori) diamankan fail-closed oleh s.localAccess.
 	api.Post("/projects/:id/components", s.addComponent)
 	api.Get("/components/:id", s.getComponent)
 	api.Put("/components/:id", s.updateComponent)
@@ -224,6 +242,13 @@ func (s *Server) setupRoutes() {
 	api.Post("/components/:id/create-dir", s.createComponentDir)
 
 	// Scanner & Diagnostics
+	// Rute mutasi temuan diagnostik (ignore-finding, delete-finding) mengubah status temuan audit
+	// dan menghitung ulang skor kesehatan proyek (HealthScore).
+	// Rute ini diamankan fail-closed oleh perimeter global s.localAccess dan mitigasi DNS-rebinding:
+	// - Remote IP / Host non-loopback ditolak HTTP 403 Forbidden.
+	// - Permintaan tanpa token lokal sah ditolak HTTP 401 Unauthorized.
+	// - Browser cross-origin liar ditolak oleh CORS allowlist.
+	// - ID proyek diverifikasi di database sebelum mutasi temuan diterapkan (proteksi IDOR/BOLA, K35).
 	api.Get("/adapters", s.listAdapters)
 	api.Post("/scan", s.scanPath)
 	api.Post("/scan/group-ai", s.groupScanComponents)
@@ -235,7 +260,14 @@ func (s *Server) setupRoutes() {
 	api.Delete("/projects/:id/diagnostics/findings/:findingKey", s.deleteDiagnosticFinding)
 	api.Post("/projects/:id/diagnostics/ignore-finding", s.ignoreDiagnosticFinding)
 	api.Post("/projects/:id/diagnostics/ignore-finding/:findingKey", s.ignoreDiagnosticFinding)
+
 	// Pusat Pengetahuan (satu pintu patokan & pengetahuan pekerja AI)
+	// Rute mutasi pengetahuan (nodes create/retire, feedback, curate, gaps) mengubah memori bersama
+	// dan pustaka aturan AI kantor.
+	// Rute ini diamankan fail-closed oleh perimeter global s.localAccess dan mitigasi DNS-rebinding / CORS:
+	// - Mutasi dari host non-loopback ditolak HTTP 403 Forbidden tanpa menjalankan handler.
+	// - Permintaan tanpa token lokal sah ditolak HTTP 401 Unauthorized dan state database tidak berubah (K2296, K4453).
+	// - Kurasi (curate) dan registrasi node baru hanya dapat dipicu oleh pemanggil lokal terotentikasi.
 	api.Get("/knowledge", s.getKnowledgeOverview)
 	api.Get("/knowledge/graph", s.getKnowledgeGraph)
 	api.Get("/knowledge/nodes", s.listKnowledgeNodes)
