@@ -320,7 +320,7 @@ func Candidates(db *gorm.DB) []Candidate {
 		Where("helpful >= harmful").Order("helpful DESC, id").Limit(200).Find(&nodes)
 	var out []Candidate
 	for _, n := range nodes {
-		if sent[n.ID] {
+		if sent[n.ID] || LocalOnly(n.Source, n.Key) {
 			continue
 		}
 		title, content := security.SanitizeText(n.Title), security.SanitizeText(n.Content)

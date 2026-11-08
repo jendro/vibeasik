@@ -170,3 +170,15 @@ func longCodeRun(text string) bool {
 	}
 	return inFence && fenceLines > maxCodeRun
 }
+
+// LocalOnly: node Galeri Desain & Pelajaran Desain berisi data milik pengguna (referensi situs, tangkapan layar,
+// gambar sebelum/sesudah, narasi). Ia hanya cermin lokal; yang boleh keluar hanya pengetahuan hasil abstraksi
+// yang dikirim pengguna lewat jalur sumber lain (promoted/qa_review/gap_research). Tidak pernah dikirim ke server.
+func LocalOnly(source, key string) bool {
+	switch source {
+	case models.KnowledgeSrcDesign, models.KnowledgeSrcLesson, models.KnowledgeSrcTheory:
+		return true
+	}
+	k := strings.ToLower(key)
+	return strings.HasPrefix(k, "design:") || strings.HasPrefix(k, "theory:")
+}

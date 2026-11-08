@@ -129,7 +129,7 @@ func AutoEligible(db *gorm.DB, now time.Time) Eligibility {
 
 	var out Eligibility
 	for _, n := range nodes {
-		if sentLocal[n.ID] {
+		if sentLocal[n.ID] || LocalOnly(n.Source, n.Key) {
 			continue
 		}
 		h := contentHash(n.Title, n.Content)

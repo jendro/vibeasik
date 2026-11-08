@@ -82,3 +82,17 @@ func TestPrivacyCheckerUsesLocalProjectsAndKeywords(t *testing.T) {
 		}
 	}
 }
+
+func TestLocalOnlyDesignData(t *testing.T) {
+	for _, c := range []struct{ src, key string }{
+		{"design_library", ""}, {"design_lesson", ""}, {"design_theory", ""},
+		{"promoted", "design:lesson:3:p1"}, {"gap_research", "theory:rule_60_30_10"},
+	} {
+		if !LocalOnly(c.src, c.key) {
+			t.Errorf("%v harus lokal saja", c)
+		}
+	}
+	if LocalOnly("promoted", "go:errors") {
+		t.Error("node umum tidak boleh dianggap lokal-saja")
+	}
+}
