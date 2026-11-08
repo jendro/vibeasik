@@ -19,77 +19,90 @@ import (
 
 var DB *gorm.DB
 
-// InitDB initializes database connection based on config (.env) or explicit path override
-func InitDB(dbPathOverride string) (*gorm.DB, error) {
-	cfg := config.GetConfig()
+// openExplicitSQLite membuka koneksi SQLite pada path eksplisit (misal dari flag CLI --db).
+func openExplicitSQLite(path string, gormConfig *gorm.Config) (*gorm.DB, error) {
+	dir := filepath.Dir(path)
+	_ = os.MkdirAll(dir, 0755)
+	log.Printf("[Database] Connecting to explicit SQLite database at: %s\n", path)
+	db, err := gorm.Open(sqlite.Open(path), gormConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open SQLite database (%s): %w", path, err)
+	}
+	return db, nil
+}
 
-	var db *gorm.DB
-	var err error
+// openMySQLOrFallback menghubungkan ke MySQL dan otomatis fallback ke SQLite jika gagal.
+func openMySQLOrFallback(cfg *config.Config, gormConfig *gorm.Config) (*gorm.DB, error) {
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		cfg.DBUser, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBName)
 
-	gormConfig := &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
+	log.Printf("[Database] Connecting to MySQL (%s:%s/%s)...\n", cfg.DBHost, cfg.DBPort, cfg.DBName)
+	db, err := gorm.Open(mysql.Open(dsn), gormConfig)
+	if err == nil {
+		log.Printf("✅ [Database] Successfully connected to MySQL database '%s'\n", cfg.DBName)
+		return db, nil
 	}
 
-	// 1. If explicit SQLite flag --db was provided, respect it
-	if dbPathOverride != "" {
-		dir := filepath.Dir(dbPathOverride)
+	log.Printf("⚠️ [Database] Failed to connect to MySQL (%s:%s/%s): %v\n", cfg.DBHost, cfg.DBPort, cfg.DBName, err)
+	log.Printf("⚠️ [Database] Falling back to SQLite (%s)...\n", cfg.DBPath)
+
+	dir := filepath.Dir(cfg.DBPath)
+	if dir != "" && dir != "." {
 		_ = os.MkdirAll(dir, 0755)
-		log.Printf("[Database] Connecting to explicit SQLite database at: %s\n", dbPathOverride)
-		db, err = gorm.Open(sqlite.Open(dbPathOverride), gormConfig)
-		if err != nil {
-			return nil, fmt.Errorf("failed to open SQLite database (%s): %w", dbPathOverride, err)
-		}
-	} else if strings.ToLower(cfg.DBDriver) == "mysql" {
-		// 2. Connect to MySQL via environment variables
-		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-			cfg.DBUser, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBName)
+	}
+	fallbackDB, fallbackErr := gorm.Open(sqlite.Open(cfg.DBPath), gormConfig)
+	if fallbackErr != nil {
+		return nil, fmt.Errorf("database initialization failed: mysql error (%v) and sqlite fallback error (%w)", err, fallbackErr)
+	}
+	return fallbackDB, nil
+}
 
-		log.Printf("[Database] Connecting to MySQL (%s:%s/%s)...\n", cfg.DBHost, cfg.DBPort, cfg.DBName)
-		db, err = gorm.Open(mysql.Open(dsn), gormConfig)
-		if err != nil {
-			log.Printf("⚠️ [Database] Failed to connect to MySQL (%s:%s/%s): %v\n", cfg.DBHost, cfg.DBPort, cfg.DBName, err)
-			log.Printf("⚠️ [Database] Falling back to SQLite (%s)...\n", cfg.DBPath)
-
-			dir := filepath.Dir(cfg.DBPath)
-			if dir != "" && dir != "." {
-				_ = os.MkdirAll(dir, 0755)
-			}
-			db, err = gorm.Open(sqlite.Open(cfg.DBPath), gormConfig)
-			if err != nil {
-				return nil, fmt.Errorf("database initialization failed: mysql error (%v) and sqlite fallback error (%w)", err, err)
-			}
-		} else {
-			log.Printf("✅ [Database] Successfully connected to MySQL database '%s'\n", cfg.DBName)
+// resolveDefaultSQLitePath menentukan path penyimpanan SQLite default bila tidak ditentukan.
+func resolveDefaultSQLitePath(configuredPath string) string {
+	if configuredPath != "" {
+		dir := filepath.Dir(configuredPath)
+		if dir != "" && dir != "." {
+			_ = os.MkdirAll(dir, 0755)
 		}
-	} else {
-		// 3. SQLite configured in DB_DRIVER
-		dbPath := cfg.DBPath
-		if dbPath == "" {
-			homeDir, err := os.UserHomeDir()
-			if err == nil {
-				appDir := filepath.Join(homeDir, ".projectmanager")
-				_ = os.MkdirAll(appDir, 0755)
-				dbPath = filepath.Join(appDir, "projects.db")
-			} else {
-				_ = os.MkdirAll("data", 0755)
-				dbPath = "data/projects.db"
-			}
-		} else {
-			dir := filepath.Dir(dbPath)
-			if dir != "" && dir != "." {
-				_ = os.MkdirAll(dir, 0755)
-			}
-		}
-
-		log.Printf("[Database] Connecting to SQLite at %s\n", dbPath)
-		db, err = gorm.Open(sqlite.Open(dbPath), gormConfig)
-		if err != nil {
-			return nil, fmt.Errorf("failed to open SQLite database (%s): %w", dbPath, err)
-		}
+		return configuredPath
 	}
 
-	// Migrate schema
-	err = db.AutoMigrate(
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		_ = os.MkdirAll("data", 0755)
+		return "data/projects.db"
+	}
+
+	appDir := filepath.Join(homeDir, ".projectmanager")
+	_ = os.MkdirAll(appDir, 0755)
+	return filepath.Join(appDir, "projects.db")
+}
+
+// openDefaultSQLite membuka SQLite default berdasarkan konfigurasi sistem.
+func openDefaultSQLite(cfg *config.Config, gormConfig *gorm.Config) (*gorm.DB, error) {
+	dbPath := resolveDefaultSQLitePath(cfg.DBPath)
+	log.Printf("[Database] Connecting to SQLite at %s\n", dbPath)
+	db, err := gorm.Open(sqlite.Open(dbPath), gormConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open SQLite database (%s): %w", dbPath, err)
+	}
+	return db, nil
+}
+
+// openDatabaseConnection memilih driver database yang sesuai secara linear.
+func openDatabaseConnection(dbPathOverride string, cfg *config.Config, gormConfig *gorm.Config) (*gorm.DB, error) {
+	if dbPathOverride != "" {
+		return openExplicitSQLite(dbPathOverride, gormConfig)
+	}
+	if strings.ToLower(cfg.DBDriver) == "mysql" {
+		return openMySQLOrFallback(cfg, gormConfig)
+	}
+	return openDefaultSQLite(cfg, gormConfig)
+}
+
+// migrateDatabaseSchema menjalankan migrasi model dan optimasi kolom pada MySQL.
+func migrateDatabaseSchema(db *gorm.DB) error {
+	err := db.AutoMigrate(
 		&models.Project{},
 		&models.Component{},
 		&models.ComponentRoute{},
@@ -143,35 +156,64 @@ func InitDB(dbPathOverride string) (*gorm.DB, error) {
 		&models.TrafficRecentEvent{},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to migrate database schema: %w", err)
+		return fmt.Errorf("failed to migrate database schema: %w", err)
 	}
 
-	// Ensure high-capacity text storage (LONGTEXT) in MySQL for JSON payloads & trees
 	if db.Dialector.Name() == "mysql" {
-		_ = db.Exec("ALTER TABLE diagnostics MODIFY COLUMN findings_json LONGTEXT, MODIFY COLUMN optimizations LONGTEXT, MODIFY COLUMN structure_tree LONGTEXT, MODIFY COLUMN summary LONGTEXT").Error
-		_ = db.Exec("ALTER TABLE deep_check_reports MODIFY COLUMN findings_json LONGTEXT, MODIFY COLUMN route_simulations_json LONGTEXT, MODIFY COLUMN summary LONGTEXT").Error
-		_ = db.Exec("ALTER TABLE runtime_sim_reports MODIFY COLUMN result_json LONGTEXT, MODIFY COLUMN summary LONGTEXT").Error
-		_ = db.Exec("ALTER TABLE components MODIFY COLUMN fast_scan_data LONGTEXT, MODIFY COLUMN env_summary LONGTEXT").Error
-		_ = db.Exec("ALTER TABLE component_routes MODIFY COLUMN target_requests LONGTEXT").Error
-		_ = db.Exec("ALTER TABLE projects MODIFY COLUMN synergy_map_data LONGTEXT").Error
+		tuneMySQLStorage(db)
+	}
+	return nil
+}
+
+// tuneMySQLStorage memastikan kolom teks berkapasitas tinggi (LONGTEXT) di MySQL.
+func tuneMySQLStorage(db *gorm.DB) {
+	_ = db.Exec("ALTER TABLE diagnostics MODIFY COLUMN findings_json LONGTEXT, MODIFY COLUMN optimizations LONGTEXT, MODIFY COLUMN structure_tree LONGTEXT, MODIFY COLUMN summary LONGTEXT").Error
+	_ = db.Exec("ALTER TABLE deep_check_reports MODIFY COLUMN findings_json LONGTEXT, MODIFY COLUMN route_simulations_json LONGTEXT, MODIFY COLUMN summary LONGTEXT").Error
+	_ = db.Exec("ALTER TABLE runtime_sim_reports MODIFY COLUMN result_json LONGTEXT, MODIFY COLUMN summary LONGTEXT").Error
+	_ = db.Exec("ALTER TABLE components MODIFY COLUMN fast_scan_data LONGTEXT, MODIFY COLUMN env_summary LONGTEXT").Error
+	_ = db.Exec("ALTER TABLE component_routes MODIFY COLUMN target_requests LONGTEXT").Error
+	_ = db.Exec("ALTER TABLE projects MODIFY COLUMN synergy_map_data LONGTEXT").Error
+}
+
+// backfillProjectShortDescriptions mengisi short_description untuk proyek lama yang masih kosong.
+func backfillProjectShortDescriptions(db *gorm.DB) {
+	var emptyShortProjects []models.Project
+	if err := db.Where("short_description = '' OR short_description IS NULL").Find(&emptyShortProjects).Error; err != nil {
+		return
+	}
+	for _, ep := range emptyShortProjects {
+		if ep.Description == "" {
+			continue
+		}
+		short := strings.TrimSpace(ep.Description)
+		if idx := strings.Index(short, "\n"); idx != -1 {
+			short = strings.TrimSpace(short[:idx])
+		}
+		if len(short) > 220 {
+			short = short[:217] + "..."
+		}
+		_ = db.Model(&ep).Update("short_description", short).Error
+	}
+}
+
+// InitDB initializes database connection based on config (.env) or explicit path override
+func InitDB(dbPathOverride string) (*gorm.DB, error) {
+	cfg := config.GetConfig()
+
+	gormConfig := &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
 	}
 
-	// Backfill short_description for existing projects where empty
-	var emptyShortProjects []models.Project
-	if err := db.Where("short_description = '' OR short_description IS NULL").Find(&emptyShortProjects).Error; err == nil {
-		for _, ep := range emptyShortProjects {
-			if ep.Description != "" {
-				short := strings.TrimSpace(ep.Description)
-				if idx := strings.Index(short, "\n"); idx != -1 {
-					short = strings.TrimSpace(short[:idx])
-				}
-				if len(short) > 220 {
-					short = short[:217] + "..."
-				}
-				_ = db.Model(&ep).Update("short_description", short).Error
-			}
-		}
+	db, err := openDatabaseConnection(dbPathOverride, cfg, gormConfig)
+	if err != nil {
+		return nil, err
 	}
+
+	if err := migrateDatabaseSchema(db); err != nil {
+		return nil, err
+	}
+
+	backfillProjectShortDescriptions(db)
 
 	DB = db
 	ensureDefaultLLMSettings(db)
