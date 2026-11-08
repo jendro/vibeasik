@@ -128,24 +128,62 @@ func commonAncestor(dirs []string) string {
 	return anc
 }
 
-// EffectiveRoot menentukan root peta: root proyek, kecuali bila root itu folder umum di atas komponennya
-// (mis. proyek bundel ber-root ~/Documents) — maka dipakai leluhur bersama komponen.
-func EffectiveRoot(p models.Project) string {
+// shouldOverrideRootWithAncestor mengevaluasi apakah root proyek perlu digantikan oleh
+// leluhur bersama komponen (mis. bila root berupa folder induk generik tanpa .git).
+func shouldOverrideRootWithAncestor(root, anc string) bool {
+	if anc == "" {
+		return false
+	}
+	if root == "" {
+		return true
+	}
+	if root == anc {
+		return false
+	}
+	if !within(root, anc) {
+		return false
+	}
+	return !exists(filepath.Join(root, ".git"))
+}
+
+// isRootValidWithoutComponents memvalidasi apakah root proyek sah digunakan saat proyek
+// belum memiliki komponen terdaftar (harus memiliki project marker).
+func isRootValidWithoutComponents(root string) bool {
+	if root == "" {
+		return false
+	}
+	return hasProjectMarker(root)
+}
+
+// collectComponentDirs mengumpulkan direktori absolut yang valid dari daftar komponen.
+func collectComponentDirs(components []models.Component) []string {
 	var compDirs []string
-	for _, c := range p.Components {
+	for _, c := range components {
 		if c.AbsolutePath != "" && isDir(c.AbsolutePath) {
 			compDirs = append(compDirs, filepath.Clean(c.AbsolutePath))
 		}
 	}
-	root := ""
-	if p.RootPath != "" && p.RootPath != "-" && isDir(p.RootPath) {
-		root = filepath.Clean(p.RootPath)
+	return compDirs
+}
+
+// resolveConfiguredRoot membersihkan path root terkonfigurasi jika valid dan berupa direktori.
+func resolveConfiguredRoot(rootPath string) string {
+	if rootPath == "" || rootPath == "-" || !isDir(rootPath) {
+		return ""
 	}
+	return filepath.Clean(rootPath)
+}
+
+// EffectiveRoot menentukan root peta: root proyek, kecuali bila root itu folder umum di atas komponennya
+// (mis. proyek bundel ber-root ~/Documents) — maka dipakai leluhur bersama komponen.
+func EffectiveRoot(p models.Project) string {
+	compDirs := collectComponentDirs(p.Components)
+	root := resolveConfiguredRoot(p.RootPath)
 	anc := commonAncestor(compDirs)
-	if anc != "" && (root == "" || root != anc && within(root, anc) && !exists(filepath.Join(root, ".git"))) {
+	if shouldOverrideRootWithAncestor(root, anc) {
 		root = anc
 	}
-	if root != "" && len(compDirs) == 0 && !hasProjectMarker(root) {
+	if len(compDirs) == 0 && !isRootValidWithoutComponents(root) {
 		return ""
 	}
 	return root

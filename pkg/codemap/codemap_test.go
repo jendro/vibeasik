@@ -333,3 +333,101 @@ func TestExistsPredicateContract(t *testing.T) {
 	}
 }
 
+func TestEffectiveRootHelpersBoundary(t *testing.T) {
+	tmp := t.TempDir()
+
+	// 1. Boundary tests for shouldOverrideRootWithAncestor
+	t.Run("shouldOverrideRootWithAncestor", func(t *testing.T) {
+		anc := filepath.Join(tmp, "workspace/app")
+		rootParent := filepath.Join(tmp, "workspace")
+		_ = os.MkdirAll(anc, 0o755)
+
+		// Invalid: empty anc
+		if shouldOverrideRootWithAncestor(rootParent, "") {
+			t.Error("expected false when anc is empty")
+		}
+
+		// Valid: empty root, non-empty anc
+		if !shouldOverrideRootWithAncestor("", anc) {
+			t.Error("expected true when root is empty and anc is valid")
+		}
+
+		// Invalid: root == anc
+		if shouldOverrideRootWithAncestor(anc, anc) {
+			t.Error("expected false when root == anc")
+		}
+
+		// Invalid: not within (anc is not within root)
+		otherDir := filepath.Join(tmp, "other")
+		if shouldOverrideRootWithAncestor(otherDir, anc) {
+			t.Error("expected false when anc is outside root")
+		}
+
+		// Invalid: root has .git repository
+		gitDir := filepath.Join(rootParent, ".git")
+		_ = os.MkdirAll(gitDir, 0o755)
+		if shouldOverrideRootWithAncestor(rootParent, anc) {
+			t.Error("expected false when root has .git")
+		}
+		_ = os.RemoveAll(gitDir)
+
+		// Valid case: anc within root, no .git in root
+		if !shouldOverrideRootWithAncestor(rootParent, anc) {
+			t.Error("expected true when anc is inside generic root without .git")
+		}
+	})
+
+	// 2. Boundary tests for isRootValidWithoutComponents
+	t.Run("isRootValidWithoutComponents", func(t *testing.T) {
+		// Invalid: empty root
+		if isRootValidWithoutComponents("") {
+			t.Error("expected false for empty root")
+		}
+
+		// Invalid: directory without project marker
+		plainDir := filepath.Join(tmp, "plain")
+		_ = os.MkdirAll(plainDir, 0o755)
+		if isRootValidWithoutComponents(plainDir) {
+			t.Error("expected false for dir without project marker")
+		}
+
+		// Valid: directory with go.mod
+		markedDir := filepath.Join(tmp, "marked")
+		_ = os.MkdirAll(markedDir, 0o755)
+		_ = os.WriteFile(filepath.Join(markedDir, "go.mod"), []byte("module test\n"), 0o644)
+		if !isRootValidWithoutComponents(markedDir) {
+			t.Error("expected true for dir with go.mod marker")
+		}
+	})
+
+	// 3. Boundary tests for collectComponentDirs & resolveConfiguredRoot
+	t.Run("collectComponentDirsAndResolveRoot", func(t *testing.T) {
+		existingDir := filepath.Join(tmp, "comp1")
+		_ = os.MkdirAll(existingDir, 0o755)
+
+		comps := []models.Component{
+			{AbsolutePath: ""},
+			{AbsolutePath: filepath.Join(tmp, "nonexistent")},
+			{AbsolutePath: existingDir},
+		}
+		dirs := collectComponentDirs(comps)
+		if len(dirs) != 1 || dirs[0] != existingDir {
+			t.Errorf("expected [comp1], got %+v", dirs)
+		}
+
+		if resolveConfiguredRoot("") != "" {
+			t.Error("expected empty string for empty rootPath")
+		}
+		if resolveConfiguredRoot("-") != "" {
+			t.Error("expected empty string for '-' rootPath")
+		}
+		if resolveConfiguredRoot(filepath.Join(tmp, "nonexistent")) != "" {
+			t.Error("expected empty string for nonexistent dir")
+		}
+		if resolveConfiguredRoot(existingDir) != existingDir {
+			t.Errorf("expected %s, got %s", existingDir, resolveConfiguredRoot(existingDir))
+		}
+	})
+}
+
+
