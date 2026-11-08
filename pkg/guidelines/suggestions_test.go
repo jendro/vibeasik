@@ -97,3 +97,26 @@ func TestGenerateSuggestionsForProjectGolden(t *testing.T) {
 		t.Fatalf("saran berubah; bandingkan %s dengan %s.got", golden, golden)
 	}
 }
+
+func TestFilePredicates(t *testing.T) {
+	tmp := t.TempDir()
+	existing := filepath.Join(tmp, "ada.txt")
+	if err := os.WriteFile(existing, []byte("ok"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	missing := filepath.Join(tmp, "tidak-ada.txt")
+
+	if !fileExists(existing) {
+		t.Errorf("fileExists(%q) = false, want true", existing)
+	}
+	if fileExists(missing) {
+		t.Errorf("fileExists(%q) = true, want false", missing)
+	}
+	if fileMissing(existing) {
+		t.Errorf("fileMissing(%q) = true, want false", existing)
+	}
+	if !fileMissing(missing) {
+		t.Errorf("fileMissing(%q) = false, want true", missing)
+	}
+}
+
