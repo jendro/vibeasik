@@ -1,0 +1,861 @@
+### create_project
+text: {
+  "id": 1,
+  "name": "Alpha",
+  "slug": "alpha",
+  "short_description": "",
+  "description": "",
+  "root_path": "<tmp>",
+  "project_type": "bundle",
+  "status": "active",
+  "git_branch": "",
+  "git_remote": "",
+  "tags": "",
+  "health_score": 100,
+  "is_unified": false,
+  "autonomous": false,
+  "created_at": "<t>",
+  "updated_at": "<t>",
+  "components": null
+}
+### create_project
+ERR: invalid project payload: json: cannot unmarshal number into Go struct field CreateProjectInput.Project.name of type string
+### update_project_status
+text: {
+  "id": 1,
+  "name": "Alpha",
+  "slug": "alpha",
+  "short_description": "",
+  "description": "",
+  "root_path": "<tmp>",
+  "project_type": "bundle",
+  "status": "hold",
+  "git_branch": "",
+  "git_remote": "",
+  "tags": "",
+  "health_score": 100,
+  "is_unified": false,
+  "autonomous": false,
+  "created_at": "<t>",
+  "updated_at": "<t>",
+  "components": []
+}
+### update_project_status
+text: {
+  "id": 1,
+  "name": "Alpha",
+  "slug": "alpha",
+  "short_description": "",
+  "description": "",
+  "root_path": "<tmp>",
+  "project_type": "bundle",
+  "status": "active",
+  "git_branch": "",
+  "git_remote": "",
+  "tags": "",
+  "health_score": 100,
+  "is_unified": false,
+  "autonomous": false,
+  "created_at": "<t>",
+  "updated_at": "<t>",
+  "components": []
+}
+### update_project_status
+text: {
+  "id": 1,
+  "name": "Alpha",
+  "slug": "alpha",
+  "short_description": "",
+  "description": "",
+  "root_path": "<tmp>",
+  "project_type": "bundle",
+  "status": "deprecated",
+  "git_branch": "",
+  "git_remote": "",
+  "tags": "",
+  "health_score": 100,
+  "is_unified": false,
+  "autonomous": false,
+  "deprecated_at": "<iso>",
+  "deprecated_reason": "uji",
+  "created_at": "<t>",
+  "updated_at": "<t>",
+  "components": []
+}
+### update_project_status
+text: {
+  "id": 1,
+  "name": "Alpha",
+  "slug": "alpha",
+  "short_description": "",
+  "description": "",
+  "root_path": "<tmp>",
+  "project_type": "bundle",
+  "status": "active",
+  "git_branch": "",
+  "git_remote": "",
+  "tags": "",
+  "health_score": 100,
+  "is_unified": false,
+  "autonomous": false,
+  "created_at": "<t>",
+  "updated_at": "<t>",
+  "components": []
+}
+### update_project_status
+text: {
+  "id": 1,
+  "name": "Alpha",
+  "slug": "alpha",
+  "short_description": "",
+  "description": "",
+  "root_path": "<tmp>",
+  "project_type": "bundle",
+  "status": "done",
+  "git_branch": "",
+  "git_remote": "",
+  "tags": "",
+  "health_score": 100,
+  "is_unified": false,
+  "autonomous": false,
+  "created_at": "<t>",
+  "updated_at": "<t>",
+  "components": []
+}
+### update_project_status
+ERR: valid project_id is required
+### add_component
+text: {
+  "id": 1,
+  "project_id": 1,
+  "name": "api",
+  "role": "other",
+  "relative_path": "",
+  "absolute_path": "",
+  "language": "auto",
+  "framework": "",
+  "package_manager": "",
+  "dev_command": "",
+  "build_command": "",
+  "port": 0,
+  "run_port": 0,
+  "health_url": "",
+  "health_score": 0,
+  "env_file": "",
+  "env_summary": "",
+  "created_at": "<t>",
+  "updated_at": "<t>"
+}
+### get_component
+text: {
+  "id": 1,
+  "project_id": 1,
+  "name": "api",
+  "role": "other",
+  "relative_path": "",
+  "absolute_path": "",
+  "language": "auto",
+  "framework": "",
+  "package_manager": "",
+  "dev_command": "",
+  "build_command": "",
+  "port": 0,
+  "run_port": 0,
+  "health_url": "",
+  "health_score": 0,
+  "env_file": "",
+  "env_summary": "",
+  "created_at": "<t>",
+  "updated_at": "<t>"
+}
+### get_component
+ERR: record not found
+### list_component_routes
+text: []
+### sync_component_routes
+text: {
+  "enrich": "upgrade_required: fitur \"routes.enrich\" butuh paket Pro (https://vibeasik.com/pricing)",
+  "sync": {
+    "component_id": 1,
+    "added_count": 0,
+    "updated_count": 0,
+    "deleted_count": 0,
+    "total_count": 0,
+    "routes": []
+  }
+}
+### diagnose_component
+ERR: component not found: record not found
+### fast_scan
+ERR: component not found: record not found
+### fast_scan
+ERR: project not found: record not found
+### evaluate_architecture
+ERR: komponen tidak ditemukan: record not found
+### evaluate_architecture
+ERR: proyek tidak ditemukan: record not found
+### list_architecture_patterns
+text: [
+  {
+    "id": "layered",
+    "name": "Traditional Layered (N-Tier)",
+    "badge": "Fondasi Standar",
+    "short_desc": "Pemisahan horizontal berdasarkan tanggung jawab teknis: Router -\u003e Controller -\u003e Service -\u003e Repository -\u003e Model.",
+    "philosophy": "Memisahkan kode ke dalam lapisan horizontal. Setiap lapisan hanya boleh berkomunikasi dengan lapisan tepat di bawahnya. Mudah dipahami oleh pemula dan tim kecil.",
+    "router_characteristics": "Router mendefinisikan rute dan memanggil method handler/controller per domain bisnis (misal: /api/projects -\u003e projectHandler).",
+    "controller_characteristics": "Handler mem-parsing DTO dari HTTP request, memvalidasi input dasar, memanggil service layer, dan membalas dengan status code HTTP yang sesuai.",
+    "function_vs_class_philosophy": "Service dan Repository menggunakan Struct/Class dengan Interface untuk Dependency Injection. Fungsi-fungsi utilitas dan kalkulasi murni dijadikan pure functions.",
+    "mcp_integration": "Biasanya belum terintegrasi secara bawaan. MCP dapat ditambahkan sebagai handler terpisah di samping HTTP router.",
+    "mvpp_role": "Dasar dari MVPP, di mana Presenter = Controller, Model = Entities/DB, namun belum memiliki layer Planner mandiri.",
+    "complexity_score": 2,
+    "testability_score": 4,
+    "ai_readiness_score": 3,
+    "scalability_score": 3,
+    "pros": [
+      "Sangat mudah dipelajari dan diimplementasikan oleh tim baru",
+      "Struktur folder intuitif dan teratur per jenis file",
+      "Mudah memisahkan query SQL dari antarmuka HTTP",
+      "Didukung luas oleh framework Go (Fiber/Gin) dan Node.js (Express/Nest)"
+    ],
+    "cons": [
+      "Lapisan horizontal bisa menjadi bottleneck jika fitur bertambah ratusan",
+      "Risiko Service layer menjadi god-object yang terlalu gemuk",
+      "Developer sering tergoda melempar entitas database langsung ke response klien"
+    ],
+    "when_to_use": [
+      "Aplikasi CRUD standar dengan skala kecil hingga menengah",
+      "Pengembangan prototipe cepat yang tetap butuh struktur rapi",
+      "Tim developer yang sedang bertransisi dari skrip monolit ke arsitektur bersih"
+    ],
+    "folder_blueprint_tree": "backend/\n├── cmd/\n│   └── api/\n│       └── main.go           # Entrypoint \u0026 inisialisasi server\n├── internal/\n│   ├── api/                  # [ROUTER \u0026 CONTROLLER] Transport Layer\n│   │   ├── server.go         # Router definition \u0026 middleware\n│   │   ├── project_handler.go\n│   │   └── user_handler.go\n│   ├── service/              # [SERVICE] Business Logic Layer\n│   │   ├── project_service.go\n│   │   └── user_service.go\n│   ├── repository/           # [REPOSITORY] Data Access Layer (GORM/SQL)\n│   │   ├── project_repo.go\n│   │   └── user_repo.go\n│   └── models/               # [MODEL] Domain Entities \u0026 DTOs\n│       ├── project.go\n│       └── user.go\n└── pkg/\n    └── utils/                # Pure helper functions\n        └── slug.go",
+    "folder_explanation": [
+      {
+        "path": "internal/api/",
+        "role": "Router \u0026 Controller",
+        "description": "Menerima request HTTP, validasi payload, dan formatting response JSON."
+      },
+      {
+        "path": "internal/service/",
+        "role": "Business Logic",
+        "description": "Berisi aturan bisnis dan orkestrasi operasi antarrepositori."
+      },
+      {
+        "path": "internal/repository/",
+        "role": "Persistence",
+        "description": "Mengenkapsulasi kueri database GORM/SQL ke dalam antarmuka interface."
+      },
+      {
+        "path": "internal/models/",
+        "role": "Domain Model",
+        "description": "Definisi struct database dan kontrak payload request/response."
+      }
+    ],
+    "router_code_sample": {
+      "language": "go",
+      "title": "Router Terstruktur di Layered Architecture",
+      "code": "// internal/api/server.go\nfunc (s *Server) setupRoutes() {\n    api := s.app.Group(\"/api\")\n    \n    // Group per domain\n    projects := api.Group(\"/projects\")\n    projects.Get(\"/\", s.getProjects)\n    projects.Post(\"/\", s.createProject)\n    projects.Get(\"/:id\", s.getProject)\n}",
+      "explanation": "Router memetakan URL ke handler struct tanpa ada logika bisnis inline."
+    },
+    "controller_code_sample": {
+      "language": "go",
+      "title": "Thin Controller Mendelegasikan ke Service",
+      "code": "// internal/api/project_handler.go\nfunc (s *Server) createProject(c *fiber.Ctx) error {\n    var req models.CreateProjectDTO\n    if err := c.BodyParser(\u0026req); err != nil {\n        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{\"error\": \"Invalid JSON\"})\n    }\n\n    // Panggil Service Layer via Interface\n    res, err := s.services.Projects.Create(c.Context(), req)\n    if err != nil {\n        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{\"error\": err.Error()})\n    }\n    return c.Status(fiber.StatusCreated).JSON(res)\n}",
+      "explanation": "Controller hanya bertugas binding DTO dan memanggil service."
+    },
+    "logic_code_sample": {
+      "language": "go",
+      "title": "Service Struct Method vs Pure Function",
+      "code": "// Pure Function: Stateless, deterministik, tanpa I/O\nfunc Slugify(title string) string {\n    return strings.ToLower(strings.ReplaceAll(title, \" \", \"-\"))\n}\n\n// Service Method: Menginjeksi dependency Repository\nfunc (s *projectService) Create(ctx context.Context, dto models.CreateProjectDTO) (*models.Project, error) {\n    slug := Slugify(dto.Name)\n    p := \u0026models.Project{Name: dto.Name, Slug: slug}\n    return s.repo.Save(ctx, p)\n}",
+      "explanation": "Pemisahan tegas: kalkulasi stateless jadi pure function, operasi I/O jadi struct method."
+    }
+  },
+  {
+    "id": "clean_hexagonal",
+    "name": "Clean / Hexagonal (Ports \u0026 Adapters)",
+    "badge": "Enterprise Grade",
+    "short_desc": "Domain entity murni berada di pusat sistem, terisolasi 100% dari framework, database, dan protokol luar.",
+    "philosophy": "Inversion of Control tingkat tinggi. Inti domain mendefinisikan port (interface), dan dunia luar (HTTP, CLI, DB, AI) adalah adapter yang mencolokkan diri ke port tersebut.",
+    "router_characteristics": "Router bertindak murni sebagai Inbound/Driving Adapter yang mengonversi request luar menjadi domain interactor commands.",
+    "controller_characteristics": "Adapter controller sangat tipis, hanya menjadi penerjemah protokol ke Use Case yang ditentukan di core domain.",
+    "function_vs_class_philosophy": "Core domain mengedepankan Rich Domain Models (entities yang memiliki method invariant sendiri). Ports didefinisikan sebagai interface murni.",
+    "mcp_integration": "Sangat alami: MCP Server cukup dianggap sebagai Inbound Adapter lain di samping HTTP Adapter, mengeksekusi Use Case yang sama persis.",
+    "mvpp_role": "Sangat sejalan dengan MVPP: Presenter = Inbound HTTP Adapter, Planner = Inbound AI Adapter, Model = Core Domain Entity.",
+    "complexity_score": 4,
+    "testability_score": 5,
+    "ai_readiness_score": 4,
+    "scalability_score": 5,
+    "pros": [
+      "Core domain 100% independen dari framework web atau database tertentu",
+      "Unit testing inti bisnis dapat dijalankan instan tanpa mock DB atau HTTP",
+      "Sangat mudah mengganti database (misal SQLite ke Postgres/MongoDB) tanpa menyentuh bisnis logic",
+      "Memudahkan penambahan protokol baru (gRPC, MCP, CLI) tanpa duplikasi logika"
+    ],
+    "cons": [
+      "Memerlukan banyak berkas mapping DTO dan interfaces (boiler plate tinggi)",
+      "Overengineering untuk aplikasi CRUD sederhana",
+      "Membutuhkan kedisiplinan tinggi dari seluruh anggota tim"
+    ],
+    "when_to_use": [
+      "Sistem dengan aturan bisnis kompleks dan umur proyek jangka panjang",
+      "Aplikasi yang memerlukan banyak pintu masuk (REST API, MCP, WebSocket, CLI)",
+      "Sistem perbankan, fintech, atau supply-chain yang menuntut uji integritas ketat"
+    ],
+    "folder_blueprint_tree": "backend/\n├── cmd/\n│   └── main.go               # Composition Root (Dependency Wiring)\n├── internal/\n│   ├── core/                 # [DOMAIN CORE] Nol dependensi ke luar\n│   │   ├── domain/           # Entitas bisnis murni\n│   │   │   └── project.go\n│   │   ├── ports/            # Interfaces\n│   │   │   ├── inbound.go    # UseCase interfaces (Driving)\n│   │   │   └── outbound.go   # Repository \u0026 Gateway interfaces (Driven)\n│   │   └── services/         # Implementasi Use Case bisnis\n│   │       └── project_usecase.go\n│   └── adapters/             # [ADAPTERS] Mengimplementasikan / Menggunakan Ports\n│       ├── inbound/          # Driving Adapters\n│       │   ├── http/         # Fiber / Express Router \u0026 Controller\n│       │   └── mcp/          # Model Context Protocol Handler\n│       └── outbound/         # Driven Adapters\n│           ├── gorm_repo/    # SQLite / PostgreSQL DB Adapter\n│           └── cloud_client/ # External HTTP API Adapter",
+    "folder_explanation": [
+      {
+        "path": "internal/core/domain/",
+        "role": "Core Domain",
+        "description": "Entitas dan invariant bisnis yang tidak mengenal database atau framework sama sekali."
+      },
+      {
+        "path": "internal/core/ports/",
+        "role": "Contract Ports",
+        "description": "Definisi antarmuka Inbound (UseCases) dan Outbound (Persistence/External)."
+      },
+      {
+        "path": "internal/adapters/inbound/",
+        "role": "Driving Adapters",
+        "description": "Pintu masuk sistem: HTTP Fiber, MCP Stdio/SSE, CLI commands."
+      },
+      {
+        "path": "internal/adapters/outbound/",
+        "role": "Driven Adapters",
+        "description": "Implementasi persistensi database GORM dan klien cloud."
+      }
+    ],
+    "router_code_sample": {
+      "language": "go",
+      "title": "HTTP Driving Adapter Router",
+      "code": "// internal/adapters/inbound/http/router.go\nfunc NewHTTPAdapter(app *fiber.App, projectUseCase ports.ProjectUseCase) *HTTPAdapter {\n    adapter := \u0026HTTPAdapter{useCase: projectUseCase}\n    api := app.Group(\"/api/v1\")\n    api.Post(\"/projects\", adapter.CreateProject)\n    return adapter\n}",
+      "explanation": "HTTP Adapter menerima Port interface (Use Case) saat inisialisasi."
+    },
+    "controller_code_sample": {
+      "language": "go",
+      "title": "Inbound Adapter Controller",
+      "code": "// internal/adapters/inbound/http/handler.go\nfunc (h *HTTPAdapter) CreateProject(c *fiber.Ctx) error {\n    var cmd domain.CreateProjectCommand\n    if err := c.BodyParser(\u0026cmd); err != nil {\n        return c.Status(400).JSON(fiber.Map{\"error\": err.Error()})\n    }\n    \n    project, err := h.useCase.Execute(c.Context(), cmd)\n    if err != nil {\n        return c.Status(500).JSON(fiber.Map{\"error\": err.Error()})\n    }\n    return c.Status(201).JSON(project)\n}",
+      "explanation": "Adapter hanya mengubah format HTTP menjadi command domain dan memanggil port."
+    },
+    "logic_code_sample": {
+      "language": "go",
+      "title": "Core Domain Entity Invariant Method",
+      "code": "// internal/core/domain/project.go\ntype Project struct {\n    ID   string\n    Name string\n    Slug string\n}\n\n// Invariant logic di dalam entitas domain murni\nfunc NewProject(name string) (*Project, error) {\n    if strings.TrimSpace(name) == \"\" {\n        return nil, errors.New(\"nama proyek tidak boleh kosong\")\n    }\n    return \u0026Project{\n        Name: name,\n        Slug: strings.ToLower(strings.ReplaceAll(name, \" \", \"-\")),\n    }, nil\n}",
+      "explanation": "Entitas domain memvalidasi integritasnya sendiri tanpa dependensi eksternal."
+    }
+  },
+  {
+    "id": "vertical_slice",
+    "name": "Vertical Slice Architecture",
+    "badge": "Modular Fitur",
+    "short_desc": "Mengelompokkan kode berdasarkan fitur/use-case vertikal, bukan memotongnya menjadi lapisan teknis horizontal.",
+    "philosophy": "Tinggalkan pembagian Controller-Service-Repository yang membuat developer harus melompat ke 4 folder untuk mengedit 1 fitur. Satukan handler, command, validasi, dan kueri SQL fitur tersebut dalam satu folder.",
+    "router_characteristics": "Router mendaftarkan command/query handler per slice fitur (misal: POST /projects memanggil CreateProjectSlice).",
+    "controller_characteristics": "Handler bertindak sebagai dispatcher ringkas yang langsung memetakan request ke slice yang bersangkutan.",
+    "function_vs_class_philosophy": "Mengutamakan fungsi murni dan struct request/response khusus per slice fitur. Menghindari inheritance dan shared abstraction yang tidak perlu.",
+    "mcp_integration": "Setiap slice fitur dapat mengekspos endpoint HTTP sekaligus fungsi MCP Tool di file yang sama.",
+    "mvpp_role": "Setiap slice merepresentasikan satu unit MVPP kecil yang mandiri.",
+    "complexity_score": 3,
+    "testability_score": 5,
+    "ai_readiness_score": 5,
+    "scalability_score": 4,
+    "pros": [
+      "Sangat ramah AI Coding Agent: Semua konteks fitur ada dalam 1 folder/file",
+      "Tidak ada overhead file jumping saat mengembangkan atau refactor fitur",
+      "Menghilangkan god-service dan kueri repo raksasa yang saling senggol",
+      "Fitur baru dapat dihapus atau ditambah tanpa risiko merusak fitur lain"
+    ],
+    "cons": [
+      "Dapat terjadi sedikit duplikasi kode DTO jika dua fitur mirip",
+      "Membutuhkan konvensi bersama agar struktur internal per slice konsisten",
+      "Belum umum di framework Go konvensional yang terbiasa dengan MVC"
+    ],
+    "when_to_use": [
+      "Aplikasi bertenaga AI dengan siklus iterasi fitur sangat cepat",
+      "Tim lintas fungsi yang mengelola domain-domain independen",
+      "Aplikasi yang sering menambah/mengurangi fitur musiman"
+    ],
+    "folder_blueprint_tree": "backend/\n├── cmd/main.go\n├── common/                   # Shared cross-cutting (DB, middleware, errors)\n└── features/                 # SLICES PER FITUR\n    ├── create_project/\n    │   ├── endpoint.go       # HTTP route \u0026 handler\n    │   ├── mcp_tool.go       # MCP Tool definition \u0026 executor\n    │   ├── command.go        # Request DTO \u0026 validation\n    │   └── handler.go        # Business logic \u0026 SQL query langsung\n    ├── get_project_detail/\n    │   ├── endpoint.go\n    │   ├── query.go\n    │   └── handler.go\n    └── delete_project/\n        ├── endpoint.go\n        └── handler.go",
+    "folder_explanation": [
+      {
+        "path": "features/create_project/",
+        "role": "Feature Slice",
+        "description": "Semua hal tentang pembuatan proyek (HTTP, MCP, Validasi, SQL) terkumpul di sini."
+      },
+      {
+        "path": "features/get_project_detail/",
+        "role": "Feature Slice",
+        "description": "Semua logika query spesifik detail proyek."
+      },
+      {
+        "path": "common/",
+        "role": "Cross-Cutting",
+        "description": "Koneksi database GORM, utilitas logger, dan auth middleware bersama."
+      }
+    ],
+    "router_code_sample": {
+      "language": "go",
+      "title": "Vertical Slice Feature Registration",
+      "code": "// cmd/main.go\nfunc registerFeatures(app *fiber.App, db *gorm.DB) {\n    api := app.Group(\"/api\")\n    \n    // Setiap slice mendaftarkan endpointnya sendiri\n    create_project.RegisterEndpoint(api, db)\n    get_project_detail.RegisterEndpoint(api, db)\n}",
+      "explanation": "Router hanya bertindak sebagai wadah registrasi slice fitur."
+    },
+    "controller_code_sample": {
+      "language": "go",
+      "title": "Feature Slice Endpoint \u0026 Handler",
+      "code": "// features/create_project/endpoint.go\nfunc RegisterEndpoint(router fiber.Router, db *gorm.DB) {\n    router.Post(\"/projects\", func(c *fiber.Ctx) error {\n        var cmd Command\n        if err := c.BodyParser(\u0026cmd); err != nil {\n            return c.Status(400).JSON(fiber.Map{\"error\": err.Error()})\n        }\n        res, err := Handle(c.Context(), db, cmd)\n        if err != nil {\n            return c.Status(500).JSON(fiber.Map{\"error\": err.Error()})\n        }\n        return c.Status(201).JSON(res)\n    })\n}",
+      "explanation": "Handler, validasi, dan eksekutor ada di folder fitur yang sama."
+    },
+    "logic_code_sample": {
+      "language": "go",
+      "title": "Direct Query \u0026 Logic in Slice Handler",
+      "code": "// features/create_project/handler.go\nfunc Handle(ctx context.Context, db *gorm.DB, cmd Command) (*Result, error) {\n    if err := cmd.Validate(); err != nil {\n        return nil, err\n    }\n    // Query langsung yang spesifik hanya untuk use case ini\n    p := \u0026models.Project{Name: cmd.Name}\n    if err := db.WithContext(ctx).Create(p).Error; err != nil {\n        return nil, err\n    }\n    return \u0026Result{ID: p.ID, Name: p.Name}, nil\n}",
+      "explanation": "Tidak perlu abstraksi repository generik jika hanya dipakai oleh fitur ini."
+    }
+  },
+  {
+    "id": "mcp_native",
+    "name": "MCP-Native Backend Architecture",
+    "badge": "AI First",
+    "short_desc": "Backend dirancang dari awal untuk melayani klien manusia (REST HTTP) dan AI Coding Agent (MCP JSON-RPC) secara setara.",
+    "philosophy": "AI Coding Agent (Antigravity, Cursor, Claude Code) bukan sekadar pengakses web biasa. Backend menyediakan Model Context Protocol (stdio \u0026 SSE) yang mengekspos Tools, Resources, dan Prompts secara terstruktur.",
+    "router_characteristics": "Menyediakan dua gerbang transport: HTTP REST (/api/*) untuk frontend web/mobile, dan JSON-RPC 2.0 (/mcp, /mcp/sse) untuk AI agent.",
+    "controller_characteristics": "Controller HTTP dan MCP Tool Executor berbagi layer logika bisnis yang sama. Tool call menerima schema JSON dan mengembalikan konten terstruktur.",
+    "function_vs_class_philosophy": "Tools didefinisikan dengan JSON Schema yang ketat. Menggunakan struct method untuk mengelola state koneksi MCP dan pure functions untuk format konten teks.",
+    "mcp_integration": "Inti dari arsitektur: backend berperan sebagai MCP Server resmi yang mengekspos kapabilitas sistem.",
+    "mvpp_role": "Mewakili kombinasi Model-View-Presenter terpadu dengan kapabilitas AI Agent.",
+    "complexity_score": 3,
+    "testability_score": 5,
+    "ai_readiness_score": 5,
+    "scalability_score": 4,
+    "pros": [
+      "Agen AI dapat mendiagnosa, memindai, dan mengoperasikan backend tanpa error atau halusinasi",
+      "Satu domain service digunakan bersama oleh UI dashboard dan AI agent",
+      "Mendukung transport lokal cepat (stdio) maupun jaringan jarak jauh (HTTP SSE)",
+      "Standar terbuka industri yang didukung Antigravity, Anthropic, dan Google"
+    ],
+    "cons": [
+      "Perlu mendefinisikan JSON Schema input yang detail untuk setiap Tool",
+      "Memerlukan pemahaman protokol JSON-RPC 2.0"
+    ],
+    "when_to_use": [
+      "Platform Vibecoding dan alat pengembang (seperti Vibeasik)",
+      "Backend internal yang ingin diautomasi oleh agent autonomous",
+      "Sistem diagnostik, audit kode, dan orkestrasi cloud devops"
+    ],
+    "folder_blueprint_tree": "backend/\n├── cmd/\n│   ├── serve.go              # Menjalankan HTTP server \u0026 MCP SSE\n│   └── mcp.go                # Menjalankan MCP stdio untuk agent lokal\n├── internal/\n│   ├── api/                  # Inbound Port 1: REST API (Browser UI)\n│   │   ├── server.go\n│   │   └── project_handler.go\n│   ├── mcp/                  # Inbound Port 2: MCP Server (AI Agents)\n│   │   ├── server.go         # JSON-RPC 2.0 Dispatcher\n│   │   ├── sse.go            # Server-Sent Events Transport\n│   │   ├── types.go          # Tool \u0026 Resource Schemas\n│   │   └── tools.go          # Tool declarations \u0026 handlers\n│   ├── service/              # Shared Core Domain Logic\n│   │   └── project_service.go\n│   ├── repository/           # Data Persistence\n│   │   └── project_repo.go\n│   └── models/               # Domain Models\n│       └── project.go",
+    "folder_explanation": [
+      {
+        "path": "internal/mcp/",
+        "role": "MCP Protocol Server",
+        "description": "Menangani JSON-RPC 2.0, validasi schema tool, dan pengiriman respon SSE/stdio ke AI agent."
+      },
+      {
+        "path": "internal/api/",
+        "role": "REST API Transport",
+        "description": "Menangani request standar dari UI Nuxt / web browser."
+      },
+      {
+        "path": "internal/service/",
+        "role": "Shared Domain Service",
+        "description": "Logika bisnis yang dieksekusi baik oleh tombol di web maupun oleh perintah AI agent."
+      }
+    ],
+    "router_code_sample": {
+      "language": "go",
+      "title": "MCP Server Protocol Registration",
+      "code": "// internal/mcp/server.go\nfunc (s *Server) RegisterTools() {\n    s.tools[\"scan_directory\"] = Tool{\n        Name: \"scan_directory\",\n        Description: \"Memindai arsitektur folder proyek lokal\",\n        InputSchema: ToolSchema{\n            Type: \"object\",\n            Properties: map[string]interface{}{\n                \"path\": map[string]string{\"type\": \"string\"},\n            },\n            Required: []string{\"path\"},\n        },\n    }\n}",
+      "explanation": "Mendefinisikan kemampuan sistem secara tipe-aman untuk agen AI."
+    },
+    "controller_code_sample": {
+      "language": "go",
+      "title": "Dual Execution: HTTP \u0026 MCP Calling Same Service",
+      "code": "// internal/mcp/server.go (Tool Executor)\nfunc (s *Server) ExecuteTool(name string, args map[string]interface{}) (ToolCallResult, error) {\n    if name == \"list_projects\" {\n        projects, err := s.services.Projects.GetAll(context.Background(), \"\", \"\")\n        if err != nil { return ToolCallResult{IsError: true}, err }\n        jsonBytes, _ := json.Marshal(projects)\n        return ToolCallResult{\n            Content: []ToolContent{{Type: \"text\", Text: string(jsonBytes)}},\n        }, nil\n    }\n    return ToolCallResult{}, fmt.Errorf(\"tool not found\")\n}",
+      "explanation": "MCP Tool memanggil service yang sama dengan HTTP handler."
+    },
+    "logic_code_sample": {
+      "language": "go",
+      "title": "Shared Service Logic",
+      "code": "// internal/service/project_service.go\nfunc (s *projectService) GetAll(ctx context.Context, pType, status string) ([]models.Project, error) {\n    // Dipanggil oleh:\n    // 1. GET /api/projects (Nuxt Frontend)\n    // 2. tool vibeasik_list_projects (Antigravity / Cursor)\n    return s.projectRepo.FindAll(ctx, pType, status)\n}",
+      "explanation": "Logika tidak diduplikasi, cukup diakses via dua adapter berbeda."
+    }
+  },
+  {
+    "id": "mvpp",
+    "name": "MVPP (Model - View - Presenter - Planner)",
+    "badge": "AI Cognitive Era",
+    "short_desc": "Memisahkan orkestrasi kontrol deterministik (Presenter) dari layer penalaran probabilistik AI (Planner).",
+    "philosophy": "Di era modern, backend tidak hanya memproses query SQL, tetapi juga memanggil LLM atau model kognitif (System One). MVPP memisahkan logika deterministik bisnis dari layer Planner kognitif agar sistem tetap stabil dan teruji.",
+    "router_characteristics": "Router meneruskan request ke Presenter. Presenter mengarahkan flow kapan harus memanggil Service deterministik vs kapan harus berkonsultasi ke Planner AI.",
+    "controller_characteristics": "Presenter (Controller) bertindak sebagai konduktor orkestra yang menggabungkan output dari Model bisnis dan hasil penalaran dari Planner.",
+    "function_vs_class_philosophy": "Planner mengisolasi primitif System One (choice, noul, score) atau LLM prompt ke dalam class/struct reasoning terdedikasi.",
+    "mcp_integration": "Planner dapat menggunakan MCP Tools eksternal untuk memperkaya konteks sebelum memberikan rekomendasi.",
+    "mvpp_role": "Arsitektur referensi utama untuk sistem bertenaga AI.",
+    "complexity_score": 4,
+    "testability_score": 5,
+    "ai_readiness_score": 5,
+    "scalability_score": 5,
+    "pros": [
+      "Logika probabilistik AI tidak mengotori atau membingungkan kode bisnis inti",
+      "Jika server AI/LLM down atau lambat, Presenter dapat mengaktifkan fallback otomatis",
+      "Planner dapat diuji dengan evaluasi akurasi, sementara Service diuji dengan unit test biasa",
+      "Mendukung primitif System One / Jev (choice, noul, score) secara modular"
+    ],
+    "cons": [
+      "Memerlukan pemahaman pemisahan logika deterministik vs probabilistik",
+      "Menambah satu layer abstraksi di atas Presenter/Controller"
+    ],
+    "when_to_use": [
+      "Aplikasi cerdas yang memiliki fitur AI rekomendasi, audit kode, atau auto-fix",
+      "Sistem dengan arsitektur System One / Jev atau integrasi LLM",
+      "Aplikasi yang memerlukan AI autonomous tanpa mengorbankan stabilitas data"
+    ],
+    "folder_blueprint_tree": "backend/\n├── cmd/main.go\n├── internal/\n│   ├── models/               # [M] MODEL: Persistent Entities \u0026 State\n│   │   ├── project.go\n│   │   └── audit_finding.go\n│   ├── views/                # [V] VIEW / SERIALIZER: DTO Output Formatter\n│   │   ├── project_view.go\n│   │   └── mcp_view.go\n│   ├── presenters/           # [P] PRESENTER: Controller \u0026 Flow Orchestrator\n│   │   ├── project_presenter.go\n│   │   └── audit_presenter.go\n│   ├── planners/             # [P] PLANNER: AI Cognitive \u0026 Reasoning Engine\n│   │   ├── systemone_client.go # Primitives: choice, noul, score\n│   │   ├── prompt_templates.go # Structured AI prompts\n│   │   └── scaleup_planner.go  # Autonomous reasoning workflow\n│   ├── services/             # Deterministic Business Operations\n│   │   └── project_service.go\n│   └── repository/           # Data Storage Layer\n│       └── project_repo.go",
+    "folder_explanation": [
+      {
+        "path": "internal/models/",
+        "role": "Model (M)",
+        "description": "Entitas data bisnis murni dan skema persistensi basis data."
+      },
+      {
+        "path": "internal/views/",
+        "role": "View (V)",
+        "description": "Serializer dan formatting response: JSON API envelope, SSE, atau Markdown."
+      },
+      {
+        "path": "internal/presenters/",
+        "role": "Presenter (P)",
+        "description": "Mengatur alur kontrol, otentikasi, HTTP status, dan koordinasi Service + Planner."
+      },
+      {
+        "path": "internal/planners/",
+        "role": "Planner (P)",
+        "description": "Lapisan kognitif: Menjalankan primitif AI System One, heuristik cerdas, dan prompt LLM."
+      }
+    ],
+    "router_code_sample": {
+      "language": "go",
+      "title": "MVPP Router Setup",
+      "code": "// internal/api/router.go\nfunc SetupMVPPRoutes(app *fiber.App, p *presenters.ProjectPresenter) {\n    api := app.Group(\"/api/projects\")\n    api.Post(\"/:id/auto-scale\", p.HandleAutoScaleUp)\n}",
+      "explanation": "Router hanya memanggil Presenter yang mengoordinasikan Planner dan Service."
+    },
+    "controller_code_sample": {
+      "language": "go",
+      "title": "Presenter Orchestrating Service + Planner",
+      "code": "// internal/presenters/project_presenter.go\nfunc (p *ProjectPresenter) HandleAutoScaleUp(c *fiber.Ctx) error {\n    id, _ := c.ParamsInt(\"id\")\n    \n    // 1. Ambil data deterministik via Service\n    project, err := p.services.GetByID(c.Context(), uint(id))\n    if err != nil { return c.Status(404).JSON(fiber.Map{\"error\": \"Not found\"}) }\n    \n    // 2. Minta penalaran cerdas ke layer Planner (AI)\n    plan, err := p.planners.ScaleUp.Evaluate(c.Context(), project)\n    if err != nil {\n        // Fallback deterministik jika Planner gagal\n        plan = p.planners.ScaleUp.DefaultHeuristicPlan(project)\n    }\n    \n    // 3. Serialisasi respon via View\n    return c.JSON(views.FormatScaleUpPlan(project, plan))\n}",
+      "explanation": "Presenter memadukan Service deterministik dan Planner AI secara aman."
+    },
+    "logic_code_sample": {
+      "language": "go",
+      "title": "Planner Layer with System One Primitives",
+      "code": "// internal/planners/scaleup_planner.go\nfunc (pl *ScaleUpPlanner) ShouldMigrateToClean(ctx context.Context, metrics CodeMetrics) (bool, error) {\n    // Menggunakan primitif System One 'noul' (keputusan biner probabilistik)\n    payload := map[string]interface{}{\n        \"files_count\": metrics.FileCount,\n        \"coupling_ratio\": metrics.Coupling,\n        \"question\": \"Apakah codebase ini sudah membutuhkan arsitektur Clean/Hexagonal?\",\n    }\n    return pl.systemOne.Noul(ctx, payload)\n}",
+      "explanation": "Logika kognitif terisolasi sepenuhnya di dalam Planner."
+    }
+  }
+]
+### get_security_status
+text: {
+  "active": true,
+  "active_keywords": 5,
+  "built_in_rules": 12,
+  "censoring_mode": "deterministic_alias",
+  "description": "Real-time heuristic and custom pattern masker before LLM dispatch.",
+  "keywords": [
+    {
+      "category": "password",
+      "id": 1,
+      "is_active": true,
+      "is_regex": false
+    },
+    {
+      "category": "token",
+      "id": 2,
+      "is_active": true,
+      "is_regex": false
+    },
+    {
+      "category": "password",
+      "id": 3,
+      "is_active": true,
+      "is_regex": false
+    },
+    {
+      "category": "private_pattern",
+      "id": 4,
+      "is_active": true,
+      "is_regex": false
+    },
+    {
+      "category": "token",
+      "id": 5,
+      "is_active": true,
+      "is_regex": true
+    }
+  ],
+  "regex_rules": 1,
+  "total_keywords": 5
+}
+### test_secret_sanitizer
+text: {
+  "audit": {
+    "redacted_count": 0,
+    "custom_matches": 0,
+    "built_in_matches": 0,
+    "records": [],
+    "message": "Zero secrets detected. Payload is clean and double-security verified.",
+    "double_security_level": "ACTIVE_ENFORCED"
+  },
+  "original": "hello",
+  "sanitized": "hello"
+}
+### plan_workspace_reorg
+text: {
+  "target_directory": "<tmp>",
+  "strategy": "product_centric",
+  "total_items": 0,
+  "total_size": 0,
+  "planned_moves": [],
+  "generated_script": "#!/usr/bin/env bash\n# vibeasik Workspace Reorganization Script\n# Dibuat otomatis pada: <gen>\n# Target Folder: <tmp> -e\n\necho '=== Memulai Reorganisasi Folder Proyek vibeasik ==='\nmkdir -p \"<tmp>"\n\necho '=== Reorganisasi Selesai! Silakan sinkronkan path di vibeasik. ==='\n",
+  "created_at": "<t>"
+}
+### preview_consolidate_project
+ERR: project not found (ID: 77)
+### consolidate_project
+ERR: project not found (ID: 77)
+### browse_directories
+text: {
+  "current_path": "<tmp>",
+  "parent_path": "<tmp>",
+  "directories": null,
+  "quick_paths": [
+    {
+      "name": "Documents",
+      "path": "<tmp>"
+    },
+    {
+      "name": "Home (~)",
+      "path": "<tmp>"
+    }
+  ]
+}
+### scan_project_similarities
+text: {
+  "total_projects": 1,
+  "matches_found": 0,
+  "high_matches": 0,
+  "scanned_at": "<iso>",
+  "matches": [],
+  "suggested_groups": []
+}
+### compare_projects
+text: {
+  "project_a": {
+    "id": 1,
+    "name": "Alpha",
+    "slug": "alpha",
+    "root_path": "<tmp>",
+    "project_type": "bundle",
+    "status": "done",
+    "tags": "",
+    "components": [
+      "api (other)"
+    ],
+    "languages": [],
+    "frameworks": []
+  },
+  "project_b": {
+    "id": 1,
+    "name": "Alpha",
+    "slug": "alpha",
+    "root_path": "<tmp>",
+    "project_type": "bundle",
+    "status": "done",
+    "tags": "",
+    "components": [
+      "api (other)"
+    ],
+    "languages": [],
+    "frameworks": []
+  },
+  "overall_score": 100,
+  "name_score": 100,
+  "path_score": 100,
+  "purpose_score": 0,
+  "exact_same_path": true,
+  "path_overlap": false,
+  "component_role_complementary": false,
+  "reasons": [
+    "Root folder persis sama (<tmp>",
+    "Memiliki komponen dengan path folder yang identik: api",
+    "Nama dasar produk identik ('alpha')"
+  ],
+  "suggestion": "duplicate_cleanup"
+}
+### get_latest_diagnostic
+ERR: component not found: record not found
+### get_latest_diagnostic
+text: {
+  "active_findings_count": 5,
+  "created_at": "<t>",
+  "diagnostic_id": 2,
+  "findings": [
+    {
+      "id": "Missing .gitignore at Project Root_.gitignore_0",
+      "category": "config",
+      "severity": "WARNING",
+      "title": "Missing .gitignore at Project Root",
+      "description": "No root .gitignore file was found. Build artifacts and secrets could be accidentally tracked.",
+      "suggestion": "Add a comprehensive .gitignore covering node_modules, binaries, and .env files.",
+      "target_file": ".gitignore",
+      "status": "open"
+    },
+    {
+      "id": "DEV-SCRIPT-MISSING_dev.sh_0",
+      "category": "deployment",
+      "severity": "WARNING",
+      "title": "dev.sh Belum Ada di Root Proyek",
+      "description": "Proyek wajib punya dev.sh di root yang menyalakan semua komponen (BE, FE, mobile) dengan satu perintah, memakai port dari blok proyek di PORTS.md dan env FE→BE yang menunjuk port BE.",
+      "suggestion": "Buat dev.sh: set PORT tiap komponen dari blok PORTS.md, ekspor URL API BE ke FE/mobile, jalankan semua komponen paralel, dan hentikan semuanya dengan trap saat Ctrl+C.",
+      "target_file": "dev.sh",
+      "rule_id": "DEV-SCRIPT-MISSING",
+      "theory_basis": "ARCH-002 Unified Local Orchestration (Dev Runner).",
+      "suggested_fix": "#!/usr/bin/env bash\n# Jalankan semua komponen proyek sekaligus. Port dari blok PORTS.md (Aturan 35).\nset -e\nROOT=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" \u0026\u0026 pwd)\"\nBE_PORT=\"${BE_PORT:-4105}\"; FE_PORT=\"${FE_PORT:-4100}\"\nLAN_IP=\"$(hostname -I 2\u003e/dev/null | awk '{print $1}')\"; LAN_IP=\"${LAN_IP:-127.0.0.1}\"\ntrap 'kill 0' EXIT INT TERM\n(cd \"$ROOT/backend\" \u0026\u0026 PORT=$BE_PORT go run .) \u0026\n(cd \"$ROOT/frontend\" \u0026\u0026 PORT=$FE_PORT NUXT_PUBLIC_API_BASE=http://localhost:$BE_PORT bun run dev) \u0026\n# (cd \"$ROOT/mobile\" \u0026\u0026 flutter run --dart-define=API_BASE_URL=http://$LAN_IP:$BE_PORT) \u0026\nwait",
+      "status": "open"
+    },
+    {
+      "id": "DEPLOY-SCRIPT-MISSING_deploy.sh_0",
+      "category": "deployment",
+      "severity": "WARNING",
+      "title": "deploy.sh Belum Ada di Root Proyek",
+      "description": "Proyek wajib punya deploy.sh: pengguna cukup mengisi .env.server (atau .env.\u003cnama\u003e pilihannya), skrip memasangnya sebagai env aktif, build \u0026 upload ke server, lalu mengembalikan .env.local walau deploy gagal.",
+      "suggestion": "Buat deploy.sh dengan argumen nama env (default server), salin .env.\u003cnama\u003e ke berkas env aktif, trap EXIT untuk memulihkan .env.local, dan pastikan .gitignore memuat .env / .env.* / !.env.example.",
+      "target_file": "deploy.sh",
+      "rule_id": "DEPLOY-SCRIPT-MISSING",
+      "theory_basis": "SEC-002 \u0026 DEV-007: hanya .env.example yang di-commit; env server dipasang saat deploy saja.",
+      "suggested_fix": "#!/usr/bin/env bash\n# ./deploy.sh [nama-env]  → pakai .env.\u003cnama-env\u003e (default: server), lalu kembali ke .env.local.\nset -e\nROOT=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" \u0026\u0026 pwd)\"\nTARGET=\"${1:-server}\"\nDIRS=(backend frontend)\nfor d in \"${DIRS[@]}\"; do\n  [ -f \"$ROOT/$d/.env.$TARGET\" ] || { echo \"Isi dulu $d/.env.$TARGET (salin dari .env.example)\"; exit 1; }\ndone\n# deploy pertama: simpan env dev sekarang sebagai .env.local agar tidak pernah hilang\nfor d in \"${DIRS[@]}\"; do [ -f \"$ROOT/$d/.env.local\" ] || [ ! -f \"$ROOT/$d/.env\" ] || cp \"$ROOT/$d/.env\" \"$ROOT/$d/.env.local\"; done\nrestore() { for d in \"${DIRS[@]}\"; do [ ! -f \"$ROOT/$d/.env.local\" ] || cp \"$ROOT/$d/.env.local\" \"$ROOT/$d/.env\"; done; }\ntrap restore EXIT\nfor d in \"${DIRS[@]}\"; do cp \"$ROOT/$d/.env.$TARGET\" \"$ROOT/$d/.env\"; done\n# build + upload; host \u0026 path server dibaca dari .env.$TARGET (DEPLOY_HOST, DEPLOY_PATH)\nset -a; . \"$ROOT/backend/.env.$TARGET\"; set +a\n(cd \"$ROOT/backend\" \u0026\u0026 GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o app .)\n(cd \"$ROOT/frontend\" \u0026\u0026 bun run build)\nrsync -az --delete \"$ROOT/backend/app\" \"$ROOT/frontend/.output\" \"$DEPLOY_HOST:$DEPLOY_PATH/\"",
+      "status": "open"
+    },
+    {
+      "id": "Missing README.md Documentation_README.md_0",
+      "category": "documentation",
+      "severity": "INFO",
+      "title": "Missing README.md Documentation",
+      "description": "No root README.md found. AI agents and contributors need quick architectural instructions.",
+      "suggestion": "Create README.md describing the BE/FE bundle structure and run instructions.",
+      "target_file": "README.md",
+      "status": "open"
+    },
+    {
+      "id": "Component Directory Missing: api__0",
+      "category": "architecture",
+      "severity": "CRITICAL",
+      "title": "Component Directory Missing: api",
+      "description": "The path '' does not exist on disk.",
+      "suggestion": "Verify directory path or re-scan project.",
+      "status": "open"
+    }
+  ],
+  "optimizations": [
+    {
+      "title": "Model Context Protocol (MCP) Integration",
+      "description": "Configure this project to expose its architecture, components, and dev commands directly to AI agents (Antigravity, Cursor, Claude).",
+      "category": "ai_readiness",
+      "impact": "HIGH",
+      "action_steps": [
+        "Register project into ProjectManager MCP server",
+        "Expose dev commands and port mapping in mcp.json",
+        "Enable automated AI health audits before git commits"
+      ],
+      "prompt_for_ai": "Analyze the software bundle 'Alpha' located at '<tmp> It consists of 1 components (bundle). Recommend architectural improvements, identify potential concurrency or state synchronization issues between Backend and Frontend, and generate a task backlog for upcoming development."
+    },
+    {
+      "title": "API Response Caching \u0026 Connection Pooling",
+      "description": "Ensure database connection pools and HTTP response headers (ETags, Cache-Control) are configured for high-speed local dev and production.",
+      "category": "performance",
+      "impact": "MEDIUM",
+      "action_steps": [
+        "Audit database connection pool settings (SetMaxOpenConns, SetMaxIdleConns)",
+        "Add Gzip / Brotli compression middleware in Fiber/Express",
+        "Verify CORS preflight caching"
+      ],
+      "prompt_for_ai": "Review the backend service of 'Alpha' and optimize Fiber/Go database connection pooling, response compression, and CORS policy for local development and production."
+    }
+  ],
+  "score": 60,
+  "severity_counts": {
+    "CRITICAL": 1,
+    "INFO": 1,
+    "WARNING": 3
+  },
+  "summary": "Analyzed 1 components across bundle architecture. Total 5 findings (5 aktif, 0 diabaikan, 0 diselesaikan). Codebase health score: 60/100.",
+  "total_findings": 5
+}
+### set_finding_status
+ERR: finding zz not found in latest diagnostic
+### set_finding_status
+ERR: project_id and finding_id are required
+### delete_todo
+ERR: todo with ID 1 not found
+### vibeasik_port_registry
+text: {
+  "entries": [
+    {
+      "component_id": 1,
+      "project_id": 1,
+      "project_name": "Alpha",
+      "component_name": "api",
+      "role": "other",
+      "declared_port": 0,
+      "run_port": 4105,
+      "state": "idle",
+      "listening": false,
+      "has_dev_command": false
+    }
+  ],
+  "range": [
+    4100,
+    4999
+  ]
+}
+### vibeasik_assign_port
+text: {
+  "component_id": 1,
+  "run_port": 4100
+}
+### vibeasik_run_status
+text: {
+  "runs": []
+}
+### vibeasik_run_status
+text: {
+  "component_id": 1,
+  "project_id": 1,
+  "name": "api",
+  "state": "idle",
+  "port": 4100,
+  "url": "http://localhost:4100",
+  "listening": false
+}
+### vibeasik_ensure_unique_ports
+text: {
+  "components": null,
+  "message": "Port unik lokal berhasil dialokasikan",
+  "updated_count": 0
+}
+### vibeasik_stop_component
+ERR: komponen tidak sedang berjalan
+### vibeasik_run_component
+ERR: komponen tidak ditemukan
+### vibeasik_code_map_overview
+ERR: proyek Alpha tidak punya direktori yang bisa dipindai (root/komponen tidak ditemukan di disk)
+### vibeasik_code_map_build
+ERR: proyek Alpha tidak punya direktori yang bisa dipindai (root/komponen tidak ditemukan di disk)
+### vibeasik_code_map_export
+ERR: proyek Alpha tidak punya direktori yang bisa dipindai (root/komponen tidak ditemukan di disk)
+### vibeasik_code_map_status
+text: {
+  "built": false,
+  "hint": "Peta belum pernah dibangun: jalankan link_project_workspace (Init vibeasik) atau vibeasik_code_map_build.",
+  "project_id": 1
+}
+### vibeasik_code_map_routes
+ERR: root proyek Alpha tidak ditemukan di disk
+### vibeasik_code_map_search
+ERR: proyek Alpha tidak punya direktori yang bisa dipindai (root/komponen tidak ditemukan di disk)

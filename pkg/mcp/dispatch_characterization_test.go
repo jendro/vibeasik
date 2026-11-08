@@ -17,6 +17,8 @@ var updateGolden = flag.Bool("update", false, "tulis ulang berkas golden")
 
 var (
 	reTime = regexp.MustCompile(`"(created_at|updated_at|CreatedAt|UpdatedAt|completed_at|last_[a-z_]+|built_at)": "[^"]*"`)
+	reISO  = regexp.MustCompile(`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?([+-]\d{2}:\d{2}|Z)`)
+	reGen  = regexp.MustCompile(`pada: [^\\]*WIB`)
 	reDate = regexp.MustCompile(`\d{1,2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}`)
 	reTmp  = regexp.MustCompile(`/tmp/[^\s"]+|/var/folders/[^\s"]+`)
 )
@@ -44,6 +46,8 @@ func renderResult(res *ToolCallResult, err error) string {
 	}
 	out := reTime.ReplaceAllString(b.String(), `"$1": "<t>"`)
 	out = reDate.ReplaceAllString(out, "<date>")
+	out = reGen.ReplaceAllString(out, "pada: <gen>")
+	out = reISO.ReplaceAllString(out, "<iso>")
 	return reTmp.ReplaceAllString(out, "<tmp>")
 }
 
@@ -157,5 +161,82 @@ func TestCommunityToolListLocked(t *testing.T) {
 	}
 	if got != string(want) {
 		t.Fatalf("daftar tool berubah:\n%s", got)
+	}
+}
+
+// TestExtendedToolsCharacterization mengunci tool extended/runner (sukses dan galat).
+func TestExtendedToolsCharacterization(t *testing.T) {
+	s := newCharServer(t)
+	root := t.TempDir()
+	type call struct {
+		name string
+		args map[string]interface{}
+	}
+	calls := []call{
+		{"create_project", map[string]interface{}{"name": "Alpha", "slug": "alpha", "root_path": root}},
+		{"create_project", map[string]interface{}{"name": 5}},
+		{"update_project_status", map[string]interface{}{"project_id": "1", "action": "hold"}},
+		{"update_project_status", map[string]interface{}{"project_id": 1.0, "action": "activate"}},
+		{"update_project_status", map[string]interface{}{"project_id": 1.0, "action": "deprecate", "reason": "uji"}},
+		{"update_project_status", map[string]interface{}{"project_id": 1.0, "action": "undeprecate"}},
+		{"update_project_status", map[string]interface{}{"project_id": 1.0, "action": "done"}},
+		{"update_project_status", map[string]interface{}{"action": "done"}},
+		{"add_component", map[string]interface{}{"project_id": 1.0, "name": "api", "type": "backend", "path": "api"}},
+		{"get_component", map[string]interface{}{"component_id": 1.0}},
+		{"get_component", map[string]interface{}{"component_id": 77.0}},
+		{"list_component_routes", map[string]interface{}{"component_id": 1.0}},
+		{"sync_component_routes", map[string]interface{}{"component_id": 1.0, "enrich": true}},
+		{"diagnose_component", map[string]interface{}{"component_id": 77.0}},
+		{"fast_scan", map[string]interface{}{"component_id": 77.0}},
+		{"fast_scan", map[string]interface{}{"project_id": 77.0}},
+		{"evaluate_architecture", map[string]interface{}{"component_id": 77.0}},
+		{"evaluate_architecture", map[string]interface{}{"project_id": 77.0}},
+		{"list_architecture_patterns", nil},
+		{"get_security_status", nil},
+		{"test_secret_sanitizer", map[string]interface{}{"payload": "hello"}},
+		{"plan_workspace_reorg", map[string]interface{}{"x": "bad"}},
+		{"preview_consolidate_project", map[string]interface{}{"project_id": 77.0}},
+		{"consolidate_project", map[string]interface{}{"confirm": true, "project_id": 77.0}},
+		{"browse_directories", map[string]interface{}{"path": root}},
+		{"scan_project_similarities", nil},
+		{"compare_projects", map[string]interface{}{"project_id_a": 1.0, "project_id_b": 1.0}},
+		{"get_latest_diagnostic", map[string]interface{}{"component_id": 77.0}},
+		{"get_latest_diagnostic", map[string]interface{}{"project_id": 1.0}},
+		{"set_finding_status", map[string]interface{}{"project_id": 1.0, "finding_id": "zz", "status": "open"}},
+		{"set_finding_status", nil},
+		{"delete_todo", map[string]interface{}{"todo_id": 1.0}},
+		{"vibeasik_port_registry", nil},
+		{"vibeasik_assign_port", map[string]interface{}{"component_id": 1.0, "port": 4100.0}},
+		{"vibeasik_run_status", map[string]interface{}{"log_lines": 5.0}},
+		{"vibeasik_run_status", map[string]interface{}{"component_id": 1.0}},
+		{"vibeasik_ensure_unique_ports", nil},
+		{"vibeasik_stop_component", map[string]interface{}{"component_id": 1.0}},
+		{"vibeasik_run_component", map[string]interface{}{"component_id": 99.0}},
+		{"vibeasik_code_map_overview", map[string]interface{}{"project_id": 1.0, "detail": "files"}},
+		{"vibeasik_code_map_build", map[string]interface{}{"project_id": 1.0, "export": true}},
+		{"vibeasik_code_map_export", map[string]interface{}{"project_id": 1.0}},
+		{"vibeasik_code_map_status", map[string]interface{}{"project_id": 1.0}},
+		{"vibeasik_code_map_routes", map[string]interface{}{"project_id": 1.0, "format": "json"}},
+		{"vibeasik_code_map_search", map[string]interface{}{"project_id": 1.0, "query": "x"}},
+	}
+	var out strings.Builder
+	for _, c := range calls {
+		res, err := s.callTool(c.name, c.args)
+		out.WriteString("### " + c.name + "\n" + renderResult(res, err))
+	}
+	golden := filepath.Join("testdata", "extended.golden")
+	if *updateGolden {
+		if err := os.WriteFile(golden, []byte(out.String()), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+	want, err := os.ReadFile(golden)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out.String() != string(want) {
+		_ = os.WriteFile(golden+".got", []byte(out.String()), 0o644)
+		t.Fatalf("hasil tool extended berubah; bandingkan %s dengan %s.got", golden, golden)
 	}
 }
