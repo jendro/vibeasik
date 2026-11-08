@@ -169,7 +169,7 @@
    "snippet": "exec.Command(\"sh\", \"-c\", \"ping \" + host)",
    "rule_id": "SEC-COMMAND-INJECTION",
    "theory_basis": "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection') \u0026 OWASP Top 10 A03:2021.",
-   "suggested_fix": "Gunakan exec.Command(executable, args...) tanpa shell interpreter (sh/bash); validasi nilai dinamis dengan allowlist sebelum memasukkannya sebagai argumen slice terpisah. Contoh: exec.Command(\"ping\", \"-c\", \"1\", validatedHost)"
+   "suggested_fix": "Gunakan exec.Command(executable, args...) tanpa shell wrapper; validasi nilai dinamis dengan allowlist sebelum memasukkannya sebagai argumen terpisah. Contoh: exec.Command(\"ping\", \"-c\", \"1\", validatedHost)"
   },
   {
    "category": "security",
@@ -356,7 +356,7 @@
    "snippet": "shell_exec(\"a\" . $b);",
    "rule_id": "SEC-COMMAND-INJECTION",
    "theory_basis": "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection') \u0026 OWASP Top 10 A03:2021.",
-   "suggested_fix": "Gunakan exec.Command(executable, args...) tanpa shell interpreter (sh/bash); validasi nilai dinamis dengan allowlist sebelum memasukkannya sebagai argumen slice terpisah. Contoh: exec.Command(\"ping\", \"-c\", \"1\", validatedHost)"
+   "suggested_fix": "Gunakan exec.Command(executable, args...) tanpa shell wrapper; validasi nilai dinamis dengan allowlist sebelum memasukkannya sebagai argumen terpisah. Contoh: exec.Command(\"ping\", \"-c\", \"1\", validatedHost)"
   }
  ],
  "py": [
@@ -410,7 +410,7 @@
    "snippet": "subprocess.run(\"a\" + b, shell=True)",
    "rule_id": "SEC-COMMAND-INJECTION",
    "theory_basis": "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection') \u0026 OWASP Top 10 A03:2021.",
-   "suggested_fix": "Gunakan exec.Command(executable, args...) tanpa shell interpreter (sh/bash); validasi nilai dinamis dengan allowlist sebelum memasukkannya sebagai argumen slice terpisah. Contoh: exec.Command(\"ping\", \"-c\", \"1\", validatedHost)"
+   "suggested_fix": "Gunakan exec.Command(executable, args...) tanpa shell wrapper; validasi nilai dinamis dengan allowlist sebelum memasukkannya sebagai argumen terpisah. Contoh: exec.Command(\"ping\", \"-c\", \"1\", validatedHost)"
   },
   {
    "category": "query",

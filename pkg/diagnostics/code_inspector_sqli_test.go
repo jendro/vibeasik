@@ -31,6 +31,14 @@ func TestQuerySQLiNoSelfTrigger(t *testing.T) {
 	}
 }
 
+func TestCommandInjectionNoSelfTrigger(t *testing.T) {
+	for _, f := range []string{"code_inspector.go", "code_line_rules.go"} {
+		if hasRuleID(inspectRuleIDs(f, "pkg/diagnostics/"+f), "SEC-COMMAND-INJECTION") {
+			t.Errorf("%s memicu SEC-COMMAND-INJECTION pada dirinya sendiri", f)
+		}
+	}
+}
+
 func TestQuerySQLiStillDetected(t *testing.T) {
 	p := t.TempDir() + "/repo.go"
 	src := "package x\n\nfunc f(db *DB, id string) {\n\tdb.Raw(fmt.Sprintf(\"SELECT * FROM users WHERE id = %s\", id))\n}\n"
