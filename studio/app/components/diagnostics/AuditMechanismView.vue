@@ -143,7 +143,7 @@
                 Resiliensi &amp; Arsitektur API
               </span>
               <p class="text-neutral-600 dark:text-neutral-400">
-                Mendeteksi rute mutasi tanpa auth guard, wildcard CORS (*), God Controller (&gt;400 baris), error yang diabaikan (<code class="font-mono">_ = err</code>), blocking sync I/O di NodeJS, dan dialog browser native (<code class="font-mono">alert()</code>).
+                Mendeteksi rute mutasi tanpa auth guard, wildcard CORS (*), God Controller (&gt;400 baris), error yang diabaikan (<code class="font-mono">_ = err</code>), blocking sync I/O di NodeJS, dan penggunaan dialog browser native.
               </p>
             </div>
             <div class="p-2.5 rounded bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200/60 dark:border-neutral-700/60 space-y-1">

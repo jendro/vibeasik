@@ -358,7 +358,7 @@ defineExpose({
       @saved="onRouteSaved"
     />
 
-    <!-- Konfirmasi (pengganti confirm() bawaan browser) -->
+    <!-- Modal konfirmasi hapus endpoint rute -->
     <UModal
       :open="!!pendingDelete"
       title="Hapus rute?"
