@@ -552,9 +552,9 @@ export const AUDIT_CRITERIA: AuditCriterion[] = [
     title: 'Dangling / Stub Endpoint Belum Terimplementasi',
     scope: 'Backend (BE)',
     severity: 'info',
-    rule: 'Handler rute tidak boleh dibiarkan dengan komentar placeholder // TODO: implement atau mengembalikan string kosong tanpa status HTTP 501 (Not Implemented).',
+    rule: 'Handler rute tidak boleh dibiarkan berisi komentar placeholder TODO (varian: dengan atau tanpa titik dua, huruf besar/kecil bebas, diikuti kata implement/fix/handle), panic bertuliskan belum diimplementasi, atau body kosong yang hanya mengembalikan nil/string kosong tanpa status HTTP 501 (Not Implemented).',
     rationale: 'Endpoint dangling yang dipanggil klien dapat menimbulkan bug tak terduga jika dianggap sudah berfungsi.',
-    inspection_check: 'Pindai handler yang memuat // TODO implement atau panic("not implemented").',
+    inspection_check: 'Pindai handler pada kode aplikasi yang memuat komentar TODO (case-insensitive, titik dua opsional) diikuti implement/fix/handle, panic bergaya belum diimplementasi, atau body yang langsung mengembalikan nil/string kosong tanpa status eksplisit. Kecualikan string di dalam properti rule, inspection_check, dan example_code (teks dokumentasi, bukan handler terdaftar).',
     suggested_action: 'Selesaikan implementasi handler atau kembalikan response HTTP 501 dengan format JSON standar.',
     example_code: {
       bad: 'func UpdateUser(c *fiber.Ctx) error { return nil }',
