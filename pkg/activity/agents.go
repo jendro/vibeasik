@@ -180,86 +180,115 @@ func ReportActivity(c Caller, r Report) *models.AgentWorker {
 		return nil
 	}
 	name := strings.TrimSpace(r.AgentName)
-	key, parentKey := c.Key, ""
-	if parent := strings.TrimSpace(r.ParentSessionID); parent != "" {
-		// Sub agent berbagi koneksi MCP dengan koordinatornya, jadi key-nya selalu dari session_id sendiri.
-		parentKey = "report:" + slug(name) + ":" + slug(parent)
-		key = parentKey + ":sub:" + slug(util.FirstNonEmpty(r.SessionID, r.Task, "sub"))
-	} else if key == "" {
-		id := strings.TrimSpace(r.SessionID)
-		if id == "" {
-			id = name
-		}
-		if id == "" {
-			return nil
-		}
-		key = "report:" + slug(name) + ":" + slug(id)
+	key, parentKey, ok := resolveWorkerKey(c, r, name)
+	if !ok {
+		return nil
 	}
 	transport := c.Transport
 	if transport == "" {
 		transport = truncate(r.Transport, 30)
 	}
-	return upsertWorker(d, key, models.AgentWorker{Kind: models.WorkerKindCodingAgent, Name: FriendlyAgentName(name), Transport: transport}, func(w *models.AgentWorker) {
-		if name != "" {
-			w.Name = FriendlyAgentName(name)
-			if w.ClientName == "" {
-				w.ClientName = truncate(name, maxGenericLength)
-			}
-		}
-		if r.Model != "" {
-			w.Model = truncate(r.Model, maxGenericLength)
-		}
-		if r.Task != "" {
-			w.Task = r.Task
-		}
-		if parentKey != "" {
-			w.ParentKey, w.Role = parentKey, models.WorkerRoleSubagent
-		}
-		if r.Action != "" {
-			w.Action = r.Action
-		}
-		if r.ProjectPath != "" {
-			w.ProjectPath = truncate(r.ProjectPath, maxPathLength)
-		}
-		if r.ProjectID == 0 && r.ProjectPath != "" {
-			r.ProjectID = projectIDForPath(r.ProjectPath)
-		}
-		if r.ProjectID > 0 {
-			setProject(w, r.ProjectID)
-		} else if r.ProjectName != "" {
-			w.ProjectID = nil // proyek tidak terdaftar di vibeasik: jangan pertahankan tautan lama
-			w.ProjectName = truncate(r.ProjectName, maxGenericLength)
-		}
-		status := strings.ToLower(strings.TrimSpace(r.Status))
-		if r.TodoID > 0 {
-			todoStatus := models.TodoStatusInProgress
-			if status == models.WorkerStatusDone {
-				todoStatus = models.TodoStatusCompleted
-			}
-			applyTodoUpdate(w, r.TodoID, todoStatus)
-		}
-		switch status {
-		case models.WorkerStatusIdle:
-			w.Status = models.WorkerStatusIdle
-		case models.WorkerStatusDone:
-			// "done" = satu pekerjaan selesai, agent tetap di kantor dan siap task berikutnya;
-			// sub agent justru ditutup setelah melapor (satu sub agent = satu todo).
-			if r.TodoID == 0 {
-				w.TasksDone++
-			}
-			w.Status = models.WorkerStatusIdle
-			if parentKey != "" {
-				now := time.Now()
-				w.Status, w.FinishedAt = models.WorkerStatusDone, &now
-			}
-		case models.WorkerStatusLeft:
-			now := time.Now()
-			w.Status = models.WorkerStatusLeft
-			w.FinishedAt = &now
-		default:
-			w.Status = models.WorkerStatusWorking
-		}
+	return upsertWorker(d, key, models.AgentWorker{
+		Kind:      models.WorkerKindCodingAgent,
+		Name:      FriendlyAgentName(name),
+		Transport: transport,
+	}, func(w *models.AgentWorker) {
+		applyWorkerReportAttributes(w, r, name, parentKey)
 	})
+}
+
+// resolveWorkerKey menentukan key pekerja dan parentKey (bila sub agent) dari pemanggil atau laporan.
+func resolveWorkerKey(c Caller, r Report, name string) (key string, parentKey string, ok bool) {
+	if parent := strings.TrimSpace(r.ParentSessionID); parent != "" {
+		// Sub agent berbagi koneksi MCP dengan koordinatornya, jadi key-nya selalu dari session_id sendiri.
+		pKey := "report:" + slug(name) + ":" + slug(parent)
+		return pKey + ":sub:" + slug(util.FirstNonEmpty(r.SessionID, r.Task, "sub")), pKey, true
+	}
+	if c.Key != "" {
+		return c.Key, "", true
+	}
+	id := strings.TrimSpace(r.SessionID)
+	if id == "" {
+		id = name
+	}
+	if id == "" {
+		return "", "", false
+	}
+	return "report:" + slug(name) + ":" + slug(id), "", true
+}
+
+// applyWorkerReportAttributes menerapkan atribut identitas, proyek, dan status dari laporan ke pekerja.
+func applyWorkerReportAttributes(w *models.AgentWorker, r Report, name, parentKey string) {
+	if name != "" {
+		w.Name = FriendlyAgentName(name)
+		if w.ClientName == "" {
+			w.ClientName = truncate(name, maxGenericLength)
+		}
+	}
+	if r.Model != "" {
+		w.Model = truncate(r.Model, maxGenericLength)
+	}
+	if r.Task != "" {
+		w.Task = r.Task
+	}
+	if parentKey != "" {
+		w.ParentKey, w.Role = parentKey, models.WorkerRoleSubagent
+	}
+	if r.Action != "" {
+		w.Action = r.Action
+	}
+	applyWorkerProjectFromReport(w, r)
+	applyWorkerStatusFromReport(w, r, parentKey)
+}
+
+func applyWorkerProjectFromReport(w *models.AgentWorker, r Report) {
+	if r.ProjectPath != "" {
+		w.ProjectPath = truncate(r.ProjectPath, maxPathLength)
+	}
+	pid := r.ProjectID
+	if pid == 0 && r.ProjectPath != "" {
+		pid = projectIDForPath(r.ProjectPath)
+	}
+	if pid > 0 {
+		setProject(w, pid)
+		return
+	}
+	if r.ProjectName != "" {
+		w.ProjectID = nil // proyek tidak terdaftar di vibeasik: jangan pertahankan tautan lama
+		w.ProjectName = truncate(r.ProjectName, maxGenericLength)
+	}
+}
+
+func applyWorkerStatusFromReport(w *models.AgentWorker, r Report, parentKey string) {
+	status := strings.ToLower(strings.TrimSpace(r.Status))
+	if r.TodoID > 0 {
+		todoStatus := models.TodoStatusInProgress
+		if status == models.WorkerStatusDone {
+			todoStatus = models.TodoStatusCompleted
+		}
+		applyTodoUpdate(w, r.TodoID, todoStatus)
+	}
+	switch status {
+	case models.WorkerStatusIdle:
+		w.Status = models.WorkerStatusIdle
+	case models.WorkerStatusDone:
+		// "done" = satu pekerjaan selesai, agent tetap di kantor dan siap task berikutnya;
+		// sub agent justru ditutup setelah melapor (satu sub agent = satu todo).
+		if r.TodoID == 0 {
+			w.TasksDone++
+		}
+		w.Status = models.WorkerStatusIdle
+		if parentKey != "" {
+			now := time.Now()
+			w.Status, w.FinishedAt = models.WorkerStatusDone, &now
+		}
+	case models.WorkerStatusLeft:
+		now := time.Now()
+		w.Status = models.WorkerStatusLeft
+		w.FinishedAt = &now
+	default:
+		w.Status = models.WorkerStatusWorking
+	}
 }
 
 // applyTodoUpdate menautkan todo ke pekerja: in_progress = sedang dikerjakan, completed = selesai.

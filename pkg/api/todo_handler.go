@@ -7,86 +7,14 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 
 	"github.com/vibeasik/vibeasik/pkg/models"
 	"github.com/vibeasik/vibeasik/pkg/registry"
 )
 
 func (s *Server) getTodos(c *fiber.Ctx) error {
-	level := c.Query("level")
-	projectIDStr := c.Query("project_id")
-	componentIDStr := c.Query("component_id")
-	status := c.Query("status")
-	priority := c.Query("priority")
-	creatorType := c.Query("creator_type")
-	category := c.Query("category")
-	isSuggestionStr := c.Query("is_ai_suggestion")
-	source := c.Query("source")
-	tag := c.Query("tag")
-
-	limitStr := c.Query("limit")
-	offsetStr := c.Query("offset")
-
-	query := s.db.Model(&models.Todo{})
-
-	if level != "" {
-		query = query.Where("level = ?", level)
-	}
-
-	if category != "" && category != "all" {
-		query = query.Where("category = ?", category)
-	}
-
-	if source != "" && source != "all" {
-		query = query.Where("source = ?", source)
-	}
-
-	if tag != "" && tag != "all" {
-		query = models.WhereTag(query, tag)
-	}
-
-	if projectIDStr != "" {
-		pid, err := strconv.Atoi(projectIDStr)
-		if err == nil {
-			query = query.Where("project_id = ?", pid)
-		}
-	}
-
-	if componentIDStr != "" {
-		cid, err := strconv.Atoi(componentIDStr)
-		if err == nil {
-			query = query.Where("component_id = ?", cid)
-		}
-	}
-
-	if status != "" {
-		query = query.Where("status = ?", status)
-	}
-
-	if priority != "" {
-		query = query.Where("priority = ?", priority)
-	}
-
-	if creatorType != "" {
-		query = query.Where("creator_type = ?", creatorType)
-	}
-
-	if isSuggestionStr != "" {
-		isSuggestion := isSuggestionStr == "true" || isSuggestionStr == "1"
-		query = query.Where("is_ai_suggestion = ?", isSuggestion)
-	}
-
-	if limitStr != "" {
-		if limit, err := strconv.Atoi(limitStr); err == nil && limit > 0 {
-			query = query.Limit(limit)
-		}
-	}
-
-	if offsetStr != "" {
-		if offset, err := strconv.Atoi(offsetStr); err == nil && offset >= 0 {
-			query = query.Offset(offset)
-		}
-	}
+	query := buildTodoFilterQuery(s.db.Model(&models.Todo{}), c)
 
 	var todos []models.Todo
 	if err := query.Order("status ASC, created_at DESC").Find(&todos).Error; err != nil {
@@ -94,6 +22,69 @@ func (s *Server) getTodos(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(todos)
+}
+
+func buildTodoFilterQuery(query *gorm.DB, c *fiber.Ctx) *gorm.DB {
+	query = applyTodoStringFilters(query, c)
+	query = applyTodoEntityFilters(query, c)
+	return applyTodoPagination(query, c)
+}
+
+func applyTodoStringFilters(query *gorm.DB, c *fiber.Ctx) *gorm.DB {
+	if level := c.Query("level"); level != "" {
+		query = query.Where("level = ?", level)
+	}
+	if category := c.Query("category"); category != "" && category != "all" {
+		query = query.Where("category = ?", category)
+	}
+	if source := c.Query("source"); source != "" && source != "all" {
+		query = query.Where("source = ?", source)
+	}
+	if tag := c.Query("tag"); tag != "" && tag != "all" {
+		query = models.WhereTag(query, tag)
+	}
+	if status := c.Query("status"); status != "" {
+		query = query.Where("status = ?", status)
+	}
+	if priority := c.Query("priority"); priority != "" {
+		query = query.Where("priority = ?", priority)
+	}
+	if creatorType := c.Query("creator_type"); creatorType != "" {
+		query = query.Where("creator_type = ?", creatorType)
+	}
+	return query
+}
+
+func applyTodoEntityFilters(query *gorm.DB, c *fiber.Ctx) *gorm.DB {
+	if projectIDStr := c.Query("project_id"); projectIDStr != "" {
+		if pid, err := strconv.Atoi(projectIDStr); err == nil {
+			query = query.Where("project_id = ?", pid)
+		}
+	}
+	if componentIDStr := c.Query("component_id"); componentIDStr != "" {
+		if cid, err := strconv.Atoi(componentIDStr); err == nil {
+			query = query.Where("component_id = ?", cid)
+		}
+	}
+	if isSuggestionStr := c.Query("is_ai_suggestion"); isSuggestionStr != "" {
+		isSuggestion := isSuggestionStr == "true" || isSuggestionStr == "1"
+		query = query.Where("is_ai_suggestion = ?", isSuggestion)
+	}
+	return query
+}
+
+func applyTodoPagination(query *gorm.DB, c *fiber.Ctx) *gorm.DB {
+	if limitStr := c.Query("limit"); limitStr != "" {
+		if limit, err := strconv.Atoi(limitStr); err == nil && limit > 0 {
+			query = query.Limit(limit)
+		}
+	}
+	if offsetStr := c.Query("offset"); offsetStr != "" {
+		if offset, err := strconv.Atoi(offsetStr); err == nil && offset >= 0 {
+			query = query.Offset(offset)
+		}
+	}
+	return query
 }
 
 // getImpactDimensions mengembalikan definisi dimensi dampak, bobot per kategori, dan ambang tingkat
@@ -108,41 +99,9 @@ func (s *Server) getProjectTodos(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 
-	limitStr := c.Query("limit")
-	offsetStr := c.Query("offset")
-	status := c.Query("status")
-	priority := c.Query("priority")
-	creatorType := c.Query("creator_type")
-	category := c.Query("category")
-	source := c.Query("source")
-
 	query := s.db.Where("project_id = ?", id)
-	if category != "" && category != "all" {
-		query = query.Where("category = ?", category)
-	}
-	if source != "" && source != "all" {
-		query = query.Where("source = ?", source)
-	}
-	if status != "" {
-		query = query.Where("status = ?", status)
-	}
-	if priority != "" {
-		query = query.Where("priority = ?", priority)
-	}
-	if creatorType != "" {
-		query = query.Where("creator_type = ?", creatorType)
-	}
-
-	if limitStr != "" {
-		if limit, err := strconv.Atoi(limitStr); err == nil && limit > 0 {
-			query = query.Limit(limit)
-		}
-	}
-	if offsetStr != "" {
-		if offset, err := strconv.Atoi(offsetStr); err == nil && offset >= 0 {
-			query = query.Offset(offset)
-		}
-	}
+	query = applyTodoStringFilters(query, c)
+	query = applyTodoPagination(query, c)
 
 	var todos []models.Todo
 	if err := query.Order("status ASC, created_at DESC").Find(&todos).Error; err != nil {
@@ -171,18 +130,39 @@ func (s *Server) createTodo(c *fiber.Ctx) error {
 	if msg := bindJSONRequired(c, &payload); msg != "" {
 		return badPayload(c, msg)
 	}
+	if denied, resp := validateCreateTodo(c, &payload); denied {
+		return resp
+	}
 
+	applyTodoDefaults(&payload)
+	s.resolveTodoEntities(&payload)
+	finalizeTodoPayload(&payload)
+
+	if err := s.db.Create(&payload).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(payload)
+}
+
+func validateCreateTodo(c *fiber.Ctx, payload *models.Todo) (bool, error) {
 	payload.Title = strings.TrimSpace(payload.Title)
 	if payload.Title == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "title is required"})
+		return true, c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "title is required"})
 	}
-	if msg := firstProblem(maxLen("title", payload.Title, maxLabel), maxLen("description", payload.Description, maxText),
+	if msg := firstProblem(
+		maxLen("title", payload.Title, maxLabel),
+		maxLen("description", payload.Description, maxText),
 		oneOf("level", payload.Level, models.TodoLevelGlobal, models.TodoLevelProject, models.TodoLevelComponent),
 		oneOf("status", payload.Status, todoStatuses...),
-		oneOf("priority", payload.Priority, todoPriorities...)); msg != "" {
-		return badPayload(c, msg)
+		oneOf("priority", payload.Priority, todoPriorities...),
+	); msg != "" {
+		return true, badPayload(c, msg)
 	}
+	return false, nil
+}
 
+func applyTodoDefaults(payload *models.Todo) {
 	if payload.Level == "" {
 		if payload.ComponentID != nil && *payload.ComponentID > 0 {
 			payload.Level = models.TodoLevelComponent
@@ -212,8 +192,9 @@ func (s *Server) createTodo(c *fiber.Ctx) error {
 	if payload.Category == "" {
 		payload.Category = models.CategoryGeneral
 	}
+}
 
-	// Resolve project name
+func (s *Server) resolveTodoEntities(payload *models.Todo) {
 	if payload.ProjectID != nil && *payload.ProjectID > 0 {
 		var p models.Project
 		if err := s.db.Select("name").First(&p, *payload.ProjectID).Error; err == nil {
@@ -221,7 +202,6 @@ func (s *Server) createTodo(c *fiber.Ctx) error {
 		}
 	}
 
-	// Resolve component name
 	if payload.ComponentID != nil && *payload.ComponentID > 0 {
 		var comp models.Component
 		if err := s.db.Select("name, project_id").First(&comp, *payload.ComponentID).Error; err == nil {
@@ -235,7 +215,9 @@ func (s *Server) createTodo(c *fiber.Ctx) error {
 			}
 		}
 	}
+}
 
+func finalizeTodoPayload(payload *models.Todo) {
 	if payload.TargetApps == "" {
 		if payload.ComponentName != "" {
 			payload.TargetApps = fmt.Sprintf("%s [1 App]", payload.ComponentName)
@@ -250,12 +232,6 @@ func (s *Server) createTodo(c *fiber.Ctx) error {
 		now := time.Now()
 		payload.CompletedAt = &now
 	}
-
-	if err := s.db.Create(&payload).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return c.Status(fiber.StatusCreated).JSON(payload)
 }
 
 func (s *Server) updateTodo(c *fiber.Ctx) error {

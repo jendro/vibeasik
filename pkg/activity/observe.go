@@ -13,6 +13,8 @@ import (
 	"sync"
 	"time"
 
+	"gorm.io/gorm"
+
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
@@ -293,69 +295,98 @@ func ApplyObservation(o Observation, doneDelta int, resolveProject, firstRead bo
 	if d == nil {
 		return false
 	}
-	if o.OnlyExisting {
-		var cur models.AgentWorker
-		if d.Select("status", "finished_at").Where("worker_key = ?", o.Key).First(&cur).Error != nil ||
-			cur.FinishedAt != nil || cur.Status == models.WorkerStatusDone || cur.Status == models.WorkerStatusLeft {
-			return true
-		}
+	if shouldSkipObservation(d, o) {
+		return true
 	}
-	upsertWorker(d, o.Key, models.AgentWorker{Kind: models.WorkerKindCodingAgent, Name: o.Name, ClientName: o.ClientName, Transport: o.Transport}, func(w *models.AgentWorker) {
-		w.Name = o.Name
-		if w.ClientName == "" {
-			w.ClientName = o.ClientName
-		}
-		if w.Transport == "" || w.Transport == "hook" {
-			w.Transport = o.Transport
-		}
-		if o.Model != "" {
-			w.Model = truncate(o.Model, maxGenericLength)
-		}
-		if o.Action != "" {
-			w.Action = o.Action
-		}
-		if o.Role != "" {
-			w.Role = truncate(o.Role, maxGenericLength)
-		}
-		if o.ParentKey != "" {
-			w.ParentKey = o.ParentKey
-		}
+	base := models.AgentWorker{
+		Kind:       models.WorkerKindCodingAgent,
+		Name:       o.Name,
+		ClientName: o.ClientName,
+		Transport:  o.Transport,
+	}
+	upsertWorker(d, o.Key, base, func(w *models.AgentWorker) {
+		applyObservationAttributes(w, o)
 		if resolveProject {
-			w.ProjectPath = truncate(o.ProjectPath, maxPathLength)
-			if id := projectIDForPath(o.ProjectPath); id > 0 {
-				setProject(w, id)
-			} else {
-				w.ProjectID = nil
-				w.ProjectName = truncate(repoName(o.ProjectPath), maxGenericLength)
-			}
+			applyObservationProject(w, o.ProjectPath)
 		}
-		if !(firstRead && w.ID != 0) {
-			w.TasksDone += doneDelta
-		}
-		if o.TodoID > 0 {
-			applyTodoUpdate(w, o.TodoID, o.TodoStatus)
-		}
-		// Selama memegang todo, gelembung menampilkan judul todo; setelah itu kembali ke prompt terakhir.
-		// "Selesai: <todo>" hanya tampil pada pembaruan saat todo itu diselesaikan (o.TodoID dikosongkan
-		// applyTracked untuk todo yang sama), lalu kembali ke prompt terakhir.
-		if o.Task != "" && w.TodoID == nil && !(o.TodoID > 0 && o.TodoStatus == models.TodoStatusCompleted) {
-			w.Task = o.Task
-		}
-		w.LastSeenAt = o.LastEvent
-		switch o.Status {
-		case models.WorkerStatusLeft:
-			at := o.LastEvent
-			w.Status, w.FinishedAt = models.WorkerStatusLeft, &at
-		case models.WorkerStatusIdle:
-			w.Status = models.WorkerStatusIdle
-		case models.WorkerStatusDone: // sub agent melapor & ditutup
-			at := o.LastEvent
-			w.Status, w.FinishedAt = models.WorkerStatusDone, &at
-		default:
-			w.Status = models.WorkerStatusWorking
-		}
+		applyObservationTasksAndTodo(w, o, doneDelta, firstRead)
+		applyObservationStatus(w, o)
 	})
 	return true
+}
+
+func shouldSkipObservation(d *gorm.DB, o Observation) bool {
+	if !o.OnlyExisting {
+		return false
+	}
+	var cur models.AgentWorker
+	if d.Select("status", "finished_at").Where("worker_key = ?", o.Key).First(&cur).Error != nil {
+		return true
+	}
+	return cur.FinishedAt != nil || cur.Status == models.WorkerStatusDone || cur.Status == models.WorkerStatusLeft
+}
+
+func applyObservationAttributes(w *models.AgentWorker, o Observation) {
+	w.Name = o.Name
+	if w.ClientName == "" {
+		w.ClientName = o.ClientName
+	}
+	if w.Transport == "" || w.Transport == "hook" {
+		w.Transport = o.Transport
+	}
+	if o.Model != "" {
+		w.Model = truncate(o.Model, maxGenericLength)
+	}
+	if o.Action != "" {
+		w.Action = o.Action
+	}
+	if o.Role != "" {
+		w.Role = truncate(o.Role, maxGenericLength)
+	}
+	if o.ParentKey != "" {
+		w.ParentKey = o.ParentKey
+	}
+}
+
+func applyObservationProject(w *models.AgentWorker, projectPath string) {
+	w.ProjectPath = truncate(projectPath, maxPathLength)
+	if id := projectIDForPath(projectPath); id > 0 {
+		setProject(w, id)
+		return
+	}
+	w.ProjectID = nil
+	w.ProjectName = truncate(repoName(projectPath), maxGenericLength)
+}
+
+func applyObservationTasksAndTodo(w *models.AgentWorker, o Observation, doneDelta int, firstRead bool) {
+	if !(firstRead && w.ID != 0) {
+		w.TasksDone += doneDelta
+	}
+	if o.TodoID > 0 {
+		applyTodoUpdate(w, o.TodoID, o.TodoStatus)
+	}
+	// Selama memegang todo, gelembung menampilkan judul todo; setelah itu kembali ke prompt terakhir.
+	// "Selesai: <todo>" hanya tampil pada pembaruan saat todo itu diselesaikan (o.TodoID dikosongkan
+	// applyTracked untuk todo yang sama), lalu kembali ke prompt terakhir.
+	if o.Task != "" && w.TodoID == nil && !(o.TodoID > 0 && o.TodoStatus == models.TodoStatusCompleted) {
+		w.Task = o.Task
+	}
+}
+
+func applyObservationStatus(w *models.AgentWorker, o Observation) {
+	w.LastSeenAt = o.LastEvent
+	switch o.Status {
+	case models.WorkerStatusLeft:
+		at := o.LastEvent
+		w.Status, w.FinishedAt = models.WorkerStatusLeft, &at
+	case models.WorkerStatusIdle:
+		w.Status = models.WorkerStatusIdle
+	case models.WorkerStatusDone: // sub agent melapor & ditutup
+		at := o.LastEvent
+		w.Status, w.FinishedAt = models.WorkerStatusDone, &at
+	default:
+		w.Status = models.WorkerStatusWorking
+	}
 }
 
 // repoName memberi nama folder repo (akar git) dari sebuah path file/direktori.
