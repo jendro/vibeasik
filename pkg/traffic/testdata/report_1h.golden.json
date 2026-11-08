@@ -1,0 +1,987 @@
+{
+ "source": {
+  "id": 0,
+  "name": "",
+  "mode": "",
+  "cloud_url": "",
+  "sync_interval_sec": 0,
+  "enabled": false,
+  "pending": 0,
+  "dropped": 0,
+  "total_events": 0,
+  "last_sync_at": null,
+  "last_event_at": null,
+  "last_ingest_at": null,
+  "last_instance": "",
+  "last_error": "",
+  "created_at": "0001-01-01T00:00:00Z",
+  "updated_at": "0001-01-01T00:00:00Z"
+ },
+ "window": "1h",
+ "gran": "m",
+ "from": "2026-01-01T18:00:00+07:00",
+ "to": "2026-01-01T12:00:30Z",
+ "step_sec": 60,
+ "totals": {
+  "requests": 2268,
+  "err_4xx": 440,
+  "err_5xx": 279,
+  "err_rate": 0.12301587301587301,
+  "client_err_rate": 0.19400352733686066,
+  "rps_avg": 3.6,
+  "rpm_peak": 504,
+  "peak_at": 1767268620,
+  "concurrency_avg": 0.17,
+  "concurrency_peak": 0.39,
+  "avg_ms": 47,
+  "p50": 5,
+  "p95": 20.7,
+  "p99": 24.1,
+  "max_ms": 560,
+  "avg_out": 2000,
+  "avg_in": 100,
+  "unique_ips": 3,
+  "instances": 2,
+  "read_share": 0.7142857142857143,
+  "span_minutes": 10.5
+ },
+ "series": [
+  {
+   "t": 1767265200,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767265260,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767265320,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767265380,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767265440,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767265500,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767265560,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767265620,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767265680,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767265740,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767265800,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767265860,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767265920,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767265980,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767266040,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767266100,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767266160,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767266220,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767266280,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767266340,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767266400,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767266460,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767266520,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767266580,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767266640,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767266700,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767266760,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767266820,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767266880,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767266940,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767267000,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767267060,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767267120,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767267180,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767267240,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767267300,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767267360,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767267420,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767267480,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767267540,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767267600,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767267660,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767267720,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767267780,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767267840,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767267900,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767267960,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767268020,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767268080,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767268140,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767268200,
+   "requests": 63,
+   "err_4xx": 11,
+   "err_5xx": 6,
+   "avg_ms": 47,
+   "p95": 21.6
+  },
+  {
+   "t": 1767268260,
+   "requests": 126,
+   "err_4xx": 23,
+   "err_5xx": 14,
+   "avg_ms": 47,
+   "p95": 20.9
+  },
+  {
+   "t": 1767268320,
+   "requests": 189,
+   "err_4xx": 36,
+   "err_5xx": 23,
+   "avg_ms": 47,
+   "p95": 20.7
+  },
+  {
+   "t": 1767268380,
+   "requests": 252,
+   "err_4xx": 48,
+   "err_5xx": 30,
+   "avg_ms": 47,
+   "p95": 20.7
+  },
+  {
+   "t": 1767268440,
+   "requests": 315,
+   "err_4xx": 63,
+   "err_5xx": 39,
+   "avg_ms": 47,
+   "p95": 20.8
+  },
+  {
+   "t": 1767268500,
+   "requests": 378,
+   "err_4xx": 74,
+   "err_5xx": 48,
+   "avg_ms": 47,
+   "p95": 20.5
+  },
+  {
+   "t": 1767268560,
+   "requests": 441,
+   "err_4xx": 86,
+   "err_5xx": 56,
+   "avg_ms": 47,
+   "p95": 20.7
+  },
+  {
+   "t": 1767268620,
+   "requests": 504,
+   "err_4xx": 99,
+   "err_5xx": 63,
+   "avg_ms": 47,
+   "p95": 20.6
+  },
+  {
+   "t": 1767268680,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767268740,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  },
+  {
+   "t": 1767268800,
+   "requests": 0,
+   "err_4xx": 0,
+   "err_5xx": 0,
+   "avg_ms": 0,
+   "p95": 0
+  }
+ ],
+ "routes": [
+  {
+   "method": "GET",
+   "route": "/api/products/:id",
+   "group": "/products",
+   "count": 1440,
+   "share": 0.6349206349206349,
+   "time_share": 0.40526849037487334,
+   "rpm": 137.1,
+   "err_4xx": 288,
+   "err_5xx": 202,
+   "err_rate": 0.14027777777777778,
+   "avg_ms": 30,
+   "p50": 5,
+   "p95": 20.6,
+   "p99": 24.1,
+   "max_ms": 200,
+   "avg_out": 1000,
+   "avg_in": 100,
+   "hot_share": 1
+  },
+  {
+   "method": "POST",
+   "route": "/api/orders",
+   "group": "/orders",
+   "count": 396,
+   "share": 0.1746031746031746,
+   "time_share": 0.3640661938534279,
+   "rpm": 37.7,
+   "err_4xx": 76,
+   "err_5xx": 36,
+   "err_rate": 0.09090909090909091,
+   "avg_ms": 98,
+   "p50": 5.1,
+   "p95": 20.8,
+   "p99": 24.2,
+   "max_ms": 560,
+   "avg_out": 5000,
+   "avg_in": 100,
+   "hot_share": 0
+  },
+  {
+   "method": "POST",
+   "route": "/api/auth/login",
+   "group": "/auth",
+   "count": 252,
+   "share": 0.1111111111111111,
+   "time_share": 0.1111111111111111,
+   "rpm": 24,
+   "err_4xx": 47,
+   "err_5xx": 28,
+   "err_rate": 0.1111111111111111,
+   "avg_ms": 47,
+   "p50": 5.1,
+   "p95": 21,
+   "p99": 24.2,
+   "max_ms": 290,
+   "avg_out": 2000,
+   "avg_in": 100,
+   "hot_share": 0
+  },
+  {
+   "method": "GET",
+   "route": "static:js",
+   "group": "static:js",
+   "count": 108,
+   "share": 0.047619047619047616,
+   "time_share": 0.06484295845997974,
+   "rpm": 10.3,
+   "err_4xx": 18,
+   "err_5xx": 9,
+   "err_rate": 0.08333333333333333,
+   "avg_ms": 64,
+   "p50": 5.3,
+   "p95": 20.9,
+   "p99": 24.2,
+   "max_ms": 380,
+   "avg_out": 3000,
+   "avg_in": 100,
+   "hot_share": 0
+  },
+  {
+   "method": "HEAD",
+   "route": "/health",
+   "group": "/health",
+   "count": 72,
+   "share": 0.031746031746031744,
+   "time_share": 0.0547112462006079,
+   "rpm": 6.9,
+   "err_4xx": 11,
+   "err_5xx": 4,
+   "err_rate": 0.05555555555555555,
+   "avg_ms": 81,
+   "p50": 5,
+   "p95": 21.4,
+   "p99": 24.3,
+   "max_ms": 470,
+   "avg_out": 4000,
+   "avg_in": 100,
+   "hot_share": 0
+  }
+ ],
+ "groups": [
+  {
+   "group": "/products",
+   "routes": 1,
+   "count": 1440,
+   "share": 0.6349206349206349,
+   "time_share": 0.40526849037487334,
+   "p95": 20.6,
+   "err_rate": 0.14027777777777778,
+   "avg_ms": 30
+  },
+  {
+   "group": "/orders",
+   "routes": 1,
+   "count": 396,
+   "share": 0.1746031746031746,
+   "time_share": 0.3640661938534279,
+   "p95": 20.8,
+   "err_rate": 0.09090909090909091,
+   "avg_ms": 98
+  },
+  {
+   "group": "/auth",
+   "routes": 1,
+   "count": 252,
+   "share": 0.1111111111111111,
+   "time_share": 0.1111111111111111,
+   "p95": 21,
+   "err_rate": 0.1111111111111111,
+   "avg_ms": 47
+  },
+  {
+   "group": "static:js",
+   "routes": 1,
+   "count": 108,
+   "share": 0.047619047619047616,
+   "time_share": 0.06484295845997974,
+   "p95": 20.9,
+   "err_rate": 0.08333333333333333,
+   "avg_ms": 64
+  },
+  {
+   "group": "/health",
+   "routes": 1,
+   "count": 72,
+   "share": 0.031746031746031744,
+   "time_share": 0.0547112462006079,
+   "p95": 21.4,
+   "err_rate": 0.05555555555555555,
+   "avg_ms": 81
+  }
+ ],
+ "status": [
+  {
+   "value": "200",
+   "count": 500,
+   "err": 0,
+   "share": 0.2204585537918871
+  },
+  {
+   "value": "401",
+   "count": 40,
+   "err": 40,
+   "share": 0.01763668430335097
+  }
+ ],
+ "countries": [
+  {
+   "value": "ID",
+   "count": 400,
+   "err": 3,
+   "share": 0.1763668430335097
+  },
+  {
+   "value": "US",
+   "count": 100,
+   "err": 9,
+   "share": 0.04409171075837742
+  }
+ ],
+ "referers": [
+  {
+   "value": "google.com",
+   "count": 60,
+   "err": 0,
+   "share": 0.026455026455026454
+  }
+ ],
+ "ua_classes": [
+  {
+   "value": "browser",
+   "count": 400,
+   "err": 12,
+   "share": 0.1763668430335097
+  },
+  {
+   "value": "bot",
+   "count": 70,
+   "err": 0,
+   "share": 0.030864197530864196
+  }
+ ],
+ "clients": [
+  {
+   "value": "Chrome",
+   "count": 380,
+   "err": 5,
+   "share": 0.1675485008818342
+  }
+ ],
+ "instances": [
+  {
+   "value": "a",
+   "count": 300,
+   "err": 2,
+   "share": 0.13227513227513227
+  },
+  {
+   "value": "b",
+   "count": 200,
+   "err": 4,
+   "share": 0.08818342151675485
+  }
+ ],
+ "not_found": [
+  {
+   "value": "/.env",
+   "count": 25,
+   "err": 25,
+   "share": 0.011022927689594356
+  },
+  {
+   "value": "/zzz",
+   "count": 4,
+   "err": 4,
+   "share": 0.001763668430335097
+  }
+ ],
+ "top_ips": [
+  {
+   "ip": "1.1.1.1",
+   "count": 250,
+   "share": 0.11022927689594356,
+   "peak_per_min": 90,
+   "err_rate": 0.04,
+   "auth_hits": 30,
+   "auth_peak_per_min": 12
+  },
+  {
+   "ip": "2.2.2.2",
+   "count": 150,
+   "share": 0.06613756613756613,
+   "peak_per_min": 15,
+   "err_rate": 0.006666666666666667,
+   "auth_hits": 0,
+   "auth_peak_per_min": 0
+  },
+  {
+   "ip": "3.3.3.3",
+   "count": 50,
+   "share": 0.02204585537918871,
+   "peak_per_min": 5,
+   "err_rate": 0,
+   "auth_hits": 0,
+   "auth_peak_per_min": 0
+  }
+ ],
+ "recommendations": [
+  {
+   "id": "rate_limit:auth",
+   "rule": "TRAFFIC-RATE-LIMIT-AUTH",
+   "category": "rate_limit",
+   "severity": "critical",
+   "title": "Endpoint login/OTP/daftar diserang percobaan berulang",
+   "detail": "Banyak percobaan gagal atau percobaan cepat dari satu IP ke endpoint autentikasi adalah pola brute force / credential stuffing / spam OTP (biaya SMS/email).",
+   "action": "Rate limit ketat khusus endpoint auth: 5–10 percobaan/menit per IP dan per akun/nomor, jeda bertahap setelah gagal, CAPTCHA setelah 3–5 gagal, dan batas harian untuk kirim OTP.",
+   "evidence": [
+    "252 request ke endpoint auth, 18.7% gagal (4xx)",
+    "1.1.1.1: 12 percobaan auth/menit (puncak)"
+   ],
+   "routes": [
+    "POST /api/auth/login"
+   ]
+  },
+  {
+   "id": "errors:GET /api/products/:id",
+   "rule": "TRAFFIC-5XX",
+   "category": "errors",
+   "severity": "critical",
+   "title": "GET /api/products/:id gagal 14.0% (5xx)",
+   "detail": "202 dari 1440 request berakhir error server. Bila error naik saat traffic ramai, penyebabnya biasanya koneksi DB habis, timeout layanan luar, atau memori.",
+   "action": "Cek log error endpoint ini pada jam yang sama, tambahkan timeout + retry dengan backoff untuk layanan luar, perbesar/atur pool koneksi DB, dan balas error yang jelas (4xx) untuk input salah alih-alih 500.",
+   "evidence": [
+    "202 error 5xx",
+    "p95 21 ms"
+   ],
+   "routes": [
+    "GET /api/products/:id"
+   ]
+  },
+  {
+   "id": "errors:POST /api/auth/login",
+   "rule": "TRAFFIC-5XX",
+   "category": "errors",
+   "severity": "critical",
+   "title": "POST /api/auth/login gagal 11.1% (5xx)",
+   "detail": "28 dari 252 request berakhir error server. Bila error naik saat traffic ramai, penyebabnya biasanya koneksi DB habis, timeout layanan luar, atau memori.",
+   "action": "Cek log error endpoint ini pada jam yang sama, tambahkan timeout + retry dengan backoff untuk layanan luar, perbesar/atur pool koneksi DB, dan balas error yang jelas (4xx) untuk input salah alih-alih 500.",
+   "evidence": [
+    "28 error 5xx",
+    "p95 21 ms"
+   ],
+   "routes": [
+    "POST /api/auth/login"
+   ]
+  },
+  {
+   "id": "security:scanner",
+   "rule": "TRAFFIC-SCANNER",
+   "category": "security",
+   "severity": "warning",
+   "title": "Server dipindai bot pencari celah (.env, wp-admin, .git, …)",
+   "detail": "Pemindai otomatis mencari berkas rahasia \u0026 panel admin. Tidak berbahaya selama berkas itu memang tidak tersaji, tetapi tetap memakan kapasitas dan menandakan server sudah jadi target.",
+   "action": "Pastikan .env/.git tidak pernah tersaji, blokir pola path ini di reverse proxy/WAF (Caddy/Nginx/Cloudflare), dan pasang fail2ban/limit untuk IP yang banyak menghasilkan 404.",
+   "evidence": [
+    "25 request ke path pemindai kerentanan",
+    "/.env (25×)"
+   ]
+  },
+  {
+   "id": "errors:POST /api/orders",
+   "rule": "TRAFFIC-5XX",
+   "category": "errors",
+   "severity": "warning",
+   "title": "POST /api/orders gagal 9.1% (5xx)",
+   "detail": "36 dari 396 request berakhir error server. Bila error naik saat traffic ramai, penyebabnya biasanya koneksi DB habis, timeout layanan luar, atau memori.",
+   "action": "Cek log error endpoint ini pada jam yang sama, tambahkan timeout + retry dengan backoff untuk layanan luar, perbesar/atur pool koneksi DB, dan balas error yang jelas (4xx) untuk input salah alih-alih 500.",
+   "evidence": [
+    "36 error 5xx",
+    "p95 21 ms"
+   ],
+   "routes": [
+    "POST /api/orders"
+   ]
+  },
+  {
+   "id": "errors:GET static:js",
+   "rule": "TRAFFIC-5XX",
+   "category": "errors",
+   "severity": "warning",
+   "title": "GET static:js gagal 8.3% (5xx)",
+   "detail": "9 dari 108 request berakhir error server. Bila error naik saat traffic ramai, penyebabnya biasanya koneksi DB habis, timeout layanan luar, atau memori.",
+   "action": "Cek log error endpoint ini pada jam yang sama, tambahkan timeout + retry dengan backoff untuk layanan luar, perbesar/atur pool koneksi DB, dan balas error yang jelas (4xx) untuk input salah alih-alih 500.",
+   "evidence": [
+    "9 error 5xx",
+    "p95 21 ms"
+   ],
+   "routes": [
+    "GET static:js"
+   ]
+  },
+  {
+   "id": "lb:imbalance",
+   "rule": "TRAFFIC-LB-IMBALANCE",
+   "category": "load_balancer",
+   "severity": "warning",
+   "title": "Beban antar instance tidak seimbang",
+   "detail": "Instance tersibuk menerima 1.5× instance tersepi. Satu instance bisa jenuh sementara yang lain menganggur.",
+   "action": "Periksa algoritma load balancer (pakai least_conn/round-robin), matikan sticky session bila tidak perlu, dan pastikan health check mengeluarkan instance yang lambat.",
+   "evidence": [
+    "a: 300 request (13.2%)",
+    "b: 200 request (8.8%)"
+   ]
+  }
+ ],
+ "Minutes": [
+  {
+   "t": 1767268200,
+   "requests": 63,
+   "err_4xx": 11,
+   "err_5xx": 6,
+   "avg_ms": 47,
+   "p95": 21.6
+  },
+  {
+   "t": 1767268260,
+   "requests": 126,
+   "err_4xx": 23,
+   "err_5xx": 14,
+   "avg_ms": 47,
+   "p95": 20.9
+  },
+  {
+   "t": 1767268320,
+   "requests": 189,
+   "err_4xx": 36,
+   "err_5xx": 23,
+   "avg_ms": 47,
+   "p95": 20.7
+  },
+  {
+   "t": 1767268380,
+   "requests": 252,
+   "err_4xx": 48,
+   "err_5xx": 30,
+   "avg_ms": 47,
+   "p95": 20.7
+  },
+  {
+   "t": 1767268440,
+   "requests": 315,
+   "err_4xx": 63,
+   "err_5xx": 39,
+   "avg_ms": 47,
+   "p95": 20.8
+  },
+  {
+   "t": 1767268500,
+   "requests": 378,
+   "err_4xx": 74,
+   "err_5xx": 48,
+   "avg_ms": 47,
+   "p95": 20.5
+  },
+  {
+   "t": 1767268560,
+   "requests": 441,
+   "err_4xx": 86,
+   "err_5xx": 56,
+   "avg_ms": 47,
+   "p95": 20.7
+  },
+  {
+   "t": 1767268620,
+   "requests": 504,
+   "err_4xx": 99,
+   "err_5xx": 63,
+   "avg_ms": 47,
+   "p95": 20.6
+  }
+ ],
+ "IPPeaks": [
+  90,
+  15,
+  5
+ ],
+ "ScannerNF": 25
+}
