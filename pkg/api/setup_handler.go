@@ -46,7 +46,7 @@ func setupView() fiber.Map {
 	cur := currentDB()
 	acc := account.Current()
 	return fiber.Map{
-		"complete": setup.Complete(knowledgesync.ConsentVersion),
+		"complete": setup.Complete(),
 		"terms": fiber.Map{
 			"version":     knowledgesync.ConsentVersion,
 			"accepted":    setup.TermsAccepted(knowledgesync.ConsentVersion),

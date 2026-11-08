@@ -29,7 +29,7 @@ func TestValidate(t *testing.T) {
 
 func TestFlowAndEnv(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
-	if Complete("v1") {
+	if Complete() {
 		t.Fatal("belum boleh selesai")
 	}
 	if err := Finish("v1"); err == nil {
@@ -62,8 +62,12 @@ func TestFlowAndEnv(t *testing.T) {
 	if err := Finish("v1"); err != nil {
 		t.Fatal(err)
 	}
-	if !Complete("v1") || Complete("v2") {
-		t.Fatal("selesai hanya untuk versi ketentuan yang disetujui")
+	if !Complete() {
+		t.Fatal("penyiapan harus tercatat selesai")
+	}
+	// Versi ketentuan baru tidak membuka wizard lagi.
+	if err := AcceptTerms("v2"); err != nil || !Complete() {
+		t.Fatal("penyiapan cukup sekali; versi ketentuan baru tidak mengulanginya")
 	}
 }
 

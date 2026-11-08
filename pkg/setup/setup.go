@@ -54,10 +54,11 @@ func save(s State) error {
 	return os.WriteFile(path(), raw, 0o600)
 }
 
-// Complete true bila semua langkah wajib sudah selesai untuk versi ketentuan ini.
-func Complete(termsVersion string) bool {
-	s := Load()
-	return !s.CompletedAt.IsZero() && s.TermsVersion == termsVersion
+// Complete true bila penyiapan awal pernah diselesaikan. Penyiapan hanya sekali per komputer:
+// versi ketentuan yang lebih baru tidak membuka wizard (dan pilihan database) lagi; persetujuan
+// ulang ketentuan Pusat Pengetahuan diminta di Setting (knowledgesync punya pencatatan versinya sendiri).
+func Complete() bool {
+	return !Load().CompletedAt.IsZero()
 }
 
 // TermsAccepted true bila versi ketentuan ini sudah disetujui.
