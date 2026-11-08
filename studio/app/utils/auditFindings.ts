@@ -9,27 +9,43 @@ export const getFindingKey = (f: Finding): string => {
   return `${rule}_${file}_${line}`
 }
 
-export const areFindingsMatching = (a: Finding, b: Finding): boolean => {
-  if (a.id && b.id && a.id === b.id) return true
+export const hasSameId = (a: Finding, b: Finding): boolean => {
+  return Boolean(a.id && b.id && a.id === b.id)
+}
+
+export const hasSameGeneratedKey = (a: Finding, b: Finding): boolean => {
   const keyA = getFindingKey(a)
   const keyB = getFindingKey(b)
-  if (keyA === keyB) return true
+  return Boolean(keyA && keyB && keyA === keyB)
+}
 
-  // Match by RuleID + TargetFile + Line
-  if (a.rule_id && b.rule_id && a.rule_id === b.rule_id
-    && (a.target_file || '') === (b.target_file || '')
-    && (a.line || 0) === (b.line || 0)) {
-    return true
+export const hasSameLocation = (a: Finding, b: Finding): boolean => {
+  const fileA = a.target_file || ''
+  const fileB = b.target_file || ''
+  const lineA = a.line || 0
+  const lineB = b.line || 0
+  return fileA === fileB && lineA === lineB
+}
+
+export const hasSameRuleAtLocation = (a: Finding, b: Finding): boolean => {
+  if (!a.rule_id || !b.rule_id || a.rule_id !== b.rule_id) {
+    return false
   }
+  return hasSameLocation(a, b)
+}
 
-  // Fallback for title matching if rule_id is empty
-  if (a.title && b.title && a.title === b.title
-    && (a.target_file || '') === (b.target_file || '')
-    && (a.line || 0) === (b.line || 0)) {
-    return true
+export const hasSameTitleAtLocation = (a: Finding, b: Finding): boolean => {
+  if (!a.title || !b.title || a.title !== b.title) {
+    return false
   }
+  return hasSameLocation(a, b)
+}
 
-  return false
+export const areFindingsMatching = (a: Finding, b: Finding): boolean => {
+  if (hasSameId(a, b)) return true
+  if (hasSameGeneratedKey(a, b)) return true
+  if (hasSameRuleAtLocation(a, b)) return true
+  return hasSameTitleAtLocation(a, b)
 }
 
 export const deduplicateFindings = (list: Finding[]): Finding[] => {
