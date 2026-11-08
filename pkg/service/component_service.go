@@ -84,45 +84,7 @@ func (s *componentService) Update(ctx context.Context, id uint, updates *models.
 		return nil, err
 	}
 
-	if updates.Name != "" {
-		existing.Name = updates.Name
-	}
-	if updates.Role != "" {
-		existing.Role = updates.Role
-	}
-	if updates.RelativePath != "" {
-		existing.RelativePath = updates.RelativePath
-	}
-	if updates.AbsolutePath != "" {
-		existing.AbsolutePath = updates.AbsolutePath
-	}
-	if updates.Language != "" {
-		existing.Language = updates.Language
-	}
-	if updates.Framework != "" {
-		existing.Framework = updates.Framework
-	}
-	if updates.PackageManager != "" {
-		existing.PackageManager = updates.PackageManager
-	}
-	if updates.DevCommand != "" {
-		existing.DevCommand = updates.DevCommand
-	}
-	if updates.BuildCommand != "" {
-		existing.BuildCommand = updates.BuildCommand
-	}
-	if updates.Port != 0 {
-		existing.Port = updates.Port
-	}
-	if updates.HealthURL != "" {
-		existing.HealthURL = updates.HealthURL
-	}
-	if updates.EnvFile != "" {
-		existing.EnvFile = updates.EnvFile
-	}
-	if updates.EnvSummary != "" {
-		existing.EnvSummary = updates.EnvSummary
-	}
+	mergeComponentUpdates(existing, updates)
 
 	if err := s.componentRepo.Update(ctx, existing); err != nil {
 		return nil, err
@@ -199,4 +161,32 @@ func (s *componentService) ApplyScanParams(ctx context.Context, id uint, params 
 	}
 
 	return s.componentRepo.FindByID(ctx, id)
+}
+
+// mergeComponentUpdates menyalin hanya field yang terisi (non-zero) dari updates ke existing.
+func mergeComponentUpdates(existing, updates *models.Component) {
+	for _, f := range []struct {
+		dst *string
+		src string
+	}{
+		{&existing.Name, updates.Name},
+		{&existing.Role, updates.Role},
+		{&existing.RelativePath, updates.RelativePath},
+		{&existing.AbsolutePath, updates.AbsolutePath},
+		{&existing.Language, updates.Language},
+		{&existing.Framework, updates.Framework},
+		{&existing.PackageManager, updates.PackageManager},
+		{&existing.DevCommand, updates.DevCommand},
+		{&existing.BuildCommand, updates.BuildCommand},
+		{&existing.HealthURL, updates.HealthURL},
+		{&existing.EnvFile, updates.EnvFile},
+		{&existing.EnvSummary, updates.EnvSummary},
+	} {
+		if f.src != "" {
+			*f.dst = f.src
+		}
+	}
+	if updates.Port != 0 {
+		existing.Port = updates.Port
+	}
 }
