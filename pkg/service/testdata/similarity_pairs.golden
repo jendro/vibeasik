@@ -1,0 +1,481 @@
+[
+  {
+    "project_a": {
+      "id": 1,
+      "name": "ShopBackend",
+      "slug": "slug-1",
+      "root_path": "/w/shop-be",
+      "project_type": "bundle",
+      "status": "active",
+      "tags": "shop,erp",
+      "components": [
+        "api (backend)"
+      ],
+      "languages": [
+        "go"
+      ],
+      "frameworks": [
+        "fiber"
+      ]
+    },
+    "project_b": {
+      "id": 2,
+      "name": "shop-frontend",
+      "slug": "slug-2",
+      "root_path": "/w/shop-fe",
+      "project_type": "bundle",
+      "status": "active",
+      "tags": "shop",
+      "components": [
+        "site (frontend_web)"
+      ],
+      "languages": [],
+      "frameworks": []
+    },
+    "overall_score": 92,
+    "name_score": 100,
+    "path_score": 0,
+    "purpose_score": 42,
+    "exact_same_path": false,
+    "path_overlap": false,
+    "component_role_complementary": true,
+    "reasons": [
+      "Nama dasar produk identik ('shop')",
+      "Peran komponen saling melengkapi (satu sisi Backend, sisi lain Frontend/Mobile)",
+      "Topik dan kata kunci deskripsi memiliki kesamaan konteks"
+    ],
+    "suggestion": "merge_bundle"
+  },
+  {
+    "project_a": {
+      "id": 1,
+      "name": "ShopBackend",
+      "slug": "slug-1",
+      "root_path": "/w/shop-be",
+      "project_type": "bundle",
+      "status": "active",
+      "tags": "shop,erp",
+      "components": [
+        "api (backend)"
+      ],
+      "languages": [
+        "go"
+      ],
+      "frameworks": [
+        "fiber"
+      ]
+    },
+    "project_b": {
+      "id": 3,
+      "name": "Shop Mobile",
+      "slug": "slug-3",
+      "root_path": "/w/shop-be/mobile",
+      "project_type": "bundle",
+      "status": "deprecated",
+      "tags": "",
+      "components": [
+        "web (frontend_mobile)"
+      ],
+      "languages": [
+        "typescript"
+      ],
+      "frameworks": []
+    },
+    "overall_score": 92,
+    "name_score": 100,
+    "path_score": 80,
+    "purpose_score": 40,
+    "exact_same_path": false,
+    "path_overlap": true,
+    "component_role_complementary": true,
+    "reasons": [
+      "Folder berada di hirarki sub-direktori yang sama",
+      "Nama dasar produk identik ('shop')",
+      "Peran komponen saling melengkapi (satu sisi Backend, sisi lain Frontend/Mobile)",
+      "Topik dan kata kunci deskripsi memiliki kesamaan konteks"
+    ],
+    "suggestion": "merge_bundle"
+  },
+  {
+    "project_a": {
+      "id": 2,
+      "name": "shop-frontend",
+      "slug": "slug-2",
+      "root_path": "/w/shop-fe",
+      "project_type": "bundle",
+      "status": "active",
+      "tags": "shop",
+      "components": [
+        "site (frontend_web)"
+      ],
+      "languages": [],
+      "frameworks": []
+    },
+    "project_b": {
+      "id": 3,
+      "name": "Shop Mobile",
+      "slug": "slug-3",
+      "root_path": "/w/shop-be/mobile",
+      "project_type": "bundle",
+      "status": "deprecated",
+      "tags": "",
+      "components": [
+        "web (frontend_mobile)"
+      ],
+      "languages": [
+        "typescript"
+      ],
+      "frameworks": []
+    },
+    "overall_score": 54,
+    "name_score": 100,
+    "path_score": 0,
+    "purpose_score": 40,
+    "exact_same_path": false,
+    "path_overlap": false,
+    "component_role_complementary": false,
+    "reasons": [
+      "Nama dasar produk identik ('shop')",
+      "Topik dan kata kunci deskripsi memiliki kesamaan konteks"
+    ],
+    "suggestion": "low_similarity"
+  },
+  {
+    "project_a": {
+      "id": 1,
+      "name": "ShopBackend",
+      "slug": "slug-1",
+      "root_path": "/w/shop-be",
+      "project_type": "bundle",
+      "status": "active",
+      "tags": "shop,erp",
+      "components": [
+        "api (backend)"
+      ],
+      "languages": [
+        "go"
+      ],
+      "frameworks": [
+        "fiber"
+      ]
+    },
+    "project_b": {
+      "id": 4,
+      "name": "Zebra",
+      "slug": "slug-4",
+      "root_path": "/w/zzz",
+      "project_type": "bundle",
+      "status": "active",
+      "tags": "",
+      "components": [
+        "api2 (backend)"
+      ],
+      "languages": [],
+      "frameworks": []
+    },
+    "overall_score": 100,
+    "name_score": 9,
+    "path_score": 100,
+    "purpose_score": 0,
+    "exact_same_path": true,
+    "path_overlap": false,
+    "component_role_complementary": false,
+    "reasons": [
+      "Memiliki komponen dengan path folder yang identik: api"
+    ],
+    "suggestion": "duplicate_cleanup"
+  },
+  {
+    "project_a": {
+      "id": 1,
+      "name": "ShopBackend",
+      "slug": "slug-1",
+      "root_path": "/w/shop-be",
+      "project_type": "bundle",
+      "status": "active",
+      "tags": "shop,erp",
+      "components": [
+        "api (backend)"
+      ],
+      "languages": [
+        "go"
+      ],
+      "frameworks": [
+        "fiber"
+      ]
+    },
+    "project_b": {
+      "id": 5,
+      "name": "Other",
+      "slug": "slug-5",
+      "root_path": "/x/zzz",
+      "project_type": "bundle",
+      "status": "active",
+      "tags": "",
+      "components": [
+        "np (backend)"
+      ],
+      "languages": [],
+      "frameworks": []
+    },
+    "overall_score": 10,
+    "name_score": 19,
+    "path_score": 0,
+    "purpose_score": 0,
+    "exact_same_path": false,
+    "path_overlap": false,
+    "component_role_complementary": false,
+    "reasons": [],
+    "suggestion": "low_similarity"
+  },
+  {
+    "project_a": {
+      "id": 5,
+      "name": "Other",
+      "slug": "slug-5",
+      "root_path": "/x/zzz",
+      "project_type": "bundle",
+      "status": "active",
+      "tags": "",
+      "components": [
+        "np (backend)"
+      ],
+      "languages": [],
+      "frameworks": []
+    },
+    "project_b": {
+      "id": 6,
+      "name": "Other2",
+      "slug": "slug-6",
+      "root_path": "-",
+      "project_type": "bundle",
+      "status": "active",
+      "tags": "",
+      "components": [
+        "np (backend)"
+      ],
+      "languages": [],
+      "frameworks": []
+    },
+    "overall_score": 100,
+    "name_score": 100,
+    "path_score": 100,
+    "purpose_score": 0,
+    "exact_same_path": true,
+    "path_overlap": false,
+    "component_role_complementary": false,
+    "reasons": [
+      "Memiliki komponen dengan path folder yang identik: np",
+      "Nama dasar produk identik ('other')"
+    ],
+    "suggestion": "duplicate_cleanup"
+  },
+  {
+    "project_a": {
+      "id": 6,
+      "name": "Other2",
+      "slug": "slug-6",
+      "root_path": "-",
+      "project_type": "bundle",
+      "status": "active",
+      "tags": "",
+      "components": [
+        "np (backend)"
+      ],
+      "languages": [],
+      "frameworks": []
+    },
+    "project_b": {
+      "id": 7,
+      "name": "Other3",
+      "slug": "slug-7",
+      "root_path": "-",
+      "project_type": "bundle",
+      "status": "active",
+      "tags": "",
+      "components": [],
+      "languages": [],
+      "frameworks": []
+    },
+    "overall_score": 50,
+    "name_score": 100,
+    "path_score": 0,
+    "purpose_score": 0,
+    "exact_same_path": false,
+    "path_overlap": false,
+    "component_role_complementary": false,
+    "reasons": [
+      "Nama dasar produk identik ('other')"
+    ],
+    "suggestion": "low_similarity"
+  },
+  {
+    "project_a": {
+      "id": 1,
+      "name": "ShopBackend",
+      "slug": "slug-1",
+      "root_path": "/w/shop-be",
+      "project_type": "bundle",
+      "status": "active",
+      "tags": "shop,erp",
+      "components": [
+        "api (backend)"
+      ],
+      "languages": [
+        "go"
+      ],
+      "frameworks": [
+        "fiber"
+      ]
+    },
+    "project_b": {
+      "id": 8,
+      "name": "ShopBackend",
+      "slug": "slug-8",
+      "root_path": "/w/shop-be",
+      "project_type": "bundle",
+      "status": "active",
+      "tags": "shop,erp",
+      "components": [],
+      "languages": [],
+      "frameworks": []
+    },
+    "overall_score": 100,
+    "name_score": 100,
+    "path_score": 100,
+    "purpose_score": 100,
+    "exact_same_path": true,
+    "path_overlap": false,
+    "component_role_complementary": false,
+    "reasons": [
+      "Root folder persis sama (/w/shop-be)",
+      "Nama dasar produk identik ('shop')",
+      "Topik dan kata kunci deskripsi memiliki kesamaan konteks"
+    ],
+    "suggestion": "duplicate_cleanup"
+  },
+  {
+    "project_a": {
+      "id": 4,
+      "name": "Zebra",
+      "slug": "slug-4",
+      "root_path": "/w/zzz",
+      "project_type": "bundle",
+      "status": "active",
+      "tags": "",
+      "components": [
+        "api2 (backend)"
+      ],
+      "languages": [],
+      "frameworks": []
+    },
+    "project_b": {
+      "id": 5,
+      "name": "Other",
+      "slug": "slug-5",
+      "root_path": "/x/zzz",
+      "project_type": "bundle",
+      "status": "active",
+      "tags": "",
+      "components": [
+        "np (backend)"
+      ],
+      "languages": [],
+      "frameworks": []
+    },
+    "overall_score": 14,
+    "name_score": 0,
+    "path_score": 70,
+    "purpose_score": 0,
+    "exact_same_path": false,
+    "path_overlap": false,
+    "component_role_complementary": false,
+    "reasons": [
+      "Nama folder dasar (folder basename) sama persis: zzz"
+    ],
+    "suggestion": "low_similarity"
+  },
+  {
+    "project_a": {
+      "id": 3,
+      "name": "Shop Mobile",
+      "slug": "slug-3",
+      "root_path": "/w/shop-be/mobile",
+      "project_type": "bundle",
+      "status": "deprecated",
+      "tags": "",
+      "components": [
+        "web (frontend_mobile)"
+      ],
+      "languages": [
+        "typescript"
+      ],
+      "frameworks": []
+    },
+    "project_b": {
+      "id": 8,
+      "name": "ShopBackend",
+      "slug": "slug-8",
+      "root_path": "/w/shop-be",
+      "project_type": "bundle",
+      "status": "active",
+      "tags": "shop,erp",
+      "components": [],
+      "languages": [],
+      "frameworks": []
+    },
+    "overall_score": 70,
+    "name_score": 100,
+    "path_score": 80,
+    "purpose_score": 40,
+    "exact_same_path": false,
+    "path_overlap": true,
+    "component_role_complementary": false,
+    "reasons": [
+      "Folder berada di hirarki sub-direktori yang sama",
+      "Nama dasar produk identik ('shop')",
+      "Topik dan kata kunci deskripsi memiliki kesamaan konteks"
+    ],
+    "suggestion": "review"
+  },
+  {
+    "project_a": {
+      "id": 2,
+      "name": "shop-frontend",
+      "slug": "slug-2",
+      "root_path": "/w/shop-fe",
+      "project_type": "bundle",
+      "status": "active",
+      "tags": "shop",
+      "components": [
+        "site (frontend_web)"
+      ],
+      "languages": [],
+      "frameworks": []
+    },
+    "project_b": {
+      "id": 8,
+      "name": "ShopBackend",
+      "slug": "slug-8",
+      "root_path": "/w/shop-be",
+      "project_type": "bundle",
+      "status": "active",
+      "tags": "shop,erp",
+      "components": [],
+      "languages": [],
+      "frameworks": []
+    },
+    "overall_score": 54,
+    "name_score": 100,
+    "path_score": 0,
+    "purpose_score": 42,
+    "exact_same_path": false,
+    "path_overlap": false,
+    "component_role_complementary": false,
+    "reasons": [
+      "Nama dasar produk identik ('shop')",
+      "Topik dan kata kunci deskripsi memiliki kesamaan konteks"
+    ],
+    "suggestion": "low_similarity"
+  }
+]

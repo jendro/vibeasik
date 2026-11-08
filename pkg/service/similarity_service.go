@@ -185,43 +185,59 @@ func (s *similarityService) comparePair(pA, pB models.Project) models.Similarity
 		Reasons:  make([]string, 0),
 	}
 
-	// 1. Path analysis
+	scoreRootPaths(&match, pA, pB)
+	scoreComponentPaths(&match, pA, pB)
+	normA, normB := scoreNames(&match, pA, pB)
+	scoreComplementaryRoles(&match, pA, pB)
+	scorePurpose(&match, pA, pB)
+	computeOverall(&match, pA, pB, normA == normB && normA != "")
+
+	return match
+}
+
+func isRealPath(p string) bool { return p != "" && p != "-" }
+
+func scoreRootPaths(match *models.SimilarityMatch, pA, pB models.Project) {
 	pathA := filepath.Clean(strings.TrimSpace(pA.RootPath))
 	pathB := filepath.Clean(strings.TrimSpace(pB.RootPath))
 
-	if pathA != "" && pathA != "-" && pathA == pathB {
+	if isRealPath(pathA) && pathA == pathB {
 		match.ExactSamePath = true
 		match.PathScore = 100
 		match.Reasons = append(match.Reasons, "Root folder persis sama ("+pathA+")")
-	} else if pathA != "" && pathB != "" && pathA != "-" && pathB != "-" {
-		if strings.HasPrefix(pathA, pathB) || strings.HasPrefix(pathB, pathA) {
-			match.PathOverlap = true
-			match.PathScore = 80
-			match.Reasons = append(match.Reasons, "Folder berada di hirarki sub-direktori yang sama")
-		} else if filepath.Base(pathA) == filepath.Base(pathB) {
-			match.PathScore = 70
-			match.Reasons = append(match.Reasons, "Nama folder dasar (folder basename) sama persis: "+filepath.Base(pathA))
-		}
+		return
 	}
+	if !isRealPath(pathA) || !isRealPath(pathB) {
+		return
+	}
+	if strings.HasPrefix(pathA, pathB) || strings.HasPrefix(pathB, pathA) {
+		match.PathOverlap = true
+		match.PathScore = 80
+		match.Reasons = append(match.Reasons, "Folder berada di hirarki sub-direktori yang sama")
+	} else if filepath.Base(pathA) == filepath.Base(pathB) {
+		match.PathScore = 70
+		match.Reasons = append(match.Reasons, "Nama folder dasar (folder basename) sama persis: "+filepath.Base(pathA))
+	}
+}
 
-	// Also check components paths
+// scoreComponentPaths memeriksa path komponen yang identik antar proyek.
+func scoreComponentPaths(match *models.SimilarityMatch, pA, pB models.Project) {
 	for _, cA := range pA.Components {
+		cAPath := filepath.Clean(strings.TrimSpace(cA.AbsolutePath))
 		for _, cB := range pB.Components {
-			cA_Path := filepath.Clean(strings.TrimSpace(cA.AbsolutePath))
-			cB_Path := filepath.Clean(strings.TrimSpace(cB.AbsolutePath))
-			if cA_Path != "" && cA_Path == cB_Path {
+			cBPath := filepath.Clean(strings.TrimSpace(cB.AbsolutePath))
+			if cAPath != "" && cAPath == cBPath {
 				match.ExactSamePath = true
 				match.PathScore = 100
 				match.Reasons = append(match.Reasons, "Memiliki komponen dengan path folder yang identik: "+cA.Name)
-				break
+				return
 			}
 		}
-		if match.ExactSamePath {
-			break
-		}
 	}
+}
 
-	// 2. Name analysis
+// scoreNames mengisi NameScore dan mengembalikan nama ternormalisasi kedua proyek.
+func scoreNames(match *models.SimilarityMatch, pA, pB models.Project) (string, string) {
 	normA := normalizeProjectName(pA.Name)
 	normB := normalizeProjectName(pB.Name)
 	rawScore := calculateStringSimilarity(strings.ToLower(pA.Name), strings.ToLower(pB.Name))
@@ -234,86 +250,80 @@ func (s *similarityService) comparePair(pA, pB models.Project) models.Similarity
 	} else if match.NameScore >= 70 {
 		match.Reasons = append(match.Reasons, "Kemiripan nama proyek tinggi ("+pA.Name+" vs "+pB.Name+")")
 	}
+	return normA, normB
+}
 
-	// 3. Component Complementary Role analysis (BE + FE / Mobile)
-	hasBE_A, hasFE_A := false, false
-	for _, c := range pA.Components {
+// projectHasRoles melaporkan apakah proyek punya komponen backend dan frontend/mobile.
+func projectHasRoles(p models.Project) (hasBE, hasFE bool) {
+	for _, c := range p.Components {
 		if c.Role == models.RoleBackend {
-			hasBE_A = true
+			hasBE = true
 		}
 		if strings.Contains(c.Role, "front") || c.Role == models.RoleFrontendMobile {
-			hasFE_A = true
+			hasFE = true
 		}
 	}
+	return hasBE, hasFE
+}
 
-	hasBE_B, hasFE_B := false, false
-	for _, c := range pB.Components {
-		if c.Role == models.RoleBackend {
-			hasBE_B = true
-		}
-		if strings.Contains(c.Role, "front") || c.Role == models.RoleFrontendMobile {
-			hasFE_B = true
-		}
-	}
-
-	if (hasBE_A && hasFE_B && !hasFE_A) || (hasFE_A && hasBE_B && !hasBE_A) {
+func scoreComplementaryRoles(match *models.SimilarityMatch, pA, pB models.Project) {
+	hasBEA, hasFEA := projectHasRoles(pA)
+	hasBEB, hasFEB := projectHasRoles(pB)
+	if (hasBEA && hasFEB && !hasFEA) || (hasFEA && hasBEB && !hasBEA) {
 		match.ComponentRoleComplementary = true
 		match.Reasons = append(match.Reasons, "Peran komponen saling melengkapi (satu sisi Backend, sisi lain Frontend/Mobile)")
 	}
+}
 
-	// 4. Purpose / Description / Tags similarity
+func scorePurpose(match *models.SimilarityMatch, pA, pB models.Project) {
 	textA := pA.ShortDescription + " " + pA.Description + " " + pA.Tags
 	textB := pB.ShortDescription + " " + pB.Description + " " + pB.Tags
-	tokensA := tokenizeText(textA)
-	tokensB := tokenizeText(textB)
-	match.PurposeScore = calculateJaccardSimilarity(tokensA, tokensB)
+	match.PurposeScore = calculateJaccardSimilarity(tokenizeText(textA), tokenizeText(textB))
 	if match.PurposeScore >= 35 {
 		match.Reasons = append(match.Reasons, "Topik dan kata kunci deskripsi memiliki kesamaan konteks")
 	}
+}
 
-	// Calculate overall score
+func computeOverall(match *models.SimilarityMatch, pA, pB models.Project, sameNormName bool) {
 	if match.ExactSamePath {
 		match.OverallScore = 100
 		match.Suggestion = "duplicate_cleanup"
-	} else {
-		weightName := 0.50
-		weightPath := 0.20
-		weightComp := 0.20
-		weightPurpose := 0.10
-
-		compScore := 0
-		if match.ComponentRoleComplementary {
-			compScore = 90
-		}
-
-		calculated := (float64(match.NameScore) * weightName) +
-			(float64(match.PathScore) * weightPath) +
-			(float64(compScore) * weightComp) +
-			(float64(match.PurposeScore) * weightPurpose)
-
-		// Boost if name is normalized identical and components are complementary
-		if normA == normB && normA != "" && match.ComponentRoleComplementary {
-			calculated = math.Max(calculated, 92.0)
-		}
-
-		match.OverallScore = int(math.Min(100.0, math.Round(calculated)))
-
-		if match.OverallScore >= 80 {
-			if match.ComponentRoleComplementary {
-				match.Suggestion = "merge_bundle"
-			} else if pA.Status == models.StatusDeprecated || pB.Status == models.StatusDeprecated {
-				match.Suggestion = "mark_deprecated"
-			} else {
-				match.Suggestion = "merge_bundle"
-			}
-		} else if match.OverallScore >= 60 {
-			match.Suggestion = "review"
-		} else {
-			match.Suggestion = "low_similarity"
-		}
+		return
 	}
+	const (
+		weightName    = 0.50
+		weightPath    = 0.20
+		weightComp    = 0.20
+		weightPurpose = 0.10
+	)
+	compScore := 0
+	if match.ComponentRoleComplementary {
+		compScore = 90
+	}
+	calculated := (float64(match.NameScore) * weightName) +
+		(float64(match.PathScore) * weightPath) +
+		(float64(compScore) * weightComp) +
+		(float64(match.PurposeScore) * weightPurpose)
 
-	return match
+	// Boost if name is normalized identical and components are complementary
+	if sameNormName && match.ComponentRoleComplementary {
+		calculated = math.Max(calculated, 92.0)
+	}
+	match.OverallScore = int(math.Min(100.0, math.Round(calculated)))
+	match.Suggestion = suggestionFor(match, pA, pB)
+}
+
+func suggestionFor(match *models.SimilarityMatch, pA, pB models.Project) string {
+	switch {
+	case match.OverallScore >= 80:
+		if !match.ComponentRoleComplementary && (pA.Status == models.StatusDeprecated || pB.Status == models.StatusDeprecated) {
+			return "mark_deprecated"
+		}
+		return "merge_bundle"
+	case match.OverallScore >= 60:
+		return "review"
+	}
+	return "low_similarity"
 }
 
 func (s *similarityService) ScanSimilarities(ctx context.Context) (*models.SimilarityScanResult, error) {
