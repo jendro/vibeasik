@@ -24,7 +24,16 @@ export interface Character3D {
 export const HIP_Y = 0.42
 export const HEAD_TOP = 1.32
 
-export function buildCharacter(look: AgentLook, kind: AgentWorker['kind']): Character3D {
+interface BuildContext {
+  materials: THREE.Material[]
+  geometries: THREE.BufferGeometry[]
+  mat: (color: string, extra?: THREE.MeshStandardMaterialParameters) => THREE.MeshStandardMaterial
+  box: (w: number, h: number, d: number, m: THREE.Material, x?: number, y?: number, z?: number) => THREE.Mesh
+  sphere: (r: number, m: THREE.Material, x?: number, y?: number, z?: number, sy?: number) => THREE.Mesh
+}
+
+/** Daftar material/geometri yang dibuat karakter (untuk dispose) beserta pembuat mesh dasarnya. */
+function createBuildContext(): BuildContext {
   const materials: THREE.Material[] = []
   const geometries: THREE.BufferGeometry[] = []
   const mat = (color: string, extra: THREE.MeshStandardMaterialParameters = {}) => {
@@ -49,125 +58,148 @@ export function buildCharacter(look: AgentLook, kind: AgentWorker['kind']): Char
     mesh.castShadow = true
     return mesh
   }
+  return { materials, geometries, mat, box, sphere }
+}
 
-  const skin = mat(look.skin)
-  const hair = mat(look.hair)
-  const shirt = mat(look.shirt)
-  const pants = mat(look.pants)
-  const dark = mat('#1f2937', { roughness: 0.4 })
-  const shoe = mat('#27272a')
+interface Palette {
+  skin: THREE.Material
+  hair: THREE.Material
+  shirt: THREE.Material
+  pants: THREE.Material
+  dark: THREE.Material
+  shoe: THREE.Material
+}
 
-  const root = new THREE.Group()
-  const body = new THREE.Group()
-  root.add(body)
-
-  // Kaki (poros di pinggul)
+/** Kaki: poros di pinggul. */
+function buildLegs(body: THREE.Group, p: Palette, ctx: BuildContext) {
   const leg = (x: number) => {
     const g = new THREE.Group()
     g.position.set(x, HIP_Y, 0)
-    g.add(box(0.13, 0.36, 0.15, pants, 0, -0.18, 0))
-    g.add(box(0.14, 0.07, 0.2, shoe, 0, -0.385, 0.03))
+    g.add(ctx.box(0.13, 0.36, 0.15, p.pants, 0, -0.18, 0))
+    g.add(ctx.box(0.14, 0.07, 0.2, p.shoe, 0, -0.385, 0.03))
     body.add(g)
     return g
   }
   const legL = leg(-0.09)
   const legR = leg(0.09)
+  return { legL, legR }
+}
 
-  // Badan
-  body.add(box(0.4, 0.44, 0.26, shirt, 0, HIP_Y + 0.21, 0))
-  body.add(box(0.41, 0.08, 0.27, pants, 0, HIP_Y + 0.02, 0)) // ikat pinggang
-  if (look.accessory === 'tie') body.add(box(0.06, 0.26, 0.02, mat('#b91c1c'), 0, HIP_Y + 0.26, 0.135))
-  if (look.accessory === 'scarf' || look.hairStyle === 'hijab') {
-    const g = new THREE.TorusGeometry(0.15, 0.05, 8, 18)
-    geometries.push(g)
-    const scarf = new THREE.Mesh(g, look.hairStyle === 'hijab' ? hair : mat('#dc2626'))
-    scarf.rotation.x = Math.PI / 2
-    scarf.position.y = HIP_Y + 0.44
-    body.add(scarf)
-  }
+/** Badan beserta dasi/syal (hijab memakai material rambut). */
+function buildTorso(body: THREE.Group, look: AgentLook, p: Palette, ctx: BuildContext) {
+  body.add(ctx.box(0.4, 0.44, 0.26, p.shirt, 0, HIP_Y + 0.21, 0))
+  body.add(ctx.box(0.41, 0.08, 0.27, p.pants, 0, HIP_Y + 0.02, 0))
+  if (look.accessory === 'tie') body.add(ctx.box(0.06, 0.26, 0.02, ctx.mat('#b91c1c'), 0, HIP_Y + 0.26, 0.135))
+  if (look.accessory !== 'scarf' && look.hairStyle !== 'hijab') return
+  const g = new THREE.TorusGeometry(0.15, 0.05, 8, 18)
+  ctx.geometries.push(g)
+  const scarf = new THREE.Mesh(g, look.hairStyle === 'hijab' ? p.hair : ctx.mat('#dc2626'))
+  scarf.rotation.x = Math.PI / 2
+  scarf.position.y = HIP_Y + 0.44
+  body.add(scarf)
+}
 
-  // Lengan (poros di bahu)
+/** Lengan: poros di bahu. */
+function buildArms(body: THREE.Group, p: Palette, ctx: BuildContext) {
   const arm = (x: number) => {
     const g = new THREE.Group()
     g.position.set(x, HIP_Y + 0.4, 0)
-    g.add(box(0.11, 0.34, 0.12, shirt, 0, -0.15, 0))
-    g.add(box(0.1, 0.08, 0.1, skin, 0, -0.33, 0))
+    g.add(ctx.box(0.11, 0.34, 0.12, p.shirt, 0, -0.15, 0))
+    g.add(ctx.box(0.1, 0.08, 0.1, p.skin, 0, -0.33, 0))
     body.add(g)
     return g
   }
   const armL = arm(-0.26)
   const armR = arm(0.26)
+  return { armL, armR }
+}
 
-  // Kurir LLM membawa amplop
-  let envelope: THREE.Mesh | undefined
-  if (kind === 'llm_call') {
-    envelope = box(0.22, 0.15, 0.03, mat('#f8fafc'), 0, -0.3, 0.1)
-    envelope.add(box(0.05, 0.05, 0.035, mat('#dc2626'), 0, 0, 0))
-    armR.add(envelope)
-    armR.rotation.x = -0.5
-  }
+/** Kurir LLM membawa amplop di lengan kanan. */
+function buildEnvelope(armR: THREE.Group, ctx: BuildContext) {
+  const envelope = ctx.box(0.22, 0.15, 0.03, ctx.mat('#f8fafc'), 0, -0.3, 0.1)
+  envelope.add(ctx.box(0.05, 0.05, 0.035, ctx.mat('#dc2626'), 0, 0, 0))
+  armR.add(envelope)
+  armR.rotation.x = -0.5
+  return envelope
+}
 
-  // Kepala
+/** Kepala + wajah (mata & mulut). */
+function buildHead(body: THREE.Group, p: Palette, ctx: BuildContext) {
   const head = new THREE.Group()
   head.position.y = HIP_Y + 0.46
   body.add(head)
-  head.add(box(0.4, 0.38, 0.36, skin, 0, 0.2, 0))
-  head.add(box(0.06, 0.07, 0.02, dark, -0.09, 0.22, 0.185))
-  head.add(box(0.06, 0.07, 0.02, dark, 0.09, 0.22, 0.185))
-  head.add(box(0.1, 0.025, 0.02, mat('#be6b5a'), 0, 0.11, 0.185))
+  head.add(ctx.box(0.4, 0.38, 0.36, p.skin, 0, 0.2, 0))
+  head.add(ctx.box(0.06, 0.07, 0.02, p.dark, -0.09, 0.22, 0.185))
+  head.add(ctx.box(0.06, 0.07, 0.02, p.dark, 0.09, 0.22, 0.185))
+  head.add(ctx.box(0.1, 0.025, 0.02, ctx.mat('#be6b5a'), 0, 0.11, 0.185))
+  return head
+}
 
-  const cut = look.hairStyle ?? ('short' as const)
+const HAIR_EXTRAS: Partial<Record<NonNullable<AgentLook['hairStyle']>, (head: THREE.Group, hair: THREE.Material, ctx: BuildContext) => void>> = {
+  long: (head, hair, ctx) => { head.add(ctx.box(0.42, 0.42, 0.1, hair, 0, 0.12, -0.18)) },
+  bun: (head, hair, ctx) => { head.add(ctx.sphere(0.1, hair, 0, 0.53, -0.08)) },
+  ponytail: (head, hair, ctx) => { head.add(ctx.box(0.1, 0.3, 0.1, hair, 0, 0.18, -0.25)) },
+  curly: (head, hair, ctx) => { [-0.14, 0, 0.14].forEach(x => head.add(ctx.sphere(0.09, hair, x, 0.47, 0))) },
+  spiky: (head, hair, ctx) => {
+    [-0.12, 0, 0.12].forEach((x) => {
+      const g = new THREE.ConeGeometry(0.06, 0.16, 6)
+      ctx.geometries.push(g)
+      const spike = new THREE.Mesh(g, hair)
+      spike.position.set(x, 0.53, 0)
+      head.add(spike)
+    })
+  }
+}
+
+/** Gaya rambut: hijab/botak lebih dulu, selain itu dasar rambut + tambahan per gaya. */
+function buildHairStyle(head: THREE.Group, cut: NonNullable<AgentLook['hairStyle']>, hair: THREE.Material, ctx: BuildContext) {
   if (cut === 'hijab') {
-    head.add(box(0.46, 0.45, 0.36, hair, 0, 0.21, -0.04))
-  } else if (cut !== 'bald') {
-    head.add(box(0.43, 0.12, 0.4, hair, 0, 0.42, -0.01))
-    head.add(box(0.43, 0.3, 0.08, hair, 0, 0.27, -0.17))
-    if (cut === 'long') head.add(box(0.42, 0.42, 0.1, hair, 0, 0.12, -0.18))
-    if (cut === 'bun') head.add(sphere(0.1, hair, 0, 0.53, -0.08))
-    if (cut === 'ponytail') head.add(box(0.1, 0.3, 0.1, hair, 0, 0.18, -0.25))
-    if (cut === 'curly') [-0.14, 0, 0.14].forEach(x => head.add(sphere(0.09, hair, x, 0.47, 0)))
-    if (cut === 'spiky') {
-      [-0.12, 0, 0.12].forEach((x) => {
-        const g = new THREE.ConeGeometry(0.06, 0.16, 6)
-        geometries.push(g)
-        const c = new THREE.Mesh(g, hair)
-        c.position.set(x, 0.53, 0)
-        head.add(c)
-      })
-    }
+    head.add(ctx.box(0.46, 0.45, 0.36, hair, 0, 0.21, -0.04))
+    return
   }
-  if (look.facial === 'beard') head.add(box(0.36, 0.12, 0.06, hair, 0, 0.06, 0.17))
-  if (look.facial === 'mustache') head.add(box(0.14, 0.03, 0.03, hair, 0, 0.14, 0.19))
+  if (cut === 'bald') return
+  head.add(ctx.box(0.43, 0.12, 0.4, hair, 0, 0.42, -0.01))
+  head.add(ctx.box(0.43, 0.3, 0.08, hair, 0, 0.27, -0.17))
+  HAIR_EXTRAS[cut]?.(head, hair, ctx)
+}
 
-  if (look.accessory === 'glasses') {
-    head.add(box(0.1, 0.08, 0.015, dark, -0.09, 0.22, 0.195))
-    head.add(box(0.1, 0.08, 0.015, dark, 0.09, 0.22, 0.195))
-    head.add(box(0.08, 0.015, 0.015, dark, 0, 0.24, 0.195))
-  }
-  if (look.accessory === 'headset') {
+const ACCESSORIES: Partial<Record<AgentLook['accessory'], (head: THREE.Group, dark: THREE.Material, look: AgentLook, kind: AgentWorker['kind'], ctx: BuildContext) => void>> = {
+  glasses: (head, dark, _look, _kind, ctx) => {
+    head.add(ctx.box(0.1, 0.08, 0.015, dark, -0.09, 0.22, 0.195))
+    head.add(ctx.box(0.1, 0.08, 0.015, dark, 0.09, 0.22, 0.195))
+    head.add(ctx.box(0.08, 0.015, 0.015, dark, 0, 0.24, 0.195))
+  },
+  headset: (head, dark, _look, _kind, ctx) => {
     const g = new THREE.TorusGeometry(0.23, 0.02, 6, 20, Math.PI)
-    geometries.push(g)
+    ctx.geometries.push(g)
     const band = new THREE.Mesh(g, dark)
     band.position.y = 0.24
     head.add(band)
-    head.add(box(0.05, 0.1, 0.1, dark, -0.22, 0.2, 0))
-    head.add(box(0.05, 0.1, 0.1, dark, 0.22, 0.2, 0))
-    head.add(box(0.02, 0.02, 0.16, dark, -0.21, 0.12, 0.1))
-  }
-  if (look.accessory === 'cap') {
-    const cap = mat(kind === 'llm_call' ? look.shirt : '#1d4ed8')
-    head.add(box(0.44, 0.1, 0.4, cap, 0, 0.44, 0))
-    head.add(box(0.4, 0.025, 0.16, cap, 0, 0.4, 0.26))
-  }
-  if (look.accessory === 'beanie') head.add(sphere(0.23, mat('#e11d48'), 0, 0.4, 0, 0.62))
+    head.add(ctx.box(0.05, 0.1, 0.1, dark, -0.22, 0.2, 0))
+    head.add(ctx.box(0.05, 0.1, 0.1, dark, 0.22, 0.2, 0))
+    head.add(ctx.box(0.02, 0.02, 0.16, dark, -0.21, 0.12, 0.1))
+  },
+  cap: (head, _dark, look, kind, ctx) => {
+    const cap = ctx.mat(kind === 'llm_call' ? look.shirt : '#1d4ed8')
+    head.add(ctx.box(0.44, 0.1, 0.4, cap, 0, 0.44, 0))
+    head.add(ctx.box(0.4, 0.025, 0.16, cap, 0, 0.4, 0.26))
+  },
+  beanie: (head, _dark, _look, _kind, ctx) => { head.add(ctx.sphere(0.23, ctx.mat('#e11d48'), 0, 0.4, 0, 0.62)) }
+}
 
-  // Bintang pusing (gagal) & Zzz (tertidur)
+/** Aksesori kepala (kacamata, headset, topi, beanie). Dasi & syal ada di badan. */
+function buildAccessory(head: THREE.Group, dark: THREE.Material, look: AgentLook, kind: AgentWorker['kind'], ctx: BuildContext) {
+  ACCESSORIES[look.accessory]?.(head, dark, look, kind, ctx)
+}
+
+/** Bintang pusing (gagal) & Zzz (tertidur); keduanya tersembunyi sampai dibutuhkan. */
+function buildStatusIndicators(root: THREE.Group, ctx: BuildContext) {
   const stars = new THREE.Group()
   stars.position.y = HEAD_TOP + 0.12
   const starMat = new THREE.MeshBasicMaterial({ color: '#facc15' })
-  materials.push(starMat)
+  ctx.materials.push(starMat)
   const starGeo = new THREE.OctahedronGeometry(0.05)
-  geometries.push(starGeo)
+  ctx.geometries.push(starGeo)
   for (let i = 0; i < 3; i++) {
     const s = new THREE.Mesh(starGeo, starMat)
     const a = (i / 3) * Math.PI * 2
@@ -179,10 +211,10 @@ export function buildCharacter(look: AgentLook, kind: AgentWorker['kind']): Char
 
   const zzz = new THREE.Group()
   const zMat = new THREE.MeshBasicMaterial({ color: '#93c5fd' })
-  materials.push(zMat)
+  ctx.materials.push(zMat)
   for (let i = 0; i < 3; i++) {
     const g = new THREE.BoxGeometry(0.06 + i * 0.02, 0.06 + i * 0.02, 0.01)
-    geometries.push(g)
+    ctx.geometries.push(g)
     const z = new THREE.Mesh(g, zMat)
     z.position.set(0.15 + i * 0.1, HEAD_TOP + i * 0.12, 0)
     z.rotation.z = 0.5
@@ -190,8 +222,34 @@ export function buildCharacter(look: AgentLook, kind: AgentWorker['kind']): Char
   }
   zzz.visible = false
   root.add(zzz)
+  return { stars, zzz }
+}
 
-  return { root, body, head, legL, legR, armL, armR, stars, zzz, envelope, materials, geometries }
+export function buildCharacter(look: AgentLook, kind: AgentWorker['kind']): Character3D {
+  const ctx = createBuildContext()
+  const { mat } = ctx
+  const p: Palette = {
+    skin: mat(look.skin),
+    hair: mat(look.hair),
+    shirt: mat(look.shirt),
+    pants: mat(look.pants),
+    dark: mat('#1f2937', { roughness: 0.4 }),
+    shoe: mat('#27272a')
+  }
+  const root = new THREE.Group()
+  const body = new THREE.Group()
+  root.add(body)
+
+  const { legL, legR } = buildLegs(body, p, ctx)
+  buildTorso(body, look, p, ctx)
+  const { armL, armR } = buildArms(body, p, ctx)
+  const envelope = kind === 'llm_call' ? buildEnvelope(armR, ctx) : undefined
+  const head = buildHead(body, p, ctx)
+  buildHairStyle(head, look.hairStyle ?? 'short', p.hair, ctx)
+  buildAccessory(head, p.dark, look, kind, ctx)
+  const { stars, zzz } = buildStatusIndicators(root, ctx)
+
+  return { root, body, head, legL, legR, armL, armR, stars, zzz, envelope, materials: ctx.materials, geometries: ctx.geometries }
 }
 
 export interface PoseState {
