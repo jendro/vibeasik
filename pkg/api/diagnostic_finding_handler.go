@@ -27,48 +27,6 @@ func isMatchingFinding(f models.Finding, target models.Finding, targetKey string
 	return (targetKey != "" && models.GenerateFindingKey(f) == targetKey) || models.AreFindingsMatching(f, target)
 }
 
-func syncFindingStatusInDeepCheck(db *gorm.DB, projectID uint, target models.Finding, newStatus string) {
-	var deepReport models.DeepCheckReport
-	if err := db.Where("project_id = ?", projectID).Order("created_at desc").First(&deepReport).Error; err != nil || deepReport.FindingsJSON == "" {
-		return
-	}
-
-	var deepFindings []models.Finding
-	if err := json.Unmarshal([]byte(deepReport.FindingsJSON), &deepFindings); err != nil {
-		return
-	}
-
-	targetKey := target.ID
-	if targetKey == "" {
-		targetKey = models.GenerateFindingKey(target)
-	}
-
-	updated := false
-	for i := range deepFindings {
-		if isMatchingFinding(deepFindings[i], target, targetKey) {
-			deepFindings[i].Status = newStatus
-			if deepFindings[i].ID == "" {
-				deepFindings[i].ID = targetKey
-			}
-			updated = true
-			break
-		}
-	}
-
-	if updated {
-		newScore := diagnostics.CalculateHealthScore(deepFindings)
-		deepReport.Score = newScore
-		if data, err := json.Marshal(deepFindings); err == nil {
-			deepReport.FindingsJSON = string(data)
-			_ = db.Model(&deepReport).Updates(map[string]interface{}{
-				"findings_json": deepReport.FindingsJSON,
-				"score":         newScore,
-			}).Error
-			_ = db.Model(&models.Project{}).Where("id = ?", projectID).Update("last_deep_check_score", newScore).Error
-		}
-	}
-}
-
 func deleteFindingInDeepCheck(db *gorm.DB, projectID uint, target models.Finding, targetKey string) bool {
 	var deepReport models.DeepCheckReport
 	if err := db.Where("project_id = ?", projectID).Order("created_at desc").First(&deepReport).Error; err != nil || deepReport.FindingsJSON == "" {
