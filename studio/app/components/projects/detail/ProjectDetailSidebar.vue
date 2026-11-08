@@ -28,7 +28,8 @@ const navGroups = computed<TabGroup[]>(() => [
       { id: 'overview', title: 'Ringkasan', desc: 'Tujuan, fitur & arah pengembangan', icon: 'i-lucide-layout-dashboard', badge: props.profile?.features?.length || undefined },
       { id: 'apps', title: 'Aplikasi', desc: 'Modul & hubungan antar aplikasi', icon: 'i-lucide-boxes', badge: props.project?.components?.length },
       { id: 'technical', title: 'Rute, File & Env', desc: 'Katalog router, struktur & .env', icon: 'i-lucide-book-open-check' },
-      { id: 'synergy', title: 'Alur Data', desc: 'Halaman ➔ API ➔ Database', icon: 'i-lucide-network' }
+      { id: 'synergy', title: 'Alur Data', desc: 'Halaman ➔ API ➔ Database', icon: 'i-lucide-network' },
+      { id: 'recap', title: 'Rekap Optimasi', desc: 'Todo selesai per kategori', icon: 'i-lucide-chart-no-axes-column' }
     ]
   },
   {

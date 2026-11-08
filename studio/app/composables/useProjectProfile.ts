@@ -1,6 +1,8 @@
 import type { Ref } from 'vue'
 import type { Project, ProjectBaseKnowledge, ProjectProfile } from '~/types'
 
+const isUpgradeRequired = (err: any) => (err?.statusCode ?? err?.status ?? err?.response?.status) === 402
+
 // Profil proyek (tujuan, fitur, roadmap) + cache Base Knowledge untuk halaman detail proyek.
 export function useProjectProfile(projectId: Ref<number>, project: Ref<Project | null>) {
   const toast = useToast()
@@ -25,6 +27,8 @@ export function useProjectProfile(projectId: Ref<number>, project: Ref<Project |
     try {
       profile.value = await getProjectProfile(projectId.value)
     } catch (err: any) {
+      // 402 = fitur Pro di edisi Community: bukan galat, tab terkait menampilkan kartu kunci.
+      if (isUpgradeRequired(err)) return
       toast.add({
         title: 'Gagal Memuat Profil Proyek',
         description: err.message || 'Terjadi kesalahan saat memuat profil proyek',
@@ -88,6 +92,7 @@ export function useProjectProfile(projectId: Ref<number>, project: Ref<Project |
       }
       return cachedBaseKnowledge.value
     } catch (err: any) {
+      if (isUpgradeRequired(err)) return
       toast.add({
         title: 'Gagal Memuat Base Knowledge',
         description: err.message || 'Terjadi kesalahan saat memuat base knowledge',

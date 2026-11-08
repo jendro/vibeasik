@@ -26,7 +26,17 @@ const project = ref<Project | null>(null)
 const loading = ref(true)
 // Legacy tab ids keep old links (?tab=topology / ?tab=base_knowledge) working
 const TAB_ALIASES: Record<string, string> = { topology: 'apps', base_knowledge: 'technical' }
-const VALID_TABS = ['overview', 'apps', 'technical', 'synergy', 'ai_chat', 'visual_audit']
+const VALID_TABS = ['overview', 'apps', 'technical', 'synergy', 'ai_chat', 'visual_audit', 'recap']
+// Tab yang datanya dari route Pro (engine Community menjawab 402): tampilkan kartu kunci, jangan panggil API-nya.
+const TAB_FEATURE: Record<string, string> = {
+  overview: 'audit.ai_review', technical: 'audit.ai_review', synergy: 'audit.ai_review',
+  ai_chat: 'audit.ai_review', visual_audit: 'runtime_sim'
+}
+const { load: loadEdition, isLocked } = useEdition()
+const lockedFeature = computed(() => {
+  const f = TAB_FEATURE[activeTab.value]
+  return f && isLocked(f) ? f : ''
+})
 const normalizeTab = (tab: unknown) => {
   const t = typeof tab === 'string' ? (TAB_ALIASES[tab] || tab) : ''
   return VALID_TABS.includes(t) ? t : 'overview'
@@ -101,9 +111,10 @@ const loadProjectData = async (quiet = false) => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   loadProjectData()
-  loadProfile()
+  await loadEdition()
+  if (!isLocked('audit.ai_review')) loadProfile()
 })
 
 // Fast Scan (antrean, modal blueprint, terapkan parameter)
@@ -145,6 +156,15 @@ const handleDeleteProject = async () => {
 }
 
 const handleStartPipeline = async () => {
+  if (isLocked('orchestrator')) {
+    toast.add({
+      title: 'Pipeline Butuh Paket Pro',
+      description: 'Antrean pipeline LLM hanya tersedia di edisi Pro. Fast Scan per aplikasi tetap bisa dipakai.',
+      icon: 'i-lucide-lock',
+      color: 'warning'
+    })
+    return
+  }
   try {
     const res = await startProjectPipeline(projectId.value)
     toast.add({
@@ -259,8 +279,15 @@ const handleCreateDirOnDisk = async (comp: ProjectComponent) => {
         @start-pipeline="handleStartPipeline"
       />
 
+      <ProLockCard v-if="lockedFeature" :feature="lockedFeature" />
+
+      <ProjectsDetailProjectOptimizationRecapTab
+        v-else-if="activeTab === 'recap'"
+        :project="project"
+      />
+
       <ProjectsDetailProjectOverviewTab
-        v-if="activeTab === 'overview'"
+        v-else-if="activeTab === 'overview'"
         :project="project"
         :profile="profile"
         :loading="loadingProfile"
