@@ -521,7 +521,7 @@ const confirmDelete = async () => {
       :project="projectToDeprecate"
       @updated="handleProjectUpdated"
     />
-    <!-- Konfirmasi (pengganti confirm() bawaan browser) -->
+    <!-- Modal konfirmasi lepas proyek -->
     <UModal
       :open="pendingDeleteId !== null"
       title="Lepas proyek dari manager?"

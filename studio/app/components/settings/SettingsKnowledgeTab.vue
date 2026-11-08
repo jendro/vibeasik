@@ -344,7 +344,7 @@ onMounted(load)
         </UCard>
       </template>
     </ClientOnly>
-    <!-- Konfirmasi (pengganti confirm() bawaan browser) -->
+    <!-- Modal konfirmasi cabut kiriman pengetahuan -->
     <UModal
       :open="!!pendingRevoke"
       title="Cabut kiriman?"
