@@ -1,0 +1,23 @@
+{
+  "success_count": 1,
+  "failed_count": 0,
+  "skipped_count": 0,
+  "moves": [
+    {
+      "id": "a",
+      "project_id": 1,
+      "project_name": "",
+      "component_id": 2,
+      "component_name": "",
+      "role": "",
+      "current_path": "<TMP>/u1",
+      "target_path": "<TMP>/o2/u1",
+      "relative_target_path": "",
+      "is_git_repo": false,
+      "has_uncommitted_changes": false,
+      "status": "success",
+      "size_bytes": 0
+    }
+  ],
+  "message": "Berhasil memindahkan 1 folder, 0 gagal, 0 dilewati."
+}

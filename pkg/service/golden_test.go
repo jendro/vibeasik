@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
+
+var projUnix = regexp.MustCompile(`proj-\d{9,}`)
 
 // golden membandingkan keluaran JSON dengan berkas testdata/<name>.golden.
 // Set UPDATE_GOLDEN=1 untuk menulis ulang. Path sementara diganti <TMP>.
@@ -20,6 +23,7 @@ func golden(t *testing.T, name string, v any, tmp string) {
 	if tmp != "" {
 		got = strings.ReplaceAll(got, tmp, "<TMP>")
 	}
+	got = projUnix.ReplaceAllString(got, "proj-<UNIX>")
 	got += "\n"
 	path := filepath.Join("testdata", name+".golden")
 	if os.Getenv("UPDATE_GOLDEN") == "1" {

@@ -1,0 +1,322 @@
+[
+  {
+    "project_id": 1,
+    "project_name": "Normal",
+    "project_slug": "normal",
+    "is_unified": false,
+    "target_parent_dir": "<TMP>/ws",
+    "project_target_dir": "<TMP>/ws/normal",
+    "items": [
+      {
+        "id": "item-1",
+        "project_id": 1,
+        "project_name": "Normal",
+        "component_id": 1,
+        "component_ids": [
+          1,
+          2
+        ],
+        "component_name": "api",
+        "role": "backend",
+        "current_path": "<TMP>/src/be",
+        "target_path": "<TMP>/ws/normal/backend",
+        "relative_target_path": "normal/backend",
+        "is_git_repo": false,
+        "has_uncommitted_changes": false,
+        "status": "pending",
+        "warning": "Folder ini juga dipakai komponen api-dup; dipindahkan sekali untuk semuanya.",
+        "size_bytes": 3
+      },
+      {
+        "id": "item-2",
+        "project_id": 1,
+        "project_name": "Normal",
+        "component_id": 3,
+        "component_ids": [
+          3
+        ],
+        "component_name": "docs",
+        "role": "docs",
+        "current_path": "<TMP>/src/be/docs",
+        "target_path": "<TMP>/ws/normal/backend/docs",
+        "relative_target_path": "normal/backend/docs",
+        "is_git_repo": false,
+        "has_uncommitted_changes": false,
+        "status": "moves_with_parent",
+        "warning": "Berada di dalam folder komponen lain; ikut pindah bersama induknya.",
+        "size_bytes": 0
+      },
+      {
+        "id": "item-3",
+        "project_id": 1,
+        "project_name": "Normal",
+        "component_id": 4,
+        "component_ids": [
+          4
+        ],
+        "component_name": "deep",
+        "role": "cli",
+        "current_path": "<TMP>/src/be/docs/deep",
+        "target_path": "deep",
+        "relative_target_path": "",
+        "is_git_repo": false,
+        "has_uncommitted_changes": false,
+        "status": "moves_with_parent",
+        "warning": "Berada di dalam folder komponen lain; ikut pindah bersama induknya.",
+        "size_bytes": 0
+      },
+      {
+        "id": "item-4",
+        "project_id": 1,
+        "project_name": "Normal",
+        "component_id": 5,
+        "component_ids": [
+          5
+        ],
+        "component_name": "web",
+        "role": "frontend_client",
+        "current_path": "<TMP>/src/fe",
+        "target_path": "<TMP>/ws/normal/frontend",
+        "relative_target_path": "normal/frontend",
+        "is_git_repo": true,
+        "has_uncommitted_changes": true,
+        "status": "pending",
+        "warning": "Terdapat perubahan git yang belum di-commit.",
+        "size_bytes": 26250
+      },
+      {
+        "id": "item-5",
+        "project_id": 1,
+        "project_name": "Normal",
+        "component_id": 6,
+        "component_ids": [
+          6
+        ],
+        "component_name": "web2",
+        "role": "frontend_client",
+        "current_path": "<TMP>/src/fe2",
+        "target_path": "<TMP>/ws/normal/frontend-web2",
+        "relative_target_path": "normal/frontend-web2",
+        "is_git_repo": false,
+        "has_uncommitted_changes": false,
+        "status": "pending",
+        "size_bytes": 0
+      }
+    ],
+    "has_conflict": false,
+    "can_consolidate": true,
+    "total_size_bytes": 26253
+  },
+  {
+    "project_id": 2,
+    "project_name": "Conflict",
+    "project_slug": "conflict",
+    "is_unified": false,
+    "target_parent_dir": "<TMP>/ws",
+    "project_target_dir": "<TMP>/ws/conflict",
+    "items": [
+      {
+        "id": "item-1",
+        "project_id": 2,
+        "project_name": "Conflict",
+        "component_id": 8,
+        "component_ids": [
+          8
+        ],
+        "component_name": "be",
+        "role": "backend",
+        "current_path": "<TMP>/src/be2",
+        "target_path": "<TMP>/ws/conflict/backend",
+        "relative_target_path": "conflict/backend",
+        "is_git_repo": false,
+        "has_uncommitted_changes": false,
+        "status": "conflict",
+        "error": "Target folder sudah ada di komputer: <TMP>/ws/conflict/backend",
+        "size_bytes": 0
+      },
+      {
+        "id": "item-2",
+        "project_id": 2,
+        "project_name": "Conflict",
+        "component_id": 9,
+        "component_ids": [
+          9
+        ],
+        "component_name": "gone",
+        "role": "frontend_client",
+        "current_path": "<TMP>/src/gone",
+        "target_path": "<TMP>/ws/conflict/frontend",
+        "relative_target_path": "conflict/frontend",
+        "is_git_repo": false,
+        "has_uncommitted_changes": false,
+        "status": "pending",
+        "size_bytes": 0
+      }
+    ],
+    "has_conflict": true,
+    "can_consolidate": false,
+    "total_size_bytes": 0
+  },
+  {
+    "project_id": 3,
+    "project_name": "Half",
+    "project_slug": "half",
+    "is_unified": false,
+    "target_parent_dir": "<TMP>/ws",
+    "project_target_dir": "<TMP>/ws/half",
+    "items": [
+      {
+        "id": "item-1",
+        "project_id": 3,
+        "project_name": "Half",
+        "component_id": 10,
+        "component_ids": [
+          10
+        ],
+        "component_name": "fe",
+        "role": "frontend_client",
+        "current_path": "<TMP>/ws/half/frontend",
+        "target_path": "<TMP>/ws/half/frontend",
+        "relative_target_path": "half/frontend",
+        "is_git_repo": false,
+        "has_uncommitted_changes": false,
+        "status": "already_in_place",
+        "size_bytes": 18
+      },
+      {
+        "id": "item-2",
+        "project_id": 3,
+        "project_name": "Half",
+        "component_id": 11,
+        "component_ids": [
+          11
+        ],
+        "component_name": "be",
+        "role": "backend",
+        "current_path": "<TMP>/ws/half/backend",
+        "target_path": "<TMP>/ws/half/backend",
+        "relative_target_path": "half/backend",
+        "is_git_repo": false,
+        "has_uncommitted_changes": false,
+        "status": "already_in_place",
+        "size_bytes": 1
+      }
+    ],
+    "has_conflict": false,
+    "can_consolidate": true,
+    "total_size_bytes": 19
+  },
+  {
+    "project_id": 4,
+    "project_name": "Solo",
+    "project_slug": "solo",
+    "is_unified": false,
+    "target_parent_dir": "<TMP>/ws",
+    "project_target_dir": "<TMP>/ws/solo",
+    "items": [
+      {
+        "id": "item-1",
+        "project_id": 4,
+        "project_name": "Solo",
+        "component_id": 0,
+        "component_name": "",
+        "role": "",
+        "current_path": "<TMP>/src/solo",
+        "target_path": "<TMP>/ws/solo",
+        "relative_target_path": "solo",
+        "is_git_repo": false,
+        "has_uncommitted_changes": false,
+        "status": "pending",
+        "size_bytes": 0
+      }
+    ],
+    "has_conflict": false,
+    "can_consolidate": true,
+    "total_size_bytes": 0
+  },
+  {
+    "project_id": 5,
+    "project_name": "SoloConflict",
+    "project_slug": "solo-conflict",
+    "is_unified": false,
+    "target_parent_dir": "<TMP>/ws",
+    "project_target_dir": "<TMP>/ws/solo-conflict",
+    "items": [
+      {
+        "id": "item-1",
+        "project_id": 5,
+        "project_name": "SoloConflict",
+        "component_id": 0,
+        "component_name": "",
+        "role": "",
+        "current_path": "<TMP>/src/solo-conf",
+        "target_path": "<TMP>/ws/solo-conflict",
+        "relative_target_path": "solo-conflict",
+        "is_git_repo": false,
+        "has_uncommitted_changes": false,
+        "status": "conflict",
+        "error": "Target folder sudah ada di komputer: <TMP>/ws/solo-conflict",
+        "size_bytes": 0
+      }
+    ],
+    "has_conflict": true,
+    "can_consolidate": false,
+    "total_size_bytes": 0
+  },
+  {
+    "project_id": 6,
+    "project_name": "NoRoot",
+    "project_slug": "noroot",
+    "is_unified": false,
+    "target_parent_dir": "<TMP>/ws",
+    "project_target_dir": "<TMP>/ws/noroot",
+    "items": [],
+    "has_conflict": false,
+    "can_consolidate": true,
+    "total_size_bytes": 0
+  },
+  {
+    "project_id": 7,
+    "project_name": "In Place",
+    "project_slug": "inplace",
+    "is_unified": false,
+    "target_parent_dir": "<TMP>/ws",
+    "project_target_dir": "<TMP>/ws/inplace",
+    "items": [
+      {
+        "id": "item-1",
+        "project_id": 7,
+        "project_name": "In Place",
+        "component_id": 12,
+        "component_ids": [
+          12
+        ],
+        "component_name": "be",
+        "role": "backend",
+        "current_path": "<TMP>/ws/inplace/backend",
+        "target_path": "<TMP>/ws/inplace/backend",
+        "relative_target_path": "inplace/backend",
+        "is_git_repo": false,
+        "has_uncommitted_changes": false,
+        "status": "already_in_place",
+        "size_bytes": 0
+      }
+    ],
+    "has_conflict": false,
+    "can_consolidate": true,
+    "total_size_bytes": 0
+  },
+  {
+    "project_id": 6,
+    "project_name": "NoRoot",
+    "project_slug": "noroot",
+    "is_unified": false,
+    "target_parent_dir": "<TMP>/home/Documents/Projects",
+    "project_target_dir": "<TMP>/home/Documents/Projects/noroot",
+    "items": [],
+    "has_conflict": false,
+    "can_consolidate": true,
+    "total_size_bytes": 0
+  },
+  "project not found (ID: 999)"
+]
