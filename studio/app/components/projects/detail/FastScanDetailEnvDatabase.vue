@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { FastScanResult } from '~/types'
+import { addDynamicMeta as addDynamicMetaHelper, removeDynamicMeta as removeDynamicMetaHelper } from '~/utils/fastScanDynamicMeta'
 
 const props = defineProps<{ scanResult: FastScanResult, savingScanChanges?: boolean }>()
 defineEmits<{ saveChanges: [] }>()
@@ -9,42 +10,27 @@ const newMetaKey = ref('')
 const newMetaVal = ref('')
 
 const addDynamicMeta = () => {
-  if (!props.scanResult) return
-  if (!props.scanResult.extracted_env) {
-    props.scanResult.extracted_env = {
-      database_type: '',
-      orm_driver: '',
-      database_name: '',
-      auth_methods: [],
-      login_endpoints: [],
-      third_party_services: [],
-      environment_keys: [],
-      login_and_access_guide: '',
-      dynamic_metadata: {}
+  const isAdded = addDynamicMetaHelper(
+    props.scanResult,
+    newMetaKey.value,
+    newMetaVal.value,
+    (description) => {
+      toast.add({
+        title: 'Validasi Gagal',
+        description,
+        icon: 'i-lucide-alert-circle',
+        color: 'warning'
+      })
     }
+  )
+  if (isAdded) {
+    newMetaKey.value = ''
+    newMetaVal.value = ''
   }
-  if (!props.scanResult.extracted_env.dynamic_metadata) {
-    props.scanResult.extracted_env.dynamic_metadata = {}
-  }
-  const k = newMetaKey.value.trim()
-  const v = newMetaVal.value.trim()
-  if (!k) {
-    toast.add({
-      title: 'Validasi Gagal',
-      description: 'Nama properti / atribut wajib diisi',
-      icon: 'i-lucide-alert-circle',
-      color: 'warning'
-    })
-    return
-  }
-  props.scanResult.extracted_env.dynamic_metadata[k] = v
-  newMetaKey.value = ''
-  newMetaVal.value = ''
 }
 
 const removeDynamicMeta = (key: string) => {
-  if (!props.scanResult?.extracted_env?.dynamic_metadata) return
-  delete props.scanResult.extracted_env.dynamic_metadata[key]
+  removeDynamicMetaHelper(props.scanResult, key)
 }
 </script>
 

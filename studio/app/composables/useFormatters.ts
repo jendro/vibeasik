@@ -11,6 +11,26 @@ export interface RoleLabelOptions {
   fallback?: string
 }
 
+export const COMP_ROLE_LABELS: Record<string, string> = {
+  backend: 'Backend API',
+  frontend_admin: 'Admin Dashboard',
+  frontend_client: 'Frontend Web',
+  frontend_mobile: 'Mobile App',
+  docs: 'Dokumentasi',
+  cli: 'CLI Tool',
+  worker: 'Worker Service',
+  other: 'Folder Lain'
+}
+
+/**
+ * Mengembalikan label deskriptif komponen berdasarkan role menggunakan lookup table.
+ * Mengembalikan nilai asli role jika tidak terdapat di tabel lookup.
+ */
+export const getCompRoleLabel = (role?: string): string => {
+  if (!role) return ''
+  return COMP_ROLE_LABELS[role] ?? role
+}
+
 // Pemformat & pemeta tampilan murni yang dipakai banyak komponen (satu sumber kebenaran).
 export const useFormatters = () => {
   const formatDateTime = (dateStr?: string | null): string => {
@@ -134,6 +154,7 @@ export const useFormatters = () => {
     getCategoryIcon,
     getRoleBadgeColor,
     getRoleLabel,
+    getCompRoleLabel,
     getMethodBadgeColor,
     getMethodColorClass
   }
