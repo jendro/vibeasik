@@ -146,3 +146,70 @@ func TestSDKKitsEmbedded(t *testing.T) {
 		t.Error("SuggestKit salah")
 	}
 }
+
+func TestPrune(t *testing.T) {
+	db := testDB(t)
+	src := models.TrafficSource{Name: "prune-test", Mode: models.TrafficModeDirect, IngestKey: "pk", Enabled: true}
+	if err := db.Create(&src).Error; err != nil {
+		t.Fatalf("gagal membuat source: %v", err)
+	}
+
+	now := time.Now()
+	oldMinBucket := now.Add(-MinuteRetention - time.Hour).Unix()
+	newMinBucket := now.Add(-time.Hour).Unix()
+	oldHourBucket := now.Add(-HourRetention - 24*time.Hour).Unix()
+	newHourBucket := now.Add(-24 * time.Hour).Unix()
+
+	routes := []models.TrafficRouteStat{
+		{SourceID: src.ID, Gran: models.TrafficGranMinute, Bucket: oldMinBucket, Method: "GET", Route: "/old/min", Count: 10},
+		{SourceID: src.ID, Gran: models.TrafficGranMinute, Bucket: newMinBucket, Method: "GET", Route: "/new/min", Count: 20},
+		{SourceID: src.ID, Gran: models.TrafficGranHour, Bucket: oldHourBucket, Method: "GET", Route: "/old/hour", Count: 30},
+		{SourceID: src.ID, Gran: models.TrafficGranHour, Bucket: newHourBucket, Method: "GET", Route: "/new/hour", Count: 40},
+	}
+	for i := range routes {
+		if err := db.Create(&routes[i]).Error; err != nil {
+			t.Fatalf("gagal membuat TrafficRouteStat: %v", err)
+		}
+	}
+
+	dims := []models.TrafficDimStat{
+		{SourceID: src.ID, Gran: models.TrafficGranMinute, Bucket: oldMinBucket, Dim: "status", Value: "200", Count: 10},
+		{SourceID: src.ID, Gran: models.TrafficGranMinute, Bucket: newMinBucket, Dim: "status", Value: "200", Count: 20},
+		{SourceID: src.ID, Gran: models.TrafficGranHour, Bucket: oldHourBucket, Dim: "status", Value: "200", Count: 30},
+		{SourceID: src.ID, Gran: models.TrafficGranHour, Bucket: newHourBucket, Dim: "status", Value: "200", Count: 40},
+	}
+	for i := range dims {
+		if err := db.Create(&dims[i]).Error; err != nil {
+			t.Fatalf("gagal membuat TrafficDimStat: %v", err)
+		}
+	}
+
+	Prune(db)
+
+	var remainingRoutes []models.TrafficRouteStat
+	if err := db.Find(&remainingRoutes).Error; err != nil {
+		t.Fatalf("gagal query TrafficRouteStat: %v", err)
+	}
+	if len(remainingRoutes) != 2 {
+		t.Fatalf("sisa TrafficRouteStat = %d, ingin 2", len(remainingRoutes))
+	}
+	for _, r := range remainingRoutes {
+		if r.Route == "/old/min" || r.Route == "/old/hour" {
+			t.Errorf("rute usang %s masih ada setelah Prune", r.Route)
+		}
+	}
+
+	var remainingDims []models.TrafficDimStat
+	if err := db.Find(&remainingDims).Error; err != nil {
+		t.Fatalf("gagal query TrafficDimStat: %v", err)
+	}
+	if len(remainingDims) != 2 {
+		t.Fatalf("sisa TrafficDimStat = %d, ingin 2", len(remainingDims))
+	}
+	for _, d := range remainingDims {
+		if d.Bucket == oldMinBucket || d.Bucket == oldHourBucket {
+			t.Errorf("dimensi usang dengan bucket %d masih ada setelah Prune", d.Bucket)
+		}
+	}
+}
+
