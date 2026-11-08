@@ -1,0 +1,29 @@
+[
+ {
+  "id": "cache:static",
+  "rule": "TRAFFIC-CACHE-STATIC",
+  "category": "cache",
+  "severity": "warning",
+  "title": "Berkas statis dilayani oleh backend",
+  "detail": "400 request (13.3%) adalah berkas statis (js/css/gambar). Backend aplikasi tidak perlu ikut melayani ini.",
+  "action": "Sajikan berkas statis lewat CDN (Cloudflare/Bunny) atau langsung dari Caddy/Nginx dengan Cache-Control: public, max-age=31536000, immutable untuk aset ber-hash.",
+  "evidence": [
+   "400 request statis"
+  ],
+  "routes": [
+   "GET static:css"
+  ]
+ },
+ {
+  "id": "lb:single",
+  "rule": "TRAFFIC-SINGLE-INSTANCE",
+  "category": "load_balancer",
+  "severity": "warning",
+  "title": "Traffic sudah besar tetapi hanya 1 instance",
+  "detail": "Puncak 2000 req/menit (±70.0 request bersamaan) dilayani satu instance. Restart/deploy atau satu crash = seluruh aplikasi mati.",
+  "action": "Jalankan minimal 2 instance di belakang load balancer dengan health check \u0026 rolling deploy (zero downtime). Pastikan aplikasi stateless dulu.",
+  "evidence": [
+   "Instance terdeteksi: 1"
+  ]
+ }
+]

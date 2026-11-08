@@ -1,0 +1,315 @@
+[
+ {
+  "id": "rate_limit:ip",
+  "rule": "TRAFFIC-RATE-LIMIT-IP",
+  "category": "rate_limit",
+  "severity": "critical",
+  "title": "2 IP mengirim request jauh di atas pengguna normal",
+  "detail": "Satu IP yang membanjiri server bisa memperlambat semua pengguna lain (scraper, bot, skrip salah, atau serangan). Tanpa rate limit per IP, satu klien bisa menghabiskan kapasitas.",
+  "action": "Pasang rate limiter per IP ±2100 request/menit (3× p95 pengguna normal), balas 429 + Retry-After. Simpan hitungan di Redis bila instance \u003e 1. Pertimbangkan blokir IP teratas di firewall/CDN.",
+  "evidence": [
+   "Puncak per menit IP biasa (median) 12 req, p95 700 req",
+   "1.1.1.1: puncak 700 req/menit, total 900 (18.0% traffic)",
+   "2.2.2.2: puncak 300 req/menit, total 300 (6.0% traffic)"
+  ]
+ },
+ {
+  "id": "rate_limit:auth",
+  "rule": "TRAFFIC-RATE-LIMIT-AUTH",
+  "category": "rate_limit",
+  "severity": "critical",
+  "title": "Endpoint login/OTP/daftar diserang percobaan berulang",
+  "detail": "Banyak percobaan gagal atau percobaan cepat dari satu IP ke endpoint autentikasi adalah pola brute force / credential stuffing / spam OTP (biaya SMS/email).",
+  "action": "Rate limit ketat khusus endpoint auth: 5–10 percobaan/menit per IP dan per akun/nomor, jeda bertahap setelah gagal, CAPTCHA setelah 3–5 gagal, dan batas harian untuk kirim OTP.",
+  "evidence": [
+   "100 request ke endpoint auth, 60.0% gagal (4xx)",
+   "1.1.1.1: 12 percobaan auth/menit (puncak)",
+   "3.3.3.3: 11 percobaan auth/menit (puncak)"
+  ],
+  "routes": [
+   "POST /api/auth/login"
+  ]
+ },
+ {
+  "id": "split:job:POST /api/export",
+  "rule": "TRAFFIC-LONG-RUNNING",
+  "category": "split_service",
+  "severity": "critical",
+  "title": "Pindahkan POST /api/export ke background job",
+  "detail": "p95 6.00 dtk, terlama 30.00 dtk. Request selama ini menahan koneksi \u0026 worker server, rawan timeout di proxy/CDN (umumnya 30–100 dtk) dan menurunkan kapasitas endpoint lain.",
+  "action": "Ubah jadi asinkron: endpoint menerima permintaan → masukkan ke antrean (Redis/DB queue) → balas 202 + id job → worker terpisah memproses → klien polling/SSE/webhook untuk hasil. Worker bisa diskalakan sendiri tanpa menambah server API.",
+  "evidence": [
+   "50 request, p50 3.00 dtk, p95 6.00 dtk, p99 9.00 dtk",
+   "Memakan 20.0% total waktu server"
+  ],
+  "routes": [
+   "POST /api/export"
+  ]
+ },
+ {
+  "id": "perf:GET /api/slow",
+  "rule": "TRAFFIC-SLOW-ROUTE",
+  "category": "performance",
+  "severity": "critical",
+  "title": "Endpoint lambat: GET /api/slow",
+  "detail": "p95 3.50 dtk dari 100 request (rata-rata 2.00 dtk). Pengguna merasakan jeda \u003e 1 detik.",
+  "action": "Profil query endpoint ini: cari N+1 query, tambah index pada kolom WHERE/JOIN/ORDER BY, batasi kolom \u0026 baris (paging), dan pindahkan panggilan API luar ke paralel/cache. Bila sudah optimal, cache hasilnya.",
+  "evidence": [
+   "p50 1.50 dtk · p95 3.50 dtk · p99 4.00 dtk",
+   "Memakan 10.0% total waktu server"
+  ],
+  "routes": [
+   "GET /api/slow"
+  ]
+ },
+ {
+  "id": "errors:POST /api/orders",
+  "rule": "TRAFFIC-5XX",
+  "category": "errors",
+  "severity": "critical",
+  "title": "POST /api/orders gagal 15.0% (5xx)",
+  "detail": "30 dari 200 request berakhir error server. Bila error naik saat traffic ramai, penyebabnya biasanya koneksi DB habis, timeout layanan luar, atau memori.",
+  "action": "Cek log error endpoint ini pada jam yang sama, tambahkan timeout + retry dengan backoff untuk layanan luar, perbesar/atur pool koneksi DB, dan balas error yang jelas (4xx) untuk input salah alih-alih 500.",
+  "evidence": [
+   "30 error 5xx",
+   "p95 300 ms"
+  ],
+  "routes": [
+   "POST /api/orders"
+  ]
+ },
+ {
+  "id": "lb:saturation",
+  "rule": "TRAFFIC-SATURATION",
+  "category": "load_balancer",
+  "severity": "critical",
+  "title": "Server melambat saat ramai — kapasitas sudah jenuh",
+  "detail": "Latensi naik seiring jumlah request (korelasi 1.00). Di menit tersibuk rata-rata 801 ms, di menit sepi 303 ms. Ini tanda CPU/DB/pool koneksi sudah penuh, bukan kode yang lambat di semua kondisi.",
+  "action": "Tambah instance aplikasi di belakang load balancer (Caddy/Nginx/HAProxy, round-robin + health check). Syaratnya aplikasi stateless: sesi di Redis/JWT, upload di object storage, cron hanya di satu instance. Cek juga DB: bila DB yang jenuh, tambah read replica/cache sebelum menambah instance.",
+  "evidence": [
+   "Korelasi beban↔latensi 1.00",
+   "Puncak 700 req/menit, ±60.0 request bersamaan"
+  ]
+ },
+ {
+  "id": "capacity:burst",
+  "rule": "TRAFFIC-BURST",
+  "category": "capacity",
+  "severity": "warning",
+  "title": "Lonjakan traffic tajam (bursty)",
+  "detail": "Menit tersibuk 700 req/menit, 12× rata-rata 60.0 req/menit. Server yang disiapkan untuk rata-rata akan tumbang saat lonjakan.",
+  "action": "Pasang rate limit global sebagai pengaman (load shedding 429/503 sebelum server mati), pindahkan pekerjaan berat saat lonjakan ke antrean (queue + worker), dan siapkan autoscaling / instance cadangan di belakang load balancer.",
+  "evidence": [
+   "Puncak 700 req/menit",
+   "Rata-rata 1.00 req/detik"
+  ]
+ },
+ {
+  "id": "rate_limit:bot",
+  "rule": "TRAFFIC-BOT-SHARE",
+  "category": "rate_limit",
+  "severity": "warning",
+  "title": "30.0% traffic berasal dari bot/crawler",
+  "detail": "Bot menghabiskan kapasitas yang seharusnya untuk pengguna. Sebagian berguna (Googlebot), sebagian tidak (scraper, AI crawler).",
+  "action": "Atur robots.txt \u0026 Crawl-delay, rate limit lebih ketat untuk UA bot, blokir bot yang tidak berguna di CDN/WAF, dan cache halaman/endpoint yang sering dirayapi.",
+  "evidence": [
+   "1500 request bot"
+  ]
+ },
+ {
+  "id": "security:scanner",
+  "rule": "TRAFFIC-SCANNER",
+  "category": "security",
+  "severity": "warning",
+  "title": "Server dipindai bot pencari celah (.env, wp-admin, .git, …)",
+  "detail": "Pemindai otomatis mencari berkas rahasia \u0026 panel admin. Tidak berbahaya selama berkas itu memang tidak tersaji, tetapi tetap memakan kapasitas dan menandakan server sudah jadi target.",
+  "action": "Pastikan .env/.git tidak pernah tersaji, blokir pola path ini di reverse proxy/WAF (Caddy/Nginx/Cloudflare), dan pasang fail2ban/limit untuk IP yang banyak menghasilkan 404.",
+  "evidence": [
+   "30 request ke path pemindai kerentanan",
+   "/.env (10×)",
+   "/wp-admin (8×)"
+  ]
+ },
+ {
+  "id": "cache:GET /api/products",
+  "rule": "TRAFFIC-CACHE-ROUTE",
+  "category": "cache",
+  "severity": "warning",
+  "title": "Cache respons GET /api/products",
+  "detail": "Endpoint GET ini dipanggil 1500 kali (30.0% traffic) dengan rata-rata 80 ms dan memakan 20.0% total waktu server. 10 path teratasnya mencakup 60.0% panggilan — makin tinggi, makin besar rasio hit cache.",
+  "action": "Pasang cache: data publik → header Cache-Control/ETag + CDN; data per pengguna → cache di Redis/in-memory dengan TTL pendek (30–300 dtk) dan invalidasi saat data berubah. Ukur ulang p95 setelahnya.",
+  "evidence": [
+   "25.0 req/menit, p95 400 ms",
+   "Error 5xx 0.1%"
+  ],
+  "routes": [
+   "GET /api/products"
+  ]
+ },
+ {
+  "id": "cache:static",
+  "rule": "TRAFFIC-CACHE-STATIC",
+  "category": "cache",
+  "severity": "warning",
+  "title": "Berkas statis dilayani oleh backend",
+  "detail": "700 request (14.0%) adalah berkas statis (js/css/gambar). Backend aplikasi tidak perlu ikut melayani ini.",
+  "action": "Sajikan berkas statis lewat CDN (Cloudflare/Bunny) atau langsung dari Caddy/Nginx dengan Cache-Control: public, max-age=31536000, immutable untuk aset ber-hash.",
+  "evidence": [
+   "700 request statis"
+  ],
+  "routes": [
+   "GET static:js"
+  ]
+ },
+ {
+  "id": "perf:GET /api/meh",
+  "rule": "TRAFFIC-SLOW-ROUTE",
+  "category": "performance",
+  "severity": "warning",
+  "title": "Endpoint lambat: GET /api/meh",
+  "detail": "p95 1.20 dtk dari 100 request (rata-rata 900 ms). Pengguna merasakan jeda \u003e 1 detik.",
+  "action": "Profil query endpoint ini: cari N+1 query, tambah index pada kolom WHERE/JOIN/ORDER BY, batasi kolom \u0026 baris (paging), dan pindahkan panggilan API luar ke paralel/cache. Bila sudah optimal, cache hasilnya.",
+  "evidence": [
+   "p50 0 ms · p95 1.20 dtk · p99 0 ms",
+   "Memakan 0.0% total waktu server"
+  ],
+  "routes": [
+   "GET /api/meh"
+  ]
+ },
+ {
+  "id": "errors:POST /api/items",
+  "rule": "TRAFFIC-5XX",
+  "category": "errors",
+  "severity": "warning",
+  "title": "POST /api/items gagal 3.0% (5xx)",
+  "detail": "6 dari 200 request berakhir error server. Bila error naik saat traffic ramai, penyebabnya biasanya koneksi DB habis, timeout layanan luar, atau memori.",
+  "action": "Cek log error endpoint ini pada jam yang sama, tambahkan timeout + retry dengan backoff untuk layanan luar, perbesar/atur pool koneksi DB, dan balas error yang jelas (4xx) untuk input salah alih-alih 500.",
+  "evidence": [
+   "6 error 5xx",
+   "p95 300 ms"
+  ],
+  "routes": [
+   "POST /api/items"
+  ]
+ },
+ {
+  "id": "payload:out:GET /api/big",
+  "rule": "TRAFFIC-PAYLOAD-LARGE",
+  "category": "payload",
+  "severity": "warning",
+  "title": "Respons besar: GET /api/big",
+  "detail": "Rata-rata respons 600 KB per request (30 request). Respons besar memperlambat pengguna mobile dan menghabiskan bandwidth server.",
+  "action": "Terapkan paging (limit/cursor), kirim kolom yang dipakai saja, aktifkan kompresi gzip/brotli, dan untuk berkas besar pakai URL object storage/CDN.",
+  "evidence": [
+   "Rata-rata 600 KB"
+  ],
+  "routes": [
+   "GET /api/big"
+  ]
+ },
+ {
+  "id": "split:upload:POST /api/upload",
+  "rule": "TRAFFIC-UPLOAD-HEAVY",
+  "category": "split_service",
+  "severity": "warning",
+  "title": "Unggahan besar lewat API: POST /api/upload",
+  "detail": "Rata-rata body masuk 2.0 MB. Unggahan besar menahan worker API selama proses kirim.",
+  "action": "Pakai presigned URL agar klien mengunggah langsung ke object storage (S3/R2/MinIO), atau pisahkan service unggah tersendiri dengan batas body \u0026 timeout yang berbeda dari API utama.",
+  "evidence": [
+   "Rata-rata body 2.0 MB"
+  ],
+  "routes": [
+   "POST /api/upload"
+  ]
+ },
+ {
+  "id": "split:group:/api/a",
+  "rule": "TRAFFIC-SPLIT-GROUP",
+  "category": "split_service",
+  "severity": "warning",
+  "title": "Kelompok /api/a layak dipisah jadi service sendiri",
+  "detail": "Hanya 10.0% request tetapi memakan 50.0% total waktu server (p95 800 ms). Saat kelompok ini sibuk, endpoint lain ikut melambat karena berbagi CPU, memori \u0026 pool koneksi yang sama.",
+  "action": "Pisahkan /api/a ke service/worker sendiri (proses \u0026 deploy terpisah, bisa diskalakan sendiri) di belakang reverse proxy yang merutekan per prefix path. Mulai dari memisahkan prosesnya dulu (monorepo, binary kedua) sebelum memecah database.",
+  "evidence": [
+   "100 request di 2 rute",
+   "Rata-rata 300 ms, error 5xx 0.0%"
+  ],
+  "routes": [
+   "/api/a/*"
+  ]
+ },
+ {
+  "id": "lb:imbalance",
+  "rule": "TRAFFIC-LB-IMBALANCE",
+  "category": "load_balancer",
+  "severity": "warning",
+  "title": "Beban antar instance tidak seimbang",
+  "detail": "Instance tersibuk menerima 3.0× instance tersepi. Satu instance bisa jenuh sementara yang lain menganggur.",
+  "action": "Periksa algoritma load balancer (pakai least_conn/round-robin), matikan sticky session bila tidak perlu, dan pastikan health check mengeluarkan instance yang lambat.",
+  "evidence": [
+   "a: 3000 request (75.0%)",
+   "b: 1000 request (25.0%)"
+  ]
+ },
+ {
+  "id": "cache:GET /api/cats",
+  "rule": "TRAFFIC-CACHE-ROUTE",
+  "category": "cache",
+  "severity": "info",
+  "title": "Cache respons GET /api/cats",
+  "detail": "Endpoint GET ini dipanggil 200 kali (4.0% traffic) dengan rata-rata 40 ms dan memakan 1.0% total waktu server. 10 path teratasnya mencakup belum diketahui panggilan — makin tinggi, makin besar rasio hit cache.",
+  "action": "Pasang cache: data publik → header Cache-Control/ETag + CDN; data per pengguna → cache di Redis/in-memory dengan TTL pendek (30–300 dtk) dan invalidasi saat data berubah. Ukur ulang p95 setelahnya.",
+  "evidence": [
+   "0.0 req/menit, p95 0 ms",
+   "Error 5xx 0.0%"
+  ],
+  "routes": [
+   "GET /api/cats"
+  ]
+ },
+ {
+  "id": "cache:GET /api/slow",
+  "rule": "TRAFFIC-CACHE-ROUTE",
+  "category": "cache",
+  "severity": "info",
+  "title": "Cache respons GET /api/slow",
+  "detail": "Endpoint GET ini dipanggil 100 kali (0.0% traffic) dengan rata-rata 2.00 dtk dan memakan 10.0% total waktu server. 10 path teratasnya mencakup belum diketahui panggilan — makin tinggi, makin besar rasio hit cache.",
+  "action": "Pasang cache: data publik → header Cache-Control/ETag + CDN; data per pengguna → cache di Redis/in-memory dengan TTL pendek (30–300 dtk) dan invalidasi saat data berubah. Ukur ulang p95 setelahnya.",
+  "evidence": [
+   "0.0 req/menit, p95 3.50 dtk",
+   "Error 5xx 0.0%"
+  ],
+  "routes": [
+   "GET /api/slow"
+  ]
+ },
+ {
+  "id": "cache:GET /api/meh",
+  "rule": "TRAFFIC-CACHE-ROUTE",
+  "category": "cache",
+  "severity": "info",
+  "title": "Cache respons GET /api/meh",
+  "detail": "Endpoint GET ini dipanggil 100 kali (0.0% traffic) dengan rata-rata 900 ms dan memakan 0.0% total waktu server. 10 path teratasnya mencakup belum diketahui panggilan — makin tinggi, makin besar rasio hit cache.",
+  "action": "Pasang cache: data publik → header Cache-Control/ETag + CDN; data per pengguna → cache di Redis/in-memory dengan TTL pendek (30–300 dtk) dan invalidasi saat data berubah. Ukur ulang p95 setelahnya.",
+  "evidence": [
+   "0.0 req/menit, p95 1.20 dtk",
+   "Error 5xx 0.0%"
+  ],
+  "routes": [
+   "GET /api/meh"
+  ]
+ },
+ {
+  "id": "capacity:write",
+  "rule": "TRAFFIC-WRITE-HEAVY",
+  "category": "capacity",
+  "severity": "info",
+  "title": "Traffic didominasi penulisan (POST/PUT/DELETE)",
+  "detail": "Hanya 30.0% request yang membaca (GET). Cache tidak banyak membantu; yang menentukan kapasitas adalah database tulis.",
+  "action": "Kumpulkan tulis yang bisa ditunda ke antrean \u0026 tulis secara batch, pastikan index tidak berlebihan di tabel yang sering ditulis, dan pantau lock/antrean koneksi DB. SQLite: aktifkan WAL; beban tulis tinggi lintas instance → MySQL/Postgres.",
+  "evidence": [
+   "30.0% baca, 70.0% tulis"
+  ]
+ }
+]

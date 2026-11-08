@@ -1,0 +1,14 @@
+[
+ {
+  "id": "info:healthy",
+  "rule": "TRAFFIC-HEALTHY",
+  "category": "info",
+  "severity": "info",
+  "title": "Belum perlu load balancer, cache besar, atau pecah service",
+  "detail": "Rata-rata 0.10 req/detik, puncak 3 req/menit, p95 80 ms, error 5xx 0.0%. Satu instance masih cukup; memecah service sekarang hanya menambah kerumitan.",
+  "action": "Fokus ke fitur. Tetap pasang rate limit dasar per IP (mis. 120 req/menit) \u0026 batas khusus endpoint login sebagai pengaman sebelum traffic tumbuh.",
+  "evidence": [
+   "500 request dalam 30 menit"
+  ]
+ }
+]

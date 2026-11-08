@@ -1,0 +1,14 @@
+[
+ {
+  "id": "info:sample",
+  "rule": "TRAFFIC-SAMPLE",
+  "category": "info",
+  "severity": "info",
+  "title": "Data traffic belum cukup untuk disimpulkan",
+  "detail": "Baru 5 request di jendela ini. Saran rate limit, cache, load balancer \u0026 pemecahan service butuh minimal 100 request agar tidak menebak.",
+  "action": "Biarkan SDK berjalan beberapa jam di server live, atau pilih jendela waktu yang lebih panjang.",
+  "evidence": [
+   "5 request"
+  ]
+ }
+]
