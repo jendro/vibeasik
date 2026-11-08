@@ -25,9 +25,6 @@ func lexSyntaxFor(lang string) lexSyntax {
 	}
 }
 
-// stripCode mengosongkan isi komentar dan literal string (diganti spasi, panjang baris tetap)
-// agar pencocokan pola kode (percabangan, kurung kurawal, setState, ...) tidak tertipu teks
-// di dalam string atau komentar. Tanda kutip pembuka/penutup dipertahankan.
 // codeStripper memproses satu baris karakter demi karakter; status komentar/string multi-baris
 // dibawa antar baris.
 type codeStripper struct {

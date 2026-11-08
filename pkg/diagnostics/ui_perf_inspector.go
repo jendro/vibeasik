@@ -513,7 +513,6 @@ func renderIssueSet(set *uiIssueSet, rules map[string]uiRule, relPath string) []
 	return findings
 }
 
-// inspectFileSize menandai halaman/komponen/screen yang terlalu besar
 func isAndroidScreenFile(base string, isAndroid bool) bool {
 	return isAndroid && containsAny(base, "Activity", "Fragment", "Screen", "Adapter", "ViewModel")
 }
@@ -1076,7 +1075,6 @@ func collectAndroidLayoutIssues(set *uiIssueSet, relPath string, lines []string)
 	}
 }
 
-// xmlMaxNestingDepth menghitung kedalaman elemen XML terdalam dan baris tempat kedalaman itu dicapai
 // isSelfClosingAt: ">" di posisi gt didahului "/" (tag self-closing).
 func isSelfClosingAt(s string, gt int) bool {
 	return gt > 0 && s[gt-1] == '/'

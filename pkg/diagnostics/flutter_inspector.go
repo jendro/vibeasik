@@ -139,8 +139,6 @@ func isFlutterSource(fullPath string, content string) bool {
 	return false
 }
 
-// dartBlockEnd mengembalikan indeks baris terakhir dari deklarasi yang dimulai di baris start:
-// badan { ... } diikuti hingga kurawal tertutup, badan => diikuti hingga ';' di kedalaman awal.
 // dartBlockScan menyimpan status pemindaian karakter demi karakter untuk dartBlockEnd.
 type dartBlockScan struct {
 	brace, paren int
@@ -148,33 +146,55 @@ type dartBlockScan struct {
 	arrow        bool
 }
 
+func (d *dartBlockScan) openBrace() {
+	d.brace++
+	if !d.arrow {
+		d.opened = true
+	}
+}
+
+func (d *dartBlockScan) closeBrace() bool {
+	d.brace--
+	return d.opened && !d.arrow && d.brace <= 0
+}
+
+func (d *dartBlockScan) closeParen() bool {
+	d.paren--
+	return d.arrow && d.paren < 0 // badan => sebagai argumen berakhir saat kurung pemanggil ditutup
+}
+
+func (d *dartBlockScan) atTopLevel() bool { return d.paren <= 0 && d.brace <= 0 }
+
+func (d *dartBlockScan) markArrow(s string, k int) {
+	if k+1 < len(s) && s[k+1] == '>' && !d.opened && d.paren == 0 && d.brace == 0 {
+		d.arrow = true
+	}
+}
+
+func (d *dartBlockScan) atSemicolon() bool {
+	if d.arrow && d.atTopLevel() {
+		return true
+	}
+	return !d.opened && !d.arrow && d.paren <= 0 // deklarasi tanpa badan
+}
+
 // step memproses karakter s[k]; true bila deklarasi berakhir pada karakter ini.
 func (d *dartBlockScan) step(s string, k int) bool {
 	switch s[k] {
 	case '{':
-		d.brace++
-		if !d.arrow {
-			d.opened = true
-		}
+		d.openBrace()
 	case '}':
-		d.brace--
-		return d.opened && !d.arrow && d.brace <= 0
+		return d.closeBrace()
 	case '(', '[':
 		d.paren++
 	case ')', ']':
-		d.paren--
-		return d.arrow && d.paren < 0 // badan => sebagai argumen berakhir saat kurung pemanggil ditutup
+		return d.closeParen()
 	case ',':
-		return d.arrow && d.paren <= 0 && d.brace <= 0
+		return d.arrow && d.atTopLevel()
 	case '=':
-		if k+1 < len(s) && s[k+1] == '>' && !d.opened && d.paren == 0 && d.brace == 0 {
-			d.arrow = true
-		}
+		d.markArrow(s, k)
 	case ';':
-		if d.arrow && d.paren <= 0 && d.brace <= 0 {
-			return true
-		}
-		return !d.opened && !d.arrow && d.paren <= 0 // deklarasi tanpa badan
+		return d.atSemicolon()
 	}
 	return false
 }
@@ -194,9 +214,6 @@ func dartBlockEnd(sl []string, start int) int {
 	return len(sl) - 1
 }
 
-// dartClosureMask menandai, untuk setiap karakter pada baris start..end, apakah posisi itu berada
-// di dalam closure (fungsi anonim `() { }`, `() async { }`, atau `=> expr`). Kode di dalam closure
-// tidak dieksekusi saat build() berjalan (mis. onPressed), sehingga aturan build() mengabaikannya.
 type dartFrame struct {
 	ch      byte
 	closure bool
@@ -334,8 +351,31 @@ func isIdentByte(b byte) bool {
 	return b == '_' || b == '$' || (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9')
 }
 
-// inspectFlutterBestPractices menjalankan aturan best practice Flutter (lifecycle, build(), async gap,
-// keamanan penyimpanan, logging) pada satu berkas Dart Flutter.
+// collectFlutterBuildLine memeriksa satu baris di dalam build(); m menandai posisi yang berada di closure.
+func collectFlutterBuildLine(set *uiIssueSet, hasBuilders bool, j int, s string, m []bool) {
+	direct := func(re *regexp.Regexp) bool {
+		for _, loc := range re.FindAllStringIndex(s, -1) {
+			if loc[0] < len(m) && !m[loc[0]] {
+				return true
+			}
+		}
+		return false
+	}
+	if direct(dartSetStateRegex) {
+		set.hit("MOB-SETSTATE-IN-BUILD", j)
+	}
+	if direct(dartHeavySyncRegex) {
+		set.hit("MOB-UI-THREAD-FREEZE", j)
+	}
+	if direct(dartResourceCtorRegex) {
+		set.hit("MOB-CONTROLLER-IN-BUILD", j)
+	}
+	// future:/stream: dibangun ulang setiap build, juga di dalam builder closure
+	if mm := dartInlineFutureRegex.FindStringSubmatch(s); mm != nil && mm[3] != "value" && mm[3] != "error" && hasBuilders {
+		set.hit("MOB-FUTURE-IN-BUILD", j)
+	}
+}
+
 // collectFlutterBuildRules: aturan di dalam build(): hanya kode yang benar-benar dieksekusi saat build (di luar closure).
 func collectFlutterBuildRules(set *uiIssueSet, content string, sl []string) {
 	hasBuilders := strings.Contains(content, "FutureBuilder") || strings.Contains(content, "StreamBuilder")
@@ -346,28 +386,7 @@ func collectFlutterBuildRules(set *uiIssueSet, content string, sl []string) {
 		end := dartBlockEnd(sl, i)
 		mask := dartClosureMask(sl, i, end)
 		for j := i + 1; j <= end; j++ {
-			s, m := sl[j], mask[j-i]
-			direct := func(re *regexp.Regexp) bool {
-				for _, loc := range re.FindAllStringIndex(s, -1) {
-					if loc[0] < len(m) && !m[loc[0]] {
-						return true
-					}
-				}
-				return false
-			}
-			if direct(dartSetStateRegex) {
-				set.hit("MOB-SETSTATE-IN-BUILD", j)
-			}
-			if direct(dartHeavySyncRegex) {
-				set.hit("MOB-UI-THREAD-FREEZE", j)
-			}
-			if direct(dartResourceCtorRegex) {
-				set.hit("MOB-CONTROLLER-IN-BUILD", j)
-			}
-			// future:/stream: dibangun ulang setiap build, juga di dalam builder closure
-			if mm := dartInlineFutureRegex.FindStringSubmatch(s); mm != nil && mm[3] != "value" && mm[3] != "error" && hasBuilders {
-				set.hit("MOB-FUTURE-IN-BUILD", j)
-			}
+			collectFlutterBuildLine(set, hasBuilders, j, sl[j], mask[j-i])
 		}
 	}
 }
@@ -465,9 +484,6 @@ func inspectFlutterBestPractices(content string, relPath string, lines []string)
 	return findings
 }
 
-// inspectFlutterResourceLeaks mencari field controller/FocusNode/StreamController/StreamSubscription/
-// Timer yang dibuat oleh kelas itu sendiri namun tidak pernah di-dispose/close/cancel.
-// Field yang diterima dari konstruktor (milik widget induk) tidak dihitung.
 type dartResourceField struct {
 	name, kind string
 	line       int

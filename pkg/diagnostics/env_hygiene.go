@@ -30,153 +30,180 @@ func isEnvFileName(name string) bool {
 	return name == ".env" || strings.HasPrefix(name, ".env.")
 }
 
-// inspectEnvHygiene memeriksa berkas env di satu folder (root proyek / komponen). Status ignore & tracked
-// dibaca dari git sendiri (check-ignore / ls-files), jadi wildcard, negasi (!) dan .gitignore bertingkat
-// dihitung persis seperti git. Folder di luar repo git hanya diperiksa template & kelengkapan kuncinya.
-func inspectEnvHygiene(dir, relBase string) []models.Finding {
+// envDir memuat hasil pemindaian satu folder: berkas env asli, template, dan label lokasi.
+type envDir struct {
+	dir, relBase string
+	files        []string // berkas env asli (bukan template)
+	template     string
+	where        string
+}
+
+func (e *envDir) rel(name string) string { return filepath.ToSlash(filepath.Join(e.relBase, name)) }
+
+// scanEnvDir membaca isi folder; ok=false bila folder tidak terbaca.
+func scanEnvDir(dir, relBase string) (*envDir, bool) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return nil
+		return nil, false
 	}
-	var envFiles []string // berkas env asli (bukan template) di folder ini
-	template := ""
-	for _, e := range entries {
-		name := e.Name()
-		if e.IsDir() || !isEnvFileName(name) {
+	e := &envDir{dir: dir, relBase: relBase}
+	for _, ent := range entries {
+		name := ent.Name()
+		if ent.IsDir() || !isEnvFileName(name) {
 			continue
 		}
 		if envTemplateNames[name] {
-			if template == "" || name == ".env.example" {
-				template = name
+			if e.template == "" || name == ".env.example" {
+				e.template = name
 			}
 			continue
 		}
-		envFiles = append(envFiles, name)
+		e.files = append(e.files, name)
 	}
-	rel := func(name string) string { return filepath.ToSlash(filepath.Join(relBase, name)) }
-	where := filepath.ToSlash(relBase)
-	if where == "" || where == "." {
-		where = "root proyek"
+	e.where = filepath.ToSlash(relBase)
+	if e.where == "" || e.where == "." {
+		e.where = "root proyek"
 	}
+	return e, true
+}
+
+func (e *envDir) trackedFinding(p string) models.Finding {
+	return models.Finding{
+		Category:     "security",
+		Severity:     "CRITICAL",
+		RuleID:       "ENV-FILE-TRACKED",
+		Title:        fmt.Sprintf("Berkas env %s ter-commit ke git", p),
+		Description:  fmt.Sprintf("'%s' tercatat di git, jadi ikut terunggah ke remote & server lain. Menambah pola di .gitignore saja tidak mengeluarkan berkas yang sudah ter-commit, dan isinya tetap ada di riwayat git.", p),
+		Suggestion:   "Keluarkan dari index (git rm --cached), pastikan .gitignore menutup .env & .env.*, lalu ganti (rotate) semua secret di dalamnya karena sudah ada di riwayat. Hanya .env.example yang di-commit.",
+		TargetFile:   e.rel(p),
+		TheoryBasis:  "The Twelve-Factor App (Factor III: Config) & OWASP Secrets Management Cheat Sheet.",
+		SuggestedFix: fmt.Sprintf("git rm --cached %s\n# .gitignore\n%s", p, envGitignoreBlock),
+	}
+}
+
+func (e *envDir) notIgnoredFinding(n string) models.Finding {
+	return models.Finding{
+		Category:     "security",
+		Severity:     "CRITICAL",
+		RuleID:       "ENV-NOT-IGNORED",
+		Title:        fmt.Sprintf("Berkas env %s tidak ter-ignore", e.rel(n)),
+		Description:  fmt.Sprintf("'%s' ada di disk tetapi tidak cocok dengan pola .gitignore mana pun, jadi commit berikutnya (git add .) akan mengunggah secret-nya.", e.rel(n)),
+		Suggestion:   "Tutup semua varian env sekaligus dengan pola wildcard di .gitignore, dan kecualikan hanya .env.example.",
+		TargetFile:   e.rel(n),
+		TheoryBasis:  "The Twelve-Factor App (Factor III: Config) & OWASP Secrets Management Cheat Sheet.",
+		SuggestedFix: envGitignoreBlock,
+	}
+}
+
+func (e *envDir) ignoreIncompleteFinding(missingProbes []string) models.Finding {
+	return models.Finding{
+		Category:     "security",
+		Severity:     "WARNING",
+		RuleID:       "ENV-IGNORE-INCOMPLETE",
+		Title:        fmt.Sprintf("Pola .gitignore belum menutup semua varian env di %s", e.where),
+		Description:  fmt.Sprintf("Nama env berikut belum ada tetapi akan lolos ke git bila dibuat: %s. Tiap server tujuan butuh berkas env sendiri (.env.server.<nama>), jadi pola harus wildcard, bukan daftar nama server.", strings.Join(missingProbes, ", ")),
+		Suggestion:   "Ganti pola env per nama dengan blok wildcard berikut di .gitignore.",
+		TargetFile:   e.rel(".gitignore"),
+		TheoryBasis:  "The Twelve-Factor App (Factor III: Config).",
+		SuggestedFix: envGitignoreBlock,
+	}
+}
+
+func (e *envDir) exampleIgnoredFinding() models.Finding {
+	return models.Finding{
+		Category:     "config",
+		Severity:     "WARNING",
+		RuleID:       "ENV-EXAMPLE-IGNORED",
+		Title:        fmt.Sprintf("%s ikut ter-ignore sehingga tidak pernah terunggah", e.rel(e.template)),
+		Description:  fmt.Sprintf("Pola .gitignore (biasanya .env* atau .env.*) juga menutup '%s', jadi server & developer baru tidak mendapat daftar variabel yang dibutuhkan.", e.template),
+		Suggestion:   fmt.Sprintf("Tambahkan pengecualian !%s setelah pola env di .gitignore, lalu commit template-nya.", e.template),
+		TargetFile:   e.rel(".gitignore"),
+		SuggestedFix: envGitignoreBlock,
+	}
+}
+
+// ignoreProbes: berkas env di disk + nama probe yang belum ada + template, untuk dicek ke git check-ignore.
+func (e *envDir) ignoreProbes() (probes []string, onDisk map[string]bool) {
+	probes = append([]string{}, e.files...)
+	onDisk = map[string]bool{}
+	for _, n := range e.files {
+		onDisk[n] = true
+	}
+	for _, n := range envIgnoreProbes {
+		if !onDisk[n] {
+			probes = append(probes, n)
+		}
+	}
+	if e.template != "" {
+		probes = append(probes, e.template)
+	}
+	return probes, onDisk
+}
+
+// gitFindings: temuan yang bergantung pada status git (tracked, ignore, template ter-ignore).
+func (e *envDir) gitFindings() []models.Finding {
 	var findings []models.Finding
+	tracked := trackedEnvFiles(e.dir)
+	isTracked := map[string]bool{}
+	for _, p := range tracked {
+		findings = append(findings, e.trackedFinding(p))
+		isTracked[p] = true
+	}
 
-	if isGitWorkTree(dir) {
-		tracked := trackedEnvFiles(dir)
-		for _, p := range tracked {
-			findings = append(findings, models.Finding{
-				Category:     "security",
-				Severity:     "CRITICAL",
-				RuleID:       "ENV-FILE-TRACKED",
-				Title:        fmt.Sprintf("Berkas env %s ter-commit ke git", p),
-				Description:  fmt.Sprintf("'%s' tercatat di git, jadi ikut terunggah ke remote & server lain. Menambah pola di .gitignore saja tidak mengeluarkan berkas yang sudah ter-commit, dan isinya tetap ada di riwayat git.", p),
-				Suggestion:   "Keluarkan dari index (git rm --cached), pastikan .gitignore menutup .env & .env.*, lalu ganti (rotate) semua secret di dalamnya karena sudah ada di riwayat. Hanya .env.example yang di-commit.",
-				TargetFile:   rel(p),
-				TheoryBasis:  "The Twelve-Factor App (Factor III: Config) & OWASP Secrets Management Cheat Sheet.",
-				SuggestedFix: fmt.Sprintf("git rm --cached %s\n# .gitignore\n%s", p, envGitignoreBlock),
-			})
-		}
-		isTracked := map[string]bool{}
-		for _, p := range tracked {
-			isTracked[p] = true
-		}
+	probes, onDisk := e.ignoreProbes()
+	ignored := gitIgnored(e.dir, probes)
 
-		probes := append([]string{}, envFiles...)
-		onDisk := map[string]bool{}
-		for _, n := range envFiles {
-			onDisk[n] = true
+	for _, n := range e.files {
+		if !ignored[n] && !isTracked[n] {
+			findings = append(findings, e.notIgnoredFinding(n))
 		}
+	}
+	// Probe hanya bermakna bila folder ini memang memakai env (ada berkas env atau template)
+	var missingProbes []string
+	if len(e.files) > 0 || e.template != "" {
 		for _, n := range envIgnoreProbes {
-			if !onDisk[n] {
-				probes = append(probes, n)
+			if !onDisk[n] && !ignored[n] {
+				missingProbes = append(missingProbes, n)
 			}
 		}
-		if template != "" {
-			probes = append(probes, template)
-		}
-		ignored := gitIgnored(dir, probes)
-
-		var missingProbes []string
-		for _, n := range envFiles {
-			if !ignored[n] && !isTracked[n] {
-				findings = append(findings, models.Finding{
-					Category:     "security",
-					Severity:     "CRITICAL",
-					RuleID:       "ENV-NOT-IGNORED",
-					Title:        fmt.Sprintf("Berkas env %s tidak ter-ignore", rel(n)),
-					Description:  fmt.Sprintf("'%s' ada di disk tetapi tidak cocok dengan pola .gitignore mana pun, jadi commit berikutnya (git add .) akan mengunggah secret-nya.", rel(n)),
-					Suggestion:   "Tutup semua varian env sekaligus dengan pola wildcard di .gitignore, dan kecualikan hanya .env.example.",
-					TargetFile:   rel(n),
-					TheoryBasis:  "The Twelve-Factor App (Factor III: Config) & OWASP Secrets Management Cheat Sheet.",
-					SuggestedFix: envGitignoreBlock,
-				})
-			}
-		}
-		// Probe hanya bermakna bila folder ini memang memakai env (ada berkas env atau template)
-		if len(envFiles) > 0 || template != "" {
-			for _, n := range envIgnoreProbes {
-				if !onDisk[n] && !ignored[n] {
-					missingProbes = append(missingProbes, n)
-				}
-			}
-		}
-		if len(missingProbes) > 0 {
-			findings = append(findings, models.Finding{
-				Category:     "security",
-				Severity:     "WARNING",
-				RuleID:       "ENV-IGNORE-INCOMPLETE",
-				Title:        fmt.Sprintf("Pola .gitignore belum menutup semua varian env di %s", where),
-				Description:  fmt.Sprintf("Nama env berikut belum ada tetapi akan lolos ke git bila dibuat: %s. Tiap server tujuan butuh berkas env sendiri (.env.server.<nama>), jadi pola harus wildcard, bukan daftar nama server.", strings.Join(missingProbes, ", ")),
-				Suggestion:   "Ganti pola env per nama dengan blok wildcard berikut di .gitignore.",
-				TargetFile:   rel(".gitignore"),
-				TheoryBasis:  "The Twelve-Factor App (Factor III: Config).",
-				SuggestedFix: envGitignoreBlock,
-			})
-		}
-
-		if template != "" && ignored[template] && !isTracked[template] {
-			findings = append(findings, models.Finding{
-				Category:     "config",
-				Severity:     "WARNING",
-				RuleID:       "ENV-EXAMPLE-IGNORED",
-				Title:        fmt.Sprintf("%s ikut ter-ignore sehingga tidak pernah terunggah", rel(template)),
-				Description:  fmt.Sprintf("Pola .gitignore (biasanya .env* atau .env.*) juga menutup '%s', jadi server & developer baru tidak mendapat daftar variabel yang dibutuhkan.", template),
-				Suggestion:   fmt.Sprintf("Tambahkan pengecualian !%s setelah pola env di .gitignore, lalu commit template-nya.", template),
-				TargetFile:   rel(".gitignore"),
-				SuggestedFix: envGitignoreBlock,
-			})
-		}
 	}
-
-	if len(envFiles) == 0 {
-		return findings
+	if len(missingProbes) > 0 {
+		findings = append(findings, e.ignoreIncompleteFinding(missingProbes))
 	}
-	if template == "" {
-		return append(findings, models.Finding{
-			Category:     "config",
-			Severity:     "WARNING",
-			RuleID:       "ENV-EXAMPLE-MISSING",
-			Title:        fmt.Sprintf("Template .env.example belum ada di %s", where),
-			Description:  fmt.Sprintf("Ada berkas env (%s) tetapi tidak ada .env.example yang di-commit. Saat aplikasi diunggah ke server baru, tidak ada daftar variabel yang harus diisi.", strings.Join(envFiles, ", ")),
-			Suggestion:   "Buat .env.example berisi semua kunci dengan nilai dummy/kosong (tanpa secret asli) dan commit. Setiap server cukup menyalinnya menjadi .env.server.<nama>.",
-			TargetFile:   rel(".env.example"),
-			TheoryBasis:  "The Twelve-Factor App (Factor III: Config).",
-			SuggestedFix: "# .env.example\nPORT=8080\nDATABASE_URL=\nSTORAGE_DIR=/var/lib/nama-app/storage",
-		})
+	if e.template != "" && ignored[e.template] && !isTracked[e.template] {
+		findings = append(findings, e.exampleIgnoredFinding())
 	}
+	return findings
+}
 
-	// Kunci yang dipakai di env asli tetapi tidak didokumentasikan di template: server baru yang disiapkan
-	// dari template akan kekurangan variabel. Yang dilaporkan hanya nama kunci, tidak pernah nilainya.
-	documented := envKeys(filepath.Join(dir, template))
+func (e *envDir) exampleMissingFinding() models.Finding {
+	return models.Finding{
+		Category:     "config",
+		Severity:     "WARNING",
+		RuleID:       "ENV-EXAMPLE-MISSING",
+		Title:        fmt.Sprintf("Template .env.example belum ada di %s", e.where),
+		Description:  fmt.Sprintf("Ada berkas env (%s) tetapi tidak ada .env.example yang di-commit. Saat aplikasi diunggah ke server baru, tidak ada daftar variabel yang harus diisi.", strings.Join(e.files, ", ")),
+		Suggestion:   "Buat .env.example berisi semua kunci dengan nilai dummy/kosong (tanpa secret asli) dan commit. Setiap server cukup menyalinnya menjadi .env.server.<nama>.",
+		TargetFile:   e.rel(".env.example"),
+		TheoryBasis:  "The Twelve-Factor App (Factor III: Config).",
+		SuggestedFix: "# .env.example\nPORT=8080\nDATABASE_URL=\nSTORAGE_DIR=/var/lib/nama-app/storage",
+	}
+}
+
+// driftFinding: kunci yang dipakai di env asli tetapi tidak didokumentasikan di template: server baru yang
+// disiapkan dari template akan kekurangan variabel. Yang dilaporkan hanya nama kunci, tidak pernah nilainya.
+func (e *envDir) driftFinding() *models.Finding {
+	documented := envKeys(filepath.Join(e.dir, e.template))
 	missing := map[string][]string{}
-	for _, n := range envFiles {
-		for k := range envKeys(filepath.Join(dir, n)) {
+	for _, n := range e.files {
+		for k := range envKeys(filepath.Join(e.dir, n)) {
 			if !documented[k] {
 				missing[k] = append(missing[k], n)
 			}
 		}
 	}
 	if len(missing) == 0 {
-		return findings
+		return nil
 	}
 	keys := make([]string, 0, len(missing))
 	for k := range missing {
@@ -187,17 +214,41 @@ func inspectEnvHygiene(dir, relBase string) []models.Finding {
 	for _, k := range keys {
 		parts = append(parts, fmt.Sprintf("%s (%s)", k, strings.Join(missing[k], ", ")))
 	}
-	return append(findings, models.Finding{
+	return &models.Finding{
 		Category:     "config",
 		Severity:     "WARNING",
 		RuleID:       "ENV-EXAMPLE-DRIFT",
-		Title:        fmt.Sprintf("%s tidak memuat %d kunci yang dipakai berkas env", rel(template), len(keys)),
-		Description:  fmt.Sprintf("Kunci berikut ada di berkas env tetapi tidak ada di %s: %s. Server baru yang disiapkan dari template akan kekurangan konfigurasi.", template, strings.Join(parts, "; ")),
-		Suggestion:   fmt.Sprintf("Tambahkan kunci tersebut ke %s dengan nilai dummy/kosong (jangan salin nilai asli).", template),
-		TargetFile:   rel(template),
+		Title:        fmt.Sprintf("%s tidak memuat %d kunci yang dipakai berkas env", e.rel(e.template), len(keys)),
+		Description:  fmt.Sprintf("Kunci berikut ada di berkas env tetapi tidak ada di %s: %s. Server baru yang disiapkan dari template akan kekurangan konfigurasi.", e.template, strings.Join(parts, "; ")),
+		Suggestion:   fmt.Sprintf("Tambahkan kunci tersebut ke %s dengan nilai dummy/kosong (jangan salin nilai asli).", e.template),
+		TargetFile:   e.rel(e.template),
 		TheoryBasis:  "The Twelve-Factor App (Factor III: Config).",
 		SuggestedFix: strings.Join(keys, "=\n") + "=",
-	})
+	}
+}
+
+// inspectEnvHygiene memeriksa berkas env di satu folder (root proyek / komponen). Status ignore & tracked
+// dibaca dari git sendiri (check-ignore / ls-files), jadi wildcard, negasi (!) dan .gitignore bertingkat
+// dihitung persis seperti git. Folder di luar repo git hanya diperiksa template & kelengkapan kuncinya.
+func inspectEnvHygiene(dir, relBase string) []models.Finding {
+	e, ok := scanEnvDir(dir, relBase)
+	if !ok {
+		return nil
+	}
+	var findings []models.Finding
+	if isGitWorkTree(dir) {
+		findings = e.gitFindings()
+	}
+	if len(e.files) == 0 {
+		return findings
+	}
+	if e.template == "" {
+		return append(findings, e.exampleMissingFinding())
+	}
+	if f := e.driftFinding(); f != nil {
+		findings = append(findings, *f)
+	}
+	return findings
 }
 
 // envKeys membaca nama kunci (tanpa nilai) dari berkas env.
