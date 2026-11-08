@@ -33,7 +33,8 @@ var ProCatalog = []CatalogRoute{
 	{"POST", "/projects/:id/diagnostics/finding-feedback", "audit.learning"},
 	{"GET", "/audit-learning", "audit.learning"},
 	{"GET", "/audit-learning/export", "audit.learning"},
-	{"POST", "/audit-learning/rules/updated", "audit.learning"},
+	{"PUT", "/audit-learning/rules/:ruleKey", "audit.learning"},
+	{"POST", "/audit-learning/rules/updated", "audit.learning"}, // deprecated: alias
 	{"DELETE", "/audit-learning/:id", "audit.learning"},
 	{"GET", "/projects/:id/design-apps", "design_library"},
 	{"GET", "/components/:id/design-tags", "design_library"},

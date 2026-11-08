@@ -134,9 +134,9 @@ export const useDiagnosticsApi = () => {
   }
 
   const markAuditRuleUpdated = async (ruleId: string, updated: boolean, projectId?: number): Promise<{ success: boolean, updated: number }> => {
-    return await $fetch<{ success: boolean, updated: number }>(`${apiBase}/api/audit-learning/rules/updated`, {
-      method: 'POST',
-      body: { rule_id: ruleId, updated, project_id: projectId || 0 }
+    return await $fetch<{ success: boolean, updated: number }>(`${apiBase}/api/audit-learning/rules/${encodeURIComponent(ruleId)}`, {
+      method: 'PUT',
+      body: { updated, project_id: projectId || 0 }
     })
   }
 
