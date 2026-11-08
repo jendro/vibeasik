@@ -34,6 +34,19 @@ func (a *GenericFrontendAdapter) Detect(dir string) bool {
 	return util.FileExists(filepath.Join(dir, "package.json")) || util.FileExists(filepath.Join(dir, "index.html"))
 }
 
+var genericPageExts = map[string]bool{".vue": true, ".tsx": true, ".jsx": true, ".svelte": true, ".html": true}
+
+// indexRoutePath: "<dir>/index" menjadi "<dir>" ("/" bila kosong); jalur lain dikembalikan apa adanya.
+func indexRoutePath(routePath string) string {
+	if strings.HasSuffix(routePath, "/index") {
+		routePath = strings.TrimSuffix(routePath, "/index")
+		if routePath == "" {
+			routePath = "/"
+		}
+	}
+	return routePath
+}
+
 func (a *GenericFrontendAdapter) Scan(dir string) ([]models.RouteInfo, error) {
 	var routes []models.RouteInfo
 	seen := make(map[string]bool)
@@ -41,24 +54,7 @@ func (a *GenericFrontendAdapter) Scan(dir string) ([]models.RouteInfo, error) {
 	apiFuncMap := BuildFrontendApiFunctionMap(dir)
 
 	candidateDirs := []string{"app/pages", "src/pages", "pages", "src/views", "src/screens", "src/app", "app"}
-	var activeDirs []string
-	for _, cand := range candidateDirs {
-		p := filepath.Join(dir, cand)
-		if dirExists(p) {
-			isSubOrParent := false
-			for _, existing := range activeDirs {
-				if strings.HasPrefix(cand, existing+"/") || strings.HasPrefix(existing, cand+"/") {
-					isSubOrParent = true
-					break
-				}
-			}
-			if !isSubOrParent {
-				activeDirs = append(activeDirs, cand)
-			}
-		}
-	}
-
-	for _, candRel := range activeDirs {
+	for _, candRel := range activePageDirs(dir, candidateDirs) {
 		candFull := filepath.Join(dir, candRel)
 		if !dirExists(candFull) {
 			continue
@@ -69,37 +65,29 @@ func (a *GenericFrontendAdapter) Scan(dir string) ([]models.RouteInfo, error) {
 				return nil
 			}
 			ext := filepath.Ext(path)
-			if ext != ".vue" && ext != ".tsx" && ext != ".jsx" && ext != ".svelte" && ext != ".html" {
+			if !genericPageExts[ext] {
 				return nil
 			}
 
 			relToCand, _ := filepath.Rel(candFull, path)
-			relNoExt := strings.TrimSuffix(relToCand, ext)
-			routePath := "/" + filepath.ToSlash(relNoExt)
-			if strings.HasSuffix(routePath, "/index") {
-				routePath = strings.TrimSuffix(routePath, "/index")
-				if routePath == "" {
-					routePath = "/"
-				}
-			}
+			routePath := indexRoutePath("/" + filepath.ToSlash(strings.TrimSuffix(relToCand, ext)))
 
 			routeKey := "PAGE " + routePath
-			if !seen[routeKey] {
-				seen[routeKey] = true
-				contentBytes, _ := os.ReadFile(path)
-				contentStr := string(contentBytes)
-				relHandler, _ := filepath.Rel(dir, path)
-				targetRequests := ExtractPageTargetRequests(path, contentStr, dir, apiFuncMap)
-
-				routes = append(routes, models.RouteInfo{
-					Method:         "PAGE (GET)",
-					Path:           routePath,
-					Handler:        filepath.ToSlash(relHandler),
-					Description:    inferFrontendPageDescription(routePath),
-					Middleware:     "Public",
-					TargetRequests: targetRequests,
-				})
+			if seen[routeKey] {
+				return nil
 			}
+			seen[routeKey] = true
+			contentBytes, _ := os.ReadFile(path)
+			relHandler, _ := filepath.Rel(dir, path)
+
+			routes = append(routes, models.RouteInfo{
+				Method:         "PAGE (GET)",
+				Path:           routePath,
+				Handler:        filepath.ToSlash(relHandler),
+				Description:    inferFrontendPageDescription(routePath),
+				Middleware:     "Public",
+				TargetRequests: ExtractPageTargetRequests(path, string(contentBytes), dir, apiFuncMap),
+			})
 			return nil
 		})
 	}

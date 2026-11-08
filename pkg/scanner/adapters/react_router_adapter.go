@@ -39,112 +39,100 @@ func (a *ReactRouterAdapter) Detect(dir string) bool {
 	return false
 }
 
-func (a *ReactRouterAdapter) Scan(dir string) ([]models.RouteInfo, error) {
-	var routes []models.RouteInfo
-	seen := make(map[string]bool)
-
-	apiFuncMap := BuildFrontendApiFunctionMap(dir)
-
-	// 1. Scan router files (App.tsx, routes.tsx, router.tsx, main.tsx) for <Route path=...> and createBrowserRouter
-	routeTagRegex := regexp.MustCompile(`<Route\s+[^>]*path=["']([^"']+)["'][^>]*element=\{<([a-zA-Z0-9_]+)`)
-	routerObjectRegex := regexp.MustCompile(`path:\s*['"]([^'"]+)['"]\s*,\s*element:\s*<([a-zA-Z0-9_]+)`)
-
-	candidateRouterFiles := []string{
+var (
+	reactRouteTagRegex      = regexp.MustCompile(`<Route\s+[^>]*path=["']([^"']+)["'][^>]*element=\{<([a-zA-Z0-9_]+)`)
+	reactRouterObjectRegex  = regexp.MustCompile(`path:\s*['"]([^'"]+)['"]\s*,\s*element:\s*<([a-zA-Z0-9_]+)`)
+	reactCandidateRouterSrc = []string{
 		"src/App.tsx", "src/App.jsx", "src/routes.tsx", "src/routes.jsx",
 		"src/router.tsx", "src/router.jsx", "src/router/index.tsx", "src/router/index.ts",
 		"src/main.tsx", "src/main.jsx", "src/index.tsx", "src/index.jsx",
 	}
+)
 
-	for _, rf := range candidateRouterFiles {
-		fullPath := filepath.Join(dir, rf)
-		if util.FileExists(fullPath) {
-			contentBytes, _ := os.ReadFile(fullPath)
-			contentStr := string(contentBytes)
+// reactScan = keadaan satu kali pemindaian proyek React.
+type reactScan struct {
+	dir        string
+	apiFuncMap map[string]string
+	seen       map[string]bool
+	routes     []models.RouteInfo
+}
 
-			// Match <Route path=... element=<Comp />
-			for _, m := range routeTagRegex.FindAllStringSubmatch(contentStr, -1) {
-				path := m[1]
-				handler := m[2]
-				routeKey := "PAGE " + path
-				if !seen[routeKey] {
-					seen[routeKey] = true
-					targetRequests := ExtractPageTargetRequests(fullPath, contentStr, dir, apiFuncMap)
-					routes = append(routes, models.RouteInfo{
-						Method:         "PAGE (GET)",
-						Path:           path,
-						Handler:        handler + " (" + rf + ")",
-						Description:    inferFrontendPageDescription(path),
-						Middleware:     "Public",
-						TargetRequests: targetRequests,
-					})
-				}
-			}
-
-			// Match createBrowserRouter([{ path: ..., element: ... }])
-			for _, m := range routerObjectRegex.FindAllStringSubmatch(contentStr, -1) {
-				path := m[1]
-				handler := m[2]
-				routeKey := "PAGE " + path
-				if !seen[routeKey] {
-					seen[routeKey] = true
-					targetRequests := ExtractPageTargetRequests(fullPath, contentStr, dir, apiFuncMap)
-					routes = append(routes, models.RouteInfo{
-						Method:         "PAGE (GET)",
-						Path:           path,
-						Handler:        handler + " (" + rf + ")",
-						Description:    inferFrontendPageDescription(path),
-						Middleware:     "Public",
-						TargetRequests: targetRequests,
-					})
-				}
-			}
-		}
+// scanRouterFile membaca <Route path=... element=<Comp />> dan createBrowserRouter([{ path, element }]).
+func (r *reactScan) scanRouterFile(rf string) {
+	fullPath := filepath.Join(r.dir, rf)
+	if !util.FileExists(fullPath) {
+		return
 	}
+	contentBytes, _ := os.ReadFile(fullPath)
+	contentStr := string(contentBytes)
 
-	// 2. Scan file-based page directories: src/pages, src/views, src/screens
-	for _, pageDirRel := range []string{"src/pages", "pages", "src/views", "src/screens"} {
-		fullPageDir := filepath.Join(dir, pageDirRel)
-		if dirExists(fullPageDir) {
-			_ = filepath.WalkDir(fullPageDir, func(path string, d os.DirEntry, err error) error {
-				if err != nil || d.IsDir() {
-					return nil
-				}
-				ext := filepath.Ext(path)
-				if ext != ".tsx" && ext != ".jsx" && ext != ".js" {
-					return nil
-				}
-
-				relToDir, _ := filepath.Rel(fullPageDir, path)
-				relNoExt := strings.TrimSuffix(relToDir, ext)
-				routePath := "/" + filepath.ToSlash(relNoExt)
-				if strings.HasSuffix(routePath, "/index") {
-					routePath = strings.TrimSuffix(routePath, "/index")
-					if routePath == "" {
-						routePath = "/"
-					}
-				}
-
-				routeKey := "PAGE " + routePath
-				if !seen[routeKey] {
-					seen[routeKey] = true
-					contentBytes, _ := os.ReadFile(path)
-					contentStr := string(contentBytes)
-					relHandler, _ := filepath.Rel(dir, path)
-					targetRequests := ExtractPageTargetRequests(path, contentStr, dir, apiFuncMap)
-
-					routes = append(routes, models.RouteInfo{
-						Method:         "PAGE (GET)",
-						Path:           routePath,
-						Handler:        filepath.ToSlash(relHandler),
-						Description:    inferFrontendPageDescription(routePath),
-						Middleware:     "Public",
-						TargetRequests: targetRequests,
-					})
-				}
-				return nil
+	for _, re := range []*regexp.Regexp{reactRouteTagRegex, reactRouterObjectRegex} {
+		for _, m := range re.FindAllStringSubmatch(contentStr, -1) {
+			path := m[1]
+			routeKey := "PAGE " + path
+			if r.seen[routeKey] {
+				continue
+			}
+			r.seen[routeKey] = true
+			r.routes = append(r.routes, models.RouteInfo{
+				Method:         "PAGE (GET)",
+				Path:           path,
+				Handler:        m[2] + " (" + rf + ")",
+				Description:    inferFrontendPageDescription(path),
+				Middleware:     "Public",
+				TargetRequests: ExtractPageTargetRequests(fullPath, contentStr, r.dir, r.apiFuncMap),
 			})
 		}
 	}
+}
 
-	return routes, nil
+func (r *reactScan) addPageFile(fullPageDir, path string) {
+	ext := filepath.Ext(path)
+	if ext != ".tsx" && ext != ".jsx" && ext != ".js" {
+		return
+	}
+	relToDir, _ := filepath.Rel(fullPageDir, path)
+	routePath := indexRoutePath("/" + filepath.ToSlash(strings.TrimSuffix(relToDir, ext)))
+
+	routeKey := "PAGE " + routePath
+	if r.seen[routeKey] {
+		return
+	}
+	r.seen[routeKey] = true
+	contentBytes, _ := os.ReadFile(path)
+	relHandler, _ := filepath.Rel(r.dir, path)
+	r.routes = append(r.routes, models.RouteInfo{
+		Method:         "PAGE (GET)",
+		Path:           routePath,
+		Handler:        filepath.ToSlash(relHandler),
+		Description:    inferFrontendPageDescription(routePath),
+		Middleware:     "Public",
+		TargetRequests: ExtractPageTargetRequests(path, string(contentBytes), r.dir, r.apiFuncMap),
+	})
+}
+
+// scanPageDirs memindai direktori halaman berbasis berkas: src/pages, src/views, src/screens.
+func (r *reactScan) scanPageDirs() {
+	for _, pageDirRel := range []string{"src/pages", "pages", "src/views", "src/screens"} {
+		fullPageDir := filepath.Join(r.dir, pageDirRel)
+		if !dirExists(fullPageDir) {
+			continue
+		}
+		_ = filepath.WalkDir(fullPageDir, func(path string, d os.DirEntry, err error) error {
+			if err != nil || d.IsDir() {
+				return nil
+			}
+			r.addPageFile(fullPageDir, path)
+			return nil
+		})
+	}
+}
+
+func (a *ReactRouterAdapter) Scan(dir string) ([]models.RouteInfo, error) {
+	r := &reactScan{dir: dir, apiFuncMap: BuildFrontendApiFunctionMap(dir), seen: make(map[string]bool)}
+	for _, rf := range reactCandidateRouterSrc {
+		r.scanRouterFile(rf)
+	}
+	r.scanPageDirs()
+	return r.routes, nil
 }

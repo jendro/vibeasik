@@ -44,32 +44,103 @@ func (a *NuxtAdapter) Detect(dir string) bool {
 	return false
 }
 
-func (a *NuxtAdapter) Scan(dir string) ([]models.RouteInfo, error) {
-	var routes []models.RouteInfo
-	seen := make(map[string]bool)
-
-	apiFuncMap := BuildFrontendApiFunctionMap(dir)
-
-	// Candidate page directories
-	var activePageDirs []string
-	for _, cand := range []string{"app/pages", "pages", "src/pages", "src/app", "app"} {
-		p := filepath.Join(dir, cand)
-		if dirExists(p) {
-			isSubOrParent := false
-			for _, existing := range activePageDirs {
-				if strings.HasPrefix(cand, existing+"/") || strings.HasPrefix(existing, cand+"/") {
-					isSubOrParent = true
-					break
-				}
-			}
-			if !isSubOrParent {
-				activePageDirs = append(activePageDirs, cand)
+// activePageDirs memilih direktori kandidat yang ada dan bukan induk/anak dari yang sudah terpilih.
+func activePageDirs(dir string, candidates []string) []string {
+	var active []string
+	for _, cand := range candidates {
+		if !dirExists(filepath.Join(dir, cand)) {
+			continue
+		}
+		isSubOrParent := false
+		for _, existing := range active {
+			if strings.HasPrefix(cand, existing+"/") || strings.HasPrefix(existing, cand+"/") {
+				isSubOrParent = true
+				break
 			}
 		}
+		if !isSubOrParent {
+			active = append(active, cand)
+		}
+	}
+	return active
+}
+
+// nuxtScan = keadaan satu kali pemindaian proyek Nuxt.
+type nuxtScan struct {
+	dir        string
+	apiFuncMap map[string]string
+	seen       map[string]bool
+	routes     []models.RouteInfo
+}
+
+var nuxtAuthMarkers = []string{
+	"middleware: 'auth'", `middleware: "auth"`, "middleware: ['auth']", `middleware: ["auth"]`,
+	"useAuth(", "requireAuth",
+}
+
+func nuxtMiddleware(content string) string {
+	for _, m := range nuxtAuthMarkers {
+		if strings.Contains(content, m) {
+			return "Protected (Auth Guard)"
+		}
+	}
+	return "Public"
+}
+
+// nuxtPageRoutePath mengubah path berkas halaman (tanpa ekstensi) menjadi path rute Nuxt.
+func nuxtPageRoutePath(relNoExt string) string {
+	routePath := "/" + filepath.ToSlash(relNoExt)
+	if routePath == "/index" || routePath == "/page" {
+		routePath = "/"
+	} else if strings.HasSuffix(routePath, "/index") {
+		routePath = strings.TrimSuffix(routePath, "/index")
+	} else if strings.HasSuffix(routePath, "/page") {
+		routePath = strings.TrimSuffix(routePath, "/page")
 	}
 
-	for _, relPageDir := range activePageDirs {
-		fullPageDir := filepath.Join(dir, relPageDir)
+	// Nuxt 3 params: [id] -> :id, [...slug] -> *
+	// Nuxt 2 params: _id -> :id
+	routePath = strings.ReplaceAll(routePath, "[...", "*")
+	routePath = strings.ReplaceAll(routePath, "[", ":")
+	routePath = strings.ReplaceAll(routePath, "]", "")
+	if strings.Contains(routePath, "/_") {
+		routePath = strings.ReplaceAll(routePath, "/_", "/:")
+	}
+	return routePath
+}
+
+func (n *nuxtScan) addPage(fullPageDir, path string) {
+	ext := filepath.Ext(path)
+	if ext != ".vue" && ext != ".tsx" && ext != ".jsx" {
+		return
+	}
+	relToPages, err := filepath.Rel(fullPageDir, path)
+	if err != nil {
+		return
+	}
+	routePath := nuxtPageRoutePath(strings.TrimSuffix(relToPages, ext))
+	routeKey := "PAGE " + routePath
+	if n.seen[routeKey] {
+		return
+	}
+	n.seen[routeKey] = true
+
+	fileData, _ := os.ReadFile(path)
+	contentStr := string(fileData)
+	relHandler, _ := filepath.Rel(n.dir, path)
+	n.routes = append(n.routes, models.RouteInfo{
+		Method:         "PAGE (GET)",
+		Path:           routePath,
+		Handler:        filepath.ToSlash(relHandler),
+		Description:    inferFrontendPageDescription(routePath),
+		Middleware:     nuxtMiddleware(contentStr),
+		TargetRequests: ExtractPageTargetRequests(path, contentStr, n.dir, n.apiFuncMap),
+	})
+}
+
+func (n *nuxtScan) scanPages() {
+	for _, relPageDir := range activePageDirs(n.dir, []string{"app/pages", "pages", "src/pages", "src/app", "app"}) {
+		fullPageDir := filepath.Join(n.dir, relPageDir)
 		_ = filepath.WalkDir(fullPageDir, func(path string, d os.DirEntry, err error) error {
 			if err != nil {
 				return nil
@@ -80,178 +151,124 @@ func (a *NuxtAdapter) Scan(dir string) ([]models.RouteInfo, error) {
 				}
 				return nil
 			}
-
-			ext := filepath.Ext(path)
-			if ext != ".vue" && ext != ".tsx" && ext != ".jsx" {
-				return nil
-			}
-
-			relToPages, err := filepath.Rel(fullPageDir, path)
-			if err != nil {
-				return nil
-			}
-
-			relNoExt := strings.TrimSuffix(relToPages, ext)
-			routePath := "/" + filepath.ToSlash(relNoExt)
-			if routePath == "/index" || routePath == "/page" {
-				routePath = "/"
-			} else if strings.HasSuffix(routePath, "/index") {
-				routePath = strings.TrimSuffix(routePath, "/index")
-			} else if strings.HasSuffix(routePath, "/page") {
-				routePath = strings.TrimSuffix(routePath, "/page")
-			}
-
-			// Nuxt 3 params: [id] -> :id, [...slug] -> *
-			// Nuxt 2 params: _id -> :id
-			routePath = strings.ReplaceAll(routePath, "[...", "*")
-			routePath = strings.ReplaceAll(routePath, "[", ":")
-			routePath = strings.ReplaceAll(routePath, "]", "")
-			if strings.Contains(routePath, "/_") {
-				routePath = strings.ReplaceAll(routePath, "/_", "/:")
-			}
-
-			routeKey := "PAGE " + routePath
-			if seen[routeKey] {
-				return nil
-			}
-			seen[routeKey] = true
-
-			fileData, _ := os.ReadFile(path)
-			contentStr := string(fileData)
-
-			middleware := "Public"
-			if strings.Contains(contentStr, "middleware: 'auth'") ||
-				strings.Contains(contentStr, `middleware: "auth"`) ||
-				strings.Contains(contentStr, "middleware: ['auth']") ||
-				strings.Contains(contentStr, `middleware: ["auth"]`) ||
-				strings.Contains(contentStr, "useAuth(") ||
-				strings.Contains(contentStr, "requireAuth") {
-				middleware = "Protected (Auth Guard)"
-			}
-
-			desc := inferFrontendPageDescription(routePath)
-			relHandler, _ := filepath.Rel(dir, path)
-			targetRequests := ExtractPageTargetRequests(path, contentStr, dir, apiFuncMap)
-
-			routes = append(routes, models.RouteInfo{
-				Method:         "PAGE (GET)",
-				Path:           routePath,
-				Handler:        filepath.ToSlash(relHandler),
-				Description:    desc,
-				Middleware:     middleware,
-				TargetRequests: targetRequests,
-			})
-
+			n.addPage(fullPageDir, path)
 			return nil
 		})
 	}
+}
 
-	// Fallback if no pages folder: check app.vue
-	if len(routes) == 0 {
-		for _, appFile := range []string{"app.vue", "app/app.vue", "src/App.vue"} {
-			appPath := filepath.Join(dir, appFile)
-			if util.FileExists(appPath) {
-				contentBytes, _ := os.ReadFile(appPath)
-				contentStr := string(contentBytes)
-				targetRequests := ExtractPageTargetRequests(appPath, contentStr, dir, apiFuncMap)
-				routes = append(routes, models.RouteInfo{
-					Method:         "PAGE (GET)",
-					Path:           "/",
-					Handler:        filepath.ToSlash(appFile),
-					Description:    "Halaman tunggal utama aplikasi (Single Page)",
-					Middleware:     "Public",
-					TargetRequests: targetRequests,
-				})
-				break
-			}
+// scanAppFallback: bila tidak ada folder pages, pakai app.vue sebagai halaman tunggal.
+func (n *nuxtScan) scanAppFallback() {
+	for _, appFile := range []string{"app.vue", "app/app.vue", "src/App.vue"} {
+		appPath := filepath.Join(n.dir, appFile)
+		if !util.FileExists(appPath) {
+			continue
+		}
+		contentBytes, _ := os.ReadFile(appPath)
+		n.routes = append(n.routes, models.RouteInfo{
+			Method:         "PAGE (GET)",
+			Path:           "/",
+			Handler:        filepath.ToSlash(appFile),
+			Description:    "Halaman tunggal utama aplikasi (Single Page)",
+			Middleware:     "Public",
+			TargetRequests: ExtractPageTargetRequests(appPath, string(contentBytes), n.dir, n.apiFuncMap),
+		})
+		return
+	}
+}
+
+var nitroMethodSuffixes = []struct{ suffix, method string }{
+	{".get", "GET"}, {".post", "POST"}, {".put", "PUT"}, {".delete", "DELETE"},
+}
+
+// nitroEndpoint menurunkan method dan path endpoint dari nama berkas server/api (tanpa ekstensi).
+func nitroEndpoint(relNoExt string) (method, endpointPath string) {
+	for _, m := range nitroMethodSuffixes {
+		if strings.HasSuffix(relNoExt, m.suffix) {
+			return m.method, "/api/" + strings.TrimSuffix(relNoExt, m.suffix)
 		}
 	}
+	return "ALL", "/api/" + filepath.ToSlash(relNoExt)
+}
 
-	// Scan Nitro server API routes (server/api)
-	nitroApiDir := filepath.Join(dir, "server/api")
-	if dirExists(nitroApiDir) {
-		_ = filepath.WalkDir(nitroApiDir, func(path string, d os.DirEntry, err error) error {
-			if err != nil || d.IsDir() {
-				return nil
-			}
-			ext := filepath.Ext(path)
-			if ext != ".ts" && ext != ".js" {
-				return nil
-			}
-			rel, _ := filepath.Rel(nitroApiDir, path)
-			relNoExt := strings.TrimSuffix(rel, ext)
-
-			method := "ALL"
-			endpointPath := "/api/" + filepath.ToSlash(relNoExt)
-			if strings.HasSuffix(relNoExt, ".get") {
-				method = "GET"
-				endpointPath = "/api/" + strings.TrimSuffix(relNoExt, ".get")
-			} else if strings.HasSuffix(relNoExt, ".post") {
-				method = "POST"
-				endpointPath = "/api/" + strings.TrimSuffix(relNoExt, ".post")
-			} else if strings.HasSuffix(relNoExt, ".put") {
-				method = "PUT"
-				endpointPath = "/api/" + strings.TrimSuffix(relNoExt, ".put")
-			} else if strings.HasSuffix(relNoExt, ".delete") {
-				method = "DELETE"
-				endpointPath = "/api/" + strings.TrimSuffix(relNoExt, ".delete")
-			}
-
-			routeKey := method + " " + endpointPath
-			if !seen[routeKey] {
-				seen[routeKey] = true
-				relHandler, _ := filepath.Rel(dir, path)
-				routes = append(routes, models.RouteInfo{
-					Method:      method,
-					Path:        endpointPath,
-					Handler:     filepath.ToSlash(relHandler),
-					Description: "Endpoint API Nitro server internal",
-					Middleware:  "Nitro Server",
-				})
-			}
-			return nil
-		})
+// scanNitroAPI memindai route API server Nitro (server/api).
+func (n *nuxtScan) scanNitroAPI() {
+	nitroApiDir := filepath.Join(n.dir, "server/api")
+	if !dirExists(nitroApiDir) {
+		return
 	}
+	_ = filepath.WalkDir(nitroApiDir, func(path string, d os.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return nil
+		}
+		ext := filepath.Ext(path)
+		if ext != ".ts" && ext != ".js" {
+			return nil
+		}
+		rel, _ := filepath.Rel(nitroApiDir, path)
+		method, endpointPath := nitroEndpoint(strings.TrimSuffix(rel, ext))
 
-	return routes, nil
+		routeKey := method + " " + endpointPath
+		if n.seen[routeKey] {
+			return nil
+		}
+		n.seen[routeKey] = true
+		relHandler, _ := filepath.Rel(n.dir, path)
+		n.routes = append(n.routes, models.RouteInfo{
+			Method:      method,
+			Path:        endpointPath,
+			Handler:     filepath.ToSlash(relHandler),
+			Description: "Endpoint API Nitro server internal",
+			Middleware:  "Nitro Server",
+		})
+		return nil
+	})
+}
+
+func (a *NuxtAdapter) Scan(dir string) ([]models.RouteInfo, error) {
+	n := &nuxtScan{dir: dir, apiFuncMap: BuildFrontendApiFunctionMap(dir), seen: make(map[string]bool)}
+	n.scanPages()
+	if len(n.routes) == 0 {
+		n.scanAppFallback()
+	}
+	n.scanNitroAPI()
+	return n.routes, nil
+}
+
+// pageDescriptionRules diperiksa berurutan; kecocokan pertama menang.
+var pageDescriptionRules = []struct {
+	keys []string
+	desc string
+}{
+	{[]string{"projects/:id", "projects/[id]"}, "Detail proyek, topologi arsitektur, diagnostik & AI Fast Scan"},
+	{[]string{"projects"}, "Daftar repositori proyek dan ringkasan arsitektur service"},
+	{[]string{"ports"}, "Cockpit monitoring status port listening dan pendeteksi tabrakan port"},
+	{[]string{"settings"}, "Pengaturan sistem, konfigurasi LLM multi-provider & Sensored Keys Security Vault"},
+	{[]string{"scan"}, "Scanner direktori lokal untuk registrasi repositori baru"},
+	{[]string{"mcp"}, "Katalog server Model Context Protocol (MCP) untuk AI Agent Antigravity"},
+	{[]string{"login", "auth"}, "Halaman login dan autentikasi pengguna aplikasi"},
+	{[]string{"register"}, "Halaman pendaftaran pengguna baru"},
+	{[]string{"profile", "user"}, "Halaman profil dan pengaturan akun pengguna"},
+	{[]string{"asset", "aset"}, "Halaman manajemen portofolio aset dan kekayaan"},
+	{[]string{"family"}, "Halaman manajemen anggota keluarga & undangan"},
+	{[]string{"finance", "keuangan"}, "Halaman pembukuan kas, catatan transaksi & keuangan keluarga"},
+	{[]string{"sync"}, "Halaman monitor integritas brankas & delta sync real-time"},
+	{[]string{"categor"}, "Halaman pengelolaan kategori aset"},
 }
 
 // InferFrontendPageDescription provides human-readable descriptions for common frontend routes
 func InferFrontendPageDescription(routePath string) string {
-	switch {
-	case routePath == "/":
+	if routePath == "/" {
 		return "Dashboard utama katalog proyek, filter pencarian & pemantauan bundle"
-	case strings.Contains(routePath, "projects/:id") || strings.Contains(routePath, "projects/[id]"):
-		return "Detail proyek, topologi arsitektur, diagnostik & AI Fast Scan"
-	case strings.Contains(routePath, "projects"):
-		return "Daftar repositori proyek dan ringkasan arsitektur service"
-	case strings.Contains(routePath, "ports"):
-		return "Cockpit monitoring status port listening dan pendeteksi tabrakan port"
-	case strings.Contains(routePath, "settings"):
-		return "Pengaturan sistem, konfigurasi LLM multi-provider & Sensored Keys Security Vault"
-	case strings.Contains(routePath, "scan"):
-		return "Scanner direktori lokal untuk registrasi repositori baru"
-	case strings.Contains(routePath, "mcp"):
-		return "Katalog server Model Context Protocol (MCP) untuk AI Agent Antigravity"
-	case strings.Contains(routePath, "login") || strings.Contains(routePath, "auth"):
-		return "Halaman login dan autentikasi pengguna aplikasi"
-	case strings.Contains(routePath, "register"):
-		return "Halaman pendaftaran pengguna baru"
-	case strings.Contains(routePath, "profile") || strings.Contains(routePath, "user"):
-		return "Halaman profil dan pengaturan akun pengguna"
-	case strings.Contains(routePath, "asset") || strings.Contains(routePath, "aset"):
-		return "Halaman manajemen portofolio aset dan kekayaan"
-	case strings.Contains(routePath, "family"):
-		return "Halaman manajemen anggota keluarga & undangan"
-	case strings.Contains(routePath, "finance") || strings.Contains(routePath, "keuangan"):
-		return "Halaman pembukuan kas, catatan transaksi & keuangan keluarga"
-	case strings.Contains(routePath, "sync"):
-		return "Halaman monitor integritas brankas & delta sync real-time"
-	case strings.Contains(routePath, "categor"):
-		return "Halaman pengelolaan kategori aset"
-	default:
-		return "Halaman antarmuka interaktif pengguna (" + routePath + ")"
 	}
+	for _, r := range pageDescriptionRules {
+		for _, k := range r.keys {
+			if strings.Contains(routePath, k) {
+				return r.desc
+			}
+		}
+	}
+	return "Halaman antarmuka interaktif pengguna (" + routePath + ")"
 }
 
 func inferFrontendPageDescription(routePath string) string {
