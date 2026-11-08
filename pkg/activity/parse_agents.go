@@ -229,57 +229,72 @@ func (p *claudeParser) feed(line []byte) {
 	}
 
 	if e.Type == "user" {
-		if text != "" {
-			blocks = append(blocks, claudeBlock{Type: "text", Text: text})
-		}
-		for _, b := range blocks {
-			t := strings.TrimSpace(b.Text)
-			switch {
-			case b.Type == "tool_result":
-				p.status = models.WorkerStatusWorking
-				p.subs.result(b.ToolUseID, e.ToolUseResult, p.last)
-			case b.Type == "text" && strings.HasPrefix(t, "<task-notification"):
-				p.subs.notification(t, p.last)
-			case b.Type != "text" || t == "" || strings.HasPrefix(t, "<"):
-			case strings.HasPrefix(t, "[Request interrupted"):
-				p.finished("Dihentikan pengguna")
-				p.subs.closeForeground(p.last)
-			default:
-				p.prompt(t)
-			}
-		}
+		p.handleUserEvent(text, blocks, e.ToolUseResult)
 		return
 	}
 
-	if e.Message.Model != "" && !strings.HasPrefix(e.Message.Model, "<") {
-		p.model = e.Message.Model
+	p.handleAssistantEvent(e.Message.ID, e.Message.Model, e.Message.StopReason, blocks)
+}
+
+func (p *claudeParser) handleUserEvent(text string, blocks []claudeBlock, toolUseResult json.RawMessage) {
+	if text != "" {
+		blocks = append(blocks, claudeBlock{Type: "text", Text: text})
+	}
+	for _, b := range blocks {
+		p.handleUserBlock(b, toolUseResult)
+	}
+}
+
+func (p *claudeParser) handleUserBlock(b claudeBlock, toolUseResult json.RawMessage) {
+	t := strings.TrimSpace(b.Text)
+	switch {
+	case b.Type == "tool_result":
+		p.status = models.WorkerStatusWorking
+		p.subs.result(b.ToolUseID, toolUseResult, p.last)
+	case b.Type == "text" && strings.HasPrefix(t, "<task-notification"):
+		p.subs.notification(t, p.last)
+	case b.Type != "text" || t == "" || strings.HasPrefix(t, "<"):
+	case strings.HasPrefix(t, "[Request interrupted"):
+		p.finished("Dihentikan pengguna")
+		p.subs.closeForeground(p.last)
+	default:
+		p.prompt(t)
+	}
+}
+
+func (p *claudeParser) handleAssistantEvent(msgID, model, stopReason string, blocks []claudeBlock) {
+	if model != "" && !strings.HasPrefix(model, "<") {
+		p.model = model
 	}
 	usedTool := false
 	for _, b := range blocks {
-		if b.Type != "tool_use" {
-			continue
-		}
-		usedTool = true
-		p.todoCall(b.Name, b.Input)
-		if b.Name == "Agent" || b.Name == "Task" {
-			p.subs.start(b.ID, b.Input, p.last, p.model)
-			p.coordinator = true
-		}
-		p.status, p.action = models.WorkerStatusWorking, ClaudeToolAction(b.Name, b.Input)
-		if task := ClaudeActiveTask(b.Name, b.Input); task != "" {
-			p.task = task
+		if b.Type == "tool_use" {
+			usedTool = true
+			p.handleAssistantToolBlock(b)
 		}
 	}
 	switch {
-	case e.Message.StopReason == "end_turn" && !usedTool:
-		if !p.endedMessages[e.Message.ID] {
-			p.endedMessages[e.Message.ID] = true
+	case stopReason == "end_turn" && !usedTool:
+		if !p.endedMessages[msgID] {
+			p.endedMessages[msgID] = true
 			p.done++
 		}
 		p.finished(actionWaiting)
 		p.subs.closeForeground(p.last)
 	case !usedTool:
 		p.status, p.action = models.WorkerStatusWorking, actionThinking
+	}
+}
+
+func (p *claudeParser) handleAssistantToolBlock(b claudeBlock) {
+	p.todoCall(b.Name, b.Input)
+	if b.Name == "Agent" || b.Name == "Task" {
+		p.subs.start(b.ID, b.Input, p.last, p.model)
+		p.coordinator = true
+	}
+	p.status, p.action = models.WorkerStatusWorking, ClaudeToolAction(b.Name, b.Input)
+	if task := ClaudeActiveTask(b.Name, b.Input); task != "" {
+		p.task = task
 	}
 }
 

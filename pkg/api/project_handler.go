@@ -275,6 +275,49 @@ type MergeProjectPayload struct {
 	TargetProjectID uint `json:"target_project_id"`
 }
 
+func isFrontendRole(role string) bool {
+	return role == models.RoleFrontendAdmin || role == models.RoleFrontendClient || role == models.RoleFrontendMobile
+}
+
+func determineMergedProjectType(comps []models.Component) string {
+	hasBackend := false
+	feCount := 0
+	for _, comp := range comps {
+		if comp.Role == models.RoleBackend {
+			hasBackend = true
+		}
+		if isFrontendRole(comp.Role) {
+			feCount++
+		}
+	}
+	if hasBackend && feCount > 1 {
+		return models.TypeMultiFE
+	}
+	if hasBackend && feCount >= 1 {
+		return models.TypeBundle
+	}
+	return ""
+}
+
+func (s *Server) transferMergeData(sourceID, targetID uint) error {
+	// 1. Move all components from source project to target project
+	if err := s.db.Model(&models.Component{}).Where("project_id = ?", sourceID).Update("project_id", targetID).Error; err != nil {
+		return err
+	}
+	// 2. Transfer todos from source project to target project
+	_ = s.db.Model(&models.Todo{}).Where("project_id = ?", sourceID).Update("project_id", targetID)
+	// 3. Release source project from monitoring
+	return s.db.Delete(&models.Project{}, sourceID).Error
+}
+
+func (s *Server) updateMergedProjectTopology(targetID uint) {
+	var targetComps []models.Component
+	s.db.Where("project_id = ?", targetID).Find(&targetComps)
+	if newType := determineMergedProjectType(targetComps); newType != "" {
+		_ = s.db.Model(&models.Project{}).Where("id = ?", targetID).Update("project_type", newType)
+	}
+}
+
 func (s *Server) mergeProject(c *fiber.Ctx) error {
 	sourceID, err := c.ParamsInt("id")
 	if err != nil || sourceID <= 0 {
@@ -300,43 +343,16 @@ func (s *Server) mergeProject(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "target project not found"})
 	}
 
-	// 1. Move all components from source project to target project
-	if err := s.db.Model(&models.Component{}).Where("project_id = ?", uint(sourceID)).Update("project_id", payload.TargetProjectID).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to transfer components: " + err.Error()})
+	if err := s.transferMergeData(uint(sourceID), payload.TargetProjectID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to merge project data: " + err.Error()})
 	}
 
-	// 2. Transfer todos from source project to target project
-	_ = s.db.Model(&models.Todo{}).Where("project_id = ?", uint(sourceID)).Update("project_id", payload.TargetProjectID)
+	s.updateMergedProjectTopology(payload.TargetProjectID)
 
-	// 3. Release source project from monitoring (delete project record from database, files on disk stay untouched)
-	if err := s.db.Delete(&models.Project{}, uint(sourceID)).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to release source project: " + err.Error()})
-	}
-
-	// 4. Re-evaluate target project topology based on updated components
-	var targetComps []models.Component
-	s.db.Where("project_id = ?", payload.TargetProjectID).Find(&targetComps)
-	hasBackend := false
-	feCount := 0
-	for _, comp := range targetComps {
-		if comp.Role == models.RoleBackend {
-			hasBackend = true
-		}
-		if comp.Role == models.RoleFrontendAdmin || comp.Role == models.RoleFrontendClient || comp.Role == models.RoleFrontendMobile {
-			feCount++
-		}
-	}
-	if hasBackend && feCount > 1 {
-		target.ProjectType = models.TypeMultiFE
-	} else if hasBackend && feCount >= 1 {
-		target.ProjectType = models.TypeBundle
-	}
-	_ = s.db.Model(&models.Project{}).Where("id = ?", payload.TargetProjectID).Update("project_type", target.ProjectType)
-
-	// 5. Regenerate AI summary for target project based on all combined applications
+	// Regenerate AI summary for target project based on all combined applications
 	fullDesc, _ := registry.ProjectSummary(s.db, payload.TargetProjectID)
 
-	// 6. Fetch final updated target project with its newly merged components
+	// Fetch final updated target project with its newly merged components
 	var finalTarget models.Project
 	_ = s.db.Preload("Components").First(&finalTarget, payload.TargetProjectID)
 

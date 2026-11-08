@@ -16,79 +16,61 @@ import (
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
-// ScanDirectory analyzes a local filesystem path and detects its architecture
-func ScanDirectory(rootPath string) (*models.ScanResult, error) {
+func validateScanDirectory(rootPath string) (string, error) {
 	absPath, err := filepath.Abs(rootPath)
 	if err != nil {
-		return nil, fmt.Errorf("invalid path: %w", err)
+		return "", fmt.Errorf("invalid path: %w", err)
 	}
 
 	info, err := os.Stat(absPath)
 	if err != nil {
-		return nil, fmt.Errorf("directory not found: %w", err)
+		return "", fmt.Errorf("directory not found: %w", err)
 	}
 	if !info.IsDir() {
-		return nil, fmt.Errorf("specified path is not a directory")
+		return "", fmt.Errorf("specified path is not a directory")
 	}
+	return absPath, nil
+}
 
-	result := &models.ScanResult{
-		RootPath:       absPath,
-		SuggestedName:  cleanProjectName(filepath.Base(absPath)),
-		SuggestedSlug:  slugify(filepath.Base(absPath)),
-		DetectedStack:  make([]string, 0),
-		Components:     make([]models.ComponentProposal, 0),
-		IssuesDetected: make([]models.Finding, 0),
+func discoverSubComponents(absPath, relPath, subPath string, components *[]models.ComponentProposal) {
+	comp := inspectDirectory(absPath, subPath, relPath)
+	if comp != nil && !isDuplicateComponent(*components, comp.AbsolutePath) {
+		*components = append(*components, *comp)
+		return
 	}
-
-	// 1. Git info
-	branch, remote := getGitInfo(absPath)
-	result.GitBranch = branch
-	result.GitRemote = remote
-
-	// 2. Discover components
-	// First check if root itself is a single project
-	rootComp := inspectDirectory(absPath, absPath, "")
-	if rootComp != nil {
-		// Root is a component. Still inspect subfolders if it's a monorepo or bundle
-		result.Components = append(result.Components, *rootComp)
+	subEntries, _ := os.ReadDir(subPath)
+	for _, subEntry := range subEntries {
+		if !subEntry.IsDir() || shouldSkipDir(subEntry.Name()) {
+			continue
+		}
+		deepPath := filepath.Join(subPath, subEntry.Name())
+		deepRelPath := filepath.Join(relPath, subEntry.Name())
+		deepComp := inspectDirectory(absPath, deepPath, deepRelPath)
+		if deepComp != nil && !isDuplicateComponent(*components, deepComp.AbsolutePath) {
+			*components = append(*components, *deepComp)
+		}
 	}
+}
 
-	// Now inspect 1st and 2nd level subdirectories
+func discoverAllComponents(absPath string) []models.ComponentProposal {
+	var components []models.ComponentProposal
+	if rootComp := inspectDirectory(absPath, absPath, ""); rootComp != nil {
+		components = append(components, *rootComp)
+	}
 	entries, _ := os.ReadDir(absPath)
 	for _, entry := range entries {
 		if !entry.IsDir() || shouldSkipDir(entry.Name()) {
 			continue
 		}
 		subPath := filepath.Join(absPath, entry.Name())
-		relPath := entry.Name()
-
-		comp := inspectDirectory(absPath, subPath, relPath)
-		if comp != nil && !isDuplicateComponent(result.Components, comp.AbsolutePath) {
-			result.Components = append(result.Components, *comp)
-		} else {
-			// Check 2nd level subdirectories (e.g. apps/web, apps/api, packages/...)
-			subEntries, _ := os.ReadDir(subPath)
-			for _, subEntry := range subEntries {
-				if !subEntry.IsDir() || shouldSkipDir(subEntry.Name()) {
-					continue
-				}
-				deepPath := filepath.Join(subPath, subEntry.Name())
-				deepRelPath := filepath.Join(relPath, subEntry.Name())
-
-				deepComp := inspectDirectory(absPath, deepPath, deepRelPath)
-				if deepComp != nil && !isDuplicateComponent(result.Components, deepComp.AbsolutePath) {
-					result.Components = append(result.Components, *deepComp)
-				}
-			}
-		}
+		discoverSubComponents(absPath, entry.Name(), subPath, &components)
 	}
+	return components
+}
 
-	// 3. Classify roles and project type
-	refineComponentRoles(result)
-
-	// 4. Collect detected stack summary
+func collectDetectedStack(components []models.ComponentProposal) []string {
 	stackMap := make(map[string]bool)
-	for _, c := range result.Components {
+	for _, c := range components {
 		if c.Language != "" {
 			stackMap[c.Language] = true
 		}
@@ -96,11 +78,34 @@ func ScanDirectory(rootPath string) (*models.ScanResult, error) {
 			stackMap[c.Framework] = true
 		}
 	}
+	var stack []string
 	for s := range stackMap {
-		result.DetectedStack = append(result.DetectedStack, s)
+		stack = append(stack, s)
+	}
+	return stack
+}
+
+// ScanDirectory analyzes a local filesystem path and detects its architecture
+func ScanDirectory(rootPath string) (*models.ScanResult, error) {
+	absPath, err := validateScanDirectory(rootPath)
+	if err != nil {
+		return nil, err
 	}
 
-	// 5. Generate Directory Tree summary
+	branch, remote := getGitInfo(absPath)
+	result := &models.ScanResult{
+		RootPath:       absPath,
+		SuggestedName:  cleanProjectName(filepath.Base(absPath)),
+		SuggestedSlug:  slugify(filepath.Base(absPath)),
+		GitBranch:      branch,
+		GitRemote:      remote,
+		DetectedStack:  make([]string, 0),
+		Components:     discoverAllComponents(absPath),
+		IssuesDetected: make([]models.Finding, 0),
+	}
+
+	refineComponentRoles(result)
+	result.DetectedStack = collectDetectedStack(result.Components)
 	result.DirectoryTree = generateFolderTree(absPath, 2)
 
 	return result, nil
@@ -204,92 +209,90 @@ func inspectDirectory(rootPath, dirPath, relPath string) *models.ComponentPropos
 	return nil
 }
 
-func inspectPhpDirectory(dirPath, relPath, dirName string) *models.ComponentProposal {
-	composerPath := filepath.Join(dirPath, "composer.json")
-	composerContent := ""
-	if util.FileExists(composerPath) {
-		if b, err := os.ReadFile(composerPath); err == nil {
-			composerContent = string(b)
-		}
-	}
-
-	// 1. CodeIgniter 4
+func detectCI4(dirPath, relPath, dirName, composerContent string) *models.ComponentProposal {
 	isCI4 := util.FileExists(filepath.Join(dirPath, "spark")) ||
 		util.FileExists(filepath.Join(dirPath, "app/Config/Routes.php")) ||
 		strings.Contains(composerContent, "codeigniter4/framework") ||
 		strings.Contains(composerContent, "codeigniter4/appstarter")
 
-	if isCI4 {
-		devCmd := "php spark serve"
-		port := 8080
-		if strings.Contains(composerContent, `"serve":`) {
-			devCmd = "composer serve"
-			if strings.Contains(composerContent, "--port") {
-				rePort := regexp.MustCompile(`--port\s+([0-9]+)`)
-				if m := rePort.FindStringSubmatch(composerContent); len(m) > 1 {
-					port, _ = strconv.Atoi(m[1])
-				}
-			}
-		}
-		if p := findPortInDir(dirPath, 0); p > 0 {
-			port = p
-		}
-
-		return &models.ComponentProposal{
-			Name:           formatComponentName(dirName, "CodeIgniter Backend"),
-			Role:           models.RoleBackend,
-			RelativePath:   relPath,
-			AbsolutePath:   dirPath,
-			Language:       "php",
-			PackageManager: "composer",
-			DevCommand:     devCmd,
-			BuildCommand:   "",
-			Port:           port,
-			Framework:      "codeigniter",
-		}
+	if !isCI4 {
+		return nil
 	}
 
-	// 2. CodeIgniter 3
+	devCmd := "php spark serve"
+	port := 8080
+	if strings.Contains(composerContent, `"serve":`) {
+		devCmd = "composer serve"
+		if strings.Contains(composerContent, "--port") {
+			rePort := regexp.MustCompile(`--port\s+([0-9]+)`)
+			if m := rePort.FindStringSubmatch(composerContent); len(m) > 1 {
+				port, _ = strconv.Atoi(m[1])
+			}
+		}
+	}
+	if p := findPortInDir(dirPath, 0); p > 0 {
+		port = p
+	}
+
+	return &models.ComponentProposal{
+		Name:           formatComponentName(dirName, "CodeIgniter Backend"),
+		Role:           models.RoleBackend,
+		RelativePath:   relPath,
+		AbsolutePath:   dirPath,
+		Language:       "php",
+		PackageManager: "composer",
+		DevCommand:     devCmd,
+		BuildCommand:   "",
+		Port:           port,
+		Framework:      "codeigniter",
+	}
+}
+
+func detectCI3(dirPath, relPath, dirName string) *models.ComponentProposal {
 	isCI3 := util.FileExists(filepath.Join(dirPath, "application/config/routes.php")) ||
 		util.FileExists(filepath.Join(dirPath, "system/core/CodeIgniter.php"))
 
-	if isCI3 {
-		return &models.ComponentProposal{
-			Name:           formatComponentName(dirName, "CodeIgniter 3 App"),
-			Role:           models.RoleBackend,
-			RelativePath:   relPath,
-			AbsolutePath:   dirPath,
-			Language:       "php",
-			PackageManager: "composer",
-			DevCommand:     "php -S localhost:8000",
-			BuildCommand:   "",
-			Port:           findPortInDir(dirPath, 8000),
-			Framework:      "codeigniter3",
-		}
+	if !isCI3 {
+		return nil
 	}
+	return &models.ComponentProposal{
+		Name:           formatComponentName(dirName, "CodeIgniter 3 App"),
+		Role:           models.RoleBackend,
+		RelativePath:   relPath,
+		AbsolutePath:   dirPath,
+		Language:       "php",
+		PackageManager: "composer",
+		DevCommand:     "php -S localhost:8000",
+		BuildCommand:   "",
+		Port:           findPortInDir(dirPath, 8000),
+		Framework:      "codeigniter3",
+	}
+}
 
-	// 3. Laravel
+func detectLaravel(dirPath, relPath, dirName, composerContent string) *models.ComponentProposal {
 	isLaravel := util.FileExists(filepath.Join(dirPath, "artisan")) ||
 		strings.Contains(composerContent, "laravel/framework") ||
 		strings.Contains(composerContent, "illuminate/") ||
 		util.FileExists(filepath.Join(dirPath, "routes/web.php"))
 
-	if isLaravel {
-		return &models.ComponentProposal{
-			Name:           formatComponentName(dirName, "Laravel Backend"),
-			Role:           models.RoleBackend,
-			RelativePath:   relPath,
-			AbsolutePath:   dirPath,
-			Language:       "php",
-			PackageManager: "composer",
-			DevCommand:     "php artisan serve",
-			BuildCommand:   "",
-			Port:           findPortInDir(dirPath, 8000),
-			Framework:      "laravel",
-		}
+	if !isLaravel {
+		return nil
 	}
+	return &models.ComponentProposal{
+		Name:           formatComponentName(dirName, "Laravel Backend"),
+		Role:           models.RoleBackend,
+		RelativePath:   relPath,
+		AbsolutePath:   dirPath,
+		Language:       "php",
+		PackageManager: "composer",
+		DevCommand:     "php artisan serve",
+		BuildCommand:   "",
+		Port:           findPortInDir(dirPath, 8000),
+		Framework:      "laravel",
+	}
+}
 
-	// 4. Generic PHP
+func detectGenericPHP(dirPath, relPath, dirName string) *models.ComponentProposal {
 	return &models.ComponentProposal{
 		Name:           formatComponentName(dirName, "PHP App"),
 		Role:           models.RoleBackend,
@@ -302,6 +305,104 @@ func inspectPhpDirectory(dirPath, relPath, dirName string) *models.ComponentProp
 		Port:           findPortInDir(dirPath, 8000),
 		Framework:      "php",
 	}
+}
+
+func inspectPhpDirectory(dirPath, relPath, dirName string) *models.ComponentProposal {
+	composerPath := filepath.Join(dirPath, "composer.json")
+	composerContent := ""
+	if util.FileExists(composerPath) {
+		if b, err := os.ReadFile(composerPath); err == nil {
+			composerContent = string(b)
+		}
+	}
+
+	if comp := detectCI4(dirPath, relPath, dirName, composerContent); comp != nil {
+		return comp
+	}
+	if comp := detectCI3(dirPath, relPath, dirName); comp != nil {
+		return comp
+	}
+	if comp := detectLaravel(dirPath, relPath, dirName, composerContent); comp != nil {
+		return comp
+	}
+	return detectGenericPHP(dirPath, relPath, dirName)
+}
+
+func detectPackageManager(dirPath string) string {
+	if util.FileExists(filepath.Join(dirPath, "bun.lockb")) || util.FileExists(filepath.Join(dirPath, "bun.lock")) {
+		return "bun"
+	}
+	if util.FileExists(filepath.Join(dirPath, "pnpm-lock.yaml")) {
+		return "pnpm"
+	}
+	if util.FileExists(filepath.Join(dirPath, "yarn.lock")) {
+		return "yarn"
+	}
+	return "npm"
+}
+
+func detectJSFramework(allDeps map[string]bool) (string, string, int) {
+	if allDeps["nuxt"] || allDeps["nuxt3"] || allDeps["@nuxt/ui"] {
+		return "nuxt", models.RoleFrontendClient, 3000
+	}
+	if allDeps["next"] {
+		return "next", models.RoleFrontendClient, 3000
+	}
+	if allDeps["vue"] || allDeps["react"] {
+		framework := "vue"
+		if allDeps["react"] {
+			framework = "react"
+		}
+		return framework, models.RoleFrontendClient, 5173
+	}
+	if allDeps["@nestjs/core"] {
+		return "nestjs", models.RoleBackend, 3000
+	}
+	if allDeps["express"] || allDeps["fastify"] || allDeps["koa"] {
+		return "express", models.RoleBackend, 8000
+	}
+	return "node", models.RoleFrontendClient, 3000
+}
+
+func detectJSScripts(scripts map[string]string, pm string) (string, string) {
+	devCmd := fmt.Sprintf("%s run dev", pm)
+	if _, ok := scripts["dev"]; !ok {
+		if _, ok := scripts["start"]; ok {
+			devCmd = fmt.Sprintf("%s start", pm)
+		}
+	}
+	buildCmd := ""
+	if _, ok := scripts["build"]; ok {
+		buildCmd = fmt.Sprintf("%s run build", pm)
+	}
+	return devCmd, buildCmd
+}
+
+func hasAnyKeyword(s string, keywords ...string) bool {
+	for _, kw := range keywords {
+		if strings.Contains(s, kw) {
+			return true
+		}
+	}
+	return false
+}
+
+func guessJSRole(dirName string, role string, defaultPort int) (string, int) {
+	lowerDir := strings.ToLower(dirName)
+	if hasAnyKeyword(lowerDir, "admin", "backoffice", "dash") {
+		role = models.RoleFrontendAdmin
+		if defaultPort == 3000 {
+			defaultPort = 3001
+		}
+	} else if hasAnyKeyword(lowerDir, "client", "store", "public", "web") {
+		role = models.RoleFrontendClient
+	} else if hasAnyKeyword(lowerDir, "api", "server", "backend") {
+		role = models.RoleBackend
+		if defaultPort == 3000 {
+			defaultPort = 8080
+		}
+	}
+	return role, defaultPort
 }
 
 func inspectPackageJSON(dirPath, relPath, dirName string) *models.ComponentProposal {
@@ -319,16 +420,7 @@ func inspectPackageJSON(dirPath, relPath, dirName string) *models.ComponentPropo
 	}
 	_ = json.Unmarshal(data, &pkg)
 
-	// Detect package manager
-	pm := "npm"
-	if util.FileExists(filepath.Join(dirPath, "bun.lockb")) || util.FileExists(filepath.Join(dirPath, "bun.lock")) {
-		pm = "bun"
-	} else if util.FileExists(filepath.Join(dirPath, "pnpm-lock.yaml")) {
-		pm = "pnpm"
-	} else if util.FileExists(filepath.Join(dirPath, "yarn.lock")) {
-		pm = "yarn"
-	}
-
+	pm := detectPackageManager(dirPath)
 	allDeps := make(map[string]bool)
 	for k := range pkg.Dependencies {
 		allDeps[k] = true
@@ -337,64 +429,14 @@ func inspectPackageJSON(dirPath, relPath, dirName string) *models.ComponentPropo
 		allDeps[k] = true
 	}
 
-	framework := "node"
 	lang := "javascript"
-	role := models.RoleFrontendClient
-	defaultPort := 3000
-
 	if util.FileExists(filepath.Join(dirPath, "tsconfig.json")) {
 		lang = "typescript"
 	}
 
-	if allDeps["nuxt"] || allDeps["nuxt3"] || allDeps["@nuxt/ui"] {
-		framework = "nuxt"
-		defaultPort = 3000
-	} else if allDeps["next"] {
-		framework = "next"
-		defaultPort = 3000
-	} else if allDeps["vue"] {
-		framework = "vue"
-		defaultPort = 5173
-	} else if allDeps["react"] {
-		framework = "react"
-		defaultPort = 5173
-	} else if allDeps["@nestjs/core"] {
-		framework = "nestjs"
-		role = models.RoleBackend
-		defaultPort = 3000
-	} else if allDeps["express"] || allDeps["fastify"] || allDeps["koa"] {
-		framework = "express"
-		role = models.RoleBackend
-		defaultPort = 8000
-	}
-
-	devCmd := fmt.Sprintf("%s run dev", pm)
-	if _, ok := pkg.Scripts["dev"]; !ok {
-		if _, ok := pkg.Scripts["start"]; ok {
-			devCmd = fmt.Sprintf("%s start", pm)
-		}
-	}
-
-	buildCmd := ""
-	if _, ok := pkg.Scripts["build"]; ok {
-		buildCmd = fmt.Sprintf("%s run build", pm)
-	}
-
-	// Guess role by folder name
-	lowerDir := strings.ToLower(dirName)
-	if strings.Contains(lowerDir, "admin") || strings.Contains(lowerDir, "backoffice") || strings.Contains(lowerDir, "dash") {
-		role = models.RoleFrontendAdmin
-		if defaultPort == 3000 {
-			defaultPort = 3001
-		}
-	} else if strings.Contains(lowerDir, "client") || strings.Contains(lowerDir, "store") || strings.Contains(lowerDir, "public") || strings.Contains(lowerDir, "web") {
-		role = models.RoleFrontendClient
-	} else if strings.Contains(lowerDir, "api") || strings.Contains(lowerDir, "server") || strings.Contains(lowerDir, "backend") {
-		role = models.RoleBackend
-		if defaultPort == 3000 {
-			defaultPort = 8080
-		}
-	}
+	framework, role, defaultPort := detectJSFramework(allDeps)
+	devCmd, buildCmd := detectJSScripts(pkg.Scripts, pm)
+	role, defaultPort = guessJSRole(dirName, role, defaultPort)
 
 	compName := pkg.Name
 	if compName == "" {
@@ -514,56 +556,58 @@ func findPortInDir(dirPath string, fallback int) int {
 	return fallback
 }
 
-func refineComponentRoles(result *models.ScanResult) {
+func categorizeComponents(components []models.ComponentProposal) (bool, []int) {
 	hasBackend := false
-	frontends := make([]int, 0)
-
-	for i, c := range result.Components {
+	var frontends []int
+	for i, c := range components {
 		if c.Role == models.RoleBackend {
 			hasBackend = true
 		} else if strings.HasPrefix(c.Role, "frontend") {
 			frontends = append(frontends, i)
 		}
 	}
+	return hasBackend, frontends
+}
 
-	// If there are multiple frontends and none marked as admin yet, disambiguate
-	if len(frontends) >= 2 {
-		hasAdmin := false
-		for _, idx := range frontends {
-			if result.Components[idx].Role == models.RoleFrontendAdmin {
-				hasAdmin = true
-				break
-			}
-		}
-		if !hasAdmin {
-			// Mark first as Admin and second as Client (or by name hint)
-			for _, idx := range frontends {
-				name := strings.ToLower(result.Components[idx].Name)
-				if strings.Contains(name, "admin") || strings.Contains(name, "manage") || strings.Contains(name, "back") {
-					result.Components[idx].Role = models.RoleFrontendAdmin
-					hasAdmin = true
-					break
-				}
-			}
-			if !hasAdmin && len(frontends) > 0 {
-				result.Components[frontends[0]].Role = models.RoleFrontendAdmin
-				if len(frontends) > 1 {
-					result.Components[frontends[1]].Role = models.RoleFrontendClient
-				}
-			}
+func disambiguateFrontends(components []models.ComponentProposal, frontends []int) {
+	if len(frontends) < 2 {
+		return
+	}
+	for _, idx := range frontends {
+		if components[idx].Role == models.RoleFrontendAdmin {
+			return
 		}
 	}
-
-	// Determine overall project type
-	if hasBackend && len(frontends) >= 2 {
-		result.ProjectType = models.TypeMultiFE
-	} else if hasBackend && len(frontends) >= 1 {
-		result.ProjectType = models.TypeBundle
-	} else if len(result.Components) > 1 {
-		result.ProjectType = models.TypeMonorepo
-	} else {
-		result.ProjectType = models.TypeSingleApp
+	for _, idx := range frontends {
+		name := strings.ToLower(components[idx].Name)
+		if strings.Contains(name, "admin") || strings.Contains(name, "manage") || strings.Contains(name, "back") {
+			components[idx].Role = models.RoleFrontendAdmin
+			return
+		}
 	}
+	components[frontends[0]].Role = models.RoleFrontendAdmin
+	if len(frontends) > 1 {
+		components[frontends[1]].Role = models.RoleFrontendClient
+	}
+}
+
+func determineScanProjectType(hasBackend bool, frontendsCount, compCount int) string {
+	if hasBackend && frontendsCount >= 2 {
+		return models.TypeMultiFE
+	}
+	if hasBackend && frontendsCount >= 1 {
+		return models.TypeBundle
+	}
+	if compCount > 1 {
+		return models.TypeMonorepo
+	}
+	return models.TypeSingleApp
+}
+
+func refineComponentRoles(result *models.ScanResult) {
+	hasBackend, frontends := categorizeComponents(result.Components)
+	disambiguateFrontends(result.Components, frontends)
+	result.ProjectType = determineScanProjectType(hasBackend, len(frontends), len(result.Components))
 }
 
 func getGitInfo(dir string) (branch, remote string) {

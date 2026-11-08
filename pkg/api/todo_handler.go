@@ -234,6 +234,51 @@ func finalizeTodoPayload(payload *models.Todo) {
 	}
 }
 
+func adjustTodoStatusFields(updates map[string]interface{}, newStatus string, existingAgent string) {
+	switch newStatus {
+	case models.TodoStatusCompleted:
+		if updates["completed_at"] == nil {
+			now := time.Now()
+			updates["completed_at"] = &now
+		}
+		if _, hasAgent := updates["completed_by_agent"]; !hasAgent && existingAgent == "" {
+			updates["completed_by_agent"] = "developer"
+		}
+	case models.TodoStatusPending, models.TodoStatusInProgress:
+		updates["completed_at"] = nil
+		updates["completed_by_agent"] = ""
+		updates["completed_by_model"] = ""
+	}
+}
+
+func normalizeTodoUpdatePayload(updates map[string]interface{}, todo *models.Todo) string {
+	delete(updates, "id")
+	if raw, ok := updates["tags"]; ok {
+		updates["tags"] = models.NormalizeTags(raw)
+	}
+
+	newStatus, hasStatus := updates["status"].(string)
+	if hasStatus && newStatus != "" {
+		adjustTodoStatusFields(updates, newStatus, todo.CompletedByAgent)
+		return newStatus
+	}
+	return ""
+}
+
+func (s *Server) applyTodoPostUpdates(todo *models.Todo, id int, newStatus string, updates map[string]interface{}) {
+	s.db.First(todo, id)
+	if rescoreTodo(todo, updates) {
+		s.db.Model(todo).Updates(todo.TodoComplexity.Columns())
+		s.db.Model(todo).Updates(todo.TodoImpact.Columns())
+	}
+
+	if newStatus == models.TodoStatusCompleted {
+		// Modul Pro: penugasan pegawai, penilaian QA, dan pengetahuan eksekutif.
+		registry.TodoCompleted(s.db, todo.ID, todo.CompletedByAgent)
+		s.db.First(todo, id)
+	}
+}
+
 func (s *Server) updateTodo(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil || id <= 0 {
@@ -253,43 +298,13 @@ func (s *Server) updateTodo(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "todo not found"})
 	}
 
-	delete(updates, "id")
-	if raw, ok := updates["tags"]; ok {
-		updates["tags"] = models.NormalizeTags(raw)
-	}
-
-	newStatus, hasStatus := updates["status"].(string)
-	if hasStatus && newStatus != "" {
-		if newStatus == models.TodoStatusCompleted {
-			if _, hasCompAt := updates["completed_at"]; !hasCompAt || updates["completed_at"] == nil {
-				now := time.Now()
-				updates["completed_at"] = &now
-			}
-			if _, hasAgent := updates["completed_by_agent"]; !hasAgent && todo.CompletedByAgent == "" {
-				updates["completed_by_agent"] = "developer"
-			}
-		} else if newStatus == models.TodoStatusPending || newStatus == models.TodoStatusInProgress {
-			updates["completed_at"] = nil
-			updates["completed_by_agent"] = ""
-			updates["completed_by_model"] = ""
-		}
-	}
+	newStatus := normalizeTodoUpdatePayload(updates, &todo)
 
 	if err := s.db.Model(&todo).Updates(updates).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	s.db.First(&todo, id)
-	if rescoreTodo(&todo, updates) {
-		s.db.Model(&todo).Updates(todo.TodoComplexity.Columns())
-		s.db.Model(&todo).Updates(todo.TodoImpact.Columns())
-	}
-
-	if newStatus == models.TodoStatusCompleted {
-		// Modul Pro: penugasan pegawai, penilaian QA, dan pengetahuan eksekutif.
-		registry.TodoCompleted(s.db, todo.ID, todo.CompletedByAgent)
-		s.db.First(&todo, id)
-	}
+	s.applyTodoPostUpdates(&todo, id, newStatus, updates)
 
 	return c.JSON(todo)
 }

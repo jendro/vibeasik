@@ -424,60 +424,62 @@ func (b *builder) lexicalCallees(c *Context, f *codemap.FileSymbols, self string
 	}
 }
 
+func buildLexicalRegexes(filePath, name string) (*regexp.Regexp, *regexp.Regexp) {
+	re := regexp.MustCompile(`(^|[^\w$])` + regexp.QuoteMeta(name) + `\s*\(|['"]` + regexp.QuoteMeta(name) + `['"]`)
+	testRe := regexp.MustCompile(`\b` + regexp.QuoteMeta(name) + `\b`)
+	if stem := strings.TrimSuffix(path.Base(filePath), path.Ext(filePath)); stem != "" && stem[0] >= 'A' && stem[0] <= 'Z' {
+		testRe = regexp.MustCompile(`\b(` + regexp.QuoteMeta(name) + `|` + regexp.QuoteMeta(stem) + `)\b`)
+	}
+	return re, testRe
+}
+
+func (b *builder) recordLexicalCaller(c *Context, o *codemap.FileSymbols, lineNum int, lineText string) {
+	c.CallerCount++
+	if len(c.Callers) < b.opt.MaxCallers {
+		caller := "(level berkas)"
+		if s, _, _, ok := b.enclosing(o, lineNum); ok {
+			caller = s.Name
+		}
+		c.Callers = append(c.Callers, CallSite{Path: o.Path, Caller: caller, Line: lineNum, Text: clip(strings.TrimSpace(lineText), 160)})
+	}
+}
+
+func (b *builder) scanFileLexicalCallers(c *Context, f, o *codemap.FileSymbols, defLine int, re, testRe *regexp.Regexp) {
+	isTest := b.testInScope(o)
+	if !isTest && !b.inScope(o) {
+		return
+	}
+	lines := b.src.lines(o.AbsPath)
+	match := re
+	if isTest {
+		match = testRe
+	}
+	for n, l := range lines {
+		if (o == f && n+1 == defLine) || !match.MatchString(l) {
+			continue
+		}
+		if isTest {
+			if len(c.Tests) < 4 && (len(c.Tests) == 0 || c.Tests[len(c.Tests)-1] != o.Path) {
+				c.Tests = append(c.Tests, o.Path)
+			}
+			break
+		}
+		b.recordLexicalCaller(c, o, n+1, l)
+	}
+}
+
 // lexicalCallers mencari pemanggilan nama fungsi di berkas lingkup (kode aplikasi) & test.
 func (b *builder) lexicalCallers(c *Context, f *codemap.FileSymbols, name string, defLine int) {
 	if len(name) < 3 {
 		return
 	}
-	re := regexp.MustCompile(`(^|[^\w$])` + regexp.QuoteMeta(name) + `\s*\(|['"]` + regexp.QuoteMeta(name) + `['"]`)
-	// test menguji method kelas lewat nama kelasnya (UserController) atau rutenya, tidak selalu memanggil method
-	testRe := regexp.MustCompile(`\b` + regexp.QuoteMeta(name) + `\b`)
-	if stem := strings.TrimSuffix(path.Base(f.Path), path.Ext(f.Path)); stem != "" && stem[0] >= 'A' && stem[0] <= 'Z' {
-		testRe = regexp.MustCompile(`\b(` + regexp.QuoteMeta(name) + `|` + regexp.QuoteMeta(stem) + `)\b`)
-	}
+	re, testRe := buildLexicalRegexes(f.Path, name)
 	for i := range b.files {
-		o := &b.files[i]
-		isTest := b.testInScope(o)
-		if !isTest && !b.inScope(o) {
-			continue
-		}
-		lines := b.src.lines(o.AbsPath)
-		match := re
-		if isTest {
-			match = testRe
-		}
-		for n, l := range lines {
-			if (o == f && n+1 == defLine) || !match.MatchString(l) {
-				continue
-			}
-			if isTest {
-				if len(c.Tests) < 4 && (len(c.Tests) == 0 || c.Tests[len(c.Tests)-1] != o.Path) {
-					c.Tests = append(c.Tests, o.Path)
-				}
-				break
-			}
-			c.CallerCount++
-			if len(c.Callers) < b.opt.MaxCallers {
-				caller := "(level berkas)"
-				if s, _, _, ok := b.enclosing(o, n+1); ok {
-					caller = s.Name
-				}
-				c.Callers = append(c.Callers, CallSite{Path: o.Path, Caller: caller, Line: n + 1, Text: clip(strings.TrimSpace(l), 160)})
-			}
-		}
+		b.scanFileLexicalCallers(c, f, &b.files[i], defLine, re, testRe)
 	}
 }
 
-// buildGo: call graph bertipe dari routemap (presisi untuk method lewat interface/variabel bertipe).
-func (b *builder) buildGo(c *Context, line int) bool {
-	graphs := routemap.Analyze(codemap.EffectiveRoot(*b.project))
-	g, fr := routemap.FuncAt(graphs, b.target.Path, line)
-	if fr == nil {
-		return false
-	}
-	c.Precise = true
-	s := b.span(b.target, fr.Name, fr.Line, fr.End, line, b.opt.MaxUnitLines, 0)
-	c.Unit = &s
+func (b *builder) collectGoCallees(g *routemap.Graph, fr *routemap.FuncRef) []Span {
 	seen := map[string]bool{fr.Key: true}
 	frontier := []routemap.FuncRef{*fr}
 	limit := b.opt.MaxCallees * 3
@@ -498,8 +500,10 @@ func (b *builder) buildGo(c *Context, line int) bool {
 		}
 		frontier = next
 	}
-	b.selectCallees(c, all)
-	short := fr.Name[strings.LastIndex(fr.Name, ".")+1:]
+	return all
+}
+
+func (b *builder) resolveGoCallers(c *Context, g *routemap.Graph, fr *routemap.FuncRef, short string) {
 	callers := g.Callers(fr.Key)
 	c.CallerCount = len(callers)
 	for _, cr := range callers {
@@ -518,7 +522,9 @@ func (b *builder) buildGo(c *Context, line int) bool {
 		}
 		c.Callers = append(c.Callers, site)
 	}
-	// test yang memakai fungsi ini (pemanggil di berkas *_test.go tidak masuk call graph rute)
+}
+
+func (b *builder) findGoTests(c *Context, short string) {
 	re := regexp.MustCompile(`\b` + regexp.QuoteMeta(short) + `\b`)
 	for i := range b.files {
 		o := &b.files[i]
@@ -532,6 +538,26 @@ func (b *builder) buildGo(c *Context, line int) bool {
 			}
 		}
 	}
+}
+
+// buildGo: call graph bertipe dari routemap (presisi untuk method lewat interface/variabel bertipe).
+func (b *builder) buildGo(c *Context, line int) bool {
+	graphs := routemap.Analyze(codemap.EffectiveRoot(*b.project))
+	g, fr := routemap.FuncAt(graphs, b.target.Path, line)
+	if fr == nil {
+		return false
+	}
+	c.Precise = true
+	s := b.span(b.target, fr.Name, fr.Line, fr.End, line, b.opt.MaxUnitLines, 0)
+	c.Unit = &s
+
+	all := b.collectGoCallees(g, fr)
+	b.selectCallees(c, all)
+
+	short := fr.Name[strings.LastIndex(fr.Name, ".")+1:]
+	b.resolveGoCallers(c, g, fr, short)
+	b.findGoTests(c, short)
+
 	return true
 }
 

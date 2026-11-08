@@ -357,34 +357,44 @@ func SyncCensoredKeywords(db *gorm.DB) {
 	}
 }
 
+type legacyCategoryRule struct {
+	prefix   string
+	keywords []string
+	category string
+}
+
+var legacyCategoryRules = []legacyCategoryRule{
+	{prefix: "SEC", category: models.CategorySecurity},
+	{prefix: "ARCH", keywords: []string{"arsitektur", "runner", "dev.sh"}, category: models.CategoryArchitecture},
+	{prefix: "FE", keywords: []string{"ui", "composable"}, category: models.CategoryUIUX},
+	{prefix: "API", keywords: []string{"endpoint", "health"}, category: models.CategoryBackend},
+	{prefix: "NET", keywords: []string{"port", "proxy"}, category: models.CategoryPerformance},
+	{prefix: "AI", keywords: []string{"mcp", "neural"}, category: models.CategoryFeature},
+	{prefix: "PLAN", keywords: []string{"mcp", "neural"}, category: models.CategoryFeature},
+	{prefix: "CICD", keywords: []string{"ci"}, category: models.CategoryDevOps},
+}
+
+func matchLegacyRule(rule legacyCategoryRule, text, g string) bool {
+	if rule.prefix != "" && strings.HasPrefix(g, rule.prefix) {
+		return true
+	}
+	for _, kw := range rule.keywords {
+		if strings.Contains(text, kw) {
+			return true
+		}
+	}
+	return false
+}
+
 // classifyLegacyTodoCategory menentukan kategori todo lama dari judul dan guideline_ref.
 // Urutan case = prioritas (SEC, ARCH, FE, API, NET, AI/PLAN, CICD); fallback ke General.
 func classifyLegacyTodoCategory(title, guidelineRef string) string {
 	text := strings.ToLower(title)
 	g := strings.ToUpper(guidelineRef)
-	has := func(subs ...string) bool {
-		for _, s := range subs {
-			if strings.Contains(text, s) {
-				return true
-			}
+	for _, rule := range legacyCategoryRules {
+		if matchLegacyRule(rule, text, g) {
+			return rule.category
 		}
-		return false
-	}
-	switch {
-	case strings.HasPrefix(g, "SEC"):
-		return models.CategorySecurity
-	case strings.HasPrefix(g, "ARCH") || has("arsitektur", "runner", "dev.sh"):
-		return models.CategoryArchitecture
-	case strings.HasPrefix(g, "FE") || has("ui", "composable"):
-		return models.CategoryUIUX
-	case strings.HasPrefix(g, "API") || has("endpoint", "health"):
-		return models.CategoryBackend
-	case strings.HasPrefix(g, "NET") || has("port", "proxy"):
-		return models.CategoryPerformance
-	case strings.HasPrefix(g, "AI") || strings.HasPrefix(g, "PLAN") || has("mcp", "neural"):
-		return models.CategoryFeature
-	case strings.HasPrefix(g, "CICD") || has("ci"):
-		return models.CategoryDevOps
 	}
 	return models.CategoryGeneral
 }

@@ -75,81 +75,94 @@ func shortKey(m *module, k string) string {
 	return k
 }
 
+func routerRootOf(byID map[int]*Router, r *Router) *Router {
+	for r.Parent >= 0 && byID[r.Parent] != nil {
+		r = byID[r.Parent]
+	}
+	return r
+}
+
+func routerAncestors(byID map[int]*Router, r *Router) map[int]bool {
+	out := map[int]bool{}
+	for r != nil {
+		out[r.ID] = true
+		if r.Parent < 0 {
+			break
+		}
+		r = byID[r.Parent]
+	}
+	return out
+}
+
+func isMiddlewareApplicable(r *Router, rt *Route, mw Middleware, o *Router, anc map[int]bool) bool {
+	scopePath := mw.ScopePath
+	if scopePath == "" {
+		scopePath = o.Prefix
+	}
+	if r.Framework == "fiber" {
+		if mw.Scope == "with" && !anc[o.ID] {
+			return false
+		}
+		return hasPathPrefix(rt.Path, scopePath)
+	}
+	if !anc[o.ID] {
+		return false
+	}
+	if mw.Scope == "prefix" && !hasPathPrefix(rt.Path, scopePath) {
+		return false
+	}
+	return true
+}
+
+func (w *walker) collectRouteMiddlewares(byID map[int]*Router, r *Router, rt *Route) []Middleware {
+	root := routerRootOf(byID, r)
+	anc := routerAncestors(byID, r)
+	var cands []Middleware
+	for _, o := range w.g.Routers {
+		if routerRootOf(byID, o) != root {
+			continue
+		}
+		for _, mw := range o.Middlewares {
+			if isMiddlewareApplicable(r, rt, mw, o, anc) {
+				cands = append(cands, mw)
+			}
+		}
+	}
+	sort.SliceStable(cands, func(i, j int) bool { return cands[i].seq < cands[j].seq })
+	return append(cands, w.routeMW[rt]...)
+}
+
+func applyRouteMiddlewares(r *Router, rt *Route, cands []Middleware) {
+	for _, mw := range cands {
+		switch {
+		case mw.seq > rt.seq && r.Framework != "echo":
+			mw.Reason = "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+			rt.Inactive = append(rt.Inactive, mw)
+		case skipped(rt.Path, mw):
+			mw.Reason = "dilewati untuk path ini (kondisi Next/skip di middleware)"
+			rt.Inactive = append(rt.Inactive, mw)
+		default:
+			rt.Chain = append(rt.Chain, mw)
+			if mw.Auth && !mw.Optional {
+				rt.Auth = true
+			}
+		}
+	}
+}
+
 // finalize menghitung rantai middleware efektif tiap rute sesuai semantik framework.
 func (w *walker) finalize() {
 	byID := map[int]*Router{}
 	for _, r := range w.g.Routers {
 		byID[r.ID] = r
 	}
-	rootOf := func(r *Router) *Router {
-		for r.Parent >= 0 && byID[r.Parent] != nil {
-			r = byID[r.Parent]
-		}
-		return r
-	}
-	ancestors := func(r *Router) map[int]bool {
-		out := map[int]bool{}
-		for r != nil {
-			out[r.ID] = true
-			if r.Parent < 0 {
-				break
-			}
-			r = byID[r.Parent]
-		}
-		return out
-	}
 	for _, rt := range w.g.Routes {
 		r := byID[rt.RouterID]
 		if r == nil {
 			continue
 		}
-		root, anc := rootOf(r), ancestors(r)
-		var cands []Middleware
-		for _, o := range w.g.Routers {
-			if rootOf(o) != root {
-				continue
-			}
-			for _, mw := range o.Middlewares {
-				scopePath := mw.ScopePath
-				if scopePath == "" {
-					scopePath = o.Prefix
-				}
-				switch {
-				case r.Framework == "fiber": // fiber: middleware group/Use berlaku berdasarkan prefix path, lintas objek group
-					if mw.Scope == "with" && !anc[o.ID] {
-						continue
-					}
-					if !hasPathPrefix(rt.Path, scopePath) {
-						continue
-					}
-				default: // gin/echo/chi/gorilla: hanya middleware milik leluhur router rute
-					if !anc[o.ID] {
-						continue
-					}
-					if mw.Scope == "prefix" && !hasPathPrefix(rt.Path, scopePath) {
-						continue
-					}
-				}
-				cands = append(cands, mw)
-			}
-		}
-		sort.SliceStable(cands, func(i, j int) bool { return cands[i].seq < cands[j].seq })
-		cands = append(cands, w.routeMW[rt]...)
-		for _, mw := range cands {
-			switch {
-			case mw.seq > rt.seq && r.Framework != "echo":
-				mw.Reason = "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
-				rt.Inactive = append(rt.Inactive, mw)
-			case skipped(rt.Path, mw):
-				mw.Reason = "dilewati untuk path ini (kondisi Next/skip di middleware)"
-				rt.Inactive = append(rt.Inactive, mw)
-			default:
-				rt.Chain = append(rt.Chain, mw)
-				if mw.Auth && !mw.Optional {
-					rt.Auth = true
-				}
-			}
-		}
+		cands := w.collectRouteMiddlewares(byID, r, rt)
+		applyRouteMiddlewares(r, rt, cands)
 	}
 	sort.SliceStable(w.g.Routes, func(i, j int) bool {
 		if w.g.Routes[i].Path != w.g.Routes[j].Path {

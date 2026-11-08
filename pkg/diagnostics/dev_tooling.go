@@ -287,10 +287,7 @@ var (
 	apiKeyHint = regexp.MustCompile(`(?i)^(?:[A-Z]+_PUBLIC_|VITE_|REACT_APP_|PUBLIC_)?(?:API|BACKEND|BE|SERVER)(?:_BASE)?(?:_URL|_HOST|_ORIGIN)?$`)
 )
 
-// inspectFrontendBackendLink memastikan FE & mobile memuat data BE yang benar saat dev: URL API di env
-// menunjuk port BE proyek ini, dan aplikasi mobile tidak memakai localhost (emulator/HP tidak bisa menjangkaunya).
-// only != 0 membatasi pemeriksaan ke satu komponen (AnalyzeComponent).
-func inspectFrontendBackendLink(project *models.Project, only uint) []models.Finding {
+func collectBackendPorts(project *models.Project) (map[int]bool, []string) {
 	bePorts := map[int]bool{}
 	var bePortList []string
 	for _, c := range project.Components {
@@ -299,43 +296,70 @@ func inspectFrontendBackendLink(project *models.Project, only uint) []models.Fin
 			bePortList = append(bePortList, strconv.Itoa(effectivePort(c)))
 		}
 	}
+	return bePorts, bePortList
+}
+
+func isInspectableFEComponent(c models.Component, only uint) bool {
+	if only != 0 && c.ID != only {
+		return false
+	}
+	if c.Role == models.RoleBackend {
+		return false
+	}
+	return strings.HasPrefix(c.Role, "frontend") || isMobileComponent(c)
+}
+
+func fePortMismatchFinding(c models.Component, rel string, lineNo int, key, url string, port int, bePortList []string) models.Finding {
+	return models.Finding{
+		Category:    "architecture",
+		Severity:    "WARNING",
+		RuleID:      "FE-API-PORT-MISMATCH",
+		Title:       fmt.Sprintf("URL API '%s' Tidak Menunjuk Port Backend", c.Name),
+		Description: fmt.Sprintf("%s di %s menunjuk port %d, sedangkan backend proyek berjalan di port %s. Saat dev, data BE gagal dimuat.", key, rel, port, strings.Join(bePortList, "/")),
+		Suggestion:  "Samakan URL API dengan port BE dari blok PORTS.md, dan biarkan dev.sh mengekspor URL ini agar selalu sinkron dengan PORT backend.",
+		TargetFile:  rel,
+		Line:        lineNo,
+		Snippet:     key + "=" + url,
+	}
+}
+
+func inspectComponentEnvURLs(c models.Component, bePorts map[int]bool, bePortList []string) []models.Finding {
 	var findings []models.Finding
-	for _, c := range project.Components {
-		if (only != 0 && c.ID != only) || c.Role == models.RoleBackend || (!strings.HasPrefix(c.Role, "frontend") && !isMobileComponent(c)) {
-			continue
-		}
-		mobile := isMobileComponent(c)
-		for _, envName := range []string{".env.local", ".env", ".env.development"} {
-			path := filepath.Join(c.AbsolutePath, envName)
-			rel := filepath.ToSlash(filepath.Join(c.RelativePath, envName))
-			for _, e := range envURLs(path) {
-				lineNo, key, url := e.line, e.key, e.url
-				if !apiKeyHint.MatchString(key) {
-					continue
-				}
-				m := localURLRe.FindStringSubmatch(url)
-				if m == nil {
-					continue
-				}
-				if mobile {
-					findings = append(findings, mobileLocalhostFinding(c, rel, lineNo, key+"="+url))
-				}
-				if port, _ := strconv.Atoi(m[2]); port > 0 && len(bePorts) > 0 && !bePorts[port] {
-					findings = append(findings, models.Finding{
-						Category:    "architecture",
-						Severity:    "WARNING",
-						RuleID:      "FE-API-PORT-MISMATCH",
-						Title:       fmt.Sprintf("URL API '%s' Tidak Menunjuk Port Backend", c.Name),
-						Description: fmt.Sprintf("%s di %s menunjuk port %d, sedangkan backend proyek berjalan di port %s. Saat dev, data BE gagal dimuat.", key, rel, port, strings.Join(bePortList, "/")),
-						Suggestion:  "Samakan URL API dengan port BE dari blok PORTS.md, dan biarkan dev.sh mengekspor URL ini agar selalu sinkron dengan PORT backend.",
-						TargetFile:  rel,
-						Line:        lineNo,
-						Snippet:     key + "=" + url,
-					})
-				}
+	mobile := isMobileComponent(c)
+	for _, envName := range []string{".env.local", ".env", ".env.development"} {
+		path := filepath.Join(c.AbsolutePath, envName)
+		rel := filepath.ToSlash(filepath.Join(c.RelativePath, envName))
+		for _, e := range envURLs(path) {
+			if !apiKeyHint.MatchString(e.key) {
+				continue
+			}
+			m := localURLRe.FindStringSubmatch(e.url)
+			if m == nil {
+				continue
+			}
+			if mobile {
+				findings = append(findings, mobileLocalhostFinding(c, rel, e.line, e.key+"="+e.url))
+			}
+			if port, _ := strconv.Atoi(m[2]); port > 0 && len(bePorts) > 0 && !bePorts[port] {
+				findings = append(findings, fePortMismatchFinding(c, rel, e.line, e.key, e.url, port, bePortList))
 			}
 		}
-		if mobile {
+	}
+	return findings
+}
+
+// inspectFrontendBackendLink memastikan FE & mobile memuat data BE yang benar saat dev: URL API di env
+// menunjuk port BE proyek ini, dan aplikasi mobile tidak memakai localhost (emulator/HP tidak bisa menjangkaunya).
+// only != 0 membatasi pemeriksaan ke satu komponen (AnalyzeComponent).
+func inspectFrontendBackendLink(project *models.Project, only uint) []models.Finding {
+	bePorts, bePortList := collectBackendPorts(project)
+	var findings []models.Finding
+	for _, c := range project.Components {
+		if !isInspectableFEComponent(c, only) {
+			continue
+		}
+		findings = append(findings, inspectComponentEnvURLs(c, bePorts, bePortList)...)
+		if isMobileComponent(c) {
 			findings = append(findings, mobileSourceLocalhost(c)...)
 		}
 	}
@@ -379,6 +403,22 @@ func mobileLocalhostFinding(c models.Component, rel string, line int, snippet st
 	}
 }
 
+func isMobileSourceFile(path string) bool {
+	ext := filepath.Ext(path)
+	return ext == ".dart" || ext == ".ts" || ext == ".tsx" || ext == ".js" || ext == ".jsx"
+}
+
+func findFirstLocalhostLine(content string) (int, string, bool) {
+	for i, line := range strings.Split(content, "\n") {
+		trim := strings.TrimSpace(line)
+		if strings.HasPrefix(trim, "//") || !localURLRe.MatchString(trim) {
+			continue
+		}
+		return i + 1, trim, true
+	}
+	return 0, "", false
+}
+
 // mobileSourceLocalhost mencari URL localhost tertanam di kode mobile (lib/, src/, app/), maksimal satu temuan per berkas.
 func mobileSourceLocalhost(c models.Component) []models.Finding {
 	var findings []models.Finding
@@ -395,21 +435,15 @@ func mobileSourceLocalhost(c models.Component) []models.Finding {
 				}
 				return nil
 			}
-			ext := filepath.Ext(path)
-			if ext != ".dart" && ext != ".ts" && ext != ".tsx" && ext != ".js" && ext != ".jsx" {
+			if !isMobileSourceFile(path) {
 				return nil
 			}
 			if scanned++; scanned > 600 || len(findings) >= 5 {
 				return filepath.SkipAll
 			}
-			for i, line := range strings.Split(readSmallFile(path), "\n") {
-				trim := strings.TrimSpace(line)
-				if strings.HasPrefix(trim, "//") || !localURLRe.MatchString(trim) {
-					continue
-				}
+			if lineNo, trim, ok := findFirstLocalhostLine(readSmallFile(path)); ok {
 				rel, _ := filepath.Rel(c.AbsolutePath, path)
-				findings = append(findings, mobileLocalhostFinding(c, filepath.ToSlash(filepath.Join(c.RelativePath, rel)), i+1, trim))
-				break
+				findings = append(findings, mobileLocalhostFinding(c, filepath.ToSlash(filepath.Join(c.RelativePath, rel)), lineNo, trim))
 			}
 			return nil
 		})
@@ -455,40 +489,50 @@ func inspectDuplicateImports(relPath string, lines []string) []models.Finding {
 	return findings
 }
 
-// inspectNuxtDuplicateAutoImports meniru warning unimport "Duplicated imports" pada Nuxt: nama yang sama
-// diekspor dari lebih dari satu berkas di composables/ atau utils/, sehingga salah satunya diabaikan diam-diam.
-func inspectNuxtDuplicateAutoImports(c models.Component) []models.Finding {
-	isNuxt := strings.Contains(strings.ToLower(c.Framework), "nuxt") ||
+func isNuxtComponent(c models.Component) bool {
+	return strings.Contains(strings.ToLower(c.Framework), "nuxt") ||
 		util.FileExists(filepath.Join(c.AbsolutePath, "nuxt.config.ts")) || util.FileExists(filepath.Join(c.AbsolutePath, "nuxt.config.js"))
-	if !isNuxt {
-		return nil
+}
+
+func extractFileExports(filePath, fileName string) []string {
+	var names []string
+	seen := map[string]bool{}
+	for _, line := range strings.Split(readSmallFile(filePath), "\n") {
+		if m := exportNameRe.FindStringSubmatch(line); m != nil {
+			if !seen[m[1]] {
+				seen[m[1]] = true
+				names = append(names, m[1])
+			}
+		} else if strings.HasPrefix(line, "export default") {
+			name := camelFromFile(fileName)
+			if !seen[name] {
+				seen[name] = true
+				names = append(names, name)
+			}
+		}
 	}
-	owners := map[string][]string{}
-	for _, dirRel := range []string{"composables", "utils", "app/composables", "app/utils", "shared/utils"} {
-		dir := filepath.Join(c.AbsolutePath, dirRel)
-		entries, err := os.ReadDir(dir)
-		if err != nil {
+	return names
+}
+
+func scanNuxtAutoImportDir(c models.Component, dirRel string, owners map[string][]string) {
+	dir := filepath.Join(c.AbsolutePath, dirRel)
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return
+	}
+	for _, e := range entries {
+		ext := filepath.Ext(e.Name())
+		if e.IsDir() || (ext != ".ts" && ext != ".js") || strings.Contains(e.Name(), ".test.") || strings.Contains(e.Name(), ".spec.") {
 			continue
 		}
-		for _, e := range entries {
-			ext := filepath.Ext(e.Name())
-			if e.IsDir() || (ext != ".ts" && ext != ".js") || strings.Contains(e.Name(), ".test.") || strings.Contains(e.Name(), ".spec.") {
-				continue
-			}
-			rel := filepath.ToSlash(filepath.Join(c.RelativePath, dirRel, e.Name()))
-			names := map[string]bool{}
-			for _, line := range strings.Split(readSmallFile(filepath.Join(dir, e.Name())), "\n") {
-				if m := exportNameRe.FindStringSubmatch(line); m != nil {
-					names[m[1]] = true
-				} else if strings.HasPrefix(line, "export default") {
-					names[camelFromFile(e.Name())] = true
-				}
-			}
-			for n := range names {
-				owners[n] = append(owners[n], rel)
-			}
+		rel := filepath.ToSlash(filepath.Join(c.RelativePath, dirRel, e.Name()))
+		for _, name := range extractFileExports(filepath.Join(dir, e.Name()), e.Name()) {
+			owners[name] = append(owners[name], rel)
 		}
 	}
+}
+
+func findDuplicateAutoImports(owners map[string][]string) []models.Finding {
 	for n, files := range owners {
 		if builtinAutoImports[n] {
 			owners[n] = append(files, "#imports (bawaan Nuxt/Vue)")
@@ -516,6 +560,19 @@ func inspectNuxtDuplicateAutoImports(c models.Component) []models.Finding {
 		})
 	}
 	return findings
+}
+
+// inspectNuxtDuplicateAutoImports meniru warning unimport "Duplicated imports" pada Nuxt: nama yang sama
+// diekspor dari lebih dari satu berkas di composables/ atau utils/, sehingga salah satunya diabaikan diam-diam.
+func inspectNuxtDuplicateAutoImports(c models.Component) []models.Finding {
+	if !isNuxtComponent(c) {
+		return nil
+	}
+	owners := map[string][]string{}
+	for _, dirRel := range []string{"composables", "utils", "app/composables", "app/utils", "shared/utils"} {
+		scanNuxtAutoImportDir(c, dirRel, owners)
+	}
+	return findDuplicateAutoImports(owners)
 }
 
 // builtinAutoImports: auto-import bawaan Nuxt/Vue/Nuxt UI yang sering tertimpa composable buatan sendiri.

@@ -80,6 +80,30 @@ func (s *Server) diagnoseComponent(c *fiber.Ctx) error {
 	return c.JSON(report)
 }
 
+func applyDetectedString(val *string, detected string, key string, updates map[string]interface{}, allowAuto bool) {
+	if (*val == "" || (allowAuto && *val == "auto")) && detected != "" {
+		*val = detected
+		updates[key] = *val
+	}
+}
+
+func applyDetectedPort(val *int, detected int, key string, updates map[string]interface{}) {
+	if *val == 0 && detected > 0 {
+		*val = detected
+		updates[key] = *val
+	}
+}
+
+func buildDetectedParamUpdates(comp *models.Component, detected models.DetectedParams) map[string]interface{} {
+	updates := map[string]interface{}{}
+	applyDetectedString(&comp.Language, detected.Language, "language", updates, true)
+	applyDetectedString(&comp.Framework, detected.Framework, "framework", updates, false)
+	applyDetectedString(&comp.PackageManager, detected.PackageManager, "package_manager", updates, false)
+	applyDetectedString(&comp.DevCommand, detected.DevCommand, "dev_command", updates, false)
+	applyDetectedPort(&comp.Port, detected.Port, "port", updates)
+	return updates
+}
+
 func (s *Server) fastScanComponent(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
@@ -105,27 +129,7 @@ func (s *Server) fastScanComponent(c *fiber.Ctx) error {
 	_, _ = analysis.SyncComponentRoutes(s.db, comp, proj)
 
 	// Auto-apply detected params to component in DB if empty or default
-	updates := map[string]interface{}{}
-	if (comp.Language == "" || comp.Language == "auto") && result.DetectedParams.Language != "" {
-		comp.Language = result.DetectedParams.Language
-		updates["language"] = comp.Language
-	}
-	if comp.Framework == "" && result.DetectedParams.Framework != "" {
-		comp.Framework = result.DetectedParams.Framework
-		updates["framework"] = comp.Framework
-	}
-	if comp.PackageManager == "" && result.DetectedParams.PackageManager != "" {
-		comp.PackageManager = result.DetectedParams.PackageManager
-		updates["package_manager"] = comp.PackageManager
-	}
-	if comp.DevCommand == "" && result.DetectedParams.DevCommand != "" {
-		comp.DevCommand = result.DetectedParams.DevCommand
-		updates["dev_command"] = comp.DevCommand
-	}
-	if comp.Port == 0 && result.DetectedParams.Port > 0 {
-		comp.Port = result.DetectedParams.Port
-		updates["port"] = comp.Port
-	}
+	updates := buildDetectedParamUpdates(comp, result.DetectedParams)
 	if len(updates) > 0 {
 		_ = s.repos.Components.UpdateFields(c.Context(), comp.ID, updates)
 	}
