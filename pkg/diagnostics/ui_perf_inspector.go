@@ -514,6 +514,101 @@ func renderIssueSet(set *uiIssueSet, rules map[string]uiRule, relPath string) []
 }
 
 // inspectFileSize menandai halaman/komponen/screen yang terlalu besar
+func isAndroidScreenFile(base string, isAndroid bool) bool {
+	return isAndroid && containsAny(base, "Activity", "Fragment", "Screen", "Adapter", "ViewModel")
+}
+
+func isFlutterWidgetFile(lang, lowerPath, base string) bool {
+	if lang != "dart" {
+		return false
+	}
+	return containsAny(lowerPath, "/screens/", "/pages/", "/widgets/", "/views/") ||
+		strings.HasSuffix(base, "_screen.dart") || strings.HasSuffix(base, "_page.dart") || strings.HasSuffix(base, "_widget.dart")
+}
+
+// uiSizeKind menjelaskan jenis berkas UI besar (aturan, kategori, saran) untuk satu platform.
+type uiSizeKind struct {
+	ruleID, category, kind, suggestion, fix string
+}
+
+var (
+	webComponentSize = uiSizeKind{
+		"FE-LARGE-COMPONENT", "frontend", "Halaman/Komponen UI",
+		"Pecah menjadi sub-komponen per bagian layar (header, filter, list, modal), pindahkan data statis ke file terpisah, dan pindahkan logika ke composable/hook.",
+		"// Struktur yang disarankan:\n// pages/report.vue            -> hanya layout & orkestrasi (< 300 baris)\n// components/report/Filter.vue\n// components/report/Table.vue\n// composables/useReport.ts    -> state & pemanggilan API",
+	}
+	androidScreenSize = uiSizeKind{
+		"AND-GOD-ACTIVITY", "mobile", "Activity/Fragment/Screen Android",
+		"Pindahkan logika ke ViewModel + UseCase/Repository, pecah UI menjadi Composable/Fragment kecil atau custom View yang dapat dipakai ulang.",
+		"// Activity hanya merender state:\nclass OrderActivity : ComponentActivity() {\n    private val vm: OrderViewModel by viewModels()\n    override fun onCreate(b: Bundle?) { super.onCreate(b); setContent { OrderScreen(vm) } }\n}",
+	}
+	flutterWidgetSize = uiSizeKind{
+		"MOB-LARGE-WIDGET-FILE", "mobile", "Screen/Widget Flutter",
+		"Ekstrak sub-tree widget menjadi StatelessWidget terpisah (bukan method _buildX), dan pindahkan state ke Bloc/Provider/Riverpod.",
+		"class OrderHeader extends StatelessWidget {\n  const OrderHeader({super.key});\n  @override\n  Widget build(BuildContext context) => ...;\n}",
+	}
+)
+
+func uiComponentSizeFinding(k uiSizeKind, relPath, base string, lines []string) []models.Finding {
+	lineCount := len(lines)
+	if lineCount <= uiComponentWarnLines {
+		return nil
+	}
+	severity := "WARNING"
+	if lineCount > uiComponentCriticalLines {
+		severity = "CRITICAL"
+	}
+	return []models.Finding{{
+		Category:     k.category,
+		Severity:     severity,
+		RuleID:       k.ruleID,
+		Title:        fmt.Sprintf("%s Terlalu Besar (%d Baris)", k.kind, lineCount),
+		Description:  fmt.Sprintf("Berkas '%s' memiliki %d baris (batas wajar %d, kritis > %d). Berkas UI raksasa memperlambat hot-reload/kompilasi, memperbesar chunk yang dimuat, memicu re-render luas, dan sulit direview.", base, lineCount, uiComponentWarnLines, uiComponentCriticalLines),
+		Suggestion:   k.suggestion,
+		TargetFile:   relPath,
+		Line:         1,
+		Snippet:      firstNonEmptyLine(lines),
+		TheoryBasis:  "Single Responsibility Principle (SOLID) & Atomic Design (Brad Frost) — Komponen kecil, fokus, dan dapat diuji.",
+		SuggestedFix: k.fix,
+	}}
+}
+
+func xmlLayoutSizeFinding(relPath, base string, lineCount int) []models.Finding {
+	if lineCount <= androidLayoutWarnLines {
+		return nil
+	}
+	return []models.Finding{{
+		Category:     "mobile",
+		Severity:     "WARNING",
+		RuleID:       "AND-LARGE-LAYOUT",
+		Title:        fmt.Sprintf("Layout XML Terlalu Besar (%d Baris)", lineCount),
+		Description:  fmt.Sprintf("Layout '%s' memiliki %d baris (batas wajar %d). Inflate layout besar memperlambat pembukaan layar dan menyulitkan pemeliharaan.", base, lineCount, androidLayoutWarnLines),
+		Suggestion:   "Pecah menjadi beberapa layout dengan <include>/<merge>, gunakan ViewStub untuk bagian opsional, atau migrasi ke Jetpack Compose.",
+		TargetFile:   relPath,
+		Line:         1,
+		TheoryBasis:  "Android Developers — Re-using Layouts with <include> & Delayed Loading with ViewStub.",
+		SuggestedFix: "<include layout=\"@layout/section_header\" />\n<ViewStub android:id=\"@+id/stub_details\" android:layout=\"@layout/details\" ... />",
+	}}
+}
+
+func scriptModuleSizeFinding(relPath, base string, lines []string) []models.Finding {
+	lineCount := len(lines)
+	return []models.Finding{{
+		Category:     "frontend",
+		Severity:     "WARNING",
+		RuleID:       "FE-LARGE-MODULE",
+		Title:        fmt.Sprintf("Modul Frontend Terlalu Besar (%d Baris)", lineCount),
+		Description:  fmt.Sprintf("Modul '%s' memiliki %d baris (batas wajar %d). Modul gemuk tidak dapat di-code-split dan ikut dimuat di semua halaman yang mengimpornya.", base, lineCount, scriptModuleWarnLines),
+		Suggestion:   "Pecah per domain (useProjects.ts, useDiagnostics.ts, ...) agar tree-shaking dan lazy loading efektif.",
+		TargetFile:   relPath,
+		Line:         1,
+		Snippet:      firstNonEmptyLine(lines),
+		TheoryBasis:  "Modular Design (David Parnas — Information Hiding) & Code Splitting (Vite/Webpack Dynamic Import).",
+		SuggestedFix: "// composables/api/projects.ts\n// composables/api/diagnostics.ts\n// composables/useApi.ts -> re-export saja",
+	}}
+}
+
+// inspectFileSize menandai halaman/komponen/screen yang terlalu besar
 func inspectFileSize(relPath string, lang string, lines []string, isAndroid bool) []models.Finding {
 	lineCount := len(lines)
 	base := filepath.Base(relPath)
@@ -521,78 +616,22 @@ func inspectFileSize(relPath string, lang string, lines []string, isAndroid bool
 
 	isUIComponent := lang == "vue" || lang == "svelte" ||
 		strings.HasSuffix(base, ".tsx") || strings.HasSuffix(base, ".jsx")
-	isAndroidScreen := isAndroid && (strings.Contains(base, "Activity") ||
-		strings.Contains(base, "Fragment") || strings.Contains(base, "Screen") ||
-		strings.Contains(base, "Adapter") || strings.Contains(base, "ViewModel"))
-	isFlutterWidget := lang == "dart" && (strings.Contains(lowerPath, "/screens/") ||
-		strings.Contains(lowerPath, "/pages/") || strings.Contains(lowerPath, "/widgets/") ||
-		strings.Contains(lowerPath, "/views/") || strings.HasSuffix(base, "_screen.dart") ||
-		strings.HasSuffix(base, "_page.dart") || strings.HasSuffix(base, "_widget.dart"))
+	isAndroidScreen := isAndroidScreenFile(base, isAndroid)
+	isFlutterWidget := isFlutterWidgetFile(lang, lowerPath, base)
 
 	switch {
 	case isUIComponent || isAndroidScreen || isFlutterWidget:
-		if lineCount <= uiComponentWarnLines {
-			return nil
-		}
-		severity := "WARNING"
-		if lineCount > uiComponentCriticalLines {
-			severity = "CRITICAL"
-		}
-		ruleID, category, kind := "FE-LARGE-COMPONENT", "frontend", "Halaman/Komponen UI"
-		suggestion := "Pecah menjadi sub-komponen per bagian layar (header, filter, list, modal), pindahkan data statis ke file terpisah, dan pindahkan logika ke composable/hook."
-		fix := "// Struktur yang disarankan:\n// pages/report.vue            -> hanya layout & orkestrasi (< 300 baris)\n// components/report/Filter.vue\n// components/report/Table.vue\n// composables/useReport.ts    -> state & pemanggilan API"
+		kind := webComponentSize
 		if isAndroidScreen {
-			ruleID, category, kind = "AND-GOD-ACTIVITY", "mobile", "Activity/Fragment/Screen Android"
-			suggestion = "Pindahkan logika ke ViewModel + UseCase/Repository, pecah UI menjadi Composable/Fragment kecil atau custom View yang dapat dipakai ulang."
-			fix = "// Activity hanya merender state:\nclass OrderActivity : ComponentActivity() {\n    private val vm: OrderViewModel by viewModels()\n    override fun onCreate(b: Bundle?) { super.onCreate(b); setContent { OrderScreen(vm) } }\n}"
+			kind = androidScreenSize
 		} else if isFlutterWidget {
-			ruleID, category, kind = "MOB-LARGE-WIDGET-FILE", "mobile", "Screen/Widget Flutter"
-			suggestion = "Ekstrak sub-tree widget menjadi StatelessWidget terpisah (bukan method _buildX), dan pindahkan state ke Bloc/Provider/Riverpod."
-			fix = "class OrderHeader extends StatelessWidget {\n  const OrderHeader({super.key});\n  @override\n  Widget build(BuildContext context) => ...;\n}"
+			kind = flutterWidgetSize
 		}
-		return []models.Finding{{
-			Category:     category,
-			Severity:     severity,
-			RuleID:       ruleID,
-			Title:        fmt.Sprintf("%s Terlalu Besar (%d Baris)", kind, lineCount),
-			Description:  fmt.Sprintf("Berkas '%s' memiliki %d baris (batas wajar %d, kritis > %d). Berkas UI raksasa memperlambat hot-reload/kompilasi, memperbesar chunk yang dimuat, memicu re-render luas, dan sulit direview.", base, lineCount, uiComponentWarnLines, uiComponentCriticalLines),
-			Suggestion:   suggestion,
-			TargetFile:   relPath,
-			Line:         1,
-			Snippet:      firstNonEmptyLine(lines),
-			TheoryBasis:  "Single Responsibility Principle (SOLID) & Atomic Design (Brad Frost) — Komponen kecil, fokus, dan dapat diuji.",
-			SuggestedFix: fix,
-		}}
+		return uiComponentSizeFinding(kind, relPath, base, lines)
 	case lang == "xml":
-		if lineCount <= androidLayoutWarnLines {
-			return nil
-		}
-		return []models.Finding{{
-			Category:     "mobile",
-			Severity:     "WARNING",
-			RuleID:       "AND-LARGE-LAYOUT",
-			Title:        fmt.Sprintf("Layout XML Terlalu Besar (%d Baris)", lineCount),
-			Description:  fmt.Sprintf("Layout '%s' memiliki %d baris (batas wajar %d). Inflate layout besar memperlambat pembukaan layar dan menyulitkan pemeliharaan.", base, lineCount, androidLayoutWarnLines),
-			Suggestion:   "Pecah menjadi beberapa layout dengan <include>/<merge>, gunakan ViewStub untuk bagian opsional, atau migrasi ke Jetpack Compose.",
-			TargetFile:   relPath,
-			Line:         1,
-			TheoryBasis:  "Android Developers — Re-using Layouts with <include> & Delayed Loading with ViewStub.",
-			SuggestedFix: "<include layout=\"@layout/section_header\" />\n<ViewStub android:id=\"@+id/stub_details\" android:layout=\"@layout/details\" ... />",
-		}}
-	case (lang == "typescript" || lang == "javascript") && lineCount > scriptModuleWarnLines && isFrontendSourcePath(lowerPath):
-		return []models.Finding{{
-			Category:     "frontend",
-			Severity:     "WARNING",
-			RuleID:       "FE-LARGE-MODULE",
-			Title:        fmt.Sprintf("Modul Frontend Terlalu Besar (%d Baris)", lineCount),
-			Description:  fmt.Sprintf("Modul '%s' memiliki %d baris (batas wajar %d). Modul gemuk tidak dapat di-code-split dan ikut dimuat di semua halaman yang mengimpornya.", base, lineCount, scriptModuleWarnLines),
-			Suggestion:   "Pecah per domain (useProjects.ts, useDiagnostics.ts, ...) agar tree-shaking dan lazy loading efektif.",
-			TargetFile:   relPath,
-			Line:         1,
-			Snippet:      firstNonEmptyLine(lines),
-			TheoryBasis:  "Modular Design (David Parnas — Information Hiding) & Code Splitting (Vite/Webpack Dynamic Import).",
-			SuggestedFix: "// composables/api/projects.ts\n// composables/api/diagnostics.ts\n// composables/useApi.ts -> re-export saja",
-		}}
+		return xmlLayoutSizeFinding(relPath, base, lineCount)
+	case isJSLang(lang) && lineCount > scriptModuleWarnLines && isFrontendSourcePath(lowerPath):
+		return scriptModuleSizeFinding(relPath, base, lines)
 	}
 	return nil
 }
@@ -657,228 +696,349 @@ func vueSections(lines []string) []byte {
 	return sec
 }
 
-func collectFrontendUIIssues(set *uiIssueSet, content string, relPath string, lang string, lines []string) {
+// feCounter menghitung pelanggaran ambang per berkas beserta baris pertamanya.
+type feCounter struct {
+	count int
+	first int
+}
+
+func newFECounter() feCounter { return feCounter{first: -1} }
+
+func (c *feCounter) add(n, idx int) {
+	c.count += n
+	if c.first < 0 {
+		c.first = idx
+	}
+}
+
+// feScan menyimpan status pemindaian satu berkas frontend.
+type feScan struct {
+	set                                *uiIssueSet
+	lines                              []string
+	lang                               string
+	isMarkup, isAppSource              bool
+	sections                           []byte
+	listenerUnpaired, intervalUnpaired bool
+	staticStyles, hexColors            feCounter
+	importants, consoleLogs            feCounter
+}
+
+func newFEScan(set *uiIssueSet, content, relPath, lang string, lines []string) *feScan {
 	isMarkup := lang == "vue" || lang == "svelte" || strings.HasSuffix(relPath, ".tsx") || strings.HasSuffix(relPath, ".jsx")
-	isAppSource := isMarkup || isFrontendSourcePath(strings.ToLower(filepath.ToSlash(relPath)))
-	var sections []byte
+	s := &feScan{
+		set:         set,
+		lines:       lines,
+		lang:        lang,
+		isMarkup:    isMarkup,
+		isAppSource: isMarkup || isFrontendSourcePath(strings.ToLower(filepath.ToSlash(relPath))),
+		// Listener / timer leak: dihitung per berkas
+		listenerUnpaired: strings.Contains(content, "addEventListener(") && !strings.Contains(content, "removeEventListener("),
+		intervalUnpaired: strings.Contains(content, "setInterval(") && !strings.Contains(content, "clearInterval("),
+		staticStyles:     newFECounter(),
+		hexColors:        newFECounter(),
+		importants:       newFECounter(),
+		consoleLogs:      newFECounter(),
+	}
 	if lang == "vue" {
-		sections = vueSections(lines)
+		s.sections = vueSections(lines)
 	}
+	return s
+}
 
-	// Listener / timer leak: dihitung per berkas
-	listenerUnpaired := strings.Contains(content, "addEventListener(") && !strings.Contains(content, "removeEventListener(")
-	intervalUnpaired := strings.Contains(content, "setInterval(") && !strings.Contains(content, "clearInterval(")
+func isFELineSkippable(trimmed string) bool {
+	return trimmed == "" || strings.HasPrefix(trimmed, "//") || strings.HasPrefix(trimmed, "*") || strings.HasPrefix(trimmed, "<!--")
+}
 
-	staticStyles, hexColors, importants, consoleLogs := 0, 0, 0, 0
-	firstStyle, firstHex, firstImportant, firstConsole := -1, -1, -1, -1
+// scanScriptRules menjalankan aturan yang berlaku pada semua berkas frontend (bukan hanya markup).
+func (s *feScan) scanScriptRules(idx int, line string) {
+	if (s.listenerUnpaired && strings.Contains(line, "addEventListener(") && !strings.Contains(line, "once: true")) ||
+		(s.intervalUnpaired && strings.Contains(line, "setInterval(")) {
+		s.set.hit("FE-LISTENER-LEAK", idx)
+	}
+	if feHeavyImportRegex.MatchString(line) {
+		s.set.hit("FE-HEAVY-LIB-IMPORT", idx)
+	}
+	if m := feBase64AssetRegex.FindString(line); len(m) > 4000 {
+		s.set.hit("FE-INLINE-BASE64-ASSET", idx)
+	}
+	if s.isAppSource && feConsoleLogRegex.MatchString(line) {
+		s.consoleLogs.add(1, idx)
+	}
+}
 
-	for idx, line := range lines {
-		trimmed := strings.TrimSpace(line)
-		if trimmed == "" || strings.HasPrefix(trimmed, "//") || strings.HasPrefix(trimmed, "*") || strings.HasPrefix(trimmed, "<!--") {
-			continue
-		}
+// sectionFlags menentukan apakah baris ada di <template> / <style>; ok=false bila baris di <script> .vue.
+func (s *feScan) sectionFlags(idx int) (inTemplate, inStyle, ok bool) {
+	if s.sections == nil {
+		return true, true, true
+	}
+	inTemplate, inStyle = s.sections[idx] == 't', s.sections[idx] == 'c'
+	return inTemplate, inStyle, inTemplate || inStyle
+}
 
-		if (listenerUnpaired && strings.Contains(line, "addEventListener(") && !strings.Contains(line, "once: true")) ||
-			(intervalUnpaired && strings.Contains(line, "setInterval(")) {
-			set.hit("FE-LISTENER-LEAK", idx)
-		}
-
-		if feHeavyImportRegex.MatchString(line) {
-			set.hit("FE-HEAVY-LIB-IMPORT", idx)
-		}
-		if m := feBase64AssetRegex.FindString(line); len(m) > 4000 {
-			set.hit("FE-INLINE-BASE64-ASSET", idx)
-		}
-		if isAppSource && feConsoleLogRegex.MatchString(line) {
-			consoleLogs++
-			if firstConsole < 0 {
-				firstConsole = idx
-			}
-		}
-
-		if !isMarkup {
-			continue
-		}
-		// Pada .vue: aturan markup hanya di <template>, aturan gaya di <template>/<style>; abaikan <script>
-		inTemplate, inStyle := true, true
-		if sections != nil {
-			inTemplate, inStyle = sections[idx] == 't', sections[idx] == 'c'
-			if !inTemplate && !inStyle {
-				continue
-			}
-		}
-
-		// v-for tanpa key & v-if bersamaan
-		if lang == "vue" && inTemplate {
-			if pos := strings.Index(line, "v-for="); pos >= 0 {
-				tagStart := strings.LastIndex(line[:pos], "<")
-				if tagStart < 0 {
-					tagStart = 0
-				}
-				tag := tagSpan(lines, idx, tagStart)
-				// cari awal tag jika atribut v-for berada di baris lanjutan
-				if !strings.Contains(line[:pos], "<") {
-					for k := idx - 1; k >= 0 && k >= idx-8; k-- {
-						if lt := strings.LastIndex(lines[k], "<"); lt >= 0 {
-							tag = tagSpan(lines, k, lt)
-							break
-						}
-					}
-				}
-				if !strings.Contains(tag, ":key") && !strings.Contains(tag, "v-bind:key") && !strings.Contains(tag, " key=") {
-					set.hit("FE-VFOR-MISSING-KEY", idx)
-				}
-				if strings.Contains(tag, "v-if=") {
-					set.hit("FE-VIF-WITH-VFOR", idx)
-				}
-			}
-		}
-
-		// <img> — dimensi, alt, lazy
-		for _, loc := range feImgTagRegex.FindAllStringIndex(line, -1) {
-			if !inTemplate {
-				break
-			}
-			tag := tagSpan(lines, idx, loc[0])
-			hasWidth := strings.Contains(tag, "width=") || feImgWidthClassRegex.MatchString(tag)
-			hasHeight := strings.Contains(tag, "height=") || feImgHeightClassRegex.MatchString(tag)
-			if !hasWidth || !hasHeight {
-				set.hit("FE-IMG-LAYOUT-SHIFT", idx)
-			}
-			if !strings.Contains(tag, "alt=") && !strings.Contains(tag, ":alt=") {
-				set.hit("FE-IMG-MISSING-ALT", idx)
-			}
-			if !strings.Contains(tag, "loading=") {
-				set.hit("FE-IMG-NO-LAZY", idx)
-			}
-		}
-
-		if m := feClickableDivRegex.FindStringIndex(line); m != nil && inTemplate {
-			tag := tagSpan(lines, idx, m[0])
-			if !strings.Contains(tag, "role=") || !(strings.Contains(tag, "tabindex") || strings.Contains(tag, "tabIndex")) {
-				set.hit("FE-CLICKABLE-NON-INTERACTIVE", idx)
-			}
-		}
-
-		for _, m := range feSmallFontTwRegex.FindAllStringSubmatch(line, -1) {
-			if v, err := strconv.ParseFloat(m[1], 64); err == nil && v < 11 {
-				set.hit("FE-SMALL-FONT", idx)
-			}
-		}
-		for _, m := range feSmallFontCssRegex.FindAllStringSubmatch(line, -1) {
-			if v, err := strconv.ParseFloat(m[1], 64); err == nil && v < 11 {
-				set.hit("FE-SMALL-FONT", idx)
-			}
-		}
-
-		for _, m := range feFixedWidthCssRegex.FindAllStringSubmatch(line, -1) {
-			if v, _ := strconv.Atoi(m[1]); v >= 768 {
-				set.hit("FE-FIXED-WIDTH-LAYOUT", idx)
-			}
-		}
-		for _, m := range feFixedWidthTwRegex.FindAllStringSubmatch(line, -1) {
-			if v, _ := strconv.Atoi(m[1]); v >= 768 {
-				set.hit("FE-FIXED-WIDTH-LAYOUT", idx)
-			}
-		}
-
-		if feStaticStyleRegex.MatchString(line) {
-			staticStyles++
-			if firstStyle < 0 {
-				firstStyle = idx
-			}
-		}
-		if n := len(feHexColorRegex.FindAllStringIndex(line, -1)); n > 0 && !strings.Contains(line, "var(--") {
-			hexColors += n
-			if firstHex < 0 {
-				firstHex = idx
-			}
-		}
-		if n := len(feImportantRegex.FindAllStringIndex(line, -1)); n > 0 {
-			importants += n
-			if firstImportant < 0 {
-				firstImportant = idx
-			}
-		}
-		for _, m := range feZIndexRegex.FindAllStringSubmatch(line, -1) {
-			if v, _ := strconv.Atoi(m[1]); v >= 1000 {
-				set.hit("FE-ZINDEX-ESCALATION", idx)
+// vForTag mengembalikan teks tag yang memuat v-for pada posisi pos di baris idx.
+func (s *feScan) vForTag(idx, pos int) string {
+	line := s.lines[idx]
+	tagStart := strings.LastIndex(line[:pos], "<")
+	if tagStart < 0 {
+		tagStart = 0
+	}
+	tag := tagSpan(s.lines, idx, tagStart)
+	// cari awal tag jika atribut v-for berada di baris lanjutan
+	if !strings.Contains(line[:pos], "<") {
+		for k := idx - 1; k >= 0 && k >= idx-8; k-- {
+			if lt := strings.LastIndex(s.lines[k], "<"); lt >= 0 {
+				return tagSpan(s.lines, k, lt)
 			}
 		}
 	}
+	return tag
+}
 
-	// Aturan berbasis ambang jumlah per berkas
-	hitN := func(ruleID string, count int, first int, threshold int) {
-		if count < threshold || first < 0 {
+// checkVFor: v-for tanpa key & v-if bersamaan.
+func (s *feScan) checkVFor(idx int, line string) {
+	pos := strings.Index(line, "v-for=")
+	if s.lang != "vue" || pos < 0 {
+		return
+	}
+	tag := s.vForTag(idx, pos)
+	if !containsAny(tag, ":key", "v-bind:key", " key=") {
+		s.set.hit("FE-VFOR-MISSING-KEY", idx)
+	}
+	if strings.Contains(tag, "v-if=") {
+		s.set.hit("FE-VIF-WITH-VFOR", idx)
+	}
+}
+
+// checkImages: <img> — dimensi, alt, lazy.
+func (s *feScan) checkImages(idx int, line string) {
+	for _, loc := range feImgTagRegex.FindAllStringIndex(line, -1) {
+		tag := tagSpan(s.lines, idx, loc[0])
+		hasWidth := strings.Contains(tag, "width=") || feImgWidthClassRegex.MatchString(tag)
+		hasHeight := strings.Contains(tag, "height=") || feImgHeightClassRegex.MatchString(tag)
+		if !hasWidth || !hasHeight {
+			s.set.hit("FE-IMG-LAYOUT-SHIFT", idx)
+		}
+		if !strings.Contains(tag, "alt=") && !strings.Contains(tag, ":alt=") {
+			s.set.hit("FE-IMG-MISSING-ALT", idx)
+		}
+		if !strings.Contains(tag, "loading=") {
+			s.set.hit("FE-IMG-NO-LAZY", idx)
+		}
+	}
+}
+
+func (s *feScan) checkClickable(idx int, line string) {
+	m := feClickableDivRegex.FindStringIndex(line)
+	if m == nil {
+		return
+	}
+	tag := tagSpan(s.lines, idx, m[0])
+	if !strings.Contains(tag, "role=") || !containsAny(tag, "tabindex", "tabIndex") {
+		s.set.hit("FE-CLICKABLE-NON-INTERACTIVE", idx)
+	}
+}
+
+// hitNumeric mencatat ruleID untuk tiap kecocokan grup-1 regex yang angkanya memenuhi pred.
+func (s *feScan) hitNumeric(re *regexp.Regexp, line string, idx int, ruleID string, pred func(float64) bool) {
+	for _, m := range re.FindAllStringSubmatch(line, -1) {
+		if v, err := strconv.ParseFloat(m[1], 64); err == nil && pred(v) {
+			s.set.hit(ruleID, idx)
+		}
+	}
+}
+
+func (s *feScan) checkSizing(idx int, line string) {
+	small := func(v float64) bool { return v < 11 }
+	wide := func(v float64) bool { return v >= 768 }
+	s.hitNumeric(feSmallFontTwRegex, line, idx, "FE-SMALL-FONT", small)
+	s.hitNumeric(feSmallFontCssRegex, line, idx, "FE-SMALL-FONT", small)
+	s.hitNumeric(feFixedWidthCssRegex, line, idx, "FE-FIXED-WIDTH-LAYOUT", wide)
+	s.hitNumeric(feFixedWidthTwRegex, line, idx, "FE-FIXED-WIDTH-LAYOUT", wide)
+}
+
+func (s *feScan) checkStyleCounters(idx int, line string) {
+	if feStaticStyleRegex.MatchString(line) {
+		s.staticStyles.add(1, idx)
+	}
+	if n := len(feHexColorRegex.FindAllStringIndex(line, -1)); n > 0 && !strings.Contains(line, "var(--") {
+		s.hexColors.add(n, idx)
+	}
+	if n := len(feImportantRegex.FindAllStringIndex(line, -1)); n > 0 {
+		s.importants.add(n, idx)
+	}
+	s.hitNumeric(feZIndexRegex, line, idx, "FE-ZINDEX-ESCALATION", func(v float64) bool { return v >= 1000 })
+}
+
+// scanMarkupRules menjalankan aturan markup/gaya (Vue/Svelte/JSX) pada satu baris.
+func (s *feScan) scanMarkupRules(idx int, line string) {
+	// Pada .vue: aturan markup hanya di <template>, aturan gaya di <template>/<style>; abaikan <script>
+	inTemplate, _, ok := s.sectionFlags(idx)
+	if !ok {
+		return
+	}
+	if inTemplate {
+		s.checkVFor(idx, line)
+		s.checkImages(idx, line)
+		s.checkClickable(idx, line)
+	}
+	s.checkSizing(idx, line)
+	s.checkStyleCounters(idx, line)
+}
+
+// flush mencatat aturan berbasis ambang jumlah per berkas.
+func (s *feScan) flush() {
+	hitN := func(ruleID string, c feCounter, threshold int) {
+		if c.count < threshold || c.first < 0 {
 			return
 		}
-		set.hit(ruleID, first)
-		set.issues[ruleID].count = count
+		s.set.hit(ruleID, c.first)
+		s.set.issues[ruleID].count = c.count
 	}
-	hitN("FE-INLINE-STYLE-OVERUSE", staticStyles, firstStyle, 8)
-	hitN("FE-HARDCODED-COLORS", hexColors, firstHex, 12)
-	hitN("FE-IMPORTANT-OVERUSE", importants, firstImportant, 5)
-	hitN("FE-CONSOLE-LOG-LEFTOVER", consoleLogs, firstConsole, 3)
+	hitN("FE-INLINE-STYLE-OVERUSE", s.staticStyles, 8)
+	hitN("FE-HARDCODED-COLORS", s.hexColors, 12)
+	hitN("FE-IMPORTANT-OVERUSE", s.importants, 5)
+	hitN("FE-CONSOLE-LOG-LEFTOVER", s.consoleLogs, 3)
+}
+
+func collectFrontendUIIssues(set *uiIssueSet, content string, relPath string, lang string, lines []string) {
+	s := newFEScan(set, content, relPath, lang, lines)
+	for idx, line := range lines {
+		if isFELineSkippable(strings.TrimSpace(line)) {
+			continue
+		}
+		s.scanScriptRules(idx, line)
+		if s.isMarkup {
+			s.scanMarkupRules(idx, line)
+		}
+	}
+	s.flush()
+}
+
+// androidCodeScan menyimpan konteks berkas Kotlin/Java Android dan status blok companion.
+type androidCodeScan struct {
+	set                                  *uiIssueSet
+	isUILayer, isComposable, isViewModel bool
+	hasLazyList                          bool
+	inCompanion                          bool
+	companionDepth                       int
+}
+
+func newAndroidCodeScan(set *uiIssueSet, content, relPath string) *androidCodeScan {
+	base := filepath.Base(relPath)
+	return &androidCodeScan{
+		set:          set,
+		isUILayer:    containsAny(base, "Activity", "Fragment", "Screen") || strings.Contains(content, "@Composable"),
+		isComposable: strings.Contains(content, "@Composable"),
+		isViewModel:  strings.Contains(base, "ViewModel"),
+		hasLazyList:  containsAny(content, "LazyColumn", "LazyRow", "LazyVerticalGrid"),
+	}
+}
+
+// scanBasic: aturan berbasis satu regex (thread utama, GlobalScope, notifyDataSetChanged, static context).
+func (a *androidCodeScan) scanBasic(idx int, trimmed string) {
+	if andMainThreadBlockRegex.MatchString(trimmed) {
+		// runBlocking/Thread.sleep di luar layer UI masih mungkin wajar (CLI/test); allowMainThreadQueries selalu ditandai
+		if a.isUILayer || strings.Contains(trimmed, "allowMainThreadQueries") {
+			a.set.hit("AND-MAIN-THREAD-BLOCKING", idx)
+		}
+	}
+	if andGlobalScopeRegex.MatchString(trimmed) {
+		a.set.hit("AND-GLOBALSCOPE-LEAK", idx)
+	}
+	if andNotifyAllRegex.MatchString(trimmed) {
+		a.set.hit("AND-NOTIFY-DATASET-CHANGED", idx)
+	}
+	if andStaticContextJava.MatchString(trimmed) {
+		a.set.hit("AND-STATIC-CONTEXT-LEAK", idx)
+	}
+}
+
+// scanCompanion melacak blok companion object / object deklarasi tingkat atas.
+func (a *androidCodeScan) scanCompanion(idx int, trimmed string) {
+	if strings.HasPrefix(trimmed, "companion object") || strings.HasPrefix(trimmed, "object ") {
+		a.inCompanion = true
+		a.companionDepth = 0
+	}
+	if !a.inCompanion {
+		return
+	}
+	a.companionDepth += strings.Count(trimmed, "{") - strings.Count(trimmed, "}")
+	if andContextVarKotlin.MatchString(trimmed) {
+		a.set.hit("AND-STATIC-CONTEXT-LEAK", idx)
+	}
+	if a.companionDepth <= 0 && strings.Contains(trimmed, "}") {
+		a.inCompanion = false
+	}
+}
+
+// scanCompose: aturan Jetpack Compose dan decode bitmap di UI.
+func (a *androidCodeScan) scanCompose(idx int, trimmed string) {
+	if a.isComposable && !a.isViewModel && andMutableStateRegex.MatchString(trimmed) &&
+		!strings.Contains(trimmed, "remember") && !strings.HasPrefix(trimmed, "private val _") {
+		a.set.hit("AND-COMPOSE-STATE-NO-REMEMBER", idx)
+	}
+	if a.hasLazyList && andLazyItemsRegex.MatchString(trimmed) && !containsAny(trimmed, "key =", "key=") {
+		a.set.hit("AND-COMPOSE-LAZY-NO-KEY", idx)
+	}
+	if a.isUILayer && andBitmapDecodeRegex.MatchString(trimmed) {
+		a.set.hit("AND-BITMAP-DECODE-UI", idx)
+	}
 }
 
 func collectAndroidCodeIssues(set *uiIssueSet, content string, relPath string, lines []string) {
-	base := filepath.Base(relPath)
-	isUILayer := strings.Contains(base, "Activity") || strings.Contains(base, "Fragment") ||
-		strings.Contains(base, "Screen") || strings.Contains(content, "@Composable")
-	isComposable := strings.Contains(content, "@Composable")
-	isViewModel := strings.Contains(base, "ViewModel")
-	hasLazyList := strings.Contains(content, "LazyColumn") || strings.Contains(content, "LazyRow") || strings.Contains(content, "LazyVerticalGrid")
-
-	companionDepth := 0
-	inCompanion := false
-
+	a := newAndroidCodeScan(set, content, relPath)
 	for idx, line := range lines {
 		trimmed := strings.TrimSpace(line)
 		if trimmed == "" || strings.HasPrefix(trimmed, "//") || strings.HasPrefix(trimmed, "*") {
 			continue
 		}
+		a.scanBasic(idx, trimmed)
+		a.scanCompanion(idx, trimmed)
+		a.scanCompose(idx, trimmed)
+	}
+}
 
-		if andMainThreadBlockRegex.MatchString(trimmed) {
-			// runBlocking/Thread.sleep di luar layer UI masih mungkin wajar (CLI/test); allowMainThreadQueries selalu ditandai
-			if isUILayer || strings.Contains(trimmed, "allowMainThreadQueries") {
-				set.hit("AND-MAIN-THREAD-BLOCKING", idx)
-			}
-		}
-		if andGlobalScopeRegex.MatchString(trimmed) {
-			set.hit("AND-GLOBALSCOPE-LEAK", idx)
-		}
-		if andNotifyAllRegex.MatchString(trimmed) {
-			set.hit("AND-NOTIFY-DATASET-CHANGED", idx)
-		}
-		if andStaticContextJava.MatchString(trimmed) {
-			set.hit("AND-STATIC-CONTEXT-LEAK", idx)
-		}
+var imageViewTags = map[string]bool{"ImageView": true, "ImageButton": true, "AppCompatImageView": true, "ShapeableImageView": true}
 
-		// Lacak blok companion object / object deklarasi tingkat atas
-		if strings.HasPrefix(trimmed, "companion object") || strings.HasPrefix(trimmed, "object ") {
-			inCompanion = true
-			companionDepth = 0
-		}
-		if inCompanion {
-			companionDepth += strings.Count(trimmed, "{") - strings.Count(trimmed, "}")
-			if andContextVarKotlin.MatchString(trimmed) {
-				set.hit("AND-STATIC-CONTEXT-LEAK", idx)
-			}
-			if companionDepth <= 0 && strings.Contains(trimmed, "}") {
-				inCompanion = false
-			}
-		}
+var touchableTags = map[string]bool{
+	"Button": true, "ImageButton": true, "MaterialButton": true, "CheckBox": true,
+	"RadioButton": true, "Switch": true, "SwitchMaterial": true,
+}
 
-		if isComposable && !isViewModel && andMutableStateRegex.MatchString(trimmed) &&
-			!strings.Contains(trimmed, "remember") && !strings.HasPrefix(trimmed, "private val _") {
-			set.hit("AND-COMPOSE-STATE-NO-REMEMBER", idx)
+// xmlShortTagName mengambil nama tag tanpa paket (com.foo.Bar -> Bar).
+func xmlShortTagName(tagName string) string {
+	if i := strings.LastIndex(tagName, "."); i >= 0 {
+		return tagName[i+1:]
+	}
+	return tagName
+}
+
+func isTouchableTag(short, tag string) bool {
+	if touchableTags[short] {
+		return true
+	}
+	return (short == "ImageView" || short == "TextView") && (strings.Contains(tag, "onClick") || strings.Contains(tag, `clickable="true"`))
+}
+
+func hasSmallDimension(tag string) bool {
+	for _, dm := range xmlDimensionDpRegex.FindAllStringSubmatch(tag, -1) {
+		if v, _ := strconv.Atoi(dm[2]); v > 0 && v < 48 {
+			return true
 		}
-		if hasLazyList && andLazyItemsRegex.MatchString(trimmed) && !strings.Contains(trimmed, "key =") && !strings.Contains(trimmed, "key=") {
-			set.hit("AND-COMPOSE-LAZY-NO-KEY", idx)
-		}
-		if isUILayer && andBitmapDecodeRegex.MatchString(trimmed) {
-			set.hit("AND-BITMAP-DECODE-UI", idx)
-		}
+	}
+	return false
+}
+
+// checkXMLOpenTag memeriksa aksesibilitas (contentDescription, target sentuh) pada tag yang dibuka di baris idx.
+func checkXMLOpenTag(set *uiIssueSet, lines []string, idx int, trimmed string, m []int) {
+	short := xmlShortTagName(trimmed[m[2]:m[3]])
+	tag := tagSpan(lines, idx, strings.Index(lines[idx], "<"))
+
+	if imageViewTags[short] && !strings.Contains(tag, "contentDescription") && !strings.Contains(tag, `importantForAccessibility="no"`) {
+		set.hit("AND-IMAGE-NO-CONTENTDESC", idx)
+	}
+	if isTouchableTag(short, tag) && !strings.Contains(tag, "minHeight") && !strings.Contains(tag, "minWidth") && hasSmallDimension(tag) {
+		set.hit("AND-SMALL-TOUCH-TARGET", idx)
 	}
 }
 
@@ -905,31 +1065,8 @@ func collectAndroidLayoutIssues(set *uiIssueSet, relPath string, lines []string)
 				firstColor = idx
 			}
 		}
-
 		if m := xmlOpenTagRegex.FindStringSubmatchIndex(trimmed); m != nil {
-			tagName := trimmed[m[2]:m[3]]
-			short := tagName
-			if i := strings.LastIndex(tagName, "."); i >= 0 {
-				short = tagName[i+1:]
-			}
-			tag := tagSpan(lines, idx, strings.Index(line, "<"))
-
-			if short == "ImageView" || short == "ImageButton" || short == "AppCompatImageView" || short == "ShapeableImageView" {
-				if !strings.Contains(tag, "contentDescription") && !strings.Contains(tag, `importantForAccessibility="no"`) {
-					set.hit("AND-IMAGE-NO-CONTENTDESC", idx)
-				}
-			}
-			isTouchable := short == "Button" || short == "ImageButton" || short == "MaterialButton" ||
-				short == "CheckBox" || short == "RadioButton" || short == "Switch" || short == "SwitchMaterial" ||
-				((short == "ImageView" || short == "TextView") && (strings.Contains(tag, "onClick") || strings.Contains(tag, `clickable="true"`)))
-			if isTouchable && !strings.Contains(tag, "minHeight") && !strings.Contains(tag, "minWidth") {
-				for _, dm := range xmlDimensionDpRegex.FindAllStringSubmatch(tag, -1) {
-					if v, _ := strconv.Atoi(dm[2]); v > 0 && v < 48 {
-						set.hit("AND-SMALL-TOUCH-TARGET", idx)
-						break
-					}
-				}
-			}
+			checkXMLOpenTag(set, lines, idx, trimmed, m)
 		}
 	}
 
@@ -937,6 +1074,22 @@ func collectAndroidLayoutIssues(set *uiIssueSet, relPath string, lines []string)
 		set.hit("AND-HARDCODED-COLOR-XML", firstColor)
 		set.issues["AND-HARDCODED-COLOR-XML"].count = hardcodedColors
 	}
+}
+
+// xmlMaxNestingDepth menghitung kedalaman elemen XML terdalam dan baris tempat kedalaman itu dicapai
+// isSelfClosingAt: ">" di posisi gt didahului "/" (tag self-closing).
+func isSelfClosingAt(s string, gt int) bool {
+	return gt > 0 && s[gt-1] == '/'
+}
+
+// multilineTagSelfCloses mencari ">" penutup tag multi-baris mulai baris from dan melaporkan apakah self-closing.
+func multilineTagSelfCloses(lines []string, from int) bool {
+	for j := from; j < len(lines); j++ {
+		if g := strings.Index(lines[j], ">"); g >= 0 {
+			return isSelfClosingAt(lines[j], g)
+		}
+	}
+	return false
 }
 
 // xmlMaxNestingDepth menghitung kedalaman elemen XML terdalam dan baris tempat kedalaman itu dicapai
@@ -949,7 +1102,6 @@ func xmlMaxNestingDepth(lines []string) (int, int) {
 			if inComment {
 				end := strings.Index(s, "-->")
 				if end < 0 {
-					s = ""
 					break
 				}
 				inComment = false
@@ -977,23 +1129,18 @@ func xmlMaxNestingDepth(lines []string) (int, int) {
 					maxLine = idx + 1
 				}
 				gt := strings.Index(s, ">")
-				if gt >= 0 {
-					if gt > 0 && s[gt-1] == '/' {
+				if gt < 0 {
+					// tag multi-baris: cari penutupnya di baris berikutnya
+					if multilineTagSelfCloses(lines, idx+1) {
 						depth--
 					}
-					s = s[gt+1:]
-				} else {
-					// tag multi-baris: cari penutupnya di baris berikutnya
-					for j := idx + 1; j < len(lines); j++ {
-						if g := strings.Index(lines[j], ">"); g >= 0 {
-							if g > 0 && lines[j][g-1] == '/' {
-								depth--
-							}
-							break
-						}
-					}
 					s = ""
+					break
 				}
+				if isSelfClosingAt(s, gt) {
+					depth--
+				}
+				s = s[gt+1:]
 			}
 		}
 	}

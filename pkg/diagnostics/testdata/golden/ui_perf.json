@@ -1,0 +1,872 @@
+{
+ "assets": {
+  "a.txt@1073741824": null,
+  "android/assets/a.webp@716800": {
+   "category": "mobile",
+   "severity": "WARNING",
+   "title": "Aset Media Terlalu Berat (700 KB)",
+   "description": "Berkas 'a.webp' berukuran 700 KB (ambang 500 KB). Aset berat memperlambat waktu muat halaman/layar (LCP), memboroskan kuota data pengguna mobile, dan memperbesar ukuran build/APK.",
+   "suggestion": "Kompres dan konversi ke WebP/AVIF, sesuaikan resolusi dengan ukuran tampil maksimum, dan sediakan srcset untuk layar berbeda.",
+   "target_file": "android/assets/a.webp",
+   "line": 1,
+   "rule_id": "ASSET-OVERSIZED",
+   "theory_basis": "Google Core Web Vitals (LCP \u003c 2.5s) \u0026 web.dev Image Optimization; Android App Bundle Size Guidelines.",
+   "suggested_fix": "# Contoh kompresi:\ncwebp -q 75 -resize 1600 0 hero.png -o hero.webp"
+  },
+  "app/src/main/res/drawable/a.png@256000": {
+   "category": "mobile",
+   "severity": "WARNING",
+   "title": "Aset Media Terlalu Berat (250 KB)",
+   "description": "Berkas 'a.png' berukuran 250 KB (ambang 200 KB). Aset berat memperlambat waktu muat halaman/layar (LCP), memboroskan kuota data pengguna mobile, dan memperbesar ukuran build/APK.",
+   "suggestion": "Konversi ke WebP (Android Studio: Convert to WebP), sediakan varian per density (mdpi–xxxhdpi), atau gunakan VectorDrawable untuk ikon.",
+   "target_file": "app/src/main/res/drawable/a.png",
+   "line": 1,
+   "rule_id": "ASSET-OVERSIZED",
+   "theory_basis": "Google Core Web Vitals (LCP \u003c 2.5s) \u0026 web.dev Image Optimization; Android App Bundle Size Guidelines.",
+   "suggested_fix": "# Android Studio: klik kanan drawable -\u003e Convert to WebP (lossy 75%)"
+  },
+  "app/src/main/res/mipmap-xhdpi/a.png@4194304": {
+   "category": "mobile",
+   "severity": "CRITICAL",
+   "title": "Aset Media Terlalu Berat (4.0 MB)",
+   "description": "Berkas 'a.png' berukuran 4.0 MB (ambang 200 KB). Aset berat memperlambat waktu muat halaman/layar (LCP), memboroskan kuota data pengguna mobile, dan memperbesar ukuran build/APK.",
+   "suggestion": "Konversi ke WebP (Android Studio: Convert to WebP), sediakan varian per density (mdpi–xxxhdpi), atau gunakan VectorDrawable untuk ikon.",
+   "target_file": "app/src/main/res/mipmap-xhdpi/a.png",
+   "line": 1,
+   "rule_id": "ASSET-OVERSIZED",
+   "theory_basis": "Google Core Web Vitals (LCP \u003c 2.5s) \u0026 web.dev Image Optimization; Android App Bundle Size Guidelines.",
+   "suggested_fix": "# Android Studio: klik kanan drawable -\u003e Convert to WebP (lossy 75%)"
+  },
+  "build/flutter_assets/a.jpg@716800": {
+   "category": "mobile",
+   "severity": "WARNING",
+   "title": "Aset Media Terlalu Berat (700 KB)",
+   "description": "Berkas 'a.jpg' berukuran 700 KB (ambang 500 KB). Aset berat memperlambat waktu muat halaman/layar (LCP), memboroskan kuota data pengguna mobile, dan memperbesar ukuran build/APK.",
+   "suggestion": "Kompres dan konversi ke WebP/AVIF, sesuaikan resolusi dengan ukuran tampil maksimum, dan sediakan srcset untuk layar berbeda.",
+   "target_file": "build/flutter_assets/a.jpg",
+   "line": 1,
+   "rule_id": "ASSET-OVERSIZED",
+   "theory_basis": "Google Core Web Vitals (LCP \u003c 2.5s) \u0026 web.dev Image Optimization; Android App Bundle Size Guidelines.",
+   "suggested_fix": "# Contoh kompresi:\ncwebp -q 75 -resize 1600 0 hero.png -o hero.webp"
+  },
+  "i/a.svg@2097152": {
+   "category": "frontend",
+   "severity": "CRITICAL",
+   "title": "Aset Media Terlalu Berat (2.0 MB)",
+   "description": "Berkas 'a.svg' berukuran 2.0 MB (ambang 200 KB). Aset berat memperlambat waktu muat halaman/layar (LCP), memboroskan kuota data pengguna mobile, dan memperbesar ukuran build/APK.",
+   "suggestion": "Optimasi dengan SVGO, hapus metadata/raster tertanam, atau ganti dengan PNG/WebP bila berisi gambar raster.",
+   "target_file": "i/a.svg",
+   "line": 1,
+   "rule_id": "ASSET-OVERSIZED",
+   "theory_basis": "Google Core Web Vitals (LCP \u003c 2.5s) \u0026 web.dev Image Optimization; Android App Bundle Size Guidelines.",
+   "suggested_fix": "npx svgo illustration.svg -o illustration.min.svg"
+  },
+  "i/a.svg@307200": {
+   "category": "frontend",
+   "severity": "WARNING",
+   "title": "Aset Media Terlalu Berat (300 KB)",
+   "description": "Berkas 'a.svg' berukuran 300 KB (ambang 200 KB). Aset berat memperlambat waktu muat halaman/layar (LCP), memboroskan kuota data pengguna mobile, dan memperbesar ukuran build/APK.",
+   "suggestion": "Optimasi dengan SVGO, hapus metadata/raster tertanam, atau ganti dengan PNG/WebP bila berisi gambar raster.",
+   "target_file": "i/a.svg",
+   "line": 1,
+   "rule_id": "ASSET-OVERSIZED",
+   "theory_basis": "Google Core Web Vitals (LCP \u003c 2.5s) \u0026 web.dev Image Optimization; Android App Bundle Size Guidelines.",
+   "suggested_fix": "npx svgo illustration.svg -o illustration.min.svg"
+  },
+  "img/a.gif@614400": {
+   "category": "frontend",
+   "severity": "WARNING",
+   "title": "Aset Media Terlalu Berat (600 KB)",
+   "description": "Berkas 'a.gif' berukuran 600 KB (ambang 500 KB). Aset berat memperlambat waktu muat halaman/layar (LCP), memboroskan kuota data pengguna mobile, dan memperbesar ukuran build/APK.",
+   "suggestion": "Ganti GIF animasi dengan video MP4/WebM (autoplay muted loop) atau animated WebP — ukurannya bisa 5–10× lebih kecil.",
+   "target_file": "img/a.gif",
+   "line": 1,
+   "rule_id": "ASSET-OVERSIZED",
+   "theory_basis": "Google Core Web Vitals (LCP \u003c 2.5s) \u0026 web.dev Image Optimization; Android App Bundle Size Guidelines.",
+   "suggested_fix": "ffmpeg -i anim.gif -movflags faststart -pix_fmt yuv420p anim.mp4"
+  },
+  "img/a.png@100": null,
+  "img/a.png@2097152": {
+   "category": "frontend",
+   "severity": "CRITICAL",
+   "title": "Aset Media Terlalu Berat (2.0 MB)",
+   "description": "Berkas 'a.png' berukuran 2.0 MB (ambang 500 KB). Aset berat memperlambat waktu muat halaman/layar (LCP), memboroskan kuota data pengguna mobile, dan memperbesar ukuran build/APK.",
+   "suggestion": "Kompres dan konversi ke WebP/AVIF, sesuaikan resolusi dengan ukuran tampil maksimum, dan sediakan srcset untuk layar berbeda.",
+   "target_file": "img/a.png",
+   "line": 1,
+   "rule_id": "ASSET-OVERSIZED",
+   "theory_basis": "Google Core Web Vitals (LCP \u003c 2.5s) \u0026 web.dev Image Optimization; Android App Bundle Size Guidelines.",
+   "suggested_fix": "# Contoh kompresi:\ncwebp -q 75 -resize 1600 0 hero.png -o hero.webp"
+  },
+  "img/a.png@614400": {
+   "category": "frontend",
+   "severity": "WARNING",
+   "title": "Aset Media Terlalu Berat (600 KB)",
+   "description": "Berkas 'a.png' berukuran 600 KB (ambang 500 KB). Aset berat memperlambat waktu muat halaman/layar (LCP), memboroskan kuota data pengguna mobile, dan memperbesar ukuran build/APK.",
+   "suggestion": "Kompres dan konversi ke WebP/AVIF, sesuaikan resolusi dengan ukuran tampil maksimum, dan sediakan srcset untuk layar berbeda.",
+   "target_file": "img/a.png",
+   "line": 1,
+   "rule_id": "ASSET-OVERSIZED",
+   "theory_basis": "Google Core Web Vitals (LCP \u003c 2.5s) \u0026 web.dev Image Optimization; Android App Bundle Size Guidelines.",
+   "suggested_fix": "# Contoh kompresi:\ncwebp -q 75 -resize 1600 0 hero.png -o hero.webp"
+  },
+  "v/a.mp4@1024": null,
+  "v/a.mp4@31457280": {
+   "category": "frontend",
+   "severity": "CRITICAL",
+   "title": "Aset Media Terlalu Berat (30.0 MB)",
+   "description": "Berkas 'a.mp4' berukuran 30.0 MB (ambang 5.0 MB). Aset berat memperlambat waktu muat halaman/layar (LCP), memboroskan kuota data pengguna mobile, dan memperbesar ukuran build/APK.",
+   "suggestion": "Transcode ke H.264/VP9 bitrate lebih rendah, gunakan poster image, preload=\"none\", atau streaming dari CDN.",
+   "target_file": "v/a.mp4",
+   "line": 1,
+   "rule_id": "ASSET-OVERSIZED",
+   "theory_basis": "Google Core Web Vitals (LCP \u003c 2.5s) \u0026 web.dev Image Optimization; Android App Bundle Size Guidelines.",
+   "suggested_fix": "ffmpeg -i intro.mp4 -vcodec libx264 -crf 28 -preset slow -vf scale=1280:-2 intro-720p.mp4"
+  },
+  "v/a.mp4@6291456": {
+   "category": "frontend",
+   "severity": "WARNING",
+   "title": "Aset Media Terlalu Berat (6.0 MB)",
+   "description": "Berkas 'a.mp4' berukuran 6.0 MB (ambang 5.0 MB). Aset berat memperlambat waktu muat halaman/layar (LCP), memboroskan kuota data pengguna mobile, dan memperbesar ukuran build/APK.",
+   "suggestion": "Transcode ke H.264/VP9 bitrate lebih rendah, gunakan poster image, preload=\"none\", atau streaming dari CDN.",
+   "target_file": "v/a.mp4",
+   "line": 1,
+   "rule_id": "ASSET-OVERSIZED",
+   "theory_basis": "Google Core Web Vitals (LCP \u003c 2.5s) \u0026 web.dev Image Optimization; Android App Bundle Size Guidelines.",
+   "suggested_fix": "ffmpeg -i intro.mp4 -vcodec libx264 -crf 28 -preset slow -vf scale=1280:-2 intro-720p.mp4"
+  }
+ },
+ "dart": [
+  {
+   "category": "mobile",
+   "severity": "INFO",
+   "title": "Flutter Image.network Tanpa Cache/Resize",
+   "description": "Berkas 'a_screen.dart' memakai Image.network sebanyak 1 kali (pertama pada baris 5) tanpa cacheWidth/cacheHeight atau cached_network_image. Gambar resolusi penuh di-decode ke memori dan diunduh ulang.",
+   "suggestion": "Gunakan CachedNetworkImage atau set cacheWidth/cacheHeight sesuai ukuran tampil.",
+   "target_file": "lib/screens/a_screen.dart",
+   "line": 5,
+   "snippet": "Image.network(u),",
+   "rule_id": "MOB-IMAGE-NETWORK-NO-CACHE",
+   "theory_basis": "Flutter Performance — Image Decoding Memory (ResizeImage) \u0026 HTTP Caching.",
+   "suggested_fix": "CachedNetworkImage(imageUrl: url, memCacheWidth: 300)"
+  },
+  {
+   "category": "mobile",
+   "severity": "INFO",
+   "title": "Flutter ListView/GridView Tanpa .builder",
+   "description": "Berkas 'a_screen.dart' membuat ListView/GridView dengan children statis sebanyak 2 kali (pertama pada baris 4). Seluruh item dibangun sekaligus meskipun tidak terlihat, berat untuk daftar panjang/dinamis.",
+   "suggestion": "Gunakan ListView.builder / GridView.builder / ListView.separated untuk data dinamis.",
+   "target_file": "lib/screens/a_screen.dart",
+   "line": 4,
+   "snippet": "return ListView(children: [",
+   "rule_id": "MOB-LISTVIEW-NON-BUILDER",
+   "theory_basis": "Flutter Performance Best Practices — Build Lazily (ListView.builder).",
+   "suggested_fix": "ListView.builder(itemCount: items.length, itemBuilder: (ctx, i) =\u003e ItemTile(items[i]))"
+  },
+  {
+   "category": "mobile",
+   "severity": "INFO",
+   "title": "Flutter Widget Opacity (saveLayer Mahal)",
+   "description": "Berkas 'a_screen.dart' memakai widget Opacity sebanyak 1 kali (pertama pada baris 6). Opacity memicu saveLayer offscreen yang mahal, terutama bila dianimasikan.",
+   "suggestion": "Gunakan AnimatedOpacity/FadeTransition untuk animasi, atau warna dengan alpha (withOpacity) untuk elemen statis.",
+   "target_file": "lib/screens/a_screen.dart",
+   "line": 6,
+   "snippet": "Opacity(opacity: 0.5, child: x),",
+   "rule_id": "MOB-OPACITY-WIDGET",
+   "theory_basis": "Flutter Performance Best Practices — Use Opacity Sparingly (saveLayer).",
+   "suggested_fix": "FadeTransition(opacity: animation, child: child)"
+  },
+  {
+   "category": "mobile",
+   "severity": "WARNING",
+   "title": "Flutter shrinkWrap: true pada Scrollable",
+   "description": "Berkas 'a_screen.dart' memakai shrinkWrap: true sebanyak 1 kali (pertama pada baris 7). Semua anak diukur di awal sehingga lazy loading hilang dan scroll menjadi berat.",
+   "suggestion": "Gunakan CustomScrollView + Sliver (SliverList) alih-alih menumpuk ListView ber-shrinkWrap di dalam Column/ScrollView.",
+   "target_file": "lib/screens/a_screen.dart",
+   "line": 7,
+   "snippet": "ListView(shrinkWrap: true),",
+   "rule_id": "MOB-SHRINKWRAP-LIST",
+   "theory_basis": "Flutter API Docs — ScrollView.shrinkWrap (\"significantly more expensive\") \u0026 Slivers.",
+   "suggested_fix": "CustomScrollView(slivers: [SliverToBoxAdapter(child: Header()), SliverList.builder(...)])"
+  }
+ ],
+ "dart_cached": [
+  {
+   "category": "mobile",
+   "severity": "INFO",
+   "title": "Flutter ListView/GridView Tanpa .builder",
+   "description": "Berkas 'a.dart' membuat ListView/GridView dengan children statis sebanyak 2 kali (pertama pada baris 4). Seluruh item dibangun sekaligus meskipun tidak terlihat, berat untuk daftar panjang/dinamis.",
+   "suggestion": "Gunakan ListView.builder / GridView.builder / ListView.separated untuk data dinamis.",
+   "target_file": "lib/a.dart",
+   "line": 4,
+   "snippet": "return ListView(children: [",
+   "rule_id": "MOB-LISTVIEW-NON-BUILDER",
+   "theory_basis": "Flutter Performance Best Practices — Build Lazily (ListView.builder).",
+   "suggested_fix": "ListView.builder(itemCount: items.length, itemBuilder: (ctx, i) =\u003e ItemTile(items[i]))"
+  },
+  {
+   "category": "mobile",
+   "severity": "INFO",
+   "title": "Flutter Widget Opacity (saveLayer Mahal)",
+   "description": "Berkas 'a.dart' memakai widget Opacity sebanyak 1 kali (pertama pada baris 6). Opacity memicu saveLayer offscreen yang mahal, terutama bila dianimasikan.",
+   "suggestion": "Gunakan AnimatedOpacity/FadeTransition untuk animasi, atau warna dengan alpha (withOpacity) untuk elemen statis.",
+   "target_file": "lib/a.dart",
+   "line": 6,
+   "snippet": "Opacity(opacity: 0.5, child: x),",
+   "rule_id": "MOB-OPACITY-WIDGET",
+   "theory_basis": "Flutter Performance Best Practices — Use Opacity Sparingly (saveLayer).",
+   "suggested_fix": "FadeTransition(opacity: animation, child: child)"
+  },
+  {
+   "category": "mobile",
+   "severity": "WARNING",
+   "title": "Flutter shrinkWrap: true pada Scrollable",
+   "description": "Berkas 'a.dart' memakai shrinkWrap: true sebanyak 1 kali (pertama pada baris 7). Semua anak diukur di awal sehingga lazy loading hilang dan scroll menjadi berat.",
+   "suggestion": "Gunakan CustomScrollView + Sliver (SliverList) alih-alih menumpuk ListView ber-shrinkWrap di dalam Column/ScrollView.",
+   "target_file": "lib/a.dart",
+   "line": 7,
+   "snippet": "ListView(shrinkWrap: true),",
+   "rule_id": "MOB-SHRINKWRAP-LIST",
+   "theory_basis": "Flutter API Docs — ScrollView.shrinkWrap (\"significantly more expensive\") \u0026 Slivers.",
+   "suggested_fix": "CustomScrollView(slivers: [SliverToBoxAdapter(child: Header()), SliverList.builder(...)])"
+  }
+ ],
+ "depth": {
+  "comment": [
+   2,
+   6
+  ],
+  "deep": [
+   12,
+   12
+  ],
+  "empty": [
+   0,
+   1
+  ],
+  "selfclose": [
+   2,
+   2
+  ]
+ },
+ "java": [
+  {
+   "category": "mobile",
+   "severity": "CRITICAL",
+   "title": "Context/Activity/View Disimpan di Field Statis (Memory Leak)",
+   "description": "Berkas 'A.java' menyimpan referensi Context/Activity/View pada field statis/companion object sebanyak 1 kali (pertama pada baris 3). Activity tidak pernah di-garbage-collect setelah rotasi layar atau navigasi.",
+   "suggestion": "Simpan applicationContext saja bila perlu, atau gunakan WeakReference / dependency injection (Hilt).",
+   "target_file": "app/src/main/java/A.java",
+   "line": 3,
+   "snippet": "static Context c;",
+   "rule_id": "AND-STATIC-CONTEXT-LEAK",
+   "theory_basis": "Android Developers — Avoiding Memory Leaks \u0026 LeakCanary Detection Patterns.",
+   "suggested_fix": "// SEBELUM: companion object { lateinit var activity: Activity }\nclass Repo @Inject constructor(@ApplicationContext private val ctx: Context)"
+  }
+ ],
+ "kotlin": [
+  {
+   "category": "mobile",
+   "severity": "WARNING",
+   "title": "Decode Bitmap Manual di Layer UI (OOM \u0026 Jank)",
+   "description": "Berkas 'MainActivity.kt' memanggil BitmapFactory.decode* sebanyak 1 kali (pertama pada baris 10) di Activity/Fragment/Composable. Decode tanpa downsampling di main thread memicu OutOfMemoryError dan frame drop.",
+   "suggestion": "Gunakan Coil/Glide yang otomatis melakukan downsampling, caching, dan decode di background thread.",
+   "target_file": "app/src/main/java/MainActivity.kt",
+   "line": 10,
+   "snippet": "val b = BitmapFactory.decodeFile(p)",
+   "rule_id": "AND-BITMAP-DECODE-UI",
+   "theory_basis": "Android Developers — Loading Large Bitmaps Efficiently (inSampleSize).",
+   "suggested_fix": "AsyncImage(model = url, contentDescription = null, modifier = Modifier.size(64.dp))"
+  },
+  {
+   "category": "mobile",
+   "severity": "INFO",
+   "title": "Jetpack Compose: LazyColumn items() Tanpa key",
+   "description": "Berkas 'MainActivity.kt' memanggil items() pada Lazy list tanpa parameter key sebanyak 1 kali (pertama pada baris 18). Saat urutan berubah, Compose me-recompose item yang salah dan state per item bisa tertukar.",
+   "suggestion": "Berikan key stabil: items(users, key = { it.id }) { ... }.",
+   "target_file": "app/src/main/java/MainActivity.kt",
+   "line": 18,
+   "snippet": "items(list) { }",
+   "rule_id": "AND-COMPOSE-LAZY-NO-KEY",
+   "theory_basis": "Android Developers — Lists and Grids in Compose (Item Keys) \u0026 Compose Performance Best Practices.",
+   "suggested_fix": "LazyColumn { items(users, key = { it.id }) { user -\u003e UserRow(user) } }"
+  },
+  {
+   "category": "mobile",
+   "severity": "WARNING",
+   "title": "Jetpack Compose: mutableStateOf Tanpa remember",
+   "description": "Berkas 'MainActivity.kt' membuat state Compose tanpa remember sebanyak 1 kali (pertama pada baris 15). State di-reset setiap recomposition sehingga input hilang dan UI berkedip.",
+   "suggestion": "Bungkus dengan remember { mutableStateOf(...) } atau rememberSaveable, atau angkat state ke ViewModel.",
+   "target_file": "app/src/main/java/MainActivity.kt",
+   "line": 15,
+   "snippet": "val s = mutableStateOf(1)",
+   "rule_id": "AND-COMPOSE-STATE-NO-REMEMBER",
+   "theory_basis": "Android Developers — State and Jetpack Compose (Recomposition \u0026 remember).",
+   "suggested_fix": "var query by rememberSaveable { mutableStateOf(\"\") }"
+  },
+  {
+   "category": "mobile",
+   "severity": "WARNING",
+   "title": "GlobalScope Coroutine (Lifecycle Leak)",
+   "description": "Berkas 'MainActivity.kt' meluncurkan 1 coroutine di GlobalScope (pertama pada baris 8). Coroutine tetap berjalan setelah layar ditutup, menahan referensi Activity dan menguras baterai.",
+   "suggestion": "Gunakan viewModelScope, lifecycleScope, atau CoroutineScope yang dibatalkan sesuai lifecycle.",
+   "target_file": "app/src/main/java/MainActivity.kt",
+   "line": 8,
+   "snippet": "GlobalScope.launch { }",
+   "rule_id": "AND-GLOBALSCOPE-LEAK",
+   "theory_basis": "Kotlin Structured Concurrency (Roman Elizarov) \u0026 Android Lifecycle-aware Components.",
+   "suggested_fix": "lifecycleScope.launch { /* ... */ }"
+  },
+  {
+   "category": "mobile",
+   "severity": "CRITICAL",
+   "title": "Operasi Blocking di Main/UI Thread (Risiko ANR)",
+   "description": "Berkas 'MainActivity.kt' memuat 1 pemanggilan blocking (runBlocking / Thread.sleep / allowMainThreadQueries) (pertama pada baris 7). UI membeku dan Android menampilkan dialog ANR jika thread utama tertahan \u003e 5 detik.",
+   "suggestion": "Gunakan coroutine dengan Dispatchers.IO di viewModelScope/lifecycleScope, dan hapus allowMainThreadQueries() dari Room builder.",
+   "target_file": "app/src/main/java/MainActivity.kt",
+   "line": 7,
+   "snippet": "runBlocking { }",
+   "rule_id": "AND-MAIN-THREAD-BLOCKING",
+   "theory_basis": "Android Developers — Keep Your App Responsive (ANR) \u0026 Kotlin Coroutines Main-Safety.",
+   "suggested_fix": "viewModelScope.launch {\n    val data = withContext(Dispatchers.IO) { repository.load() }\n    _state.value = data\n}"
+  },
+  {
+   "category": "mobile",
+   "severity": "WARNING",
+   "title": "RecyclerView notifyDataSetChanged() (Re-render Seluruh List)",
+   "description": "Berkas 'MainActivity.kt' memanggil notifyDataSetChanged() sebanyak 1 kali (pertama pada baris 9). Seluruh item di-bind ulang tanpa animasi sehingga scroll patah (jank) pada list panjang.",
+   "suggestion": "Gunakan ListAdapter + DiffUtil.ItemCallback atau notifyItemChanged/Inserted/Removed yang spesifik.",
+   "target_file": "app/src/main/java/MainActivity.kt",
+   "line": 9,
+   "snippet": "adapter.notifyDataSetChanged()",
+   "rule_id": "AND-NOTIFY-DATASET-CHANGED",
+   "theory_basis": "Android Developers — RecyclerView Performance \u0026 DiffUtil (Eugene Myers Diff Algorithm).",
+   "suggested_fix": "class UserAdapter : ListAdapter\u003cUser, VH\u003e(DIFF) { ... }\nadapter.submitList(newUsers)"
+  },
+  {
+   "category": "mobile",
+   "severity": "CRITICAL",
+   "title": "Context/Activity/View Disimpan di Field Statis (Memory Leak)",
+   "description": "Berkas 'MainActivity.kt' menyimpan referensi Context/Activity/View pada field statis/companion object sebanyak 1 kali (pertama pada baris 4). Activity tidak pernah di-garbage-collect setelah rotasi layar atau navigasi.",
+   "suggestion": "Simpan applicationContext saja bila perlu, atau gunakan WeakReference / dependency injection (Hilt).",
+   "target_file": "app/src/main/java/MainActivity.kt",
+   "line": 4,
+   "snippet": "var ctx: Context? = null",
+   "rule_id": "AND-STATIC-CONTEXT-LEAK",
+   "theory_basis": "Android Developers — Avoiding Memory Leaks \u0026 LeakCanary Detection Patterns.",
+   "suggested_fix": "// SEBELUM: companion object { lateinit var activity: Activity }\nclass Repo @Inject constructor(@ApplicationContext private val ctx: Context)"
+  }
+ ],
+ "kotlin_server": [],
+ "sizes": {
+  "android_other": null,
+  "android_screen": [
+   {
+    "category": "mobile",
+    "severity": "WARNING",
+    "title": "Activity/Fragment/Screen Android Terlalu Besar (701 Baris)",
+    "description": "Berkas 'MainActivity.kt' memiliki 701 baris (batas wajar 600, kritis \u003e 1000). Berkas UI raksasa memperlambat hot-reload/kompilasi, memperbesar chunk yang dimuat, memicu re-render luas, dan sulit direview.",
+    "suggestion": "Pindahkan logika ke ViewModel + UseCase/Repository, pecah UI menjadi Composable/Fragment kecil atau custom View yang dapat dipakai ulang.",
+    "target_file": "app/MainActivity.kt",
+    "line": 1,
+    "snippet": "x",
+    "rule_id": "AND-GOD-ACTIVITY",
+    "theory_basis": "Single Responsibility Principle (SOLID) \u0026 Atomic Design (Brad Frost) — Komponen kecil, fokus, dan dapat diuji.",
+    "suggested_fix": "// Activity hanya merender state:\nclass OrderActivity : ComponentActivity() {\n    private val vm: OrderViewModel by viewModels()\n    override fun onCreate(b: Bundle?) { super.onCreate(b); setContent { OrderScreen(vm) } }\n}"
+   }
+  ],
+  "dart_plain": null,
+  "flutter_suffix": [
+   {
+    "category": "mobile",
+    "severity": "CRITICAL",
+    "title": "Screen/Widget Flutter Terlalu Besar (1101 Baris)",
+    "description": "Berkas 'x_page.dart' memiliki 1101 baris (batas wajar 600, kritis \u003e 1000). Berkas UI raksasa memperlambat hot-reload/kompilasi, memperbesar chunk yang dimuat, memicu re-render luas, dan sulit direview.",
+    "suggestion": "Ekstrak sub-tree widget menjadi StatelessWidget terpisah (bukan method _buildX), dan pindahkan state ke Bloc/Provider/Riverpod.",
+    "target_file": "lib/x_page.dart",
+    "line": 1,
+    "snippet": "x",
+    "rule_id": "MOB-LARGE-WIDGET-FILE",
+    "theory_basis": "Single Responsibility Principle (SOLID) \u0026 Atomic Design (Brad Frost) — Komponen kecil, fokus, dan dapat diuji.",
+    "suggested_fix": "class OrderHeader extends StatelessWidget {\n  const OrderHeader({super.key});\n  @override\n  Widget build(BuildContext context) =\u003e ...;\n}"
+   }
+  ],
+  "flutter_widget": [
+   {
+    "category": "mobile",
+    "severity": "WARNING",
+    "title": "Screen/Widget Flutter Terlalu Besar (701 Baris)",
+    "description": "Berkas 'x.dart' memiliki 701 baris (batas wajar 600, kritis \u003e 1000). Berkas UI raksasa memperlambat hot-reload/kompilasi, memperbesar chunk yang dimuat, memicu re-render luas, dan sulit direview.",
+    "suggestion": "Ekstrak sub-tree widget menjadi StatelessWidget terpisah (bukan method _buildX), dan pindahkan state ke Bloc/Provider/Riverpod.",
+    "target_file": "lib/screens/x.dart",
+    "line": 1,
+    "snippet": "x",
+    "rule_id": "MOB-LARGE-WIDGET-FILE",
+    "theory_basis": "Single Responsibility Principle (SOLID) \u0026 Atomic Design (Brad Frost) — Komponen kecil, fokus, dan dapat diuji.",
+    "suggested_fix": "class OrderHeader extends StatelessWidget {\n  const OrderHeader({super.key});\n  @override\n  Widget build(BuildContext context) =\u003e ...;\n}"
+   }
+  ],
+  "go_big": null,
+  "ts_module": [
+   {
+    "category": "frontend",
+    "severity": "WARNING",
+    "title": "Modul Frontend Terlalu Besar (901 Baris)",
+    "description": "Modul 'useA.ts' memiliki 901 baris (batas wajar 800). Modul gemuk tidak dapat di-code-split dan ikut dimuat di semua halaman yang mengimpornya.",
+    "suggestion": "Pecah per domain (useProjects.ts, useDiagnostics.ts, ...) agar tree-shaking dan lazy loading efektif.",
+    "target_file": "src/composables/useA.ts",
+    "line": 1,
+    "snippet": "x",
+    "rule_id": "FE-LARGE-MODULE",
+    "theory_basis": "Modular Design (David Parnas — Information Hiding) \u0026 Code Splitting (Vite/Webpack Dynamic Import).",
+    "suggested_fix": "// composables/api/projects.ts\n// composables/api/diagnostics.ts\n// composables/useApi.ts -\u003e re-export saja"
+   }
+  ],
+  "ts_module_server": null,
+  "vue_crit": [
+   {
+    "category": "frontend",
+    "severity": "CRITICAL",
+    "title": "Halaman/Komponen UI Terlalu Besar (1101 Baris)",
+    "description": "Berkas 'a.vue' memiliki 1101 baris (batas wajar 600, kritis \u003e 1000). Berkas UI raksasa memperlambat hot-reload/kompilasi, memperbesar chunk yang dimuat, memicu re-render luas, dan sulit direview.",
+    "suggestion": "Pecah menjadi sub-komponen per bagian layar (header, filter, list, modal), pindahkan data statis ke file terpisah, dan pindahkan logika ke composable/hook.",
+    "target_file": "pages/a.vue",
+    "line": 1,
+    "snippet": "x",
+    "rule_id": "FE-LARGE-COMPONENT",
+    "theory_basis": "Single Responsibility Principle (SOLID) \u0026 Atomic Design (Brad Frost) — Komponen kecil, fokus, dan dapat diuji.",
+    "suggested_fix": "// Struktur yang disarankan:\n// pages/report.vue            -\u003e hanya layout \u0026 orkestrasi (\u003c 300 baris)\n// components/report/Filter.vue\n// components/report/Table.vue\n// composables/useReport.ts    -\u003e state \u0026 pemanggilan API"
+   }
+  ],
+  "vue_small": null,
+  "vue_warn": [
+   {
+    "category": "frontend",
+    "severity": "WARNING",
+    "title": "Halaman/Komponen UI Terlalu Besar (701 Baris)",
+    "description": "Berkas 'a.vue' memiliki 701 baris (batas wajar 600, kritis \u003e 1000). Berkas UI raksasa memperlambat hot-reload/kompilasi, memperbesar chunk yang dimuat, memicu re-render luas, dan sulit direview.",
+    "suggestion": "Pecah menjadi sub-komponen per bagian layar (header, filter, list, modal), pindahkan data statis ke file terpisah, dan pindahkan logika ke composable/hook.",
+    "target_file": "pages/a.vue",
+    "line": 1,
+    "snippet": "x",
+    "rule_id": "FE-LARGE-COMPONENT",
+    "theory_basis": "Single Responsibility Principle (SOLID) \u0026 Atomic Design (Brad Frost) — Komponen kecil, fokus, dan dapat diuji.",
+    "suggested_fix": "// Struktur yang disarankan:\n// pages/report.vue            -\u003e hanya layout \u0026 orkestrasi (\u003c 300 baris)\n// components/report/Filter.vue\n// components/report/Table.vue\n// composables/useReport.ts    -\u003e state \u0026 pemanggilan API"
+   }
+  ],
+  "xml_big": [
+   {
+    "category": "mobile",
+    "severity": "WARNING",
+    "title": "Layout XML Terlalu Besar (401 Baris)",
+    "description": "Layout 'a.xml' memiliki 401 baris (batas wajar 300). Inflate layout besar memperlambat pembukaan layar dan menyulitkan pemeliharaan.",
+    "suggestion": "Pecah menjadi beberapa layout dengan \u003cinclude\u003e/\u003cmerge\u003e, gunakan ViewStub untuk bagian opsional, atau migrasi ke Jetpack Compose.",
+    "target_file": "res/layout/a.xml",
+    "line": 1,
+    "rule_id": "AND-LARGE-LAYOUT",
+    "theory_basis": "Android Developers — Re-using Layouts with \u003cinclude\u003e \u0026 Delayed Loading with ViewStub.",
+    "suggested_fix": "\u003cinclude layout=\"@layout/section_header\" /\u003e\n\u003cViewStub android:id=\"@+id/stub_details\" android:layout=\"@layout/details\" ... /\u003e"
+   }
+  ],
+  "xml_small": null
+ },
+ "ts_nonui": [
+  {
+   "category": "frontend",
+   "severity": "WARNING",
+   "title": "Import Library Berat Secara Utuh (Bundle Bloat)",
+   "description": "Berkas 'a.ts' mengimpor seluruh isi library berat 1 kali (pertama pada baris 1). Tree-shaking gagal sehingga ukuran bundle JS membengkak dan waktu muat halaman melambat.",
+   "suggestion": "Impor fungsi spesifik (import debounce from 'lodash-es/debounce'), ganti moment dengan dayjs/date-fns, dan hindari import * as.",
+   "target_file": "server/a.ts",
+   "line": 1,
+   "snippet": "import moment from 'moment'",
+   "rule_id": "FE-HEAVY-LIB-IMPORT",
+   "theory_basis": "Webpack/Vite Tree Shaking (ES Module Static Analysis) \u0026 web.dev JavaScript Budget (\u003c 170KB gzip).",
+   "suggested_fix": "// SEBELUM: import _ from 'lodash'\nimport { debounce } from 'lodash-es'"
+  }
+ ],
+ "tsx": [
+  {
+   "category": "frontend",
+   "severity": "WARNING",
+   "title": "Elemen Non-Interaktif Diberi Event Klik (Aksesibilitas Keyboard)",
+   "description": "Berkas 'A.tsx' memiliki 1 elemen \u003cdiv\u003e/\u003cspan\u003e dengan event klik tanpa role \u0026 tabindex (pertama pada baris 3). Elemen ini tidak dapat dijangkau keyboard maupun pembaca layar.",
+   "suggestion": "Gunakan elemen \u003cbutton\u003e asli, atau tambahkan role=\"button\", tabindex=\"0\", dan handler @keydown.enter.",
+   "target_file": "src/components/A.tsx",
+   "line": 3,
+   "snippet": "\u003cdiv onClick={go}\u003e",
+   "rule_id": "FE-CLICKABLE-NON-INTERACTIVE",
+   "theory_basis": "WCAG 2.2 SC 2.1.1 (Keyboard) \u0026 SC 4.1.2 (Name, Role, Value) — Level A.",
+   "suggested_fix": "\u003cbutton type=\"button\" class=\"...\" @click=\"open\"\u003eBuka\u003c/button\u003e"
+  },
+  {
+   "category": "frontend",
+   "severity": "INFO",
+   "title": "Sisa console.log Debugging di Kode Produksi",
+   "description": "Berkas 'A.tsx' memuat 3 pemanggilan console.log/debug (pertama pada baris 7). Log berlebih memperlambat render loop, membocorkan data internal ke DevTools, dan mengotori konsol.",
+   "suggestion": "Hapus log debugging atau gunakan logger dengan level yang dimatikan pada build produksi.",
+   "target_file": "src/components/A.tsx",
+   "line": 7,
+   "snippet": "console.debug('x')",
+   "rule_id": "FE-CONSOLE-LOG-LEFTOVER",
+   "theory_basis": "Clean Code — Boy Scout Rule \u0026 OWASP Logging Cheat Sheet (Sensitive Data Exposure).",
+   "suggested_fix": "if (import.meta.dev) console.debug('[debug]', payload)"
+  },
+  {
+   "category": "frontend",
+   "severity": "WARNING",
+   "title": "Import Library Berat Secara Utuh (Bundle Bloat)",
+   "description": "Berkas 'A.tsx' mengimpor seluruh isi library berat 1 kali (pertama pada baris 1). Tree-shaking gagal sehingga ukuran bundle JS membengkak dan waktu muat halaman melambat.",
+   "suggestion": "Impor fungsi spesifik (import debounce from 'lodash-es/debounce'), ganti moment dengan dayjs/date-fns, dan hindari import * as.",
+   "target_file": "src/components/A.tsx",
+   "line": 1,
+   "snippet": "import moment from 'moment'",
+   "rule_id": "FE-HEAVY-LIB-IMPORT",
+   "theory_basis": "Webpack/Vite Tree Shaking (ES Module Static Analysis) \u0026 web.dev JavaScript Budget (\u003c 170KB gzip).",
+   "suggested_fix": "// SEBELUM: import _ from 'lodash'\nimport { debounce } from 'lodash-es'"
+  },
+  {
+   "category": "frontend",
+   "severity": "WARNING",
+   "title": "Gambar Tanpa Dimensi Eksplisit (Cumulative Layout Shift)",
+   "description": "Berkas 'A.tsx' memiliki 1 tag \u003cimg\u003e tanpa width/height atau kelas ukuran/aspect-ratio (pertama pada baris 4). Saat gambar selesai dimuat, konten di bawahnya melompat (CLS buruk).",
+   "suggestion": "Berikan atribut width \u0026 height, atau kelas ukuran tetap / aspect-ratio (misal: class=\"w-16 h-16\" atau \"aspect-video w-full\").",
+   "target_file": "src/components/A.tsx",
+   "line": 4,
+   "snippet": "\u003cimg src=\"a.png\" /\u003e",
+   "rule_id": "FE-IMG-LAYOUT-SHIFT",
+   "theory_basis": "Google Core Web Vitals — Cumulative Layout Shift (CLS) target \u003c 0.1.",
+   "suggested_fix": "\u003cimg :src=\"avatar\" width=\"64\" height=\"64\" alt=\"Foto profil\" loading=\"lazy\" /\u003e"
+  },
+  {
+   "category": "frontend",
+   "severity": "WARNING",
+   "title": "Gambar Tanpa Teks Alternatif (alt)",
+   "description": "Berkas 'A.tsx' memiliki 1 tag \u003cimg\u003e tanpa atribut alt (pertama pada baris 4). Pembaca layar tidak dapat mendeskripsikan gambar dan SEO terdampak.",
+   "suggestion": "Tambahkan alt deskriptif; gunakan alt=\"\" untuk gambar dekoratif murni.",
+   "target_file": "src/components/A.tsx",
+   "line": 4,
+   "snippet": "\u003cimg src=\"a.png\" /\u003e",
+   "rule_id": "FE-IMG-MISSING-ALT",
+   "theory_basis": "WCAG 2.2 Success Criterion 1.1.1 (Non-text Content) — Level A.",
+   "suggested_fix": "\u003cimg src=\"/logo.svg\" alt=\"Logo Vibeasik\" width=\"120\" height=\"32\" /\u003e"
+  },
+  {
+   "category": "frontend",
+   "severity": "INFO",
+   "title": "Gambar Tanpa Lazy Loading",
+   "description": "Berkas 'A.tsx' memiliki 1 tag \u003cimg\u003e tanpa loading=\"lazy\" (pertama pada baris 4). Gambar di luar viewport ikut diunduh saat halaman pertama dibuka sehingga memperlambat LCP.",
+   "suggestion": "Tambahkan loading=\"lazy\" untuk gambar di bawah lipatan layar, dan decoding=\"async\" untuk gambar besar.",
+   "target_file": "src/components/A.tsx",
+   "line": 4,
+   "snippet": "\u003cimg src=\"a.png\" /\u003e",
+   "rule_id": "FE-IMG-NO-LAZY",
+   "theory_basis": "Google Web Fundamentals — Browser-level Image Lazy Loading \u0026 Largest Contentful Paint (LCP).",
+   "suggested_fix": "\u003cimg :src=\"thumb\" loading=\"lazy\" decoding=\"async\" width=\"320\" height=\"180\" alt=\"...\" /\u003e"
+  }
+ ],
+ "vue": [
+  {
+   "category": "frontend",
+   "severity": "WARNING",
+   "title": "Elemen Non-Interaktif Diberi Event Klik (Aksesibilitas Keyboard)",
+   "description": "Berkas 'A.vue' memiliki 1 elemen \u003cdiv\u003e/\u003cspan\u003e dengan event klik tanpa role \u0026 tabindex (pertama pada baris 2). Elemen ini tidak dapat dijangkau keyboard maupun pembaca layar.",
+   "suggestion": "Gunakan elemen \u003cbutton\u003e asli, atau tambahkan role=\"button\", tabindex=\"0\", dan handler @keydown.enter.",
+   "target_file": "components/A.vue",
+   "line": 2,
+   "snippet": "\u003cdiv @click=\"go\" class=\"x\"\u003ea\u003c/div\u003e",
+   "rule_id": "FE-CLICKABLE-NON-INTERACTIVE",
+   "theory_basis": "WCAG 2.2 SC 2.1.1 (Keyboard) \u0026 SC 4.1.2 (Name, Role, Value) — Level A.",
+   "suggested_fix": "\u003cbutton type=\"button\" class=\"...\" @click=\"open\"\u003eBuka\u003c/button\u003e"
+  },
+  {
+   "category": "frontend",
+   "severity": "INFO",
+   "title": "Sisa console.log Debugging di Kode Produksi",
+   "description": "Berkas 'A.vue' memuat 3 pemanggilan console.log/debug (pertama pada baris 20). Log berlebih memperlambat render loop, membocorkan data internal ke DevTools, dan mengotori konsol.",
+   "suggestion": "Hapus log debugging atau gunakan logger dengan level yang dimatikan pada build produksi.",
+   "target_file": "components/A.vue",
+   "line": 20,
+   "snippet": "console.log('a')",
+   "rule_id": "FE-CONSOLE-LOG-LEFTOVER",
+   "theory_basis": "Clean Code — Boy Scout Rule \u0026 OWASP Logging Cheat Sheet (Sensitive Data Exposure).",
+   "suggested_fix": "if (import.meta.dev) console.debug('[debug]', payload)"
+  },
+  {
+   "category": "frontend",
+   "severity": "WARNING",
+   "title": "Lebar Layout Tetap (Fixed Width ≥ 768px) — Tidak Responsif",
+   "description": "Berkas 'A.vue' menetapkan lebar/min-width tetap ≥ 768px sebanyak 2 kali (pertama pada baris 11). Layout akan terpotong atau memunculkan scroll horizontal di tablet/HP.",
+   "suggestion": "Ganti dengan max-width + w-full, grid/flex fluid, atau terapkan hanya pada breakpoint besar (md:/lg:).",
+   "target_file": "components/A.vue",
+   "line": 11,
+   "snippet": "\u003cp style=\"width: 1024px\"\u003ey\u003c/p\u003e",
+   "rule_id": "FE-FIXED-WIDTH-LAYOUT",
+   "theory_basis": "Ethan Marcotte — Responsive Web Design (Fluid Grids) \u0026 WCAG 2.2 SC 1.4.10 (Reflow, 320 CSS px).",
+   "suggested_fix": "\u003c!-- SEBELUM: class=\"w-[1200px]\" --\u003e\n\u003cdiv class=\"w-full max-w-7xl mx-auto\"\u003e"
+  },
+  {
+   "category": "frontend",
+   "severity": "INFO",
+   "title": "Warna Hex Hardcoded Berulang (Tanpa Design Token)",
+   "description": "Berkas 'A.vue' memuat 14 kode warna hex langsung (pertama pada baris 10). Palet warna menjadi tidak konsisten antar halaman dan dark mode sulit diterapkan.",
+   "suggestion": "Definisikan warna di tema (tailwind.config / app.config / CSS variables) lalu gunakan kelas atau token semantik.",
+   "target_file": "components/A.vue",
+   "line": 10,
+   "snippet": "\u003cp class=\"text-[9px]\" style=\"font-size: 10px; color: #fff\"\u003ex\u003c/p\u003e",
+   "rule_id": "FE-HARDCODED-COLORS",
+   "theory_basis": "Design Tokens (W3C Design Tokens Community Group) \u0026 Atomic Design — Brad Frost.",
+   "suggested_fix": ":root { --color-brand: #7c3aed; }\n.title { color: var(--color-brand); }"
+  },
+  {
+   "category": "frontend",
+   "severity": "WARNING",
+   "title": "Import Library Berat Secara Utuh (Bundle Bloat)",
+   "description": "Berkas 'A.vue' mengimpor seluruh isi library berat 1 kali (pertama pada baris 17). Tree-shaking gagal sehingga ukuran bundle JS membengkak dan waktu muat halaman melambat.",
+   "suggestion": "Impor fungsi spesifik (import debounce from 'lodash-es/debounce'), ganti moment dengan dayjs/date-fns, dan hindari import * as.",
+   "target_file": "components/A.vue",
+   "line": 17,
+   "snippet": "import _ from 'lodash'",
+   "rule_id": "FE-HEAVY-LIB-IMPORT",
+   "theory_basis": "Webpack/Vite Tree Shaking (ES Module Static Analysis) \u0026 web.dev JavaScript Budget (\u003c 170KB gzip).",
+   "suggested_fix": "// SEBELUM: import _ from 'lodash'\nimport { debounce } from 'lodash-es'"
+  },
+  {
+   "category": "frontend",
+   "severity": "WARNING",
+   "title": "Gambar Tanpa Dimensi Eksplisit (Cumulative Layout Shift)",
+   "description": "Berkas 'A.vue' memiliki 1 tag \u003cimg\u003e tanpa width/height atau kelas ukuran/aspect-ratio (pertama pada baris 8). Saat gambar selesai dimuat, konten di bawahnya melompat (CLS buruk).",
+   "suggestion": "Berikan atribut width \u0026 height, atau kelas ukuran tetap / aspect-ratio (misal: class=\"w-16 h-16\" atau \"aspect-video w-full\").",
+   "target_file": "components/A.vue",
+   "line": 8,
+   "snippet": "\u003cimg src=\"a.png\"\u003e",
+   "rule_id": "FE-IMG-LAYOUT-SHIFT",
+   "theory_basis": "Google Core Web Vitals — Cumulative Layout Shift (CLS) target \u003c 0.1.",
+   "suggested_fix": "\u003cimg :src=\"avatar\" width=\"64\" height=\"64\" alt=\"Foto profil\" loading=\"lazy\" /\u003e"
+  },
+  {
+   "category": "frontend",
+   "severity": "WARNING",
+   "title": "Gambar Tanpa Teks Alternatif (alt)",
+   "description": "Berkas 'A.vue' memiliki 1 tag \u003cimg\u003e tanpa atribut alt (pertama pada baris 8). Pembaca layar tidak dapat mendeskripsikan gambar dan SEO terdampak.",
+   "suggestion": "Tambahkan alt deskriptif; gunakan alt=\"\" untuk gambar dekoratif murni.",
+   "target_file": "components/A.vue",
+   "line": 8,
+   "snippet": "\u003cimg src=\"a.png\"\u003e",
+   "rule_id": "FE-IMG-MISSING-ALT",
+   "theory_basis": "WCAG 2.2 Success Criterion 1.1.1 (Non-text Content) — Level A.",
+   "suggested_fix": "\u003cimg src=\"/logo.svg\" alt=\"Logo Vibeasik\" width=\"120\" height=\"32\" /\u003e"
+  },
+  {
+   "category": "frontend",
+   "severity": "INFO",
+   "title": "Gambar Tanpa Lazy Loading",
+   "description": "Berkas 'A.vue' memiliki 1 tag \u003cimg\u003e tanpa loading=\"lazy\" (pertama pada baris 8). Gambar di luar viewport ikut diunduh saat halaman pertama dibuka sehingga memperlambat LCP.",
+   "suggestion": "Tambahkan loading=\"lazy\" untuk gambar di bawah lipatan layar, dan decoding=\"async\" untuk gambar besar.",
+   "target_file": "components/A.vue",
+   "line": 8,
+   "snippet": "\u003cimg src=\"a.png\"\u003e",
+   "rule_id": "FE-IMG-NO-LAZY",
+   "theory_basis": "Google Web Fundamentals — Browser-level Image Lazy Loading \u0026 Largest Contentful Paint (LCP).",
+   "suggested_fix": "\u003cimg :src=\"thumb\" loading=\"lazy\" decoding=\"async\" width=\"320\" height=\"180\" alt=\"...\" /\u003e"
+  },
+  {
+   "category": "frontend",
+   "severity": "INFO",
+   "title": "Penggunaan !important Berlebihan",
+   "description": "Berkas 'A.vue' memakai !important sebanyak 13 kali (pertama pada baris 26). Spesifisitas CSS menjadi kacau dan tema/override sulit dilakukan.",
+   "suggestion": "Perbaiki urutan/spesifisitas selector atau gunakan utility class; batasi !important hanya untuk utility override.",
+   "target_file": "components/A.vue",
+   "line": 26,
+   "snippet": ".a { z-index: 99999; color: #aabbcc !important; font-size: 8px; }",
+   "rule_id": "FE-IMPORTANT-OVERUSE",
+   "theory_basis": "CSS Cascade \u0026 Specificity (W3C CSS Cascading Level 4) — ITCSS Architecture.",
+   "suggested_fix": "/* Hindari: .btn { color: red !important } */\n.card .btn-danger { color: var(--color-danger); }"
+  },
+  {
+   "category": "frontend",
+   "severity": "WARNING",
+   "title": "Aset Base64 Besar Tertanam di Kode Sumber",
+   "description": "Berkas 'A.vue' memuat 1 data URI base64 berukuran besar (pertama pada baris 23). Base64 menambah ~33% ukuran, tidak bisa di-cache terpisah, dan memperbesar bundle JS/CSS.",
+   "suggestion": "Simpan aset sebagai file terpisah di public/ atau assets/ dan rujuk melalui URL.",
+   "target_file": "components/A.vue",
+   "line": 23,
+   "snippet": "const img = \"data:image/png;base64,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA…",
+   "rule_id": "FE-INLINE-BASE64-ASSET",
+   "theory_basis": "HTTP Caching (RFC 9111) \u0026 web.dev — Avoid Large Inlined Assets.",
+   "suggested_fix": "\u003cimg src=\"/images/hero.webp\" width=\"1200\" height=\"600\" alt=\"...\" /\u003e"
+  },
+  {
+   "category": "frontend",
+   "severity": "INFO",
+   "title": "Penggunaan Inline Style Berlebihan",
+   "description": "Berkas 'A.vue' memiliki 10 atribut style=\"...\" statis (pertama pada baris 10). Inline style mem-bypass design system, sulit dirawat, dan tidak mendukung dark mode/breakpoint.",
+   "suggestion": "Pindahkan gaya ke kelas utility (Tailwind) atau \u003cstyle scoped\u003e dengan design token.",
+   "target_file": "components/A.vue",
+   "line": 10,
+   "snippet": "\u003cp class=\"text-[9px]\" style=\"font-size: 10px; color: #fff\"\u003ex\u003c/p\u003e",
+   "rule_id": "FE-INLINE-STYLE-OVERUSE",
+   "theory_basis": "Design System Consistency \u0026 CSS Maintainability (Atomic/Utility-first CSS).",
+   "suggested_fix": "\u003c!-- SEBELUM: style=\"margin-top: 12px; color: #333\" --\u003e\n\u003cdiv class=\"mt-3 text-neutral-700 dark:text-neutral-300\"\u003e"
+  },
+  {
+   "category": "frontend",
+   "severity": "WARNING",
+   "title": "Event Listener / Timer Tanpa Pembersihan (SPA Memory Leak)",
+   "description": "Berkas 'A.vue' mendaftarkan 2 listener/timer global tanpa pasangan removeEventListener/clearInterval (pertama pada baris 18). Setiap navigasi SPA menumpuk listener baru sehingga memori dan CPU terus naik.",
+   "suggestion": "Bersihkan di onBeforeUnmount/onUnmounted (Vue) atau fungsi cleanup useEffect (React), atau gunakan useEventListener dari VueUse.",
+   "target_file": "components/A.vue",
+   "line": 18,
+   "snippet": "window.addEventListener('resize', f)",
+   "rule_id": "FE-LISTENER-LEAK",
+   "theory_basis": "Vue Composition API Lifecycle \u0026 Chrome DevTools Memory Profiling (Detached Listener Leak).",
+   "suggested_fix": "onMounted(() =\u003e window.addEventListener('resize', onResize))\nonBeforeUnmount(() =\u003e window.removeEventListener('resize', onResize))"
+  },
+  {
+   "category": "frontend",
+   "severity": "INFO",
+   "title": "Ukuran Teks Terlalu Kecil (\u003c 12px)",
+   "description": "Berkas 'A.vue' memakai ukuran font di bawah 12px sebanyak 3 kali (pertama pada baris 10). Teks sekecil ini sulit dibaca, terutama pada layar mobile dan pengguna dengan gangguan penglihatan.",
+   "suggestion": "Gunakan skala tipografi minimum 12px (text-xs) untuk label dan 14–16px untuk isi utama; konsistenkan via design token.",
+   "target_file": "components/A.vue",
+   "line": 10,
+   "snippet": "\u003cp class=\"text-[9px]\" style=\"font-size: 10px; color: #fff\"\u003ex\u003c/p\u003e",
+   "rule_id": "FE-SMALL-FONT",
+   "theory_basis": "Material Design Type Scale (min 12sp caption) \u0026 Apple HIG Typography; WCAG 2.2 SC 1.4.4 (Resize Text).",
+   "suggested_fix": "\u003c!-- SEBELUM: class=\"text-[9px]\" --\u003e\n\u003c!-- SESUDAH: --\u003e \u003cspan class=\"text-xs\"\u003eLabel\u003c/span\u003e"
+  },
+  {
+   "category": "frontend",
+   "severity": "WARNING",
+   "title": "Rendering List Tanpa :key (v-for Missing Key)",
+   "description": "Berkas 'A.vue' memiliki 1 elemen v-for tanpa atribut :key (pertama pada baris 3). Vue tidak dapat melacak identitas item sehingga DOM dirender ulang penuh dan state input/animasi bisa tertukar.",
+   "suggestion": "Tambahkan :key unik dan stabil (ID entitas, bukan index array) pada setiap elemen v-for.",
+   "target_file": "components/A.vue",
+   "line": 3,
+   "snippet": "\u003cli v-for=\"i in items\" v-if=\"i.ok\"\u003e{{ i }}\u003c/li\u003e",
+   "rule_id": "FE-VFOR-MISSING-KEY",
+   "theory_basis": "Vue.js Official Style Guide — Priority A (Essential): Keyed v-for \u0026 Virtual DOM Reconciliation.",
+   "suggested_fix": "\u003cli v-for=\"item in items\" :key=\"item.id\"\u003e{{ item.name }}\u003c/li\u003e"
+  },
+  {
+   "category": "frontend",
+   "severity": "WARNING",
+   "title": "v-if dan v-for pada Elemen yang Sama",
+   "description": "Berkas 'A.vue' memiliki 1 elemen yang memakai v-if bersamaan dengan v-for (pertama pada baris 3). Kondisi dievaluasi untuk setiap item sehingga render lebih lambat dan prioritas direktif membingungkan.",
+   "suggestion": "Saring data lewat computed property terlebih dahulu, atau pindahkan v-if ke elemen \u003ctemplate\u003e pembungkus.",
+   "target_file": "components/A.vue",
+   "line": 3,
+   "snippet": "\u003cli v-for=\"i in items\" v-if=\"i.ok\"\u003e{{ i }}\u003c/li\u003e",
+   "rule_id": "FE-VIF-WITH-VFOR",
+   "theory_basis": "Vue.js Official Style Guide — Priority A (Essential): Avoid v-if with v-for.",
+   "suggested_fix": "const activeUsers = computed(() =\u003e users.value.filter(u =\u003e u.isActive))\n// \u003cli v-for=\"user in activeUsers\" :key=\"user.id\"\u003e"
+  },
+  {
+   "category": "frontend",
+   "severity": "INFO",
+   "title": "Eskalasi z-index Ekstrem (≥ 1000)",
+   "description": "Berkas 'A.vue' memakai z-index ≥ 1000 sebanyak 2 kali (pertama pada baris 12). Ini tanda perang tumpukan layer yang membuat modal, dropdown, dan toast saling menutupi.",
+   "suggestion": "Definisikan skala z-index terpusat (dropdown 10, sticky 20, modal 50, toast 60) dan gunakan token tersebut.",
+   "target_file": "components/A.vue",
+   "line": 12,
+   "snippet": "\u003cp class=\"w-[800px] z-[9999]\"\u003ez\u003c/p\u003e",
+   "rule_id": "FE-ZINDEX-ESCALATION",
+   "theory_basis": "CSS Stacking Context (CSS2.1 Appendix E) \u0026 Design System Layering Scale.",
+   "suggested_fix": ":root { --z-dropdown: 10; --z-modal: 50; --z-toast: 60; }"
+  }
+ ],
+ "xml": [
+  {
+   "category": "mobile",
+   "severity": "INFO",
+   "title": "Warna Hex Hardcoded di Layout (Tanpa @color/Tema)",
+   "description": "Layout 'a.xml' memuat 5 warna hex langsung (pertama pada baris 5). Dark theme dan konsistensi brand sulit dijaga.",
+   "suggestion": "Definisikan di res/values/colors.xml atau atribut tema (?attr/colorPrimary) lalu rujuk dari layout.",
+   "target_file": "app/src/main/res/layout/a.xml",
+   "line": 5,
+   "snippet": "\u003cImageView android:layout_width=\"24dp\" android:src=\"#fff\" /\u003e",
+   "rule_id": "AND-HARDCODED-COLOR-XML",
+   "theory_basis": "Material Theming \u0026 Android Night Mode (DayNight Theme).",
+   "suggested_fix": "android:textColor=\"?attr/colorOnSurface\""
+  },
+  {
+   "category": "mobile",
+   "severity": "INFO",
+   "title": "Teks Hardcoded di Layout (Tidak Memakai @string)",
+   "description": "Layout 'a.xml' memiliki 2 teks literal pada android:text/hint (pertama pada baris 7). Aplikasi tidak dapat dilokalisasi dan teks sulit dikelola.",
+   "suggestion": "Pindahkan teks ke res/values/strings.xml dan rujuk via @string/nama.",
+   "target_file": "app/src/main/res/layout/a.xml",
+   "line": 7,
+   "snippet": "\u003cButton android:layout_width=\"30dp\" android:layout_height=\"30dp\" android:text=\"Click\" android:textSize=\"12sp\"/\u003e",
+   "rule_id": "AND-HARDCODED-TEXT",
+   "theory_basis": "Android Lint HardcodedText \u0026 Android Localization Guidelines.",
+   "suggested_fix": "android:text=\"@string/login_button\""
+  },
+  {
+   "category": "mobile",
+   "severity": "WARNING",
+   "title": "ImageView/ImageButton Tanpa contentDescription",
+   "description": "Layout 'a.xml' memiliki 2 gambar/ikon tanpa contentDescription (pertama pada baris 5). TalkBack tidak dapat membacakan fungsi tombol ikon.",
+   "suggestion": "Tambahkan android:contentDescription=\"@string/...\", atau importantForAccessibility=\"no\" untuk gambar dekoratif.",
+   "target_file": "app/src/main/res/layout/a.xml",
+   "line": 5,
+   "snippet": "\u003cImageView android:layout_width=\"24dp\" android:src=\"#fff\" /\u003e",
+   "rule_id": "AND-IMAGE-NO-CONTENTDESC",
+   "theory_basis": "Android Accessibility — Content Labels \u0026 Lint ContentDescription; WCAG 2.2 SC 1.1.1.",
+   "suggested_fix": "android:contentDescription=\"@string/cd_close\""
+  },
+  {
+   "category": "mobile",
+   "severity": "INFO",
+   "title": "Memakai ListView/GridView Lama (Bukan RecyclerView)",
+   "description": "Layout 'a.xml' memakai ListView/GridView sebanyak 1 kali (pertama pada baris 9). Komponen lama tidak mendaur ulang view secara efisien dan tidak mendukung DiffUtil.",
+   "suggestion": "Migrasi ke RecyclerView + ListAdapter, atau LazyColumn bila memakai Jetpack Compose.",
+   "target_file": "app/src/main/res/layout/a.xml",
+   "line": 9,
+   "snippet": "\u003cListView android:id=\"@+id/l\"/\u003e",
+   "rule_id": "AND-LEGACY-LISTVIEW",
+   "theory_basis": "Android Developers — Create Dynamic Lists with RecyclerView.",
+   "suggested_fix": "\u003candroidx.recyclerview.widget.RecyclerView android:id=\"@+id/list\" ... /\u003e"
+  },
+  {
+   "category": "mobile",
+   "severity": "WARNING",
+   "title": "Area Sentuh Tombol Terlalu Kecil (\u003c 48dp)",
+   "description": "Layout 'a.xml' memiliki 1 tombol/kontrol interaktif dengan lebar/tinggi \u003c 48dp (pertama pada baris 7). Tombol sulit ditekan dan sering salah sentuh.",
+   "suggestion": "Pastikan area sentuh minimal 48×48dp (gunakan minWidth/minHeight atau padding, bukan memperkecil ikon).",
+   "target_file": "app/src/main/res/layout/a.xml",
+   "line": 7,
+   "snippet": "\u003cButton android:layout_width=\"30dp\" android:layout_height=\"30dp\" android:text=\"Click\" android:textSize=\"12sp\"/\u003e",
+   "rule_id": "AND-SMALL-TOUCH-TARGET",
+   "theory_basis": "Material Design Accessibility — Touch Targets 48×48dp \u0026 WCAG 2.2 SC 2.5.8 (Target Size).",
+   "suggested_fix": "android:minWidth=\"48dp\"\nandroid:minHeight=\"48dp\""
+  },
+  {
+   "category": "mobile",
+   "severity": "WARNING",
+   "title": "Ukuran Teks Memakai dp/px, Bukan sp",
+   "description": "Layout 'a.xml' menetapkan textSize dalam dp/px sebanyak 1 kali (pertama pada baris 8). Teks tidak ikut membesar saat pengguna mengatur ukuran font sistem (aksesibilitas).",
+   "suggestion": "Gunakan satuan sp untuk textSize, atau TextAppearance dari tema.",
+   "target_file": "app/src/main/res/layout/a.xml",
+   "line": 8,
+   "snippet": "\u003cTextView android:onClick=\"go\" android:layout_width=\"40dp\" android:minHeight=\"48dp\" android:textSize=\"12dp\"/\u003e",
+   "rule_id": "AND-TEXTSIZE-NOT-SP",
+   "theory_basis": "Android Developers — Support Different Pixel Densities (sp vs dp) \u0026 WCAG 2.2 SC 1.4.4.",
+   "suggested_fix": "android:textAppearance=\"?attr/textAppearanceBodyMedium\"  \u003c!-- atau android:textSize=\"14sp\" --\u003e"
+  }
+ ],
+ "xml_deep": [
+  {
+   "category": "mobile",
+   "severity": "WARNING",
+   "title": "Hierarki Layout Terlalu Dalam (12 Level)",
+   "description": "Layout 'deep.xml' memiliki kedalaman view 12 level (batas Android Lint: 10). Setiap level menambah pass measure/layout sehingga render frame melewati 16ms (jank).",
+   "suggestion": "Ratakan hierarki dengan ConstraintLayout, \u003cmerge\u003e, atau pecah ke \u003cinclude\u003e/ViewStub untuk bagian yang jarang tampil.",
+   "target_file": "res/layout/deep.xml",
+   "line": 12,
+   "rule_id": "AND-DEEP-LAYOUT",
+   "theory_basis": "Android Lint TooDeepLayout \u0026 Android Developers — Optimizing Layout Hierarchies.",
+   "suggested_fix": "\u003candroidx.constraintlayout.widget.ConstraintLayout ...\u003e\n    \u003c!-- susun view sejajar dengan constraint, bukan nested LinearLayout --\u003e"
+  }
+ ]
+}
