@@ -20,56 +20,8 @@ import (
 	"github.com/vibeasik/vibeasik/pkg/security"
 )
 
-// FastScanComponent performs an AI-powered quick scan on a project component
-func FastScanComponent(db *gorm.DB, comp *models.Component, proj *models.Project) (*models.FastScanResult, error) {
-	targetDir := comp.AbsolutePath
-	if targetDir == "" {
-		if proj != nil && proj.RootPath != "" && comp.RelativePath != "" {
-			targetDir = filepath.Join(proj.RootPath, comp.RelativePath)
-		} else if comp.RelativePath != "" {
-			targetDir = comp.RelativePath
-		}
-	}
-
-	absDir, err := filepath.Abs(targetDir)
-	if err != nil {
-		return nil, fmt.Errorf("invalid path: %w", err)
-	}
-
-	info, err := os.Stat(absDir)
-	if err != nil || !info.IsDir() {
-		return nil, fmt.Errorf("directory does not exist on disk: %s", absDir)
-	}
-
-	// 1. Generate Clean Directory Tree (max depth 3); LLM cukup melihat 2 tingkat
-	dirTree := generateCleanTree(absDir, 3)
-
-	// 2. Rute diekstrak statis lebih dulu: bila adapter menemukannya, LLM tidak perlu membaca kode controller
-	// maupun menulis ulang daftar rute (deskripsinya diisi EnrichComponentRoutes secara bertahap).
-	staticRoutes := extractRoutes(absDir, comp.Role)
-	needRoutes := len(staticRoutes) == 0
-
-	// 3. Extract key manifest, config, database, auth, and env files
-	fileSnippets := extractKeyFiles(absDir, needRoutes)
-
-	// 4. Assemble scan prompt
-	rawPrompt := fmt.Sprintf(`Component Name: %s
-Role: %s (BE, FE, Mobile, etc.)
-Path: %s
-Registered Language: %s
-Registered Framework: %s
-
-DIRECTORY TREE:
-%s
-
-KEY FILES CONTENT (Config, Env, Database, Auth & Code):
-%s
-`, comp.Name, comp.Role, absDir, comp.Language, comp.Framework, generateCleanTree(absDir, 2), fileSnippets)
-
-	// 5. Sanitize and censor all keys globally with deterministic safe aliases
-	sanitizedContext, audit := security.GlobalSanitizer.Sanitize(rawPrompt)
-
-	systemPrompt := `You are an elite fullstack software architect, security auditor, and devops expert.
+// fastScanSystemPromptTmpl: prompt sistem fast scan; %s diisi skema rute (kosong bila rute sudah diekstrak statis).
+const fastScanSystemPromptTmpl = `You are an elite fullstack software architect, security auditor, and devops expert.
 Analyze the provided application component directory tree, environment files, database configs, and code snippets.
 Return a STRICT JSON response containing the folder structure, run instructions, environment/database/authentication extraction and architecture. Keep every text field short: vibeasik post-processes the result.
 All secret keys and passwords in the text have already been safely censored and aliased (e.g. [ALIASED_...]).
@@ -124,12 +76,125 @@ Respond with a JSON object in this exact schema:
     "port": 0
   }
 }`
+
+// fastScanTargetDir menentukan direktori target komponen (mungkin relatif/kosong).
+func fastScanTargetDir(comp *models.Component, proj *models.Project) string {
+	targetDir := comp.AbsolutePath
+	if targetDir == "" {
+		if proj != nil && proj.RootPath != "" && comp.RelativePath != "" {
+			targetDir = filepath.Join(proj.RootPath, comp.RelativePath)
+		} else if comp.RelativePath != "" {
+			targetDir = comp.RelativePath
+		}
+	}
+	return targetDir
+}
+
+// mergeDetectedArchitecture melengkapi arsitektur hasil LLM dengan deteksi statis.
+func mergeDetectedArchitecture(arch *models.ArchitectureInfo, detected models.ArchitectureInfo) {
+	if arch.Framework == "" {
+		arch.Framework = detected.Framework
+	}
+	if arch.FrameworkType == "" {
+		arch.FrameworkType = detected.FrameworkType
+	}
+	if arch.DesignPattern == "" {
+		arch.DesignPattern = detected.DesignPattern
+	}
+	if arch.PatternDetails == "" {
+		arch.PatternDetails = detected.PatternDetails
+	}
+	if len(arch.Plugins) == 0 {
+		arch.Plugins = detected.Plugins
+		return
+	}
+	// Merge any plugins detected statically that LLM missed
+	for _, p := range detected.Plugins {
+		arch.Plugins = addUnique(arch.Plugins, p)
+	}
+}
+
+// mergeHeuristicEnv melengkapi hasil ekstraksi database/auth dengan heuristik statis.
+func mergeHeuristicEnv(env *models.ExtractedEnvInfo, h models.ExtractedEnvInfo) {
+	if env.DatabaseType == "" || env.DatabaseType == envDBNone {
+		env.DatabaseType = h.DatabaseType
+	}
+	if env.ORMDriver == "" || env.ORMDriver == envORMNone {
+		env.ORMDriver = h.ORMDriver
+	}
+	if env.DatabaseName == "" {
+		env.DatabaseName = h.DatabaseName
+	}
+	if len(env.AuthMethods) == 0 && len(h.AuthMethods) > 0 {
+		env.AuthMethods = h.AuthMethods
+	}
+	if len(env.LoginEndpoints) == 0 && len(h.LoginEndpoints) > 0 {
+		env.LoginEndpoints = h.LoginEndpoints
+	}
+}
+
+// applyParsedFastScan menyalin hasil parse JSON LLM ke result.
+func applyParsedFastScan(result *models.FastScanResult, parsed *fastScanJSONPayload) {
+	result.FolderStructureSummary = parsed.FolderStructureSummary
+	result.HowToRun = parsed.HowToRun
+	result.ExtractedEnv = parsed.ExtractedEnv
+	result.DetectedParams = parsed.DetectedParams
+	result.Routes = parsed.Routes
+	result.Architecture = parsed.Architecture
+	result.AiAnalysisMarkdown = parsed.AiAnalysisMarkdown
+
+	// Ensure DynamicMetadata is non-nil
+	if result.ExtractedEnv.DynamicMetadata == nil {
+		result.ExtractedEnv.DynamicMetadata = make(map[string]string)
+	}
+}
+
+// FastScanComponent performs an AI-powered quick scan on a project component
+func FastScanComponent(db *gorm.DB, comp *models.Component, proj *models.Project) (*models.FastScanResult, error) {
+	absDir, err := filepath.Abs(fastScanTargetDir(comp, proj))
+	if err != nil {
+		return nil, fmt.Errorf("invalid path: %w", err)
+	}
+
+	info, err := os.Stat(absDir)
+	if err != nil || !info.IsDir() {
+		return nil, fmt.Errorf("directory does not exist on disk: %s", absDir)
+	}
+
+	// 1. Generate Clean Directory Tree (max depth 3); LLM cukup melihat 2 tingkat
+	dirTree := generateCleanTree(absDir, 3)
+
+	// 2. Rute diekstrak statis lebih dulu: bila adapter menemukannya, LLM tidak perlu membaca kode controller
+	// maupun menulis ulang daftar rute (deskripsinya diisi EnrichComponentRoutes secara bertahap).
+	staticRoutes := extractRoutes(absDir, comp.Role)
+	needRoutes := len(staticRoutes) == 0
+
+	// 3. Extract key manifest, config, database, auth, and env files
+	fileSnippets := extractKeyFiles(absDir, needRoutes)
+
+	// 4. Assemble scan prompt
+	rawPrompt := fmt.Sprintf(`Component Name: %s
+Role: %s (BE, FE, Mobile, etc.)
+Path: %s
+Registered Language: %s
+Registered Framework: %s
+
+DIRECTORY TREE:
+%s
+
+KEY FILES CONTENT (Config, Env, Database, Auth & Code):
+%s
+`, comp.Name, comp.Role, absDir, comp.Language, comp.Framework, generateCleanTree(absDir, 2), fileSnippets)
+
+	// 5. Sanitize and censor all keys globally with deterministic safe aliases
+	sanitizedContext, audit := security.GlobalSanitizer.Sanitize(rawPrompt)
+
 	routesSchema, routesAsk := "", fmt.Sprintf("Routes (%d) were already extracted statically: do NOT list them.", len(staticRoutes))
 	if needRoutes {
 		routesSchema = fastScanRoutesSchema
 		routesAsk = "List all routers, their HTTP methods, exact endpoint paths, handler functions, and short descriptions."
 	}
-	systemPrompt = fmt.Sprintf(systemPrompt, routesSchema)
+	systemPrompt := fmt.Sprintf(fastScanSystemPromptTmpl, routesSchema)
 
 	userPrompt := fmt.Sprintf(`Perform Fast Scan, Database Extraction, and API Route Inspection on this component:
 %s
@@ -160,49 +225,15 @@ Ensure your response is valid JSON matching the requested structure. %s`, saniti
 		},
 	}
 
-	parsed := parseFastScanJSON(aiRawResponse)
-	if parsed != nil {
-		result.FolderStructureSummary = parsed.FolderStructureSummary
-		result.HowToRun = parsed.HowToRun
-		result.ExtractedEnv = parsed.ExtractedEnv
-		result.DetectedParams = parsed.DetectedParams
-		result.Routes = parsed.Routes
-		result.Architecture = parsed.Architecture
-		result.AiAnalysisMarkdown = parsed.AiAnalysisMarkdown
-
-		// Ensure DynamicMetadata is non-nil
-		if result.ExtractedEnv.DynamicMetadata == nil {
-			result.ExtractedEnv.DynamicMetadata = make(map[string]string)
-		}
+	if parsed := parseFastScanJSON(aiRawResponse); parsed != nil {
+		applyParsedFastScan(result, parsed)
 	} else {
 		// Fallback heuristic if LLM returned free text or was offline
 		fallbackHeuristic(result, absDir, comp, aiRawResponse)
 	}
 
 	// Guarantee architecture detection completeness (Framework, Plugins, Design Pattern)
-	detectedArch := detectArchitecture(absDir)
-	if result.Architecture.Framework == "" {
-		result.Architecture.Framework = detectedArch.Framework
-	}
-	if result.Architecture.FrameworkType == "" {
-		result.Architecture.FrameworkType = detectedArch.FrameworkType
-	}
-	if result.Architecture.DesignPattern == "" {
-		result.Architecture.DesignPattern = detectedArch.DesignPattern
-	}
-	if result.Architecture.PatternDetails == "" {
-		result.Architecture.PatternDetails = detectedArch.PatternDetails
-	}
-	if len(result.Architecture.Plugins) == 0 {
-		result.Architecture.Plugins = detectedArch.Plugins
-	} else {
-		// Merge any plugins detected statically that LLM missed
-		for _, p := range detectedArch.Plugins {
-			if !containsString(result.Architecture.Plugins, p) {
-				result.Architecture.Plugins = append(result.Architecture.Plugins, p)
-			}
-		}
-	}
+	mergeDetectedArchitecture(&result.Architecture, detectArchitecture(absDir))
 
 	// Guarantee complete route extraction & merging via adapter architecture
 	if len(result.Routes) == 0 {
@@ -212,22 +243,7 @@ Ensure your response is valid JSON matching the requested structure. %s`, saniti
 	}
 
 	// Guarantee database extraction completeness
-	heuristicEnv := extractEnvHeuristic(absDir)
-	if result.ExtractedEnv.DatabaseType == "" || result.ExtractedEnv.DatabaseType == "None detected" {
-		result.ExtractedEnv.DatabaseType = heuristicEnv.DatabaseType
-	}
-	if result.ExtractedEnv.ORMDriver == "" || result.ExtractedEnv.ORMDriver == "Native / Standard" {
-		result.ExtractedEnv.ORMDriver = heuristicEnv.ORMDriver
-	}
-	if result.ExtractedEnv.DatabaseName == "" {
-		result.ExtractedEnv.DatabaseName = heuristicEnv.DatabaseName
-	}
-	if len(result.ExtractedEnv.AuthMethods) == 0 && len(heuristicEnv.AuthMethods) > 0 {
-		result.ExtractedEnv.AuthMethods = heuristicEnv.AuthMethods
-	}
-	if len(result.ExtractedEnv.LoginEndpoints) == 0 && len(heuristicEnv.LoginEndpoints) > 0 {
-		result.ExtractedEnv.LoginEndpoints = heuristicEnv.LoginEndpoints
-	}
+	mergeHeuristicEnv(&result.ExtractedEnv, extractEnvHeuristic(absDir))
 
 	// Generate clean rich Markdown report if raw response is empty, heuristic, or System One raw JSON
 	if strings.TrimSpace(result.AiAnalysisMarkdown) == "" || strings.HasPrefix(result.AiAnalysisMarkdown, "System One Evaluation") {
@@ -304,152 +320,193 @@ func parseFastScanJSON(raw string) *fastScanJSONPayload {
 	return nil
 }
 
-func fallbackHeuristic(result *models.FastScanResult, absDir string, comp *models.Component, rawAi string) {
-	lang := comp.Language
-	pkgMgr := comp.PackageManager
-	devCmd := comp.DevCommand
-	buildCmd := comp.BuildCommand
-	port := comp.Port
+// fallbackPlan: hasil deteksi stack berbasis berkas untuk fallbackHeuristic.
+type fallbackPlan struct {
+	lang       string
+	pkgMgr     string
+	devCmd     string
+	buildCmd   string
+	port       int
+	prereqs    []string
+	installCmd string
+	testCmd    string
+	steps      []string
+}
 
-	var prereqs []string
-	var installCmd, testCmd string
-	var steps []string
+func (p *fallbackPlan) defaultDev(cmd string) {
+	if p.devCmd == "" {
+		p.devCmd = cmd
+	}
+}
+
+func (p *fallbackPlan) defaultBuild(cmd string) {
+	if p.buildCmd == "" {
+		p.buildCmd = cmd
+	}
+}
+
+func (p *fallbackPlan) defaultPort(port int) {
+	if p.port == 0 {
+		p.port = port
+	}
+}
+
+func composerMentions(dir, word string) bool {
+	composer := filepath.Join(dir, "composer.json")
+	return util.PathExists(composer) && strings.Contains(util.ReadFileString(composer), word)
+}
+
+func planGo(dir string, comp *models.Component, p *fallbackPlan) {
+	p.lang = "go"
+	p.pkgMgr = "go"
+	p.defaultDev("go run main.go")
+	p.defaultBuild("go build -o server main.go")
+	p.testCmd = "go test ./..."
+	p.installCmd = "go mod download"
+	p.prereqs = []string{"Go 1.21+"}
+	p.defaultPort(8080)
+	p.steps = []string{
+		"1. Pastikan Go terinstall (`go version`).",
+		"2. Jalankan `go mod download` untuk mengunduh dependency.",
+		"3. Jalankan `go run main.go` untuk mode development.",
+		"4. Akses server di port :" + strconv.Itoa(p.port) + ".",
+	}
+}
+
+func planFlutter(dir string, comp *models.Component, p *fallbackPlan) {
+	p.lang = "dart"
+	comp.Framework = "flutter"
+	p.pkgMgr = "pub"
+	p.defaultDev("flutter run")
+	p.defaultBuild("flutter build apk")
+	p.testCmd = "flutter test"
+	p.installCmd = "flutter pub get"
+	p.prereqs = []string{"Flutter SDK 3.x", "Android Studio / VS Code"}
+	p.steps = []string{
+		"1. Pastikan Flutter SDK terpasang (`flutter doctor`).",
+		"2. Jalankan `flutter pub get` untuk mengunduh paket.",
+		"3. Buka emulator atau sambungkan perangkat fisik.",
+		"4. Jalankan `flutter run` untuk memulai aplikasi mobile.",
+	}
+}
+
+// nodePackageManager memilih package manager dari berkas lock (bawaan bun).
+func nodePackageManager(dir string) string {
+	for _, l := range []struct{ file, mgr string }{
+		{"pnpm-lock.yaml", "pnpm"}, {"yarn.lock", "yarn"}, {"package-lock.json", "npm"},
+	} {
+		if util.PathExists(filepath.Join(dir, l.file)) {
+			return l.mgr
+		}
+	}
+	return "bun"
+}
+
+func planNode(dir string, comp *models.Component, p *fallbackPlan) {
+	p.pkgMgr = nodePackageManager(dir)
+	if pathExistsAny(dir, "nuxt.config.ts", "nuxt.config.js") {
+		comp.Framework = "nuxt"
+		p.defaultPort(3000)
+	}
+	p.lang = "typescript"
+	p.installCmd = fmt.Sprintf("%s install", p.pkgMgr)
+	p.defaultDev(fmt.Sprintf("%s run dev", p.pkgMgr))
+	p.defaultBuild(fmt.Sprintf("%s run build", p.pkgMgr))
+	p.testCmd = fmt.Sprintf("%s test", p.pkgMgr)
+	p.prereqs = []string{fmt.Sprintf("Node.js 20+ atau %s", p.pkgMgr)}
+	p.steps = []string{
+		fmt.Sprintf("1. Jalankan `%s install` untuk menginstal modul.", p.pkgMgr),
+		fmt.Sprintf("2. Jalankan `%s` untuk menjalankan dev server.", p.devCmd),
+		fmt.Sprintf("3. Buka browser di http://localhost:%d", p.port),
+	}
+}
+
+func planCodeIgniter(dir string, comp *models.Component, p *fallbackPlan) {
+	p.lang = "php"
+	comp.Framework = "codeigniter"
+	p.pkgMgr = "composer"
+	p.defaultDev("php spark serve")
+	p.testCmd = "php spark test"
+	p.installCmd = "composer install"
+	p.prereqs = []string{"PHP 8.2+", "Composer"}
+	p.defaultPort(8080)
+	p.steps = []string{
+		"1. Pastikan PHP dan Composer terpasang (`php -v`, `composer -V`).",
+		"2. Jalankan `composer install` untuk mengunduh dependency.",
+		"3. Salin environment file: `cp env .env` dan sesuaikan konfigurasi database.",
+		"4. Jalankan `php spark serve` untuk memulai server development lokal.",
+		"5. Akses server di port :" + strconv.Itoa(p.port) + ".",
+	}
+}
+
+func planLaravel(dir string, comp *models.Component, p *fallbackPlan) {
+	p.lang = "php"
+	comp.Framework = "laravel"
+	p.pkgMgr = "composer"
+	p.defaultDev("php artisan serve")
+	p.testCmd = "php artisan test"
+	p.installCmd = "composer install"
+	p.prereqs = []string{"PHP 8.2+", "Composer"}
+	p.defaultPort(8000)
+	p.steps = []string{
+		"1. Pastikan PHP dan Composer terpasang (`php -v`, `composer -V`).",
+		"2. Jalankan `composer install` untuk mengunduh dependency.",
+		"3. Jalankan `php artisan serve` untuk memulai server development lokal.",
+		"4. Akses server di port :" + strconv.Itoa(p.port) + ".",
+	}
+}
+
+// fallbackStacks: stack yang dikenali dari berkas di disk (urut, pertama cocok).
+var fallbackStacks = []struct {
+	match func(dir string) bool
+	plan  func(dir string, comp *models.Component, p *fallbackPlan)
+}{
+	{func(d string) bool { return pathExistsAll(d, "go.mod") }, planGo},
+	{func(d string) bool { return pathExistsAll(d, "pubspec.yaml") }, planFlutter},
+	{func(d string) bool { return pathExistsAll(d, "package.json") }, planNode},
+	{func(d string) bool {
+		return pathExistsAny(d, "spark", "app/Config/Routes.php") || composerMentions(d, "codeigniter")
+	}, planCodeIgniter},
+	{func(d string) bool { return pathExistsAny(d, "artisan") || composerMentions(d, "laravel") }, planLaravel},
+}
+
+func fallbackHeuristic(result *models.FastScanResult, absDir string, comp *models.Component, rawAi string) {
+	p := &fallbackPlan{
+		lang:     comp.Language,
+		pkgMgr:   comp.PackageManager,
+		devCmd:   comp.DevCommand,
+		buildCmd: comp.BuildCommand,
+		port:     comp.Port,
+	}
 
 	// Detect by files on disk
-	if util.PathExists(filepath.Join(absDir, "go.mod")) {
-		lang = "go"
-		pkgMgr = "go"
-		if devCmd == "" {
-			devCmd = "go run main.go"
-		}
-		if buildCmd == "" {
-			buildCmd = "go build -o server main.go"
-		}
-		testCmd = "go test ./..."
-		installCmd = "go mod download"
-		prereqs = []string{"Go 1.21+"}
-		if port == 0 {
-			port = 8080
-		}
-		steps = []string{
-			"1. Pastikan Go terinstall (`go version`).",
-			"2. Jalankan `go mod download` untuk mengunduh dependency.",
-			"3. Jalankan `go run main.go` untuk mode development.",
-			"4. Akses server di port :" + strconv.Itoa(port) + ".",
-		}
-	} else if util.PathExists(filepath.Join(absDir, "pubspec.yaml")) {
-		lang = "dart"
-		comp.Framework = "flutter"
-		pkgMgr = "pub"
-		if devCmd == "" {
-			devCmd = "flutter run"
-		}
-		if buildCmd == "" {
-			buildCmd = "flutter build apk"
-		}
-		testCmd = "flutter test"
-		installCmd = "flutter pub get"
-		prereqs = []string{"Flutter SDK 3.x", "Android Studio / VS Code"}
-		steps = []string{
-			"1. Pastikan Flutter SDK terpasang (`flutter doctor`).",
-			"2. Jalankan `flutter pub get` untuk mengunduh paket.",
-			"3. Buka emulator atau sambungkan perangkat fisik.",
-			"4. Jalankan `flutter run` untuk memulai aplikasi mobile.",
-		}
-	} else if util.PathExists(filepath.Join(absDir, "package.json")) {
-		pkgMgr = "bun"
-		if util.PathExists(filepath.Join(absDir, "pnpm-lock.yaml")) {
-			pkgMgr = "pnpm"
-		} else if util.PathExists(filepath.Join(absDir, "yarn.lock")) {
-			pkgMgr = "yarn"
-		} else if util.PathExists(filepath.Join(absDir, "package-lock.json")) {
-			pkgMgr = "npm"
-		}
-
-		if util.PathExists(filepath.Join(absDir, "nuxt.config.ts")) || util.PathExists(filepath.Join(absDir, "nuxt.config.js")) {
-			comp.Framework = "nuxt"
-			if port == 0 {
-				port = 3000
-			}
-		}
-
-		lang = "typescript"
-		installCmd = fmt.Sprintf("%s install", pkgMgr)
-		if devCmd == "" {
-			devCmd = fmt.Sprintf("%s run dev", pkgMgr)
-		}
-		if buildCmd == "" {
-			buildCmd = fmt.Sprintf("%s run build", pkgMgr)
-		}
-		testCmd = fmt.Sprintf("%s test", pkgMgr)
-		prereqs = []string{fmt.Sprintf("Node.js 20+ atau %s", pkgMgr)}
-		steps = []string{
-			fmt.Sprintf("1. Jalankan `%s install` untuk menginstal modul.", pkgMgr),
-			fmt.Sprintf("2. Jalankan `%s` untuk menjalankan dev server.", devCmd),
-			fmt.Sprintf("3. Buka browser di http://localhost:%d", port),
-		}
-	} else if util.PathExists(filepath.Join(absDir, "spark")) || util.PathExists(filepath.Join(absDir, "app/Config/Routes.php")) || (util.PathExists(filepath.Join(absDir, "composer.json")) && strings.Contains(util.ReadFileString(filepath.Join(absDir, "composer.json")), "codeigniter")) {
-		lang = "php"
-		comp.Framework = "codeigniter"
-		pkgMgr = "composer"
-		if devCmd == "" {
-			devCmd = "php spark serve"
-		}
-		testCmd = "php spark test"
-		installCmd = "composer install"
-		prereqs = []string{"PHP 8.2+", "Composer"}
-		if port == 0 {
-			port = 8080
-		}
-		steps = []string{
-			"1. Pastikan PHP dan Composer terpasang (`php -v`, `composer -V`).",
-			"2. Jalankan `composer install` untuk mengunduh dependency.",
-			"3. Salin environment file: `cp env .env` dan sesuaikan konfigurasi database.",
-			"4. Jalankan `php spark serve` untuk memulai server development lokal.",
-			"5. Akses server di port :" + strconv.Itoa(port) + ".",
-		}
-	} else if util.PathExists(filepath.Join(absDir, "artisan")) || (util.PathExists(filepath.Join(absDir, "composer.json")) && strings.Contains(util.ReadFileString(filepath.Join(absDir, "composer.json")), "laravel")) {
-		lang = "php"
-		comp.Framework = "laravel"
-		pkgMgr = "composer"
-		if devCmd == "" {
-			devCmd = "php artisan serve"
-		}
-		testCmd = "php artisan test"
-		installCmd = "composer install"
-		prereqs = []string{"PHP 8.2+", "Composer"}
-		if port == 0 {
-			port = 8000
-		}
-		steps = []string{
-			"1. Pastikan PHP dan Composer terpasang (`php -v`, `composer -V`).",
-			"2. Jalankan `composer install` untuk mengunduh dependency.",
-			"3. Jalankan `php artisan serve` untuk memulai server development lokal.",
-			"4. Akses server di port :" + strconv.Itoa(port) + ".",
+	for _, st := range fallbackStacks {
+		if st.match(absDir) {
+			st.plan(absDir, comp, p)
+			break
 		}
 	}
 
-	result.FolderStructureSummary = fmt.Sprintf("Komponen %s berada di `%s`. Terdeteksi arsitektur berbasis %s dengan package manager %s.", comp.Name, absDir, lang, pkgMgr)
+	result.FolderStructureSummary = fmt.Sprintf("Komponen %s berada di `%s`. Terdeteksi arsitektur berbasis %s dengan package manager %s.", comp.Name, absDir, p.lang, p.pkgMgr)
 	result.HowToRun = models.HowToRunInfo{
-		Prerequisites:  prereqs,
-		InstallCommand: installCmd,
-		DevCommand:     devCmd,
-		BuildCommand:   buildCmd,
-		TestCommand:    testCmd,
-		Steps:          steps,
+		Prerequisites:  p.prereqs,
+		InstallCommand: p.installCmd,
+		DevCommand:     p.devCmd,
+		BuildCommand:   p.buildCmd,
+		TestCommand:    p.testCmd,
+		Steps:          p.steps,
 	}
 	result.DetectedParams = models.DetectedParams{
-		Language:       lang,
+		Language:       p.lang,
 		Framework:      comp.Framework,
-		PackageManager: pkgMgr,
-		DevCommand:     devCmd,
-		BuildCommand:   buildCmd,
-		Port:           port,
+		PackageManager: p.pkgMgr,
+		DevCommand:     p.devCmd,
+		BuildCommand:   p.buildCmd,
+		Port:           p.port,
 	}
 
 	// Extract environment, database, auth, and dynamic info heuristically
-	extractedEnv := extractEnvHeuristic(absDir)
-	result.ExtractedEnv = extractedEnv
+	result.ExtractedEnv = extractEnvHeuristic(absDir)
 	result.Routes = extractRoutes(absDir, comp.Role)
 
 	if strings.TrimSpace(rawAi) != "" && !strings.HasPrefix(rawAi, "System One Evaluation") {
@@ -901,113 +958,133 @@ func shouldIgnoreName(name string) bool {
 	return ignored[name]
 }
 
+// keyFileTargets: berkas manifest/konfigurasi yang dicuplik (urut tampil).
+var keyFileTargets = []string{
+	".env.example",
+	".env",
+	".env.server",
+	".env.local",
+	".env.development",
+	"docker-compose.yml",
+	"docker-compose.yaml",
+	"Dockerfile",
+	"package.json",
+	"go.mod",
+	"pubspec.yaml",
+	"Makefile",
+	"database/database.go",
+	"database/db.go",
+	"db/database.go",
+	"db/db.go",
+	"database.go",
+	"db.go",
+	"internal/database/db.go",
+	"internal/database/database.go",
+	"internal/config/config.go",
+	"config/config.go",
+	"utils/config.go",
+	"prisma/schema.prisma",
+	"drizzle.config.ts",
+	"nuxt.config.ts",
+	"nuxt.config.js",
+	"next.config.js",
+	"next.config.mjs",
+	"next.config.ts",
+	"vite.config.ts",
+	"vite.config.js",
+	"tailwind.config.ts",
+	"tailwind.config.js",
+	"tsconfig.json",
+	"spark",
+	"app/Config/Routes.php",
+	"app/Config/Database.php",
+	"app/Config/App.php",
+	"app/Config/Filters.php",
+	"application/config/routes.php",
+	"application/config/database.php",
+	"composer.json",
+	"routes/api.php",
+	"routes/web.php",
+	"main.go",
+	"app.vue",
+	"app/app.vue",
+	"app/composables/useApi.ts",
+	"composables/useApi.ts",
+	"lib/main.dart",
+	"README.md",
+}
+
+// keyFileCtrlDirs: direktori controller/composable yang dicuplik bila kode rute dibutuhkan.
+var keyFileCtrlDirs = []string{"controllers", "routes", "handlers", "api", "composables", "app/composables", "server/api", "app/Controllers", "app/Controllers/Api", "application/controllers"}
+
+// keyFileMaxLines: batas baris cuplikan per berkas.
+func keyFileMaxLines(t string, withCode bool) int {
+	switch {
+	case withCode && (strings.HasSuffix(t, "main.go") || containsAny(t, "routes", "Routes", "useApi")):
+		return 400
+	case strings.Contains(t, "database"):
+		return 150
+	}
+	return 60
+}
+
+// isSnippetSource: berkas kode yang layak dicuplik dari direktori controller.
+func isSnippetSource(name string) bool {
+	if strings.HasSuffix(name, "_test.go") || strings.HasSuffix(name, ".test.ts") {
+		return false
+	}
+	for _, ext := range []string{".go", ".ts", ".js", ".php"} {
+		if strings.HasSuffix(name, ext) {
+			return true
+		}
+	}
+	return false
+}
+
+// appendControllerSnippets menambahkan cuplikan (maks 8 berkas per direktori) dari direktori controller.
+func appendControllerSnippets(sb *strings.Builder, dir string) {
+	for _, cd := range keyFileCtrlDirs {
+		p := filepath.Join(dir, cd)
+		if info, err := os.Stat(p); err != nil || !info.IsDir() {
+			continue
+		}
+		entries, _ := os.ReadDir(p)
+		count := 0
+		for _, e := range entries {
+			if e.IsDir() || !isSnippetSource(e.Name()) {
+				continue
+			}
+			count++
+			if count > 8 {
+				break
+			}
+			cContent, err := readSnippet(filepath.Join(p, e.Name()), 150)
+			if err == nil && cContent != "" {
+				sb.WriteString(fmt.Sprintf("\n--- FILE: %s/%s ---\n%s\n", cd, e.Name(), cContent))
+			}
+		}
+	}
+}
+
 // extractKeyFiles: cuplikan berkas manifest/konfigurasi. withCode = sertakan kode rute/controller (hanya bila
 // rute tidak bisa diekstrak statis); tanpa itu cukup 60 baris pertama per berkas.
 func extractKeyFiles(dir string, withCode bool) string {
 	var sb strings.Builder
-	targets := []string{
-		".env.example",
-		".env",
-		".env.server",
-		".env.local",
-		".env.development",
-		"docker-compose.yml",
-		"docker-compose.yaml",
-		"Dockerfile",
-		"package.json",
-		"go.mod",
-		"pubspec.yaml",
-		"Makefile",
-		"database/database.go",
-		"database/db.go",
-		"db/database.go",
-		"db/db.go",
-		"database.go",
-		"db.go",
-		"internal/database/db.go",
-		"internal/database/database.go",
-		"internal/config/config.go",
-		"config/config.go",
-		"utils/config.go",
-		"prisma/schema.prisma",
-		"drizzle.config.ts",
-		"nuxt.config.ts",
-		"nuxt.config.js",
-		"next.config.js",
-		"next.config.mjs",
-		"next.config.ts",
-		"vite.config.ts",
-		"vite.config.js",
-		"tailwind.config.ts",
-		"tailwind.config.js",
-		"tsconfig.json",
-		"spark",
-		"app/Config/Routes.php",
-		"app/Config/Database.php",
-		"app/Config/App.php",
-		"app/Config/Filters.php",
-		"application/config/routes.php",
-		"application/config/database.php",
-		"composer.json",
-		"routes/api.php",
-		"routes/web.php",
-		"main.go",
-		"app.vue",
-		"app/app.vue",
-		"app/composables/useApi.ts",
-		"composables/useApi.ts",
-		"lib/main.dart",
-		"README.md",
-	}
-
-	for _, t := range targets {
+	for _, t := range keyFileTargets {
 		p := filepath.Join(dir, t)
-		if util.PathExists(p) {
-			maxLines := 60
-			switch {
-			case withCode && (strings.HasSuffix(t, "main.go") || strings.Contains(t, "routes") || strings.Contains(t, "Routes") || strings.Contains(t, "useApi")):
-				maxLines = 400
-			case strings.Contains(t, "database"):
-				maxLines = 150
-			}
-			content, err := readSnippet(p, maxLines)
-			if err == nil && content != "" {
-				sb.WriteString(fmt.Sprintf("\n--- FILE: %s ---\n%s\n", t, content))
-			}
+		if !util.PathExists(p) {
+			continue
+		}
+		content, err := readSnippet(p, keyFileMaxLines(t, withCode))
+		if err == nil && content != "" {
+			sb.WriteString(fmt.Sprintf("\n--- FILE: %s ---\n%s\n", t, content))
 		}
 	}
 
-	if !withCode {
-		return sb.String()
+	if withCode {
+		// Also extract controller signatures or composables if available
+		appendControllerSnippets(&sb, dir)
 	}
-	// Also extract controller signatures or composables if available
-	ctrlDirs := []string{"controllers", "routes", "handlers", "api", "composables", "app/composables", "server/api", "app/Controllers", "app/Controllers/Api", "application/controllers"}
-	for _, cd := range ctrlDirs {
-		p := filepath.Join(dir, cd)
-		if info, err := os.Stat(p); err == nil && info.IsDir() {
-			entries, _ := os.ReadDir(p)
-			count := 0
-			for _, e := range entries {
-				if e.IsDir() || strings.HasSuffix(e.Name(), "_test.go") || strings.HasSuffix(e.Name(), ".test.ts") {
-					continue
-				}
-				name := e.Name()
-				if !strings.HasSuffix(name, ".go") && !strings.HasSuffix(name, ".ts") && !strings.HasSuffix(name, ".js") && !strings.HasSuffix(name, ".php") {
-					continue
-				}
-				count++
-				if count > 8 {
-					break
-				}
-				cPath := filepath.Join(p, name)
-				cContent, err := readSnippet(cPath, 150)
-				if err == nil && cContent != "" {
-					sb.WriteString(fmt.Sprintf("\n--- FILE: %s/%s ---\n%s\n", cd, name, cContent))
-				}
-			}
-		}
-	}
-
 	return sb.String()
 }
 
