@@ -5,6 +5,7 @@ import (
 
 	"github.com/vibeasik/vibeasik/pkg/analysis"
 	"github.com/vibeasik/vibeasik/pkg/models"
+	"github.com/vibeasik/vibeasik/pkg/paging"
 )
 
 func (s *Server) getComponentRoutes(c *fiber.Ctx) error {
@@ -26,11 +27,11 @@ func (s *Server) getComponentRoutes(c *fiber.Ctx) error {
 		proj, _ := s.repos.Projects.FindByID(c.Context(), comp.ProjectID)
 		syncRes, err := analysis.SyncComponentRoutes(s.db, comp, proj)
 		if err == nil && len(syncRes.Routes) > 0 {
-			return c.JSON(syncRes.Routes)
+			return c.JSON(paging.Apply(c, syncRes.Routes))
 		}
 	}
 
-	return c.JSON(routes)
+	return c.JSON(paging.Apply(c, routes))
 }
 
 func (s *Server) syncComponentRoutes(c *fiber.Ctx) error {

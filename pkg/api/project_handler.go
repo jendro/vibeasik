@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/vibeasik/vibeasik/pkg/models"
+	"github.com/vibeasik/vibeasik/pkg/paging"
 	"github.com/vibeasik/vibeasik/pkg/registry"
 	"github.com/vibeasik/vibeasik/pkg/service"
 	"github.com/vibeasik/vibeasik/pkg/workspace"
@@ -21,7 +22,8 @@ func (s *Server) getProjects(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.JSON(projects)
+	// Bentuk array tetap; ?limit=&offset= opsional, total di header X-Total-Count.
+	return c.JSON(paging.Apply(c, projects))
 }
 
 type CreateProjectPayload struct {
