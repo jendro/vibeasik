@@ -1,0 +1,590 @@
+=== JSON
+[
+ {
+  "module": "ginmix",
+  "dir": ".",
+  "framework": "gin",
+  "entries": [
+   "main.go:14"
+  ],
+  "routers": [
+   {
+    "id": 0,
+    "parent": -1,
+    "var": "",
+    "framework": "gin",
+    "prefix": "/",
+    "pos": "main.go:15",
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "middlewares": [
+     {
+      "name": "Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "main.go:11"
+     }
+    ]
+   },
+   {
+    "id": 1,
+    "parent": 0,
+    "var": "",
+    "framework": "gin",
+    "prefix": "/v1",
+    "pos": "main.go:22",
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "middlewares": [
+     {
+      "name": "AuthRequired()",
+      "scope": "group",
+      "scope_path": "/v1",
+      "pos": "main.go:22",
+      "decl": "main.go:9",
+      "auth": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "parent": 1,
+    "var": "",
+    "framework": "gin",
+    "prefix": "/v1/admin",
+    "pos": "main.go:26",
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "middlewares": [
+     {
+      "name": "AdminOnly()",
+      "scope": "group",
+      "scope_path": "/v1/admin",
+      "pos": "main.go:26",
+      "decl": "main.go:10"
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "parent": 0,
+    "var": "",
+    "framework": "gin",
+    "prefix": "/soft",
+    "pos": "main.go:29",
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "middlewares": [
+     {
+      "name": "TrySoftAuth()",
+      "scope": "group",
+      "scope_path": "/soft",
+      "pos": "main.go:29",
+      "decl": "main.go:12",
+      "auth": true,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "parent": 0,
+    "var": "",
+    "framework": "gin",
+    "prefix": "/pub",
+    "pos": "main.go:31",
+    "stack": [
+     "main.go:14 main()"
+    ]
+   }
+  ],
+  "routes": [
+   {
+    "method": "GET",
+    "path": "/",
+    "pos": "main.go:17",
+    "router_id": 0,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "index",
+    "handler_decl": "main.go:36",
+    "chain": [
+     {
+      "name": "Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "main.go:11"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "string",
+      "body": "\"hi\"",
+      "pos": "main.go:36"
+     }
+    ]
+   },
+   {
+    "method": "ANY",
+    "path": "/any",
+    "pos": "main.go:21",
+    "router_id": 0,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "index",
+    "handler_decl": "main.go:36",
+    "chain": [
+     {
+      "name": "Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "main.go:11"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "string",
+      "body": "\"hi\"",
+      "pos": "main.go:36"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/f",
+    "pos": "main.go:19",
+    "router_id": 0,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "static \"./f\"",
+    "chain": [
+     {
+      "name": "Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "main.go:11"
+     }
+    ],
+    "auth": false
+   },
+   {
+    "method": "GET,POST",
+    "path": "/m",
+    "pos": "main.go:20",
+    "router_id": 0,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "index",
+    "handler_decl": "main.go:36",
+    "chain": [
+     {
+      "name": "Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "main.go:11"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "string",
+      "body": "\"hi\"",
+      "pos": "main.go:36"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/pub/p",
+    "pos": "main.go:32",
+    "router_id": 4,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "func literal",
+    "handler_decl": "main.go:32",
+    "chain": [
+     {
+      "name": "Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "main.go:11"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "json",
+      "body": "gin.H{ok}",
+      "pos": "main.go:32"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/s",
+    "pos": "main.go:18",
+    "router_id": 0,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "static \"./s\"",
+    "chain": [
+     {
+      "name": "Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "main.go:11"
+     }
+    ],
+    "auth": false
+   },
+   {
+    "method": "GET",
+    "path": "/soft/s",
+    "pos": "main.go:30",
+    "router_id": 3,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "index",
+    "handler_decl": "main.go:36",
+    "chain": [
+     {
+      "name": "Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "main.go:11"
+     },
+     {
+      "name": "TrySoftAuth()",
+      "scope": "group",
+      "scope_path": "/soft",
+      "pos": "main.go:29",
+      "decl": "main.go:12",
+      "auth": true,
+      "optional": true
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "string",
+      "body": "\"hi\"",
+      "pos": "main.go:36"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/v1/a",
+    "pos": "main.go:24",
+    "router_id": 1,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "a",
+    "handler_decl": "main.go:37",
+    "chain": [
+     {
+      "name": "Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "main.go:11"
+     },
+     {
+      "name": "AuthRequired()",
+      "scope": "group",
+      "scope_path": "/v1",
+      "pos": "main.go:22",
+      "decl": "main.go:9",
+      "auth": true
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "json",
+      "body": "gin.H{a}",
+      "pos": "main.go:37"
+     }
+    ]
+   },
+   {
+    "method": "DELETE",
+    "path": "/v1/admin/c/:id",
+    "pos": "main.go:27",
+    "router_id": 2,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "c2",
+    "handler_decl": "main.go:45",
+    "chain": [
+     {
+      "name": "Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "main.go:11"
+     },
+     {
+      "name": "AuthRequired()",
+      "scope": "group",
+      "scope_path": "/v1",
+      "pos": "main.go:22",
+      "decl": "main.go:9",
+      "auth": true
+     },
+     {
+      "name": "AdminOnly()",
+      "scope": "group",
+      "scope_path": "/v1/admin",
+      "pos": "main.go:26",
+      "decl": "main.go:10"
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 404,
+      "kind": "status",
+      "pos": "main.go:45"
+     }
+    ]
+   },
+   {
+    "method": "POST",
+    "path": "/v1/b",
+    "pos": "main.go:25",
+    "router_id": 1,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "b",
+    "handler_decl": "main.go:38",
+    "chain": [
+     {
+      "name": "Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "main.go:11"
+     },
+     {
+      "name": "AuthRequired()",
+      "scope": "group",
+      "scope_path": "/v1",
+      "pos": "main.go:22",
+      "decl": "main.go:9",
+      "auth": true
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 302,
+      "kind": "redirect",
+      "pos": "main.go:43"
+     },
+     {
+      "status": 400,
+      "kind": "json",
+      "body": "gin.H{error}",
+      "pos": "main.go:40"
+     }
+    ]
+   }
+  ]
+ }
+]
+=== MARKDOWN
+## Peta Rute (router → middleware → handler → response)
+
+> Ditelusuri statis dari `func main` dengan go/parser + go/types: prefix group, middleware efektif per rute sesuai semantik framework (urutan pendaftaran, prefix Use/Group, skip `Next`), status response handler (termasuk lewat helper), fungsi yang dijangkau. Sebelum menyimpulkan "rute tanpa auth/validasi", cek rantai di sini: middleware global & group tidak terlihat di baris rute. Detail per rute (jalur setup dari main, response + body, semua fungsi yang dipanggil) ada di `.vibeasik/routes.jsonl`; MCP `vibeasik_code_map_routes` (filter path/method, atau `function` untuk menelusur balik fungsi → rute).
+
+### Modul `ginmix` (`.`, gin) — 10 rute
+
+- Titik masuk: `main.go:14`
+- **Middleware global** (urut eksekusi, berlaku untuk rute yang didaftarkan sesudahnya):
+  1. Logger() [main.go:11] — `main.go:16`
+- **Group bermiddleware**:
+  - `/v1` (`main.go:22`): AuthRequired() [main.go:9] (auth)
+  - `/v1/admin` (`main.go:26`): AdminOnly() [main.go:10]
+  - `/soft` (`main.go:29`): TrySoftAuth() [main.go:12] (auth opsional)
+- Rute pengubah data **tanpa** middleware auth wajib (pastikan memang publik): `ANY /any`, `GET,POST /m`
+
+#### Rantai: global · publik (6 rute)
+
+- `GET /` → `index` `main.go:36` · 200 string
+- `ANY /any` → `index` `main.go:36` · 200 string
+- `GET /f` → `static "./f"`
+- `GET,POST /m` → `index` `main.go:36` · 200 string
+- `GET /pub/p` → `func literal` `main.go:32` · 200
+- `GET /s` → `static "./s"`
+
+#### Rantai: global → TrySoftAuth() [main.go:12] (auth opsional) {group /soft} · publik (1 rute)
+
+- `GET /soft/s` → `index` `main.go:36` · 200 string
+
+#### Rantai: global → AuthRequired() [main.go:9] (auth) {group /v1} · auth (2 rute)
+
+- `GET /v1/a` → `a` `main.go:37` · 200
+- `POST /v1/b` → `b` `main.go:38` · 302 redirect,400
+
+#### Rantai: global → AuthRequired() [main.go:9] (auth) {group /v1} → AdminOnly() [main.go:10] {group /v1/admin} · auth (1 rute)
+
+- `DELETE /v1/admin/c/:id` → `c2` `main.go:45` · 404
+
+
+=== JSONL
+{"module":"ginmix","method":"GET","path":"/","pos":"main.go:17","router_id":0,"stack":["main.go:14 main()"],"handler":"index","handler_decl":"main.go:36","chain":[{"name":"Logger()","scope":"global","pos":"main.go:16","decl":"main.go:11"}],"auth":false,"responses":[{"status":200,"kind":"string","body":"\"hi\"","pos":"main.go:36"}]}
+{"module":"ginmix","method":"ANY","path":"/any","pos":"main.go:21","router_id":0,"stack":["main.go:14 main()"],"handler":"index","handler_decl":"main.go:36","chain":[{"name":"Logger()","scope":"global","pos":"main.go:16","decl":"main.go:11"}],"auth":false,"responses":[{"status":200,"kind":"string","body":"\"hi\"","pos":"main.go:36"}]}
+{"module":"ginmix","method":"GET","path":"/f","pos":"main.go:19","router_id":0,"stack":["main.go:14 main()"],"handler":"static \"./f\"","chain":[{"name":"Logger()","scope":"global","pos":"main.go:16","decl":"main.go:11"}],"auth":false}
+{"module":"ginmix","method":"GET,POST","path":"/m","pos":"main.go:20","router_id":0,"stack":["main.go:14 main()"],"handler":"index","handler_decl":"main.go:36","chain":[{"name":"Logger()","scope":"global","pos":"main.go:16","decl":"main.go:11"}],"auth":false,"responses":[{"status":200,"kind":"string","body":"\"hi\"","pos":"main.go:36"}]}
+{"module":"ginmix","method":"GET","path":"/pub/p","pos":"main.go:32","router_id":4,"stack":["main.go:14 main()"],"handler":"func literal","handler_decl":"main.go:32","chain":[{"name":"Logger()","scope":"global","pos":"main.go:16","decl":"main.go:11"}],"auth":false,"responses":[{"status":200,"kind":"json","body":"gin.H{ok}","pos":"main.go:32"}]}
+{"module":"ginmix","method":"GET","path":"/s","pos":"main.go:18","router_id":0,"stack":["main.go:14 main()"],"handler":"static \"./s\"","chain":[{"name":"Logger()","scope":"global","pos":"main.go:16","decl":"main.go:11"}],"auth":false}
+{"module":"ginmix","method":"GET","path":"/soft/s","pos":"main.go:30","router_id":3,"stack":["main.go:14 main()"],"handler":"index","handler_decl":"main.go:36","chain":[{"name":"Logger()","scope":"global","pos":"main.go:16","decl":"main.go:11"},{"name":"TrySoftAuth()","scope":"group","scope_path":"/soft","pos":"main.go:29","decl":"main.go:12","auth":true,"optional":true}],"auth":false,"responses":[{"status":200,"kind":"string","body":"\"hi\"","pos":"main.go:36"}]}
+{"module":"ginmix","method":"GET","path":"/v1/a","pos":"main.go:24","router_id":1,"stack":["main.go:14 main()"],"handler":"a","handler_decl":"main.go:37","chain":[{"name":"Logger()","scope":"global","pos":"main.go:16","decl":"main.go:11"},{"name":"AuthRequired()","scope":"group","scope_path":"/v1","pos":"main.go:22","decl":"main.go:9","auth":true}],"auth":true,"responses":[{"status":200,"kind":"json","body":"gin.H{a}","pos":"main.go:37"}]}
+{"module":"ginmix","method":"DELETE","path":"/v1/admin/c/:id","pos":"main.go:27","router_id":2,"stack":["main.go:14 main()"],"handler":"c2","handler_decl":"main.go:45","chain":[{"name":"Logger()","scope":"global","pos":"main.go:16","decl":"main.go:11"},{"name":"AuthRequired()","scope":"group","scope_path":"/v1","pos":"main.go:22","decl":"main.go:9","auth":true},{"name":"AdminOnly()","scope":"group","scope_path":"/v1/admin","pos":"main.go:26","decl":"main.go:10"}],"auth":true,"responses":[{"status":404,"kind":"status","pos":"main.go:45"}]}
+{"module":"ginmix","method":"POST","path":"/v1/b","pos":"main.go:25","router_id":1,"stack":["main.go:14 main()"],"handler":"b","handler_decl":"main.go:38","chain":[{"name":"Logger()","scope":"global","pos":"main.go:16","decl":"main.go:11"},{"name":"AuthRequired()","scope":"group","scope_path":"/v1","pos":"main.go:22","decl":"main.go:9","auth":true}],"auth":true,"responses":[{"status":302,"kind":"redirect","pos":"main.go:43"},{"status":400,"kind":"json","body":"gin.H{error}","pos":"main.go:40"}]}
+
+=== TRACE
+GET /  (didaftarkan main.go:17)
+Jalur setup: main.go:14 main() → main.go:17
+Rantai middleware (urut eksekusi):
+  1. Logger() [main.go:11] {global} — main.go:16
+Auth wajib: false
+Handler: index (main.go:36)
+  → 200 string "hi" (main.go:36)
+
+ANY /any  (didaftarkan main.go:21)
+Jalur setup: main.go:14 main() → main.go:21
+Rantai middleware (urut eksekusi):
+  1. Logger() [main.go:11] {global} — main.go:16
+Auth wajib: false
+Handler: index (main.go:36)
+  → 200 string "hi" (main.go:36)
+
+GET /f  (didaftarkan main.go:19)
+Jalur setup: main.go:14 main() → main.go:19
+Rantai middleware (urut eksekusi):
+  1. Logger() [main.go:11] {global} — main.go:16
+Auth wajib: false
+Handler: static "./f"
+
+GET,POST /m  (didaftarkan main.go:20)
+Jalur setup: main.go:14 main() → main.go:20
+Rantai middleware (urut eksekusi):
+  1. Logger() [main.go:11] {global} — main.go:16
+Auth wajib: false
+Handler: index (main.go:36)
+  → 200 string "hi" (main.go:36)
+
+GET /pub/p  (didaftarkan main.go:32)
+Jalur setup: main.go:14 main() → main.go:32
+Rantai middleware (urut eksekusi):
+  1. Logger() [main.go:11] {global} — main.go:16
+Auth wajib: false
+Handler: func literal (main.go:32)
+  → 200 json gin.H{ok} (main.go:32)
+
+GET /s  (didaftarkan main.go:18)
+Jalur setup: main.go:14 main() → main.go:18
+Rantai middleware (urut eksekusi):
+  1. Logger() [main.go:11] {global} — main.go:16
+Auth wajib: false
+Handler: static "./s"
+
+GET /soft/s  (didaftarkan main.go:30)
+Jalur setup: main.go:14 main() → main.go:30
+Rantai middleware (urut eksekusi):
+  1. Logger() [main.go:11] {global} — main.go:16
+  2. TrySoftAuth() [main.go:12] (auth opsional) {group /soft} — main.go:29
+Auth wajib: false
+Handler: index (main.go:36)
+  → 200 string "hi" (main.go:36)
+
+GET /v1/a  (didaftarkan main.go:24)
+Jalur setup: main.go:14 main() → main.go:24
+Rantai middleware (urut eksekusi):
+  1. Logger() [main.go:11] {global} — main.go:16
+  2. AuthRequired() [main.go:9] (auth) {group /v1} — main.go:22
+Auth wajib: true
+Handler: a (main.go:37)
+  → 200 json gin.H{a} (main.go:37)
+
+DELETE /v1/admin/c/:id  (didaftarkan main.go:27)
+Jalur setup: main.go:14 main() → main.go:27
+Rantai middleware (urut eksekusi):
+  1. Logger() [main.go:11] {global} — main.go:16
+  2. AuthRequired() [main.go:9] (auth) {group /v1} — main.go:22
+  3. AdminOnly() [main.go:10] {group /v1/admin} — main.go:26
+Auth wajib: true
+Handler: c2 (main.go:45)
+  → 404 status (main.go:45)
+
+POST /v1/b  (didaftarkan main.go:25)
+Jalur setup: main.go:14 main() → main.go:25
+Rantai middleware (urut eksekusi):
+  1. Logger() [main.go:11] {global} — main.go:16
+  2. AuthRequired() [main.go:9] (auth) {group /v1} — main.go:22
+Auth wajib: true
+Handler: b (main.go:38)
+  → 302 redirect (main.go:43)
+  → 400 json gin.H{error} (main.go:40)
+
+=== FILEROUTES
+main.go: ANY /any; DELETE /v1/admin/c/:id; GET /; GET /pub/p; GET /soft/s; GET /v1/a; GET,POST /m; POST /v1/b
+=== QUERIES
+[  ] => GET /, ANY /any, GET /f, GET,POST /m, GET /pub/p, GET /s, GET /soft/s, GET /v1/a, DELETE /v1/admin/c/:id, POST /v1/b
+[get  ] => GET /, ANY /any, GET /f, GET /pub/p, GET /s, GET /soft/s, GET /v1/a
+[ /a ] => ANY /any, GET /v1/a, DELETE /v1/admin/c/:id
+[POST  list] => 
+[  handlers.CreateUser] => 
+[  save] => 
+[  home] => 
+[  h/h.go] => 
+[  create] => 
+RouteAt(main.go:17) => GET /
+ContextFor(main.go:36) => "GET /  (didaftarkan main.go:17)\nJalur setup: main.go:14 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nANY /any  (didaftarkan main.go:21)\nJalur setup: main.go:14 main() → main.go:21\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nGET,POST /m  (didaftarkan main.go:20)\nJalur setup: main.go:14 main() → main.go:20\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\n(+1 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /  (didaftarkan main.go:17)\nJalur setup: main.go:14 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nANY /any  (didaftarkan main.go:21)\nJalur setup: main.go:14 main() → main.go:21\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nGET,POST /m  (didaftarkan main.go:20)\nJalur setup: main.go:14 main() → main.go:20\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\n(+5 rute lain menjangkau target ini)\n"
+RouteAt(main.go:21) => ANY /any
+ContextFor(main.go:36) => "GET /  (didaftarkan main.go:17)\nJalur setup: main.go:14 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nANY /any  (didaftarkan main.go:21)\nJalur setup: main.go:14 main() → main.go:21\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nGET,POST /m  (didaftarkan main.go:20)\nJalur setup: main.go:14 main() → main.go:20\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\n(+1 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /  (didaftarkan main.go:17)\nJalur setup: main.go:14 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nANY /any  (didaftarkan main.go:21)\nJalur setup: main.go:14 main() → main.go:21\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nGET,POST /m  (didaftarkan main.go:20)\nJalur setup: main.go:14 main() → main.go:20\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\n(+5 rute lain menjangkau target ini)\n"
+RouteAt(main.go:19) => GET /f
+RouteAt(main.go:20) => GET,POST /m
+ContextFor(main.go:36) => "GET /  (didaftarkan main.go:17)\nJalur setup: main.go:14 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nANY /any  (didaftarkan main.go:21)\nJalur setup: main.go:14 main() → main.go:21\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nGET,POST /m  (didaftarkan main.go:20)\nJalur setup: main.go:14 main() → main.go:20\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\n(+1 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /  (didaftarkan main.go:17)\nJalur setup: main.go:14 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nANY /any  (didaftarkan main.go:21)\nJalur setup: main.go:14 main() → main.go:21\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nGET,POST /m  (didaftarkan main.go:20)\nJalur setup: main.go:14 main() → main.go:20\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\n(+5 rute lain menjangkau target ini)\n"
+RouteAt(main.go:32) => GET /pub/p
+ContextFor(main.go:32) => "GET /pub/p  (didaftarkan main.go:32)\nJalur setup: main.go:14 main() → main.go:32\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: func literal (main.go:32)\n  → 200 json gin.H{ok} (main.go:32)\n\n"
+ContextFor(main.go,0) => "GET /  (didaftarkan main.go:17)\nJalur setup: main.go:14 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nANY /any  (didaftarkan main.go:21)\nJalur setup: main.go:14 main() → main.go:21\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nGET,POST /m  (didaftarkan main.go:20)\nJalur setup: main.go:14 main() → main.go:20\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\n(+5 rute lain menjangkau target ini)\n"
+RouteAt(main.go:18) => GET /s
+RouteAt(main.go:30) => GET /soft/s
+ContextFor(main.go:36) => "GET /  (didaftarkan main.go:17)\nJalur setup: main.go:14 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nANY /any  (didaftarkan main.go:21)\nJalur setup: main.go:14 main() → main.go:21\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nGET,POST /m  (didaftarkan main.go:20)\nJalur setup: main.go:14 main() → main.go:20\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\n(+1 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /  (didaftarkan main.go:17)\nJalur setup: main.go:14 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nANY /any  (didaftarkan main.go:21)\nJalur setup: main.go:14 main() → main.go:21\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nGET,POST /m  (didaftarkan main.go:20)\nJalur setup: main.go:14 main() → main.go:20\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\n(+5 rute lain menjangkau target ini)\n"
+RouteAt(main.go:24) => GET /v1/a
+ContextFor(main.go:37) => "GET /v1/a  (didaftarkan main.go:24)\nJalur setup: main.go:14 main() → main.go:24\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\n  2. AuthRequired() [main.go:9] (auth) {group /v1} — main.go:22\nAuth wajib: true\nHandler: a (main.go:37)\n  → 200 json gin.H{a} (main.go:37)\n\n"
+ContextFor(main.go,0) => "GET /  (didaftarkan main.go:17)\nJalur setup: main.go:14 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nANY /any  (didaftarkan main.go:21)\nJalur setup: main.go:14 main() → main.go:21\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nGET,POST /m  (didaftarkan main.go:20)\nJalur setup: main.go:14 main() → main.go:20\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\n(+5 rute lain menjangkau target ini)\n"
+RouteAt(main.go:27) => DELETE /v1/admin/c/:id
+ContextFor(main.go:45) => "DELETE /v1/admin/c/:id  (didaftarkan main.go:27)\nJalur setup: main.go:14 main() → main.go:27\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\n  2. AuthRequired() [main.go:9] (auth) {group /v1} — main.go:22\n  3. AdminOnly() [main.go:10] {group /v1/admin} — main.go:26\nAuth wajib: true\nHandler: c2 (main.go:45)\n  → 404 status (main.go:45)\n\n"
+ContextFor(main.go,0) => "GET /  (didaftarkan main.go:17)\nJalur setup: main.go:14 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nANY /any  (didaftarkan main.go:21)\nJalur setup: main.go:14 main() → main.go:21\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nGET,POST /m  (didaftarkan main.go:20)\nJalur setup: main.go:14 main() → main.go:20\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\n(+5 rute lain menjangkau target ini)\n"
+RouteAt(main.go:25) => POST /v1/b
+ContextFor(main.go:38) => "POST /v1/b  (didaftarkan main.go:25)\nJalur setup: main.go:14 main() → main.go:25\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\n  2. AuthRequired() [main.go:9] (auth) {group /v1} — main.go:22\nAuth wajib: true\nHandler: b (main.go:38)\n  → 302 redirect (main.go:43)\n  → 400 json gin.H{error} (main.go:40)\n\n"
+ContextFor(main.go,0) => "GET /  (didaftarkan main.go:17)\nJalur setup: main.go:14 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nANY /any  (didaftarkan main.go:21)\nJalur setup: main.go:14 main() → main.go:21\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\nGET,POST /m  (didaftarkan main.go:20)\nJalur setup: main.go:14 main() → main.go:20\nRantai middleware (urut eksekusi):\n  1. Logger() [main.go:11] {global} — main.go:16\nAuth wajib: false\nHandler: index (main.go:36)\n  → 200 string \"hi\" (main.go:36)\n\n(+5 rute lain menjangkau target ini)\n"
+ContextFor(handlers.CreateUser) => ""
+ContextFor(empty) => ""

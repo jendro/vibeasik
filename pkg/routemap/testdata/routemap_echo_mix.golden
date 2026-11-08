@@ -1,0 +1,421 @@
+=== JSON
+[
+ {
+  "module": "echomix",
+  "dir": ".",
+  "framework": "echo",
+  "entries": [
+   "main.go:13"
+  ],
+  "routers": [
+   {
+    "id": 0,
+    "parent": -1,
+    "var": "",
+    "framework": "echo",
+    "prefix": "/",
+    "pos": "main.go:14",
+    "stack": [
+     "main.go:13 main()"
+    ],
+    "middlewares": [
+     {
+      "name": "Recover()",
+      "scope": "global",
+      "pos": "main.go:15",
+      "decl": "main.go:11"
+     },
+     {
+      "name": "Logger()",
+      "scope": "global",
+      "pos": "main.go:23",
+      "decl": "main.go:10"
+     }
+    ]
+   },
+   {
+    "id": 1,
+    "parent": 0,
+    "var": "",
+    "framework": "echo",
+    "prefix": "/api",
+    "pos": "main.go:19",
+    "stack": [
+     "main.go:13 main()"
+    ],
+    "middlewares": [
+     {
+      "name": "JWT()",
+      "scope": "group",
+      "scope_path": "/api",
+      "pos": "main.go:19",
+      "decl": "main.go:9",
+      "auth": true
+     },
+     {
+      "name": "Logger()",
+      "scope": "group",
+      "scope_path": "/api",
+      "pos": "main.go:22",
+      "decl": "main.go:10"
+     }
+    ]
+   }
+  ],
+  "routes": [
+   {
+    "method": "GET",
+    "path": "/",
+    "pos": "main.go:16",
+    "router_id": 0,
+    "stack": [
+     "main.go:13 main()"
+    ],
+    "handler": "home",
+    "handler_decl": "main.go:27",
+    "chain": [
+     {
+      "name": "Recover()",
+      "scope": "global",
+      "pos": "main.go:15",
+      "decl": "main.go:11"
+     },
+     {
+      "name": "Logger()",
+      "scope": "global",
+      "pos": "main.go:23",
+      "decl": "main.go:10"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 204,
+      "kind": "status",
+      "pos": "main.go:27"
+     }
+    ]
+   },
+   {
+    "method": "POST",
+    "path": "/add",
+    "pos": "main.go:17",
+    "router_id": 0,
+    "stack": [
+     "main.go:13 main()"
+    ],
+    "handler": "home",
+    "handler_decl": "main.go:27",
+    "chain": [
+     {
+      "name": "Recover()",
+      "scope": "global",
+      "pos": "main.go:15",
+      "decl": "main.go:11"
+     },
+     {
+      "name": "Logger()",
+      "scope": "global",
+      "pos": "main.go:23",
+      "decl": "main.go:10"
+     },
+     {
+      "name": "Logger()",
+      "scope": "route",
+      "pos": "main.go:17",
+      "decl": "main.go:10"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 204,
+      "kind": "status",
+      "pos": "main.go:27"
+     }
+    ]
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/items/:id",
+    "pos": "main.go:21",
+    "router_id": 1,
+    "stack": [
+     "main.go:13 main()"
+    ],
+    "handler": "func literal",
+    "handler_decl": "main.go:21",
+    "chain": [
+     {
+      "name": "Recover()",
+      "scope": "global",
+      "pos": "main.go:15",
+      "decl": "main.go:11"
+     },
+     {
+      "name": "JWT()",
+      "scope": "group",
+      "scope_path": "/api",
+      "pos": "main.go:19",
+      "decl": "main.go:9",
+      "auth": true
+     },
+     {
+      "name": "Logger()",
+      "scope": "group",
+      "scope_path": "/api",
+      "pos": "main.go:22",
+      "decl": "main.go:10"
+     },
+     {
+      "name": "Logger()",
+      "scope": "global",
+      "pos": "main.go:23",
+      "decl": "main.go:10"
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 403,
+      "kind": "error",
+      "body": "\"no\"",
+      "pos": "main.go:21"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/api/list",
+    "pos": "main.go:20",
+    "router_id": 1,
+    "stack": [
+     "main.go:13 main()"
+    ],
+    "handler": "list",
+    "handler_decl": "main.go:29",
+    "chain": [
+     {
+      "name": "Recover()",
+      "scope": "global",
+      "pos": "main.go:15",
+      "decl": "main.go:11"
+     },
+     {
+      "name": "JWT()",
+      "scope": "group",
+      "scope_path": "/api",
+      "pos": "main.go:19",
+      "decl": "main.go:9",
+      "auth": true
+     },
+     {
+      "name": "Logger()",
+      "scope": "group",
+      "scope_path": "/api",
+      "pos": "main.go:22",
+      "decl": "main.go:10"
+     },
+     {
+      "name": "Logger()",
+      "scope": "global",
+      "pos": "main.go:23",
+      "decl": "main.go:10"
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "json",
+      "body": "[]string{…}",
+      "pos": "main.go:30"
+     }
+    ]
+   },
+   {
+    "method": "POST",
+    "path": "/items",
+    "pos": "main.go:18",
+    "router_id": 0,
+    "stack": [
+     "main.go:13 main()"
+    ],
+    "handler": "create",
+    "handler_decl": "main.go:28",
+    "chain": [
+     {
+      "name": "Recover()",
+      "scope": "global",
+      "pos": "main.go:15",
+      "decl": "main.go:11"
+     },
+     {
+      "name": "Logger()",
+      "scope": "global",
+      "pos": "main.go:23",
+      "decl": "main.go:10"
+     },
+     {
+      "name": "JWT()",
+      "scope": "route",
+      "pos": "main.go:18",
+      "decl": "main.go:9",
+      "auth": true
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 201,
+      "kind": "json",
+      "body": "map[string]int{id}",
+      "pos": "main.go:28"
+     }
+    ]
+   }
+  ],
+  "duplicates": [
+   {
+    "kind": "middleware",
+    "name": "Logger()",
+    "first": "main.go:23",
+    "pos": "main.go:17",
+    "detail": "global → route",
+    "routes": [
+     "POST /add"
+    ],
+    "count": 1
+   },
+   {
+    "kind": "middleware",
+    "name": "Logger()",
+    "first": "main.go:22",
+    "pos": "main.go:23",
+    "detail": "group → global",
+    "routes": [
+     "DELETE /api/items/:id",
+     "GET /api/list"
+    ],
+    "count": 2
+   }
+  ]
+ }
+]
+=== MARKDOWN
+## Peta Rute (router → middleware → handler → response)
+
+> Ditelusuri statis dari `func main` dengan go/parser + go/types: prefix group, middleware efektif per rute sesuai semantik framework (urutan pendaftaran, prefix Use/Group, skip `Next`), status response handler (termasuk lewat helper), fungsi yang dijangkau. Sebelum menyimpulkan "rute tanpa auth/validasi", cek rantai di sini: middleware global & group tidak terlihat di baris rute. Detail per rute (jalur setup dari main, response + body, semua fungsi yang dipanggil) ada di `.vibeasik/routes.jsonl`; MCP `vibeasik_code_map_routes` (filter path/method, atau `function` untuk menelusur balik fungsi → rute).
+
+### Modul `echomix` (`.`, echo) — 5 rute
+
+- Titik masuk: `main.go:13`
+- **Middleware global** (urut eksekusi, berlaku untuk rute yang didaftarkan sesudahnya):
+  1. Recover() [main.go:11] — `main.go:15`
+  2. Logger() [main.go:10] — `main.go:23`
+- **Group bermiddleware**:
+  - `/api` (`main.go:19`): JWT() [main.go:9] (auth) → Logger() [main.go:10]
+- ⚠ Middleware `Logger()` terpasang ulang di `main.go:17` (sudah di `main.go:23`, global → route) — 1 rute, mis. `POST /add` (redundan, patokan ARCH-004).
+- ⚠ Middleware `Logger()` terpasang ulang di `main.go:23` (sudah di `main.go:22`, group → global) — 2 rute, mis. `DELETE /api/items/:id` (redundan, patokan ARCH-004).
+- Rute pengubah data **tanpa** middleware auth wajib (pastikan memang publik): `POST /add`
+
+#### Rantai: global · publik (3 rute)
+
+- `GET /` → `home` `main.go:27` · 204
+- `POST /add` → `home` `main.go:27` · 204 · +rute: Logger() [main.go:10] (redundan)
+- `POST /items` → `create` `main.go:28` · 201 · +rute: JWT() [main.go:9] (auth) · **auth**
+
+#### Rantai: global → JWT() [main.go:9] (auth) {group /api} → Logger() [main.go:10] {group /api} · auth (2 rute)
+
+- `DELETE /api/items/:id` → `func literal` `main.go:21` · 403
+- `GET /api/list` → `list` `main.go:29` · 200
+
+
+=== JSONL
+{"module":"echomix","method":"GET","path":"/","pos":"main.go:16","router_id":0,"stack":["main.go:13 main()"],"handler":"home","handler_decl":"main.go:27","chain":[{"name":"Recover()","scope":"global","pos":"main.go:15","decl":"main.go:11"},{"name":"Logger()","scope":"global","pos":"main.go:23","decl":"main.go:10"}],"auth":false,"responses":[{"status":204,"kind":"status","pos":"main.go:27"}]}
+{"module":"echomix","method":"POST","path":"/add","pos":"main.go:17","router_id":0,"stack":["main.go:13 main()"],"handler":"home","handler_decl":"main.go:27","chain":[{"name":"Recover()","scope":"global","pos":"main.go:15","decl":"main.go:11"},{"name":"Logger()","scope":"global","pos":"main.go:23","decl":"main.go:10"},{"name":"Logger()","scope":"route","pos":"main.go:17","decl":"main.go:10"}],"auth":false,"responses":[{"status":204,"kind":"status","pos":"main.go:27"}]}
+{"module":"echomix","method":"DELETE","path":"/api/items/:id","pos":"main.go:21","router_id":1,"stack":["main.go:13 main()"],"handler":"func literal","handler_decl":"main.go:21","chain":[{"name":"Recover()","scope":"global","pos":"main.go:15","decl":"main.go:11"},{"name":"JWT()","scope":"group","scope_path":"/api","pos":"main.go:19","decl":"main.go:9","auth":true},{"name":"Logger()","scope":"group","scope_path":"/api","pos":"main.go:22","decl":"main.go:10"},{"name":"Logger()","scope":"global","pos":"main.go:23","decl":"main.go:10"}],"auth":true,"responses":[{"status":403,"kind":"error","body":"\"no\"","pos":"main.go:21"}]}
+{"module":"echomix","method":"GET","path":"/api/list","pos":"main.go:20","router_id":1,"stack":["main.go:13 main()"],"handler":"list","handler_decl":"main.go:29","chain":[{"name":"Recover()","scope":"global","pos":"main.go:15","decl":"main.go:11"},{"name":"JWT()","scope":"group","scope_path":"/api","pos":"main.go:19","decl":"main.go:9","auth":true},{"name":"Logger()","scope":"group","scope_path":"/api","pos":"main.go:22","decl":"main.go:10"},{"name":"Logger()","scope":"global","pos":"main.go:23","decl":"main.go:10"}],"auth":true,"responses":[{"status":200,"kind":"json","body":"[]string{…}","pos":"main.go:30"}]}
+{"module":"echomix","method":"POST","path":"/items","pos":"main.go:18","router_id":0,"stack":["main.go:13 main()"],"handler":"create","handler_decl":"main.go:28","chain":[{"name":"Recover()","scope":"global","pos":"main.go:15","decl":"main.go:11"},{"name":"Logger()","scope":"global","pos":"main.go:23","decl":"main.go:10"},{"name":"JWT()","scope":"route","pos":"main.go:18","decl":"main.go:9","auth":true}],"auth":true,"responses":[{"status":201,"kind":"json","body":"map[string]int{id}","pos":"main.go:28"}]}
+
+=== TRACE
+GET /  (didaftarkan main.go:16)
+Jalur setup: main.go:13 main() → main.go:16
+Rantai middleware (urut eksekusi):
+  1. Recover() [main.go:11] {global} — main.go:15
+  2. Logger() [main.go:10] {global} — main.go:23
+Auth wajib: false
+Handler: home (main.go:27)
+  → 204 status (main.go:27)
+
+POST /add  (didaftarkan main.go:17)
+Jalur setup: main.go:13 main() → main.go:17
+Rantai middleware (urut eksekusi):
+  1. Recover() [main.go:11] {global} — main.go:15
+  2. Logger() [main.go:10] {global} — main.go:23
+  3. Logger() [main.go:10] {route} — main.go:17
+Auth wajib: false
+Handler: home (main.go:27)
+  → 204 status (main.go:27)
+
+DELETE /api/items/:id  (didaftarkan main.go:21)
+Jalur setup: main.go:13 main() → main.go:21
+Rantai middleware (urut eksekusi):
+  1. Recover() [main.go:11] {global} — main.go:15
+  2. JWT() [main.go:9] (auth) {group /api} — main.go:19
+  3. Logger() [main.go:10] {group /api} — main.go:22
+  4. Logger() [main.go:10] {global} — main.go:23
+Auth wajib: true
+Handler: func literal (main.go:21)
+  → 403 error "no" (main.go:21)
+
+GET /api/list  (didaftarkan main.go:20)
+Jalur setup: main.go:13 main() → main.go:20
+Rantai middleware (urut eksekusi):
+  1. Recover() [main.go:11] {global} — main.go:15
+  2. JWT() [main.go:9] (auth) {group /api} — main.go:19
+  3. Logger() [main.go:10] {group /api} — main.go:22
+  4. Logger() [main.go:10] {global} — main.go:23
+Auth wajib: true
+Handler: list (main.go:29)
+  → 200 json []string{…} (main.go:30)
+
+POST /items  (didaftarkan main.go:18)
+Jalur setup: main.go:13 main() → main.go:18
+Rantai middleware (urut eksekusi):
+  1. Recover() [main.go:11] {global} — main.go:15
+  2. Logger() [main.go:10] {global} — main.go:23
+  3. JWT() [main.go:9] (auth) {route} — main.go:18
+Auth wajib: true
+Handler: create (main.go:28)
+  → 201 json map[string]int{id} (main.go:28)
+
+=== FILEROUTES
+main.go: DELETE /api/items/:id; GET /; GET /api/list; POST /add; POST /items
+=== QUERIES
+[  ] => GET /, POST /add, DELETE /api/items/:id, GET /api/list, POST /items
+[get  ] => GET /, GET /api/list
+[ /a ] => POST /add, DELETE /api/items/:id, GET /api/list
+[POST  list] => 
+[  handlers.CreateUser] => 
+[  save] => 
+[  home] => GET /, POST /add
+[  h/h.go] => 
+[  create] => POST /items
+RouteAt(main.go:16) => GET /
+ContextFor(main.go:27) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Recover() [main.go:11] {global} — main.go:15\n  2. Logger() [main.go:10] {global} — main.go:23\nAuth wajib: false\nHandler: home (main.go:27)\n  → 204 status (main.go:27)\n\nPOST /add  (didaftarkan main.go:17)\nJalur setup: main.go:13 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Recover() [main.go:11] {global} — main.go:15\n  2. Logger() [main.go:10] {global} — main.go:23\n  3. Logger() [main.go:10] {route} — main.go:17\nAuth wajib: false\nHandler: home (main.go:27)\n  → 204 status (main.go:27)\n\n"
+ContextFor(main.go,0) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Recover() [main.go:11] {global} — main.go:15\n  2. Logger() [main.go:10] {global} — main.go:23\nAuth wajib: false\nHandler: home (main.go:27)\n  → 204 status (main.go:27)\n\nPOST /add  (didaftarkan main.go:17)\nJalur setup: main.go:13 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Recover() [main.go:11] {global} — main.go:15\n  2. Logger() [main.go:10] {global} — main.go:23\n  3. Logger() [main.go:10] {route} — main.go:17\nAuth wajib: false\nHandler: home (main.go:27)\n  → 204 status (main.go:27)\n\nDELETE /api/items/:id  (didaftarkan main.go:21)\nJalur setup: main.go:13 main() → main.go:21\nRantai middleware (urut eksekusi):\n  1. Recover() [main.go:11] {global} — main.go:15\n  2. JWT() [main.go:9] (auth) {group /api} — main.go:19\n  3. Logger() [main.go:10] {group /api} — main.go:22\n  4. Logger() [main.go:10] {global} — main.go:23\nAuth wajib: true\nHandler: func literal (main.go:21)\n  → 403 error \"no\" (main.go:21)\n\n(+2 rute lain menjangkau target ini)\n"
+RouteAt(main.go:17) => POST /add
+ContextFor(main.go:27) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Recover() [main.go:11] {global} — main.go:15\n  2. Logger() [main.go:10] {global} — main.go:23\nAuth wajib: false\nHandler: home (main.go:27)\n  → 204 status (main.go:27)\n\nPOST /add  (didaftarkan main.go:17)\nJalur setup: main.go:13 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Recover() [main.go:11] {global} — main.go:15\n  2. Logger() [main.go:10] {global} — main.go:23\n  3. Logger() [main.go:10] {route} — main.go:17\nAuth wajib: false\nHandler: home (main.go:27)\n  → 204 status (main.go:27)\n\n"
+ContextFor(main.go,0) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Recover() [main.go:11] {global} — main.go:15\n  2. Logger() [main.go:10] {global} — main.go:23\nAuth wajib: false\nHandler: home (main.go:27)\n  → 204 status (main.go:27)\n\nPOST /add  (didaftarkan main.go:17)\nJalur setup: main.go:13 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Recover() [main.go:11] {global} — main.go:15\n  2. Logger() [main.go:10] {global} — main.go:23\n  3. Logger() [main.go:10] {route} — main.go:17\nAuth wajib: false\nHandler: home (main.go:27)\n  → 204 status (main.go:27)\n\nDELETE /api/items/:id  (didaftarkan main.go:21)\nJalur setup: main.go:13 main() → main.go:21\nRantai middleware (urut eksekusi):\n  1. Recover() [main.go:11] {global} — main.go:15\n  2. JWT() [main.go:9] (auth) {group /api} — main.go:19\n  3. Logger() [main.go:10] {group /api} — main.go:22\n  4. Logger() [main.go:10] {global} — main.go:23\nAuth wajib: true\nHandler: func literal (main.go:21)\n  → 403 error \"no\" (main.go:21)\n\n(+2 rute lain menjangkau target ini)\n"
+RouteAt(main.go:21) => DELETE /api/items/:id
+ContextFor(main.go:21) => "DELETE /api/items/:id  (didaftarkan main.go:21)\nJalur setup: main.go:13 main() → main.go:21\nRantai middleware (urut eksekusi):\n  1. Recover() [main.go:11] {global} — main.go:15\n  2. JWT() [main.go:9] (auth) {group /api} — main.go:19\n  3. Logger() [main.go:10] {group /api} — main.go:22\n  4. Logger() [main.go:10] {global} — main.go:23\nAuth wajib: true\nHandler: func literal (main.go:21)\n  → 403 error \"no\" (main.go:21)\n\n"
+ContextFor(main.go,0) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Recover() [main.go:11] {global} — main.go:15\n  2. Logger() [main.go:10] {global} — main.go:23\nAuth wajib: false\nHandler: home (main.go:27)\n  → 204 status (main.go:27)\n\nPOST /add  (didaftarkan main.go:17)\nJalur setup: main.go:13 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Recover() [main.go:11] {global} — main.go:15\n  2. Logger() [main.go:10] {global} — main.go:23\n  3. Logger() [main.go:10] {route} — main.go:17\nAuth wajib: false\nHandler: home (main.go:27)\n  → 204 status (main.go:27)\n\nDELETE /api/items/:id  (didaftarkan main.go:21)\nJalur setup: main.go:13 main() → main.go:21\nRantai middleware (urut eksekusi):\n  1. Recover() [main.go:11] {global} — main.go:15\n  2. JWT() [main.go:9] (auth) {group /api} — main.go:19\n  3. Logger() [main.go:10] {group /api} — main.go:22\n  4. Logger() [main.go:10] {global} — main.go:23\nAuth wajib: true\nHandler: func literal (main.go:21)\n  → 403 error \"no\" (main.go:21)\n\n(+2 rute lain menjangkau target ini)\n"
+RouteAt(main.go:20) => GET /api/list
+ContextFor(main.go:29) => "GET /api/list  (didaftarkan main.go:20)\nJalur setup: main.go:13 main() → main.go:20\nRantai middleware (urut eksekusi):\n  1. Recover() [main.go:11] {global} — main.go:15\n  2. JWT() [main.go:9] (auth) {group /api} — main.go:19\n  3. Logger() [main.go:10] {group /api} — main.go:22\n  4. Logger() [main.go:10] {global} — main.go:23\nAuth wajib: true\nHandler: list (main.go:29)\n  → 200 json []string{…} (main.go:30)\n\n"
+ContextFor(main.go,0) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Recover() [main.go:11] {global} — main.go:15\n  2. Logger() [main.go:10] {global} — main.go:23\nAuth wajib: false\nHandler: home (main.go:27)\n  → 204 status (main.go:27)\n\nPOST /add  (didaftarkan main.go:17)\nJalur setup: main.go:13 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Recover() [main.go:11] {global} — main.go:15\n  2. Logger() [main.go:10] {global} — main.go:23\n  3. Logger() [main.go:10] {route} — main.go:17\nAuth wajib: false\nHandler: home (main.go:27)\n  → 204 status (main.go:27)\n\nDELETE /api/items/:id  (didaftarkan main.go:21)\nJalur setup: main.go:13 main() → main.go:21\nRantai middleware (urut eksekusi):\n  1. Recover() [main.go:11] {global} — main.go:15\n  2. JWT() [main.go:9] (auth) {group /api} — main.go:19\n  3. Logger() [main.go:10] {group /api} — main.go:22\n  4. Logger() [main.go:10] {global} — main.go:23\nAuth wajib: true\nHandler: func literal (main.go:21)\n  → 403 error \"no\" (main.go:21)\n\n(+2 rute lain menjangkau target ini)\n"
+RouteAt(main.go:18) => POST /items
+ContextFor(main.go:28) => "POST /items  (didaftarkan main.go:18)\nJalur setup: main.go:13 main() → main.go:18\nRantai middleware (urut eksekusi):\n  1. Recover() [main.go:11] {global} — main.go:15\n  2. Logger() [main.go:10] {global} — main.go:23\n  3. JWT() [main.go:9] (auth) {route} — main.go:18\nAuth wajib: true\nHandler: create (main.go:28)\n  → 201 json map[string]int{id} (main.go:28)\n\n"
+ContextFor(main.go,0) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Recover() [main.go:11] {global} — main.go:15\n  2. Logger() [main.go:10] {global} — main.go:23\nAuth wajib: false\nHandler: home (main.go:27)\n  → 204 status (main.go:27)\n\nPOST /add  (didaftarkan main.go:17)\nJalur setup: main.go:13 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Recover() [main.go:11] {global} — main.go:15\n  2. Logger() [main.go:10] {global} — main.go:23\n  3. Logger() [main.go:10] {route} — main.go:17\nAuth wajib: false\nHandler: home (main.go:27)\n  → 204 status (main.go:27)\n\nDELETE /api/items/:id  (didaftarkan main.go:21)\nJalur setup: main.go:13 main() → main.go:21\nRantai middleware (urut eksekusi):\n  1. Recover() [main.go:11] {global} — main.go:15\n  2. JWT() [main.go:9] (auth) {group /api} — main.go:19\n  3. Logger() [main.go:10] {group /api} — main.go:22\n  4. Logger() [main.go:10] {global} — main.go:23\nAuth wajib: true\nHandler: func literal (main.go:21)\n  → 403 error \"no\" (main.go:21)\n\n(+2 rute lain menjangkau target ini)\n"
+ContextFor(handlers.CreateUser) => ""
+ContextFor(empty) => ""

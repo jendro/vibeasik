@@ -1,0 +1,700 @@
+=== JSON
+[
+ {
+  "module": "chimix",
+  "dir": ".",
+  "framework": "chi",
+  "entries": [
+   "main.go:13"
+  ],
+  "routers": [
+   {
+    "id": 0,
+    "parent": -1,
+    "var": "",
+    "framework": "chi",
+    "prefix": "/",
+    "pos": "main.go:14",
+    "stack": [
+     "main.go:13 main()"
+    ],
+    "middlewares": [
+     {
+      "name": "Logger",
+      "scope": "global",
+      "pos": "main.go:15",
+      "decl": "main.go:10"
+     }
+    ]
+   },
+   {
+    "id": 1,
+    "parent": 0,
+    "var": "",
+    "framework": "chi",
+    "prefix": "/api",
+    "pos": "main.go:21",
+    "stack": [
+     "main.go:13 main()"
+    ],
+    "middlewares": [
+     {
+      "name": "JWTAuth",
+      "scope": "group",
+      "scope_path": "/api",
+      "pos": "main.go:22",
+      "decl": "main.go:9",
+      "auth": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "parent": 1,
+    "var": "",
+    "framework": "chi",
+    "prefix": "/api/admin",
+    "pos": "main.go:24",
+    "stack": [
+     "main.go:13 main()"
+    ],
+    "middlewares": [
+     {
+      "name": "AdminGuard",
+      "scope": "group",
+      "scope_path": "/api/admin",
+      "pos": "main.go:32",
+      "decl": "main.go:11",
+      "auth": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "parent": 1,
+    "var": "",
+    "framework": "chi",
+    "prefix": "/api",
+    "pos": "main.go:25",
+    "stack": [
+     "main.go:13 main()"
+    ],
+    "middlewares": [
+     {
+      "name": "AdminGuard",
+      "scope": "with",
+      "scope_path": "/api",
+      "pos": "main.go:25",
+      "decl": "main.go:11",
+      "auth": true
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "parent": 0,
+    "var": "",
+    "framework": "chi",
+    "prefix": "/sub/",
+    "pos": "main.go:37",
+    "stack": [
+     "main.go:13 main()",
+     "main.go:27 subRouter()"
+    ]
+   },
+   {
+    "id": 5,
+    "parent": -1,
+    "var": "r",
+    "framework": "chi",
+    "prefix": "/",
+    "pos": "main.go:31",
+    "stack": [
+     "main.go:31 adminRoutes() — tidak terjangkau dari main"
+    ],
+    "middlewares": [
+     {
+      "name": "AdminGuard",
+      "scope": "global",
+      "pos": "main.go:32",
+      "decl": "main.go:11",
+      "auth": true
+     }
+    ]
+   }
+  ],
+  "routes": [
+   {
+    "method": "GET",
+    "path": "/",
+    "pos": "main.go:16",
+    "router_id": 0,
+    "stack": [
+     "main.go:13 main()"
+    ],
+    "handler": "home",
+    "handler_decl": "main.go:42",
+    "chain": [
+     {
+      "name": "Logger",
+      "scope": "global",
+      "pos": "main.go:15",
+      "decl": "main.go:10"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 204,
+      "kind": "status",
+      "pos": "main.go:47"
+     },
+     {
+      "status": 400,
+      "kind": "error",
+      "body": "\"bad\"",
+      "pos": "main.go:44"
+     }
+    ]
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/admin/{id}",
+    "pos": "main.go:33",
+    "router_id": 2,
+    "stack": [
+     "main.go:13 main()",
+     "main.go:24 adminRoutes()"
+    ],
+    "handler": "home",
+    "handler_decl": "main.go:42",
+    "chain": [
+     {
+      "name": "Logger",
+      "scope": "global",
+      "pos": "main.go:15",
+      "decl": "main.go:10"
+     },
+     {
+      "name": "JWTAuth",
+      "scope": "group",
+      "scope_path": "/api",
+      "pos": "main.go:22",
+      "decl": "main.go:9",
+      "auth": true
+     },
+     {
+      "name": "AdminGuard",
+      "scope": "group",
+      "scope_path": "/api/admin",
+      "pos": "main.go:32",
+      "decl": "main.go:11",
+      "auth": true
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 204,
+      "kind": "status",
+      "pos": "main.go:47"
+     },
+     {
+      "status": 400,
+      "kind": "error",
+      "body": "\"bad\"",
+      "pos": "main.go:44"
+     }
+    ]
+   },
+   {
+    "method": "POST",
+    "path": "/api/w",
+    "pos": "main.go:25",
+    "router_id": 3,
+    "stack": [
+     "main.go:13 main()"
+    ],
+    "handler": "home",
+    "handler_decl": "main.go:42",
+    "chain": [
+     {
+      "name": "Logger",
+      "scope": "global",
+      "pos": "main.go:15",
+      "decl": "main.go:10"
+     },
+     {
+      "name": "JWTAuth",
+      "scope": "group",
+      "scope_path": "/api",
+      "pos": "main.go:22",
+      "decl": "main.go:9",
+      "auth": true
+     },
+     {
+      "name": "AdminGuard",
+      "scope": "with",
+      "scope_path": "/api",
+      "pos": "main.go:25",
+      "decl": "main.go:11",
+      "auth": true
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 204,
+      "kind": "status",
+      "pos": "main.go:47"
+     },
+     {
+      "status": 400,
+      "kind": "error",
+      "body": "\"bad\"",
+      "pos": "main.go:44"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/api/x",
+    "pos": "main.go:23",
+    "router_id": 1,
+    "stack": [
+     "main.go:13 main()"
+    ],
+    "handler": "home",
+    "handler_decl": "main.go:42",
+    "chain": [
+     {
+      "name": "Logger",
+      "scope": "global",
+      "pos": "main.go:15",
+      "decl": "main.go:10"
+     },
+     {
+      "name": "JWTAuth",
+      "scope": "group",
+      "scope_path": "/api",
+      "pos": "main.go:22",
+      "decl": "main.go:9",
+      "auth": true
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 204,
+      "kind": "status",
+      "pos": "main.go:47"
+     },
+     {
+      "status": 400,
+      "kind": "error",
+      "body": "\"bad\"",
+      "pos": "main.go:44"
+     }
+    ]
+   },
+   {
+    "method": "ANY",
+    "path": "/h",
+    "pos": "main.go:19",
+    "router_id": 0,
+    "stack": [
+     "main.go:13 main()"
+    ],
+    "handler": "http.HandlerFunc(home)",
+    "handler_decl": "main.go:42",
+    "chain": [
+     {
+      "name": "Logger",
+      "scope": "global",
+      "pos": "main.go:15",
+      "decl": "main.go:10"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 204,
+      "kind": "status",
+      "pos": "main.go:47"
+     },
+     {
+      "status": 400,
+      "kind": "error",
+      "body": "\"bad\"",
+      "pos": "main.go:44"
+     }
+    ]
+   },
+   {
+    "method": "ANY",
+    "path": "/hf",
+    "pos": "main.go:20",
+    "router_id": 0,
+    "stack": [
+     "main.go:13 main()"
+    ],
+    "handler": "home",
+    "handler_decl": "main.go:42",
+    "chain": [
+     {
+      "name": "Logger",
+      "scope": "global",
+      "pos": "main.go:15",
+      "decl": "main.go:10"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 204,
+      "kind": "status",
+      "pos": "main.go:47"
+     },
+     {
+      "status": 400,
+      "kind": "error",
+      "body": "\"bad\"",
+      "pos": "main.go:44"
+     }
+    ]
+   },
+   {
+    "method": "PUT",
+    "path": "/m",
+    "pos": "main.go:17",
+    "router_id": 0,
+    "stack": [
+     "main.go:13 main()"
+    ],
+    "handler": "http.HandlerFunc(home)",
+    "handler_decl": "main.go:42",
+    "chain": [
+     {
+      "name": "Logger",
+      "scope": "global",
+      "pos": "main.go:15",
+      "decl": "main.go:10"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 204,
+      "kind": "status",
+      "pos": "main.go:47"
+     },
+     {
+      "status": 400,
+      "kind": "error",
+      "body": "\"bad\"",
+      "pos": "main.go:44"
+     }
+    ]
+   },
+   {
+    "method": "PATCH",
+    "path": "/mf",
+    "pos": "main.go:18",
+    "router_id": 0,
+    "stack": [
+     "main.go:13 main()"
+    ],
+    "handler": "home",
+    "handler_decl": "main.go:42",
+    "chain": [
+     {
+      "name": "Logger",
+      "scope": "global",
+      "pos": "main.go:15",
+      "decl": "main.go:10"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 204,
+      "kind": "status",
+      "pos": "main.go:47"
+     },
+     {
+      "status": 400,
+      "kind": "error",
+      "body": "\"bad\"",
+      "pos": "main.go:44"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/sub/z",
+    "pos": "main.go:38",
+    "router_id": 4,
+    "stack": [
+     "main.go:13 main()",
+     "main.go:27 subRouter()"
+    ],
+    "handler": "home",
+    "handler_decl": "main.go:42",
+    "chain": [
+     {
+      "name": "Logger",
+      "scope": "global",
+      "pos": "main.go:15",
+      "decl": "main.go:10"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 204,
+      "kind": "status",
+      "pos": "main.go:47"
+     },
+     {
+      "status": 400,
+      "kind": "error",
+      "body": "\"bad\"",
+      "pos": "main.go:44"
+     }
+    ]
+   },
+   {
+    "method": "DELETE",
+    "path": "/{id}",
+    "pos": "main.go:33",
+    "router_id": 5,
+    "stack": [
+     "main.go:31 adminRoutes() — tidak terjangkau dari main"
+    ],
+    "handler": "home",
+    "handler_decl": "main.go:42",
+    "chain": [
+     {
+      "name": "AdminGuard",
+      "scope": "global",
+      "pos": "main.go:32",
+      "decl": "main.go:11",
+      "auth": true
+     }
+    ],
+    "auth": true,
+    "unreachable": true,
+    "responses": [
+     {
+      "status": 204,
+      "kind": "status",
+      "pos": "main.go:47"
+     },
+     {
+      "status": 400,
+      "kind": "error",
+      "body": "\"bad\"",
+      "pos": "main.go:44"
+     }
+    ]
+   }
+  ],
+  "warnings": [
+   "Fungsi setup main.adminRoutes (main.go:31) tidak terjangkau dari main: 1 rutenya kemungkinan kode mati (tidak pernah dipasang) atau dipasang dinamis; middleware induknya tidak diketahui."
+  ]
+ }
+]
+=== MARKDOWN
+## Peta Rute (router → middleware → handler → response)
+
+> Ditelusuri statis dari `func main` dengan go/parser + go/types: prefix group, middleware efektif per rute sesuai semantik framework (urutan pendaftaran, prefix Use/Group, skip `Next`), status response handler (termasuk lewat helper), fungsi yang dijangkau. Sebelum menyimpulkan "rute tanpa auth/validasi", cek rantai di sini: middleware global & group tidak terlihat di baris rute. Detail per rute (jalur setup dari main, response + body, semua fungsi yang dipanggil) ada di `.vibeasik/routes.jsonl`; MCP `vibeasik_code_map_routes` (filter path/method, atau `function` untuk menelusur balik fungsi → rute).
+
+### Modul `chimix` (`.`, chi) — 10 rute
+
+- Titik masuk: `main.go:13`
+- **Middleware global** (urut eksekusi, berlaku untuk rute yang didaftarkan sesudahnya):
+  1. Logger [main.go:10] — `main.go:15`
+  2. AdminGuard [main.go:11] (auth) — `main.go:32`
+- **Group bermiddleware**:
+  - `/api` (`main.go:21`): JWTAuth [main.go:9] (auth)
+  - `/api/admin` (`main.go:24`): AdminGuard [main.go:11] (auth)
+  - `/api` (`main.go:25`): AdminGuard [main.go:11] (auth)
+- ⚠ Fungsi setup main.adminRoutes (main.go:31) tidak terjangkau dari main: 1 rutenya kemungkinan kode mati (tidak pernah dipasang) atau dipasang dinamis; middleware induknya tidak diketahui.
+- Rute pengubah data **tanpa** middleware auth wajib (pastikan memang publik): `ANY /h`, `ANY /hf`, `PUT /m`, `PATCH /mf`
+
+#### Rantai: global · publik (6 rute)
+
+- `GET /` → `home` `main.go:42` · 204,400
+- `ANY /h` → `http.HandlerFunc(home)` `main.go:42` · 204,400
+- `ANY /hf` → `home` `main.go:42` · 204,400
+- `PUT /m` → `http.HandlerFunc(home)` `main.go:42` · 204,400
+- `PATCH /mf` → `home` `main.go:42` · 204,400
+- `GET /sub/z` → `home` `main.go:42` · 204,400
+
+#### Rantai: global → JWTAuth [main.go:9] (auth) {group /api} · auth (2 rute)
+
+- `DELETE /api/admin/{id}` → `home` `main.go:42` · 204,400
+- `GET /api/x` → `home` `main.go:42` · 204,400
+
+#### Rantai: global → JWTAuth [main.go:9] (auth) {group /api} → AdminGuard [main.go:11] (auth) {with /api} · auth (1 rute)
+
+- `POST /api/w` → `home` `main.go:42` · 204,400
+
+#### Rantai: Tidak terpasang (fungsi setup tidak terjangkau dari main — kemungkinan kode mati) · tidak aktif (1 rute)
+
+- `DELETE /{id}` → `home` `main.go:42` · 204,400
+
+
+=== JSONL
+{"module":"chimix","method":"GET","path":"/","pos":"main.go:16","router_id":0,"stack":["main.go:13 main()"],"handler":"home","handler_decl":"main.go:42","chain":[{"name":"Logger","scope":"global","pos":"main.go:15","decl":"main.go:10"}],"auth":false,"responses":[{"status":204,"kind":"status","pos":"main.go:47"},{"status":400,"kind":"error","body":"\"bad\"","pos":"main.go:44"}]}
+{"module":"chimix","method":"DELETE","path":"/api/admin/{id}","pos":"main.go:33","router_id":2,"stack":["main.go:13 main()","main.go:24 adminRoutes()"],"handler":"home","handler_decl":"main.go:42","chain":[{"name":"Logger","scope":"global","pos":"main.go:15","decl":"main.go:10"},{"name":"JWTAuth","scope":"group","scope_path":"/api","pos":"main.go:22","decl":"main.go:9","auth":true},{"name":"AdminGuard","scope":"group","scope_path":"/api/admin","pos":"main.go:32","decl":"main.go:11","auth":true}],"auth":true,"responses":[{"status":204,"kind":"status","pos":"main.go:47"},{"status":400,"kind":"error","body":"\"bad\"","pos":"main.go:44"}]}
+{"module":"chimix","method":"POST","path":"/api/w","pos":"main.go:25","router_id":3,"stack":["main.go:13 main()"],"handler":"home","handler_decl":"main.go:42","chain":[{"name":"Logger","scope":"global","pos":"main.go:15","decl":"main.go:10"},{"name":"JWTAuth","scope":"group","scope_path":"/api","pos":"main.go:22","decl":"main.go:9","auth":true},{"name":"AdminGuard","scope":"with","scope_path":"/api","pos":"main.go:25","decl":"main.go:11","auth":true}],"auth":true,"responses":[{"status":204,"kind":"status","pos":"main.go:47"},{"status":400,"kind":"error","body":"\"bad\"","pos":"main.go:44"}]}
+{"module":"chimix","method":"GET","path":"/api/x","pos":"main.go:23","router_id":1,"stack":["main.go:13 main()"],"handler":"home","handler_decl":"main.go:42","chain":[{"name":"Logger","scope":"global","pos":"main.go:15","decl":"main.go:10"},{"name":"JWTAuth","scope":"group","scope_path":"/api","pos":"main.go:22","decl":"main.go:9","auth":true}],"auth":true,"responses":[{"status":204,"kind":"status","pos":"main.go:47"},{"status":400,"kind":"error","body":"\"bad\"","pos":"main.go:44"}]}
+{"module":"chimix","method":"ANY","path":"/h","pos":"main.go:19","router_id":0,"stack":["main.go:13 main()"],"handler":"http.HandlerFunc(home)","handler_decl":"main.go:42","chain":[{"name":"Logger","scope":"global","pos":"main.go:15","decl":"main.go:10"}],"auth":false,"responses":[{"status":204,"kind":"status","pos":"main.go:47"},{"status":400,"kind":"error","body":"\"bad\"","pos":"main.go:44"}]}
+{"module":"chimix","method":"ANY","path":"/hf","pos":"main.go:20","router_id":0,"stack":["main.go:13 main()"],"handler":"home","handler_decl":"main.go:42","chain":[{"name":"Logger","scope":"global","pos":"main.go:15","decl":"main.go:10"}],"auth":false,"responses":[{"status":204,"kind":"status","pos":"main.go:47"},{"status":400,"kind":"error","body":"\"bad\"","pos":"main.go:44"}]}
+{"module":"chimix","method":"PUT","path":"/m","pos":"main.go:17","router_id":0,"stack":["main.go:13 main()"],"handler":"http.HandlerFunc(home)","handler_decl":"main.go:42","chain":[{"name":"Logger","scope":"global","pos":"main.go:15","decl":"main.go:10"}],"auth":false,"responses":[{"status":204,"kind":"status","pos":"main.go:47"},{"status":400,"kind":"error","body":"\"bad\"","pos":"main.go:44"}]}
+{"module":"chimix","method":"PATCH","path":"/mf","pos":"main.go:18","router_id":0,"stack":["main.go:13 main()"],"handler":"home","handler_decl":"main.go:42","chain":[{"name":"Logger","scope":"global","pos":"main.go:15","decl":"main.go:10"}],"auth":false,"responses":[{"status":204,"kind":"status","pos":"main.go:47"},{"status":400,"kind":"error","body":"\"bad\"","pos":"main.go:44"}]}
+{"module":"chimix","method":"GET","path":"/sub/z","pos":"main.go:38","router_id":4,"stack":["main.go:13 main()","main.go:27 subRouter()"],"handler":"home","handler_decl":"main.go:42","chain":[{"name":"Logger","scope":"global","pos":"main.go:15","decl":"main.go:10"}],"auth":false,"responses":[{"status":204,"kind":"status","pos":"main.go:47"},{"status":400,"kind":"error","body":"\"bad\"","pos":"main.go:44"}]}
+{"module":"chimix","method":"DELETE","path":"/{id}","pos":"main.go:33","router_id":5,"stack":["main.go:31 adminRoutes() — tidak terjangkau dari main"],"handler":"home","handler_decl":"main.go:42","chain":[{"name":"AdminGuard","scope":"global","pos":"main.go:32","decl":"main.go:11","auth":true}],"auth":true,"unreachable":true,"responses":[{"status":204,"kind":"status","pos":"main.go:47"},{"status":400,"kind":"error","body":"\"bad\"","pos":"main.go:44"}]}
+
+=== TRACE
+GET /  (didaftarkan main.go:16)
+Jalur setup: main.go:13 main() → main.go:16
+Rantai middleware (urut eksekusi):
+  1. Logger [main.go:10] {global} — main.go:15
+Auth wajib: false
+Handler: home (main.go:42)
+  → 204 status (main.go:47)
+  → 400 error "bad" (main.go:44)
+
+DELETE /api/admin/{id}  (didaftarkan main.go:33)
+Jalur setup: main.go:13 main() → main.go:24 adminRoutes() → main.go:33
+Rantai middleware (urut eksekusi):
+  1. Logger [main.go:10] {global} — main.go:15
+  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22
+  3. AdminGuard [main.go:11] (auth) {group /api/admin} — main.go:32
+Auth wajib: true
+Handler: home (main.go:42)
+  → 204 status (main.go:47)
+  → 400 error "bad" (main.go:44)
+
+POST /api/w  (didaftarkan main.go:25)
+Jalur setup: main.go:13 main() → main.go:25
+Rantai middleware (urut eksekusi):
+  1. Logger [main.go:10] {global} — main.go:15
+  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22
+  3. AdminGuard [main.go:11] (auth) {with /api} — main.go:25
+Auth wajib: true
+Handler: home (main.go:42)
+  → 204 status (main.go:47)
+  → 400 error "bad" (main.go:44)
+
+GET /api/x  (didaftarkan main.go:23)
+Jalur setup: main.go:13 main() → main.go:23
+Rantai middleware (urut eksekusi):
+  1. Logger [main.go:10] {global} — main.go:15
+  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22
+Auth wajib: true
+Handler: home (main.go:42)
+  → 204 status (main.go:47)
+  → 400 error "bad" (main.go:44)
+
+ANY /h  (didaftarkan main.go:19)
+Jalur setup: main.go:13 main() → main.go:19
+Rantai middleware (urut eksekusi):
+  1. Logger [main.go:10] {global} — main.go:15
+Auth wajib: false
+Handler: http.HandlerFunc(home) (main.go:42)
+  → 204 status (main.go:47)
+  → 400 error "bad" (main.go:44)
+
+ANY /hf  (didaftarkan main.go:20)
+Jalur setup: main.go:13 main() → main.go:20
+Rantai middleware (urut eksekusi):
+  1. Logger [main.go:10] {global} — main.go:15
+Auth wajib: false
+Handler: home (main.go:42)
+  → 204 status (main.go:47)
+  → 400 error "bad" (main.go:44)
+
+PUT /m  (didaftarkan main.go:17)
+Jalur setup: main.go:13 main() → main.go:17
+Rantai middleware (urut eksekusi):
+  1. Logger [main.go:10] {global} — main.go:15
+Auth wajib: false
+Handler: http.HandlerFunc(home) (main.go:42)
+  → 204 status (main.go:47)
+  → 400 error "bad" (main.go:44)
+
+PATCH /mf  (didaftarkan main.go:18)
+Jalur setup: main.go:13 main() → main.go:18
+Rantai middleware (urut eksekusi):
+  1. Logger [main.go:10] {global} — main.go:15
+Auth wajib: false
+Handler: home (main.go:42)
+  → 204 status (main.go:47)
+  → 400 error "bad" (main.go:44)
+
+GET /sub/z  (didaftarkan main.go:38)
+Jalur setup: main.go:13 main() → main.go:27 subRouter() → main.go:38
+Rantai middleware (urut eksekusi):
+  1. Logger [main.go:10] {global} — main.go:15
+Auth wajib: false
+Handler: home (main.go:42)
+  → 204 status (main.go:47)
+  → 400 error "bad" (main.go:44)
+
+DELETE /{id}  (didaftarkan main.go:33)
+⚠ Fungsi setup rute ini tidak terjangkau dari main — kemungkinan kode mati.
+Jalur setup: main.go:31 adminRoutes() — tidak terjangkau dari main → main.go:33
+Rantai middleware (urut eksekusi):
+  1. AdminGuard [main.go:11] (auth) {global} — main.go:32
+Auth wajib: true
+Handler: home (main.go:42)
+  → 204 status (main.go:47)
+  → 400 error "bad" (main.go:44)
+
+=== FILEROUTES
+main.go: ANY /h; ANY /hf; DELETE /api/admin/{id}; DELETE /{id}; GET /; GET /api/x; GET /sub/z; PATCH /mf; POST /api/w; PUT /m
+=== QUERIES
+[  ] => GET /, DELETE /api/admin/{id}, POST /api/w, GET /api/x, ANY /h, ANY /hf, PUT /m, PATCH /mf, GET /sub/z, DELETE /{id}
+[get  ] => GET /, GET /api/x, ANY /h, ANY /hf, GET /sub/z
+[ /a ] => DELETE /api/admin/{id}, POST /api/w, GET /api/x
+[POST  list] => 
+[  handlers.CreateUser] => 
+[  save] => 
+[  home] => GET /, DELETE /api/admin/{id}, POST /api/w, GET /api/x, ANY /h, ANY /hf, PUT /m, PATCH /mf, GET /sub/z, DELETE /{id}
+[  h/h.go] => 
+[  create] => 
+RouteAt(main.go:16) => GET /
+ContextFor(main.go:42) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\nAuth wajib: false\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nDELETE /api/admin/{id}  (didaftarkan main.go:33)\nJalur setup: main.go:13 main() → main.go:24 adminRoutes() → main.go:33\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {group /api/admin} — main.go:32\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nPOST /api/w  (didaftarkan main.go:25)\nJalur setup: main.go:13 main() → main.go:25\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {with /api} — main.go:25\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\n(+7 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\nAuth wajib: false\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nDELETE /api/admin/{id}  (didaftarkan main.go:33)\nJalur setup: main.go:13 main() → main.go:24 adminRoutes() → main.go:33\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {group /api/admin} — main.go:32\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nPOST /api/w  (didaftarkan main.go:25)\nJalur setup: main.go:13 main() → main.go:25\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {with /api} — main.go:25\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\n(+7 rute lain menjangkau target ini)\n"
+RouteAt(main.go:33) => DELETE /api/admin/{id}
+ContextFor(main.go:42) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\nAuth wajib: false\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nDELETE /api/admin/{id}  (didaftarkan main.go:33)\nJalur setup: main.go:13 main() → main.go:24 adminRoutes() → main.go:33\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {group /api/admin} — main.go:32\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nPOST /api/w  (didaftarkan main.go:25)\nJalur setup: main.go:13 main() → main.go:25\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {with /api} — main.go:25\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\n(+7 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\nAuth wajib: false\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nDELETE /api/admin/{id}  (didaftarkan main.go:33)\nJalur setup: main.go:13 main() → main.go:24 adminRoutes() → main.go:33\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {group /api/admin} — main.go:32\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nPOST /api/w  (didaftarkan main.go:25)\nJalur setup: main.go:13 main() → main.go:25\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {with /api} — main.go:25\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\n(+7 rute lain menjangkau target ini)\n"
+RouteAt(main.go:25) => POST /api/w
+ContextFor(main.go:42) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\nAuth wajib: false\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nDELETE /api/admin/{id}  (didaftarkan main.go:33)\nJalur setup: main.go:13 main() → main.go:24 adminRoutes() → main.go:33\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {group /api/admin} — main.go:32\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nPOST /api/w  (didaftarkan main.go:25)\nJalur setup: main.go:13 main() → main.go:25\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {with /api} — main.go:25\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\n(+7 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\nAuth wajib: false\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nDELETE /api/admin/{id}  (didaftarkan main.go:33)\nJalur setup: main.go:13 main() → main.go:24 adminRoutes() → main.go:33\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {group /api/admin} — main.go:32\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nPOST /api/w  (didaftarkan main.go:25)\nJalur setup: main.go:13 main() → main.go:25\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {with /api} — main.go:25\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\n(+7 rute lain menjangkau target ini)\n"
+RouteAt(main.go:23) => GET /api/x
+ContextFor(main.go:42) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\nAuth wajib: false\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nDELETE /api/admin/{id}  (didaftarkan main.go:33)\nJalur setup: main.go:13 main() → main.go:24 adminRoutes() → main.go:33\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {group /api/admin} — main.go:32\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nPOST /api/w  (didaftarkan main.go:25)\nJalur setup: main.go:13 main() → main.go:25\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {with /api} — main.go:25\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\n(+7 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\nAuth wajib: false\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nDELETE /api/admin/{id}  (didaftarkan main.go:33)\nJalur setup: main.go:13 main() → main.go:24 adminRoutes() → main.go:33\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {group /api/admin} — main.go:32\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nPOST /api/w  (didaftarkan main.go:25)\nJalur setup: main.go:13 main() → main.go:25\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {with /api} — main.go:25\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\n(+7 rute lain menjangkau target ini)\n"
+RouteAt(main.go:19) => ANY /h
+ContextFor(main.go:42) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\nAuth wajib: false\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nDELETE /api/admin/{id}  (didaftarkan main.go:33)\nJalur setup: main.go:13 main() → main.go:24 adminRoutes() → main.go:33\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {group /api/admin} — main.go:32\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nPOST /api/w  (didaftarkan main.go:25)\nJalur setup: main.go:13 main() → main.go:25\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {with /api} — main.go:25\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\n(+7 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\nAuth wajib: false\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nDELETE /api/admin/{id}  (didaftarkan main.go:33)\nJalur setup: main.go:13 main() → main.go:24 adminRoutes() → main.go:33\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {group /api/admin} — main.go:32\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nPOST /api/w  (didaftarkan main.go:25)\nJalur setup: main.go:13 main() → main.go:25\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {with /api} — main.go:25\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\n(+7 rute lain menjangkau target ini)\n"
+RouteAt(main.go:20) => ANY /hf
+ContextFor(main.go:42) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\nAuth wajib: false\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nDELETE /api/admin/{id}  (didaftarkan main.go:33)\nJalur setup: main.go:13 main() → main.go:24 adminRoutes() → main.go:33\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {group /api/admin} — main.go:32\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nPOST /api/w  (didaftarkan main.go:25)\nJalur setup: main.go:13 main() → main.go:25\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {with /api} — main.go:25\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\n(+7 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\nAuth wajib: false\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nDELETE /api/admin/{id}  (didaftarkan main.go:33)\nJalur setup: main.go:13 main() → main.go:24 adminRoutes() → main.go:33\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {group /api/admin} — main.go:32\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nPOST /api/w  (didaftarkan main.go:25)\nJalur setup: main.go:13 main() → main.go:25\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {with /api} — main.go:25\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\n(+7 rute lain menjangkau target ini)\n"
+RouteAt(main.go:17) => PUT /m
+ContextFor(main.go:42) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\nAuth wajib: false\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nDELETE /api/admin/{id}  (didaftarkan main.go:33)\nJalur setup: main.go:13 main() → main.go:24 adminRoutes() → main.go:33\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {group /api/admin} — main.go:32\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nPOST /api/w  (didaftarkan main.go:25)\nJalur setup: main.go:13 main() → main.go:25\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {with /api} — main.go:25\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\n(+7 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\nAuth wajib: false\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nDELETE /api/admin/{id}  (didaftarkan main.go:33)\nJalur setup: main.go:13 main() → main.go:24 adminRoutes() → main.go:33\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {group /api/admin} — main.go:32\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nPOST /api/w  (didaftarkan main.go:25)\nJalur setup: main.go:13 main() → main.go:25\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {with /api} — main.go:25\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\n(+7 rute lain menjangkau target ini)\n"
+RouteAt(main.go:18) => PATCH /mf
+ContextFor(main.go:42) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\nAuth wajib: false\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nDELETE /api/admin/{id}  (didaftarkan main.go:33)\nJalur setup: main.go:13 main() → main.go:24 adminRoutes() → main.go:33\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {group /api/admin} — main.go:32\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nPOST /api/w  (didaftarkan main.go:25)\nJalur setup: main.go:13 main() → main.go:25\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {with /api} — main.go:25\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\n(+7 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\nAuth wajib: false\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nDELETE /api/admin/{id}  (didaftarkan main.go:33)\nJalur setup: main.go:13 main() → main.go:24 adminRoutes() → main.go:33\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {group /api/admin} — main.go:32\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nPOST /api/w  (didaftarkan main.go:25)\nJalur setup: main.go:13 main() → main.go:25\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {with /api} — main.go:25\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\n(+7 rute lain menjangkau target ini)\n"
+RouteAt(main.go:38) => GET /sub/z
+ContextFor(main.go:42) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\nAuth wajib: false\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nDELETE /api/admin/{id}  (didaftarkan main.go:33)\nJalur setup: main.go:13 main() → main.go:24 adminRoutes() → main.go:33\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {group /api/admin} — main.go:32\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nPOST /api/w  (didaftarkan main.go:25)\nJalur setup: main.go:13 main() → main.go:25\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {with /api} — main.go:25\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\n(+7 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\nAuth wajib: false\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nDELETE /api/admin/{id}  (didaftarkan main.go:33)\nJalur setup: main.go:13 main() → main.go:24 adminRoutes() → main.go:33\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {group /api/admin} — main.go:32\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nPOST /api/w  (didaftarkan main.go:25)\nJalur setup: main.go:13 main() → main.go:25\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {with /api} — main.go:25\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\n(+7 rute lain menjangkau target ini)\n"
+RouteAt(main.go:33) => DELETE /api/admin/{id}
+ContextFor(main.go:42) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\nAuth wajib: false\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nDELETE /api/admin/{id}  (didaftarkan main.go:33)\nJalur setup: main.go:13 main() → main.go:24 adminRoutes() → main.go:33\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {group /api/admin} — main.go:32\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nPOST /api/w  (didaftarkan main.go:25)\nJalur setup: main.go:13 main() → main.go:25\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {with /api} — main.go:25\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\n(+7 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /  (didaftarkan main.go:16)\nJalur setup: main.go:13 main() → main.go:16\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\nAuth wajib: false\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nDELETE /api/admin/{id}  (didaftarkan main.go:33)\nJalur setup: main.go:13 main() → main.go:24 adminRoutes() → main.go:33\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {group /api/admin} — main.go:32\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\nPOST /api/w  (didaftarkan main.go:25)\nJalur setup: main.go:13 main() → main.go:25\nRantai middleware (urut eksekusi):\n  1. Logger [main.go:10] {global} — main.go:15\n  2. JWTAuth [main.go:9] (auth) {group /api} — main.go:22\n  3. AdminGuard [main.go:11] (auth) {with /api} — main.go:25\nAuth wajib: true\nHandler: home (main.go:42)\n  → 204 status (main.go:47)\n  → 400 error \"bad\" (main.go:44)\n\n(+7 rute lain menjangkau target ini)\n"
+ContextFor(handlers.CreateUser) => ""
+ContextFor(empty) => ""

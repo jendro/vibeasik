@@ -1,0 +1,347 @@
+=== JSON
+[
+ {
+  "module": "gor",
+  "dir": ".",
+  "framework": "gorilla",
+  "entries": [
+   "main.go:11"
+  ],
+  "routers": [
+   {
+    "id": 0,
+    "parent": -1,
+    "var": "",
+    "framework": "gorilla",
+    "prefix": "/",
+    "pos": "main.go:12",
+    "stack": [
+     "main.go:11 main()"
+    ],
+    "middlewares": [
+     {
+      "name": "Auth",
+      "scope": "global",
+      "pos": "main.go:13",
+      "decl": "main.go:9",
+      "auth": true
+     }
+    ]
+   },
+   {
+    "id": 1,
+    "parent": 0,
+    "var": "",
+    "framework": "gorilla",
+    "prefix": "/api",
+    "pos": "main.go:16",
+    "stack": [
+     "main.go:11 main()"
+    ]
+   }
+  ],
+  "routes": [
+   {
+    "method": "GET,POST",
+    "path": "/a",
+    "pos": "main.go:14",
+    "router_id": 0,
+    "stack": [
+     "main.go:11 main()"
+    ],
+    "handler": "home",
+    "handler_decl": "main.go:21",
+    "chain": [
+     {
+      "name": "Auth",
+      "scope": "global",
+      "pos": "main.go:13",
+      "decl": "main.go:9",
+      "auth": true
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "status",
+      "pos": "main.go:21"
+     }
+    ]
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/c",
+    "pos": "main.go:17",
+    "router_id": 1,
+    "stack": [
+     "main.go:11 main()"
+    ],
+    "handler": "home",
+    "handler_decl": "main.go:21",
+    "chain": [
+     {
+      "name": "Auth",
+      "scope": "global",
+      "pos": "main.go:13",
+      "decl": "main.go:9",
+      "auth": true
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "status",
+      "pos": "main.go:21"
+     }
+    ]
+   },
+   {
+    "method": "ANY",
+    "path": "/b",
+    "pos": "main.go:15",
+    "router_id": 0,
+    "stack": [
+     "main.go:11 main()"
+    ],
+    "handler": "home",
+    "handler_decl": "main.go:21",
+    "chain": [
+     {
+      "name": "Auth",
+      "scope": "global",
+      "pos": "main.go:13",
+      "decl": "main.go:9",
+      "auth": true
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "status",
+      "pos": "main.go:21"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "module": "std",
+  "dir": "std",
+  "framework": "nethttp",
+  "entries": [
+   "std/main.go:5"
+  ],
+  "routers": [
+   {
+    "id": 0,
+    "parent": -1,
+    "var": "",
+    "framework": "nethttp",
+    "prefix": "/",
+    "pos": "std/main.go:6",
+    "stack": [
+     "std/main.go:5 main()"
+    ]
+   }
+  ],
+  "routes": [
+   {
+    "method": "GET",
+    "path": "/h/{id}",
+    "pos": "std/main.go:9",
+    "router_id": 0,
+    "stack": [
+     "std/main.go:5 main()"
+    ],
+    "handler": "http.HandlerFunc(create)",
+    "handler_decl": "std/main.go:13",
+    "auth": false,
+    "responses": [
+     {
+      "status": 201,
+      "kind": "status",
+      "pos": "std/main.go:15"
+     },
+     {
+      "status": 500,
+      "kind": "error",
+      "body": "\"x\"",
+      "pos": "std/main.go:14"
+     }
+    ]
+   },
+   {
+    "method": "POST",
+    "path": "/items",
+    "pos": "std/main.go:7",
+    "router_id": 0,
+    "stack": [
+     "std/main.go:5 main()"
+    ],
+    "handler": "create",
+    "handler_decl": "std/main.go:13",
+    "auth": false,
+    "responses": [
+     {
+      "status": 201,
+      "kind": "status",
+      "pos": "std/main.go:15"
+     },
+     {
+      "status": 500,
+      "kind": "error",
+      "body": "\"x\"",
+      "pos": "std/main.go:14"
+     }
+    ]
+   },
+   {
+    "method": "ANY",
+    "path": "/plain",
+    "pos": "std/main.go:8",
+    "router_id": 0,
+    "stack": [
+     "std/main.go:5 main()"
+    ],
+    "handler": "create",
+    "handler_decl": "std/main.go:13",
+    "auth": false,
+    "responses": [
+     {
+      "status": 201,
+      "kind": "status",
+      "pos": "std/main.go:15"
+     },
+     {
+      "status": 500,
+      "kind": "error",
+      "body": "\"x\"",
+      "pos": "std/main.go:14"
+     }
+    ]
+   }
+  ]
+ }
+]
+=== MARKDOWN
+## Peta Rute (router → middleware → handler → response)
+
+> Ditelusuri statis dari `func main` dengan go/parser + go/types: prefix group, middleware efektif per rute sesuai semantik framework (urutan pendaftaran, prefix Use/Group, skip `Next`), status response handler (termasuk lewat helper), fungsi yang dijangkau. Sebelum menyimpulkan "rute tanpa auth/validasi", cek rantai di sini: middleware global & group tidak terlihat di baris rute. Detail per rute (jalur setup dari main, response + body, semua fungsi yang dipanggil) ada di `.vibeasik/routes.jsonl`; MCP `vibeasik_code_map_routes` (filter path/method, atau `function` untuk menelusur balik fungsi → rute).
+
+### Modul `gor` (`.`, gorilla) — 3 rute
+
+- Titik masuk: `main.go:11`
+- **Middleware global** (urut eksekusi, berlaku untuk rute yang didaftarkan sesudahnya):
+  1. Auth [main.go:9] (auth) — `main.go:13`
+
+#### Rantai: global · auth (3 rute)
+
+- `GET,POST /a` → `home` `main.go:21` · 200
+- `DELETE /api/c` → `home` `main.go:21` · 200
+- `ANY /b` → `home` `main.go:21` · 200
+
+### Modul `std` (`std`, nethttp) — 3 rute
+
+- Titik masuk: `std/main.go:5`
+- Rute pengubah data **tanpa** middleware auth wajib (pastikan memang publik): `POST /items`, `ANY /plain`
+
+#### Rantai: global · publik (3 rute)
+
+- `GET /h/{id}` → `http.HandlerFunc(create)` `std/main.go:13` · 201,500
+- `POST /items` → `create` `std/main.go:13` · 201,500
+- `ANY /plain` → `create` `std/main.go:13` · 201,500
+
+
+=== JSONL
+{"module":"gor","method":"GET,POST","path":"/a","pos":"main.go:14","router_id":0,"stack":["main.go:11 main()"],"handler":"home","handler_decl":"main.go:21","chain":[{"name":"Auth","scope":"global","pos":"main.go:13","decl":"main.go:9","auth":true}],"auth":true,"responses":[{"status":200,"kind":"status","pos":"main.go:21"}]}
+{"module":"gor","method":"DELETE","path":"/api/c","pos":"main.go:17","router_id":1,"stack":["main.go:11 main()"],"handler":"home","handler_decl":"main.go:21","chain":[{"name":"Auth","scope":"global","pos":"main.go:13","decl":"main.go:9","auth":true}],"auth":true,"responses":[{"status":200,"kind":"status","pos":"main.go:21"}]}
+{"module":"gor","method":"ANY","path":"/b","pos":"main.go:15","router_id":0,"stack":["main.go:11 main()"],"handler":"home","handler_decl":"main.go:21","chain":[{"name":"Auth","scope":"global","pos":"main.go:13","decl":"main.go:9","auth":true}],"auth":true,"responses":[{"status":200,"kind":"status","pos":"main.go:21"}]}
+{"module":"std","method":"GET","path":"/h/{id}","pos":"std/main.go:9","router_id":0,"stack":["std/main.go:5 main()"],"handler":"http.HandlerFunc(create)","handler_decl":"std/main.go:13","auth":false,"responses":[{"status":201,"kind":"status","pos":"std/main.go:15"},{"status":500,"kind":"error","body":"\"x\"","pos":"std/main.go:14"}]}
+{"module":"std","method":"POST","path":"/items","pos":"std/main.go:7","router_id":0,"stack":["std/main.go:5 main()"],"handler":"create","handler_decl":"std/main.go:13","auth":false,"responses":[{"status":201,"kind":"status","pos":"std/main.go:15"},{"status":500,"kind":"error","body":"\"x\"","pos":"std/main.go:14"}]}
+{"module":"std","method":"ANY","path":"/plain","pos":"std/main.go:8","router_id":0,"stack":["std/main.go:5 main()"],"handler":"create","handler_decl":"std/main.go:13","auth":false,"responses":[{"status":201,"kind":"status","pos":"std/main.go:15"},{"status":500,"kind":"error","body":"\"x\"","pos":"std/main.go:14"}]}
+
+=== TRACE
+GET,POST /a  (didaftarkan main.go:14)
+Jalur setup: main.go:11 main() → main.go:14
+Rantai middleware (urut eksekusi):
+  1. Auth [main.go:9] (auth) {global} — main.go:13
+Auth wajib: true
+Handler: home (main.go:21)
+  → 200 status (main.go:21)
+
+DELETE /api/c  (didaftarkan main.go:17)
+Jalur setup: main.go:11 main() → main.go:17
+Rantai middleware (urut eksekusi):
+  1. Auth [main.go:9] (auth) {global} — main.go:13
+Auth wajib: true
+Handler: home (main.go:21)
+  → 200 status (main.go:21)
+
+ANY /b  (didaftarkan main.go:15)
+Jalur setup: main.go:11 main() → main.go:15
+Rantai middleware (urut eksekusi):
+  1. Auth [main.go:9] (auth) {global} — main.go:13
+Auth wajib: true
+Handler: home (main.go:21)
+  → 200 status (main.go:21)
+
+GET /h/{id}  (didaftarkan std/main.go:9)
+Jalur setup: std/main.go:5 main() → std/main.go:9
+Rantai middleware (urut eksekusi):
+Auth wajib: false
+Handler: http.HandlerFunc(create) (std/main.go:13)
+  → 201 status (std/main.go:15)
+  → 500 error "x" (std/main.go:14)
+
+POST /items  (didaftarkan std/main.go:7)
+Jalur setup: std/main.go:5 main() → std/main.go:7
+Rantai middleware (urut eksekusi):
+Auth wajib: false
+Handler: create (std/main.go:13)
+  → 201 status (std/main.go:15)
+  → 500 error "x" (std/main.go:14)
+
+ANY /plain  (didaftarkan std/main.go:8)
+Jalur setup: std/main.go:5 main() → std/main.go:8
+Rantai middleware (urut eksekusi):
+Auth wajib: false
+Handler: create (std/main.go:13)
+  → 201 status (std/main.go:15)
+  → 500 error "x" (std/main.go:14)
+
+=== FILEROUTES
+main.go: ANY /b; DELETE /api/c; GET,POST /a
+std/main.go: ANY /plain; GET /h/{id}; POST /items
+=== QUERIES
+[  ] => GET,POST /a, DELETE /api/c, ANY /b, GET /h/{id}, POST /items, ANY /plain
+[get  ] => ANY /b, GET /h/{id}, ANY /plain
+[ /a ] => GET,POST /a, DELETE /api/c
+[POST  list] => 
+[  handlers.CreateUser] => 
+[  save] => 
+[  home] => GET,POST /a, DELETE /api/c, ANY /b
+[  h/h.go] => 
+[  create] => GET /h/{id}, POST /items, ANY /plain
+RouteAt(main.go:14) => GET,POST /a
+ContextFor(main.go:21) => "GET,POST /a  (didaftarkan main.go:14)\nJalur setup: main.go:11 main() → main.go:14\nRantai middleware (urut eksekusi):\n  1. Auth [main.go:9] (auth) {global} — main.go:13\nAuth wajib: true\nHandler: home (main.go:21)\n  → 200 status (main.go:21)\n\nDELETE /api/c  (didaftarkan main.go:17)\nJalur setup: main.go:11 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Auth [main.go:9] (auth) {global} — main.go:13\nAuth wajib: true\nHandler: home (main.go:21)\n  → 200 status (main.go:21)\n\nANY /b  (didaftarkan main.go:15)\nJalur setup: main.go:11 main() → main.go:15\nRantai middleware (urut eksekusi):\n  1. Auth [main.go:9] (auth) {global} — main.go:13\nAuth wajib: true\nHandler: home (main.go:21)\n  → 200 status (main.go:21)\n\n"
+ContextFor(main.go,0) => "GET,POST /a  (didaftarkan main.go:14)\nJalur setup: main.go:11 main() → main.go:14\nRantai middleware (urut eksekusi):\n  1. Auth [main.go:9] (auth) {global} — main.go:13\nAuth wajib: true\nHandler: home (main.go:21)\n  → 200 status (main.go:21)\n\nDELETE /api/c  (didaftarkan main.go:17)\nJalur setup: main.go:11 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Auth [main.go:9] (auth) {global} — main.go:13\nAuth wajib: true\nHandler: home (main.go:21)\n  → 200 status (main.go:21)\n\nANY /b  (didaftarkan main.go:15)\nJalur setup: main.go:11 main() → main.go:15\nRantai middleware (urut eksekusi):\n  1. Auth [main.go:9] (auth) {global} — main.go:13\nAuth wajib: true\nHandler: home (main.go:21)\n  → 200 status (main.go:21)\n\n(+3 rute lain menjangkau target ini)\n"
+RouteAt(main.go:17) => DELETE /api/c
+ContextFor(main.go:21) => "GET,POST /a  (didaftarkan main.go:14)\nJalur setup: main.go:11 main() → main.go:14\nRantai middleware (urut eksekusi):\n  1. Auth [main.go:9] (auth) {global} — main.go:13\nAuth wajib: true\nHandler: home (main.go:21)\n  → 200 status (main.go:21)\n\nDELETE /api/c  (didaftarkan main.go:17)\nJalur setup: main.go:11 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Auth [main.go:9] (auth) {global} — main.go:13\nAuth wajib: true\nHandler: home (main.go:21)\n  → 200 status (main.go:21)\n\nANY /b  (didaftarkan main.go:15)\nJalur setup: main.go:11 main() → main.go:15\nRantai middleware (urut eksekusi):\n  1. Auth [main.go:9] (auth) {global} — main.go:13\nAuth wajib: true\nHandler: home (main.go:21)\n  → 200 status (main.go:21)\n\n"
+ContextFor(main.go,0) => "GET,POST /a  (didaftarkan main.go:14)\nJalur setup: main.go:11 main() → main.go:14\nRantai middleware (urut eksekusi):\n  1. Auth [main.go:9] (auth) {global} — main.go:13\nAuth wajib: true\nHandler: home (main.go:21)\n  → 200 status (main.go:21)\n\nDELETE /api/c  (didaftarkan main.go:17)\nJalur setup: main.go:11 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Auth [main.go:9] (auth) {global} — main.go:13\nAuth wajib: true\nHandler: home (main.go:21)\n  → 200 status (main.go:21)\n\nANY /b  (didaftarkan main.go:15)\nJalur setup: main.go:11 main() → main.go:15\nRantai middleware (urut eksekusi):\n  1. Auth [main.go:9] (auth) {global} — main.go:13\nAuth wajib: true\nHandler: home (main.go:21)\n  → 200 status (main.go:21)\n\n(+3 rute lain menjangkau target ini)\n"
+RouteAt(main.go:15) => ANY /b
+ContextFor(main.go:21) => "GET,POST /a  (didaftarkan main.go:14)\nJalur setup: main.go:11 main() → main.go:14\nRantai middleware (urut eksekusi):\n  1. Auth [main.go:9] (auth) {global} — main.go:13\nAuth wajib: true\nHandler: home (main.go:21)\n  → 200 status (main.go:21)\n\nDELETE /api/c  (didaftarkan main.go:17)\nJalur setup: main.go:11 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Auth [main.go:9] (auth) {global} — main.go:13\nAuth wajib: true\nHandler: home (main.go:21)\n  → 200 status (main.go:21)\n\nANY /b  (didaftarkan main.go:15)\nJalur setup: main.go:11 main() → main.go:15\nRantai middleware (urut eksekusi):\n  1. Auth [main.go:9] (auth) {global} — main.go:13\nAuth wajib: true\nHandler: home (main.go:21)\n  → 200 status (main.go:21)\n\n"
+ContextFor(main.go,0) => "GET,POST /a  (didaftarkan main.go:14)\nJalur setup: main.go:11 main() → main.go:14\nRantai middleware (urut eksekusi):\n  1. Auth [main.go:9] (auth) {global} — main.go:13\nAuth wajib: true\nHandler: home (main.go:21)\n  → 200 status (main.go:21)\n\nDELETE /api/c  (didaftarkan main.go:17)\nJalur setup: main.go:11 main() → main.go:17\nRantai middleware (urut eksekusi):\n  1. Auth [main.go:9] (auth) {global} — main.go:13\nAuth wajib: true\nHandler: home (main.go:21)\n  → 200 status (main.go:21)\n\nANY /b  (didaftarkan main.go:15)\nJalur setup: main.go:11 main() → main.go:15\nRantai middleware (urut eksekusi):\n  1. Auth [main.go:9] (auth) {global} — main.go:13\nAuth wajib: true\nHandler: home (main.go:21)\n  → 200 status (main.go:21)\n\n(+3 rute lain menjangkau target ini)\n"
+RouteAt(std/main.go:9) => GET /h/{id}
+ContextFor(std/main.go:13) => "GET /h/{id}  (didaftarkan std/main.go:9)\nJalur setup: std/main.go:5 main() → std/main.go:9\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: http.HandlerFunc(create) (std/main.go:13)\n  → 201 status (std/main.go:15)\n  → 500 error \"x\" (std/main.go:14)\n\nPOST /items  (didaftarkan std/main.go:7)\nJalur setup: std/main.go:5 main() → std/main.go:7\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: create (std/main.go:13)\n  → 201 status (std/main.go:15)\n  → 500 error \"x\" (std/main.go:14)\n\nANY /plain  (didaftarkan std/main.go:8)\nJalur setup: std/main.go:5 main() → std/main.go:8\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: create (std/main.go:13)\n  → 201 status (std/main.go:15)\n  → 500 error \"x\" (std/main.go:14)\n\n"
+ContextFor(std/main.go,0) => "GET /h/{id}  (didaftarkan std/main.go:9)\nJalur setup: std/main.go:5 main() → std/main.go:9\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: http.HandlerFunc(create) (std/main.go:13)\n  → 201 status (std/main.go:15)\n  → 500 error \"x\" (std/main.go:14)\n\nPOST /items  (didaftarkan std/main.go:7)\nJalur setup: std/main.go:5 main() → std/main.go:7\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: create (std/main.go:13)\n  → 201 status (std/main.go:15)\n  → 500 error \"x\" (std/main.go:14)\n\nANY /plain  (didaftarkan std/main.go:8)\nJalur setup: std/main.go:5 main() → std/main.go:8\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: create (std/main.go:13)\n  → 201 status (std/main.go:15)\n  → 500 error \"x\" (std/main.go:14)\n\n"
+RouteAt(std/main.go:7) => POST /items
+ContextFor(std/main.go:13) => "GET /h/{id}  (didaftarkan std/main.go:9)\nJalur setup: std/main.go:5 main() → std/main.go:9\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: http.HandlerFunc(create) (std/main.go:13)\n  → 201 status (std/main.go:15)\n  → 500 error \"x\" (std/main.go:14)\n\nPOST /items  (didaftarkan std/main.go:7)\nJalur setup: std/main.go:5 main() → std/main.go:7\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: create (std/main.go:13)\n  → 201 status (std/main.go:15)\n  → 500 error \"x\" (std/main.go:14)\n\nANY /plain  (didaftarkan std/main.go:8)\nJalur setup: std/main.go:5 main() → std/main.go:8\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: create (std/main.go:13)\n  → 201 status (std/main.go:15)\n  → 500 error \"x\" (std/main.go:14)\n\n"
+ContextFor(std/main.go,0) => "GET /h/{id}  (didaftarkan std/main.go:9)\nJalur setup: std/main.go:5 main() → std/main.go:9\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: http.HandlerFunc(create) (std/main.go:13)\n  → 201 status (std/main.go:15)\n  → 500 error \"x\" (std/main.go:14)\n\nPOST /items  (didaftarkan std/main.go:7)\nJalur setup: std/main.go:5 main() → std/main.go:7\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: create (std/main.go:13)\n  → 201 status (std/main.go:15)\n  → 500 error \"x\" (std/main.go:14)\n\nANY /plain  (didaftarkan std/main.go:8)\nJalur setup: std/main.go:5 main() → std/main.go:8\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: create (std/main.go:13)\n  → 201 status (std/main.go:15)\n  → 500 error \"x\" (std/main.go:14)\n\n"
+RouteAt(std/main.go:8) => ANY /plain
+ContextFor(std/main.go:13) => "GET /h/{id}  (didaftarkan std/main.go:9)\nJalur setup: std/main.go:5 main() → std/main.go:9\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: http.HandlerFunc(create) (std/main.go:13)\n  → 201 status (std/main.go:15)\n  → 500 error \"x\" (std/main.go:14)\n\nPOST /items  (didaftarkan std/main.go:7)\nJalur setup: std/main.go:5 main() → std/main.go:7\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: create (std/main.go:13)\n  → 201 status (std/main.go:15)\n  → 500 error \"x\" (std/main.go:14)\n\nANY /plain  (didaftarkan std/main.go:8)\nJalur setup: std/main.go:5 main() → std/main.go:8\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: create (std/main.go:13)\n  → 201 status (std/main.go:15)\n  → 500 error \"x\" (std/main.go:14)\n\n"
+ContextFor(std/main.go,0) => "GET /h/{id}  (didaftarkan std/main.go:9)\nJalur setup: std/main.go:5 main() → std/main.go:9\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: http.HandlerFunc(create) (std/main.go:13)\n  → 201 status (std/main.go:15)\n  → 500 error \"x\" (std/main.go:14)\n\nPOST /items  (didaftarkan std/main.go:7)\nJalur setup: std/main.go:5 main() → std/main.go:7\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: create (std/main.go:13)\n  → 201 status (std/main.go:15)\n  → 500 error \"x\" (std/main.go:14)\n\nANY /plain  (didaftarkan std/main.go:8)\nJalur setup: std/main.go:5 main() → std/main.go:8\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: create (std/main.go:13)\n  → 201 status (std/main.go:15)\n  → 500 error \"x\" (std/main.go:14)\n\n"
+ContextFor(handlers.CreateUser) => ""
+ContextFor(empty) => ""

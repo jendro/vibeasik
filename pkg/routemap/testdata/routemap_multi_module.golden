@@ -1,0 +1,206 @@
+=== JSON
+[
+ {
+  "module": "a",
+  "dir": "a",
+  "framework": "echo",
+  "entries": [
+   "a/main.go:5"
+  ],
+  "routers": [
+   {
+    "id": 0,
+    "parent": -1,
+    "var": "",
+    "framework": "echo",
+    "prefix": "/",
+    "pos": "a/main.go:6",
+    "stack": [
+     "a/main.go:5 main()"
+    ]
+   }
+  ],
+  "routes": [
+   {
+    "method": "GET",
+    "path": "/a",
+    "pos": "a/main.go:7",
+    "router_id": 0,
+    "stack": [
+     "a/main.go:5 main()"
+    ],
+    "handler": "func literal",
+    "handler_decl": "a/main.go:7",
+    "auth": false,
+    "responses": [
+     {
+      "status": 204,
+      "kind": "status",
+      "pos": "a/main.go:7"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "module": "b",
+  "dir": "b",
+  "framework": "gin",
+  "entries": [
+   "b/main.go:5"
+  ],
+  "routers": [
+   {
+    "id": 0,
+    "parent": -1,
+    "var": "",
+    "framework": "gin",
+    "prefix": "/",
+    "pos": "b/main.go:6",
+    "stack": [
+     "b/main.go:5 main()"
+    ]
+   }
+  ],
+  "routes": [
+   {
+    "method": "POST",
+    "path": "/b",
+    "pos": "b/main.go:7",
+    "router_id": 0,
+    "stack": [
+     "b/main.go:5 main()"
+    ],
+    "handler": "func literal",
+    "handler_decl": "b/main.go:7",
+    "auth": false
+   }
+  ]
+ },
+ {
+  "module": "c",
+  "dir": "c",
+  "framework": "echo",
+  "entries": [
+   "c/main.go:5"
+  ],
+  "routers": [
+   {
+    "id": 0,
+    "parent": -1,
+    "var": "",
+    "framework": "echo",
+    "prefix": "/",
+    "pos": "c/main.go:6",
+    "stack": [
+     "c/main.go:5 main()"
+    ]
+   }
+  ],
+  "routes": [
+   {
+    "method": "POST",
+    "path": "/c",
+    "pos": "c/main.go:7",
+    "router_id": 0,
+    "stack": [
+     "c/main.go:5 main()"
+    ],
+    "handler": "create",
+    "handler_decl": "c/main.go:9",
+    "auth": false,
+    "responses": [
+     {
+      "status": 201,
+      "kind": "json",
+      "body": "nil",
+      "pos": "c/main.go:9"
+     }
+    ]
+   }
+  ]
+ }
+]
+=== MARKDOWN
+## Peta Rute (router → middleware → handler → response)
+
+> Ditelusuri statis dari `func main` dengan go/parser + go/types: prefix group, middleware efektif per rute sesuai semantik framework (urutan pendaftaran, prefix Use/Group, skip `Next`), status response handler (termasuk lewat helper), fungsi yang dijangkau. Sebelum menyimpulkan "rute tanpa auth/validasi", cek rantai di sini: middleware global & group tidak terlihat di baris rute. Detail per rute (jalur setup dari main, response + body, semua fungsi yang dipanggil) ada di `.vibeasik/routes.jsonl`; MCP `vibeasik_code_map_routes` (filter path/method, atau `function` untuk menelusur balik fungsi → rute).
+
+### Modul `a` (`a`, echo) — 1 rute
+
+- Titik masuk: `a/main.go:5`
+
+#### Rantai: global · publik (1 rute)
+
+- `GET /a` → `func literal` `a/main.go:7` · 204
+
+### Modul `b` (`b`, gin) — 1 rute
+
+- Titik masuk: `b/main.go:5`
+- Rute pengubah data **tanpa** middleware auth wajib (pastikan memang publik): `POST /b`
+
+#### Rantai: global · publik (1 rute)
+
+- `POST /b` → `func literal` `b/main.go:7`
+
+### Modul `c` (`c`, echo) — 1 rute
+
+- Titik masuk: `c/main.go:5`
+- Rute pengubah data **tanpa** middleware auth wajib (pastikan memang publik): `POST /c`
+
+#### Rantai: global · publik (1 rute)
+
+- `POST /c` → `create` `c/main.go:9` · 201
+
+
+=== JSONL
+{"module":"a","method":"GET","path":"/a","pos":"a/main.go:7","router_id":0,"stack":["a/main.go:5 main()"],"handler":"func literal","handler_decl":"a/main.go:7","auth":false,"responses":[{"status":204,"kind":"status","pos":"a/main.go:7"}]}
+{"module":"b","method":"POST","path":"/b","pos":"b/main.go:7","router_id":0,"stack":["b/main.go:5 main()"],"handler":"func literal","handler_decl":"b/main.go:7","auth":false}
+{"module":"c","method":"POST","path":"/c","pos":"c/main.go:7","router_id":0,"stack":["c/main.go:5 main()"],"handler":"create","handler_decl":"c/main.go:9","auth":false,"responses":[{"status":201,"kind":"json","body":"nil","pos":"c/main.go:9"}]}
+
+=== TRACE
+GET /a  (didaftarkan a/main.go:7)
+Jalur setup: a/main.go:5 main() → a/main.go:7
+Rantai middleware (urut eksekusi):
+Auth wajib: false
+Handler: func literal (a/main.go:7)
+  → 204 status (a/main.go:7)
+
+POST /b  (didaftarkan b/main.go:7)
+Jalur setup: b/main.go:5 main() → b/main.go:7
+Rantai middleware (urut eksekusi):
+Auth wajib: false
+Handler: func literal (b/main.go:7)
+
+POST /c  (didaftarkan c/main.go:7)
+Jalur setup: c/main.go:5 main() → c/main.go:7
+Rantai middleware (urut eksekusi):
+Auth wajib: false
+Handler: create (c/main.go:9)
+  → 201 json nil (c/main.go:9)
+
+=== FILEROUTES
+a/main.go: GET /a
+b/main.go: POST /b
+c/main.go: POST /c
+=== QUERIES
+[  ] => GET /a, POST /b, POST /c
+[get  ] => GET /a
+[ /a ] => GET /a
+[POST  list] => 
+[  handlers.CreateUser] => 
+[  save] => 
+[  home] => 
+[  h/h.go] => 
+[  create] => POST /c
+RouteAt(a/main.go:7) => GET /a
+ContextFor(a/main.go:7) => "GET /a  (didaftarkan a/main.go:7)\nJalur setup: a/main.go:5 main() → a/main.go:7\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: func literal (a/main.go:7)\n  → 204 status (a/main.go:7)\n\n"
+ContextFor(a/main.go,0) => "GET /a  (didaftarkan a/main.go:7)\nJalur setup: a/main.go:5 main() → a/main.go:7\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: func literal (a/main.go:7)\n  → 204 status (a/main.go:7)\n\n"
+RouteAt(b/main.go:7) => POST /b
+ContextFor(b/main.go:7) => "POST /b  (didaftarkan b/main.go:7)\nJalur setup: b/main.go:5 main() → b/main.go:7\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: func literal (b/main.go:7)\n\n"
+ContextFor(b/main.go,0) => "POST /b  (didaftarkan b/main.go:7)\nJalur setup: b/main.go:5 main() → b/main.go:7\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: func literal (b/main.go:7)\n\n"
+RouteAt(c/main.go:7) => POST /c
+ContextFor(c/main.go:9) => "POST /c  (didaftarkan c/main.go:7)\nJalur setup: c/main.go:5 main() → c/main.go:7\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: create (c/main.go:9)\n  → 201 json nil (c/main.go:9)\n\n"
+ContextFor(c/main.go,0) => "POST /c  (didaftarkan c/main.go:7)\nJalur setup: c/main.go:5 main() → c/main.go:7\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: create (c/main.go:9)\n  → 201 json nil (c/main.go:9)\n\n"
+ContextFor(handlers.CreateUser) => ""
+ContextFor(empty) => ""

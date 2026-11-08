@@ -1,0 +1,1052 @@
+=== JSON
+[
+ {
+  "module": "stm",
+  "dir": ".",
+  "framework": "fiber",
+  "entries": [
+   "main.go:26"
+  ],
+  "routers": [
+   {
+    "id": 0,
+    "parent": -1,
+    "var": "",
+    "framework": "fiber",
+    "prefix": "/",
+    "pos": "main.go:27",
+    "stack": [
+     "main.go:26 main()"
+    ],
+    "middlewares": [
+     {
+      "name": "jwtGuard",
+      "scope": "global",
+      "pos": "main.go:73",
+      "auth": true
+     }
+    ]
+   },
+   {
+    "id": 1,
+    "parent": -1,
+    "var": "",
+    "framework": "fiber",
+    "prefix": "/",
+    "pos": "main.go:28",
+    "stack": [
+     "main.go:26 main()"
+    ]
+   },
+   {
+    "id": 2,
+    "parent": -1,
+    "var": "",
+    "framework": "fiber",
+    "prefix": "/",
+    "pos": "main.go:28",
+    "stack": [
+     "main.go:26 main()"
+    ]
+   },
+   {
+    "id": 3,
+    "parent": -1,
+    "var": "",
+    "framework": "fiber",
+    "prefix": "/",
+    "pos": "main.go:16",
+    "stack": [
+     "main.go:26 main()",
+     "main.go:30 setup()"
+    ]
+   },
+   {
+    "id": 4,
+    "parent": 0,
+    "var": "",
+    "framework": "fiber",
+    "prefix": "/",
+    "pos": "main.go:71",
+    "stack": [
+     "main.go:26 main()"
+    ],
+    "middlewares": [
+     {
+      "name": "jwtGuard",
+      "scope": "group",
+      "scope_path": "/",
+      "pos": "main.go:71",
+      "auth": true
+     }
+    ]
+   }
+  ],
+  "routes": [
+   {
+    "method": "GET",
+    "path": "/a",
+    "pos": "main.go:72",
+    "router_id": 4,
+    "stack": [
+     "main.go:26 main()"
+    ],
+    "handler": "h",
+    "handler_decl": "main.go:13",
+    "chain": [
+     {
+      "name": "jwtGuard",
+      "scope": "group",
+      "scope_path": "/",
+      "pos": "main.go:71",
+      "auth": true
+     }
+    ],
+    "inactive": [
+     {
+      "name": "jwtGuard",
+      "scope": "global",
+      "pos": "main.go:73",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "status",
+      "pos": "main.go:13"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/block",
+    "pos": "main.go:66",
+    "router_id": 0,
+    "stack": [
+     "main.go:26 main()"
+    ],
+    "handler": "h",
+    "handler_decl": "main.go:13",
+    "inactive": [
+     {
+      "name": "jwtGuard",
+      "scope": "group",
+      "scope_path": "/",
+      "pos": "main.go:71",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     },
+     {
+      "name": "jwtGuard",
+      "scope": "global",
+      "pos": "main.go:73",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "status",
+      "pos": "main.go:13"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/defer",
+    "pos": "main.go:61",
+    "router_id": 0,
+    "stack": [
+     "main.go:26 main()"
+    ],
+    "handler": "h",
+    "handler_decl": "main.go:13",
+    "inactive": [
+     {
+      "name": "jwtGuard",
+      "scope": "group",
+      "scope_path": "/",
+      "pos": "main.go:71",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     },
+     {
+      "name": "jwtGuard",
+      "scope": "global",
+      "pos": "main.go:73",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "status",
+      "pos": "main.go:13"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/else",
+    "pos": "main.go:35",
+    "router_id": 0,
+    "stack": [
+     "main.go:26 main()"
+    ],
+    "handler": "h",
+    "handler_decl": "main.go:13",
+    "inactive": [
+     {
+      "name": "jwtGuard",
+      "scope": "group",
+      "scope_path": "/",
+      "pos": "main.go:71",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     },
+     {
+      "name": "jwtGuard",
+      "scope": "global",
+      "pos": "main.go:73",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "status",
+      "pos": "main.go:13"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/for",
+    "pos": "main.go:38",
+    "router_id": 0,
+    "stack": [
+     "main.go:26 main()"
+    ],
+    "handler": "h",
+    "handler_decl": "main.go:13",
+    "inactive": [
+     {
+      "name": "jwtGuard",
+      "scope": "group",
+      "scope_path": "/",
+      "pos": "main.go:71",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     },
+     {
+      "name": "jwtGuard",
+      "scope": "global",
+      "pos": "main.go:73",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "status",
+      "pos": "main.go:13"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/go",
+    "pos": "main.go:60",
+    "router_id": 0,
+    "stack": [
+     "main.go:26 main()"
+    ],
+    "handler": "h",
+    "handler_decl": "main.go:13",
+    "inactive": [
+     {
+      "name": "jwtGuard",
+      "scope": "group",
+      "scope_path": "/",
+      "pos": "main.go:71",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     },
+     {
+      "name": "jwtGuard",
+      "scope": "global",
+      "pos": "main.go:73",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "status",
+      "pos": "main.go:13"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/if-init",
+    "pos": "main.go:33",
+    "router_id": 0,
+    "stack": [
+     "main.go:26 main()"
+    ],
+    "handler": "h",
+    "handler_decl": "main.go:13",
+    "inactive": [
+     {
+      "name": "jwtGuard",
+      "scope": "group",
+      "scope_path": "/",
+      "pos": "main.go:71",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     },
+     {
+      "name": "jwtGuard",
+      "scope": "global",
+      "pos": "main.go:73",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "status",
+      "pos": "main.go:13"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/iife",
+    "pos": "main.go:63",
+    "router_id": 0,
+    "stack": [
+     "main.go:26 main()"
+    ],
+    "handler": "h",
+    "handler_decl": "main.go:13",
+    "inactive": [
+     {
+      "name": "jwtGuard",
+      "scope": "group",
+      "scope_path": "/",
+      "pos": "main.go:71",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     },
+     {
+      "name": "jwtGuard",
+      "scope": "global",
+      "pos": "main.go:73",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "status",
+      "pos": "main.go:13"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/in-setup",
+    "pos": "main.go:17",
+    "router_id": 3,
+    "stack": [
+     "main.go:26 main()",
+     "main.go:30 setup()"
+    ],
+    "handler": "h",
+    "handler_decl": "main.go:13",
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "status",
+      "pos": "main.go:13"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/labeled",
+    "pos": "main.go:57",
+    "router_id": 0,
+    "stack": [
+     "main.go:26 main()"
+    ],
+    "handler": "h",
+    "handler_decl": "main.go:13",
+    "inactive": [
+     {
+      "name": "jwtGuard",
+      "scope": "group",
+      "scope_path": "/",
+      "pos": "main.go:71",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     },
+     {
+      "name": "jwtGuard",
+      "scope": "global",
+      "pos": "main.go:73",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "status",
+      "pos": "main.go:13"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/lit",
+    "pos": "main.go:70",
+    "router_id": 0,
+    "stack": [
+     "main.go:26 main()"
+    ],
+    "handler": "func literal",
+    "handler_decl": "main.go:70",
+    "inactive": [
+     {
+      "name": "jwtGuard",
+      "scope": "group",
+      "scope_path": "/",
+      "pos": "main.go:71",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     },
+     {
+      "name": "jwtGuard",
+      "scope": "global",
+      "pos": "main.go:73",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "json",
+      "body": "fiber.Map{k}",
+      "pos": "main.go:70"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/other",
+    "pos": "main.go:80",
+    "router_id": 0,
+    "stack": [
+     "main.go:26 main()",
+     "main.go:74 setupOther()"
+    ],
+    "handler": "h",
+    "handler_decl": "main.go:13",
+    "chain": [
+     {
+      "name": "jwtGuard",
+      "scope": "group",
+      "scope_path": "/",
+      "pos": "main.go:71",
+      "auth": true
+     },
+     {
+      "name": "jwtGuard",
+      "scope": "global",
+      "pos": "main.go:73",
+      "auth": true
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "status",
+      "pos": "main.go:13"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/range",
+    "pos": "main.go:42",
+    "router_id": 0,
+    "stack": [
+     "main.go:26 main()"
+    ],
+    "handler": "h",
+    "handler_decl": "main.go:13",
+    "inactive": [
+     {
+      "name": "jwtGuard",
+      "scope": "group",
+      "scope_path": "/",
+      "pos": "main.go:71",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     },
+     {
+      "name": "jwtGuard",
+      "scope": "global",
+      "pos": "main.go:73",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "status",
+      "pos": "main.go:13"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/switch",
+    "pos": "main.go:46",
+    "router_id": 0,
+    "stack": [
+     "main.go:26 main()"
+    ],
+    "handler": "h",
+    "handler_decl": "main.go:13",
+    "inactive": [
+     {
+      "name": "jwtGuard",
+      "scope": "group",
+      "scope_path": "/",
+      "pos": "main.go:71",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     },
+     {
+      "name": "jwtGuard",
+      "scope": "global",
+      "pos": "main.go:73",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "status",
+      "pos": "main.go:13"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/switch-default",
+    "pos": "main.go:48",
+    "router_id": 0,
+    "stack": [
+     "main.go:26 main()"
+    ],
+    "handler": "h",
+    "handler_decl": "main.go:13",
+    "inactive": [
+     {
+      "name": "jwtGuard",
+      "scope": "group",
+      "scope_path": "/",
+      "pos": "main.go:71",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     },
+     {
+      "name": "jwtGuard",
+      "scope": "global",
+      "pos": "main.go:73",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "status",
+      "pos": "main.go:13"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/tswitch",
+    "pos": "main.go:53",
+    "router_id": 0,
+    "stack": [
+     "main.go:26 main()"
+    ],
+    "handler": "h",
+    "handler_decl": "main.go:13",
+    "inactive": [
+     {
+      "name": "jwtGuard",
+      "scope": "group",
+      "scope_path": "/",
+      "pos": "main.go:71",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     },
+     {
+      "name": "jwtGuard",
+      "scope": "global",
+      "pos": "main.go:73",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "status",
+      "pos": "main.go:13"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/wired",
+    "pos": "main.go:22",
+    "router_id": 0,
+    "stack": [
+     "main.go:26 main()",
+     "main.go:32 wire()"
+    ],
+    "handler": "extra",
+    "chain": [
+     {
+      "name": "h",
+      "scope": "route",
+      "pos": "main.go:22",
+      "decl": "main.go:13"
+     }
+    ],
+    "inactive": [
+     {
+      "name": "jwtGuard",
+      "scope": "group",
+      "scope_path": "/",
+      "pos": "main.go:71",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     },
+     {
+      "name": "jwtGuard",
+      "scope": "global",
+      "pos": "main.go:73",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": false
+   },
+   {
+    "method": "GET",
+    "path": "/x",
+    "pos": "main.go:31",
+    "router_id": 3,
+    "stack": [
+     "main.go:26 main()"
+    ],
+    "handler": "h",
+    "handler_decl": "main.go:13",
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "status",
+      "pos": "main.go:13"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/{dynamicPath()}",
+    "pos": "main.go:68",
+    "router_id": 0,
+    "stack": [
+     "main.go:26 main()"
+    ],
+    "handler": "h",
+    "handler_decl": "main.go:13",
+    "inactive": [
+     {
+      "name": "jwtGuard",
+      "scope": "group",
+      "scope_path": "/",
+      "pos": "main.go:71",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     },
+     {
+      "name": "jwtGuard",
+      "scope": "global",
+      "pos": "main.go:73",
+      "auth": true,
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "status",
+      "pos": "main.go:13"
+     }
+    ]
+   }
+  ],
+  "duplicates": [
+   {
+    "kind": "middleware",
+    "name": "jwtGuard",
+    "first": "main.go:71",
+    "pos": "main.go:73",
+    "detail": "group → global",
+    "routes": [
+     "GET /other"
+    ],
+    "count": 1
+   }
+  ]
+ }
+]
+=== MARKDOWN
+## Peta Rute (router → middleware → handler → response)
+
+> Ditelusuri statis dari `func main` dengan go/parser + go/types: prefix group, middleware efektif per rute sesuai semantik framework (urutan pendaftaran, prefix Use/Group, skip `Next`), status response handler (termasuk lewat helper), fungsi yang dijangkau. Sebelum menyimpulkan "rute tanpa auth/validasi", cek rantai di sini: middleware global & group tidak terlihat di baris rute. Detail per rute (jalur setup dari main, response + body, semua fungsi yang dipanggil) ada di `.vibeasik/routes.jsonl`; MCP `vibeasik_code_map_routes` (filter path/method, atau `function` untuk menelusur balik fungsi → rute).
+
+### Modul `stm` (`.`, fiber) — 19 rute
+
+- Titik masuk: `main.go:26`
+- **Middleware global** (urut eksekusi, berlaku untuk rute yang didaftarkan sesudahnya):
+  1. jwtGuard (auth) — `main.go:73` — tidak berjalan untuk 16 rute (didaftarkan sesudahnya/dilewati)
+- **Group bermiddleware**:
+  - `/` (`main.go:71`): jwtGuard (auth)
+- ⚠ Middleware `jwtGuard` terpasang ulang di `main.go:73` (sudah di `main.go:71`, group → global) — 1 rute, mis. `GET /other` (redundan, patokan ARCH-004).
+
+#### Rantai: global → jwtGuard (auth) {group /} · auth (2 rute)
+
+- `GET /a` → `h` `main.go:13` · 200 · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)
+- `GET /other` → `h` `main.go:13` · 200
+
+#### Rantai: global · publik (17 rute)
+
+- `GET /block` → `h` `main.go:13` · 200 · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)
+- `GET /defer` → `h` `main.go:13` · 200 · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)
+- `GET /else` → `h` `main.go:13` · 200 · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)
+- `GET /for` → `h` `main.go:13` · 200 · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)
+- `GET /go` → `h` `main.go:13` · 200 · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)
+- `GET /if-init` → `h` `main.go:13` · 200 · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)
+- `GET /iife` → `h` `main.go:13` · 200 · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)
+- `GET /in-setup` → `h` `main.go:13` · 200
+- `GET /labeled` → `h` `main.go:13` · 200 · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)
+- `GET /lit` → `func literal` `main.go:70` · 200 · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)
+- `GET /range` → `h` `main.go:13` · 200 · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)
+- `GET /switch` → `h` `main.go:13` · 200 · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)
+- `GET /switch-default` → `h` `main.go:13` · 200 · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)
+- `GET /tswitch` → `h` `main.go:13` · 200 · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)
+- `GET /wired` → `extra` · +rute: h [main.go:13] · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)
+- `GET /x` → `h` `main.go:13` · 200
+- `GET /{dynamicPath()}` → `h` `main.go:13` · 200 · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) · ✗ jwtGuard: didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)
+
+
+=== JSONL
+{"module":"stm","method":"GET","path":"/a","pos":"main.go:72","router_id":4,"stack":["main.go:26 main()"],"handler":"h","handler_decl":"main.go:13","chain":[{"name":"jwtGuard","scope":"group","scope_path":"/","pos":"main.go:71","auth":true}],"inactive":[{"name":"jwtGuard","scope":"global","pos":"main.go:73","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":true,"responses":[{"status":200,"kind":"status","pos":"main.go:13"}]}
+{"module":"stm","method":"GET","path":"/block","pos":"main.go:66","router_id":0,"stack":["main.go:26 main()"],"handler":"h","handler_decl":"main.go:13","inactive":[{"name":"jwtGuard","scope":"group","scope_path":"/","pos":"main.go:71","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"},{"name":"jwtGuard","scope":"global","pos":"main.go:73","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":false,"responses":[{"status":200,"kind":"status","pos":"main.go:13"}]}
+{"module":"stm","method":"GET","path":"/defer","pos":"main.go:61","router_id":0,"stack":["main.go:26 main()"],"handler":"h","handler_decl":"main.go:13","inactive":[{"name":"jwtGuard","scope":"group","scope_path":"/","pos":"main.go:71","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"},{"name":"jwtGuard","scope":"global","pos":"main.go:73","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":false,"responses":[{"status":200,"kind":"status","pos":"main.go:13"}]}
+{"module":"stm","method":"GET","path":"/else","pos":"main.go:35","router_id":0,"stack":["main.go:26 main()"],"handler":"h","handler_decl":"main.go:13","inactive":[{"name":"jwtGuard","scope":"group","scope_path":"/","pos":"main.go:71","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"},{"name":"jwtGuard","scope":"global","pos":"main.go:73","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":false,"responses":[{"status":200,"kind":"status","pos":"main.go:13"}]}
+{"module":"stm","method":"GET","path":"/for","pos":"main.go:38","router_id":0,"stack":["main.go:26 main()"],"handler":"h","handler_decl":"main.go:13","inactive":[{"name":"jwtGuard","scope":"group","scope_path":"/","pos":"main.go:71","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"},{"name":"jwtGuard","scope":"global","pos":"main.go:73","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":false,"responses":[{"status":200,"kind":"status","pos":"main.go:13"}]}
+{"module":"stm","method":"GET","path":"/go","pos":"main.go:60","router_id":0,"stack":["main.go:26 main()"],"handler":"h","handler_decl":"main.go:13","inactive":[{"name":"jwtGuard","scope":"group","scope_path":"/","pos":"main.go:71","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"},{"name":"jwtGuard","scope":"global","pos":"main.go:73","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":false,"responses":[{"status":200,"kind":"status","pos":"main.go:13"}]}
+{"module":"stm","method":"GET","path":"/if-init","pos":"main.go:33","router_id":0,"stack":["main.go:26 main()"],"handler":"h","handler_decl":"main.go:13","inactive":[{"name":"jwtGuard","scope":"group","scope_path":"/","pos":"main.go:71","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"},{"name":"jwtGuard","scope":"global","pos":"main.go:73","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":false,"responses":[{"status":200,"kind":"status","pos":"main.go:13"}]}
+{"module":"stm","method":"GET","path":"/iife","pos":"main.go:63","router_id":0,"stack":["main.go:26 main()"],"handler":"h","handler_decl":"main.go:13","inactive":[{"name":"jwtGuard","scope":"group","scope_path":"/","pos":"main.go:71","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"},{"name":"jwtGuard","scope":"global","pos":"main.go:73","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":false,"responses":[{"status":200,"kind":"status","pos":"main.go:13"}]}
+{"module":"stm","method":"GET","path":"/in-setup","pos":"main.go:17","router_id":3,"stack":["main.go:26 main()","main.go:30 setup()"],"handler":"h","handler_decl":"main.go:13","auth":false,"responses":[{"status":200,"kind":"status","pos":"main.go:13"}]}
+{"module":"stm","method":"GET","path":"/labeled","pos":"main.go:57","router_id":0,"stack":["main.go:26 main()"],"handler":"h","handler_decl":"main.go:13","inactive":[{"name":"jwtGuard","scope":"group","scope_path":"/","pos":"main.go:71","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"},{"name":"jwtGuard","scope":"global","pos":"main.go:73","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":false,"responses":[{"status":200,"kind":"status","pos":"main.go:13"}]}
+{"module":"stm","method":"GET","path":"/lit","pos":"main.go:70","router_id":0,"stack":["main.go:26 main()"],"handler":"func literal","handler_decl":"main.go:70","inactive":[{"name":"jwtGuard","scope":"group","scope_path":"/","pos":"main.go:71","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"},{"name":"jwtGuard","scope":"global","pos":"main.go:73","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":false,"responses":[{"status":200,"kind":"json","body":"fiber.Map{k}","pos":"main.go:70"}]}
+{"module":"stm","method":"GET","path":"/other","pos":"main.go:80","router_id":0,"stack":["main.go:26 main()","main.go:74 setupOther()"],"handler":"h","handler_decl":"main.go:13","chain":[{"name":"jwtGuard","scope":"group","scope_path":"/","pos":"main.go:71","auth":true},{"name":"jwtGuard","scope":"global","pos":"main.go:73","auth":true}],"auth":true,"responses":[{"status":200,"kind":"status","pos":"main.go:13"}]}
+{"module":"stm","method":"GET","path":"/range","pos":"main.go:42","router_id":0,"stack":["main.go:26 main()"],"handler":"h","handler_decl":"main.go:13","inactive":[{"name":"jwtGuard","scope":"group","scope_path":"/","pos":"main.go:71","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"},{"name":"jwtGuard","scope":"global","pos":"main.go:73","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":false,"responses":[{"status":200,"kind":"status","pos":"main.go:13"}]}
+{"module":"stm","method":"GET","path":"/switch","pos":"main.go:46","router_id":0,"stack":["main.go:26 main()"],"handler":"h","handler_decl":"main.go:13","inactive":[{"name":"jwtGuard","scope":"group","scope_path":"/","pos":"main.go:71","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"},{"name":"jwtGuard","scope":"global","pos":"main.go:73","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":false,"responses":[{"status":200,"kind":"status","pos":"main.go:13"}]}
+{"module":"stm","method":"GET","path":"/switch-default","pos":"main.go:48","router_id":0,"stack":["main.go:26 main()"],"handler":"h","handler_decl":"main.go:13","inactive":[{"name":"jwtGuard","scope":"group","scope_path":"/","pos":"main.go:71","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"},{"name":"jwtGuard","scope":"global","pos":"main.go:73","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":false,"responses":[{"status":200,"kind":"status","pos":"main.go:13"}]}
+{"module":"stm","method":"GET","path":"/tswitch","pos":"main.go:53","router_id":0,"stack":["main.go:26 main()"],"handler":"h","handler_decl":"main.go:13","inactive":[{"name":"jwtGuard","scope":"group","scope_path":"/","pos":"main.go:71","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"},{"name":"jwtGuard","scope":"global","pos":"main.go:73","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":false,"responses":[{"status":200,"kind":"status","pos":"main.go:13"}]}
+{"module":"stm","method":"GET","path":"/wired","pos":"main.go:22","router_id":0,"stack":["main.go:26 main()","main.go:32 wire()"],"handler":"extra","chain":[{"name":"h","scope":"route","pos":"main.go:22","decl":"main.go:13"}],"inactive":[{"name":"jwtGuard","scope":"group","scope_path":"/","pos":"main.go:71","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"},{"name":"jwtGuard","scope":"global","pos":"main.go:73","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":false}
+{"module":"stm","method":"GET","path":"/x","pos":"main.go:31","router_id":3,"stack":["main.go:26 main()"],"handler":"h","handler_decl":"main.go:13","auth":false,"responses":[{"status":200,"kind":"status","pos":"main.go:13"}]}
+{"module":"stm","method":"GET","path":"/{dynamicPath()}","pos":"main.go:68","router_id":0,"stack":["main.go:26 main()"],"handler":"h","handler_decl":"main.go:13","inactive":[{"name":"jwtGuard","scope":"group","scope_path":"/","pos":"main.go:71","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"},{"name":"jwtGuard","scope":"global","pos":"main.go:73","auth":true,"reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":false,"responses":[{"status":200,"kind":"status","pos":"main.go:13"}]}
+
+=== TRACE
+GET /a  (didaftarkan main.go:72)
+Jalur setup: main.go:26 main() → main.go:72
+Rantai middleware (urut eksekusi):
+  1. jwtGuard (auth) {group /} — main.go:71
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)
+Auth wajib: true
+Handler: h (main.go:13)
+  → 200 status (main.go:13)
+
+GET /block  (didaftarkan main.go:66)
+Jalur setup: main.go:26 main() → main.go:66
+Rantai middleware (urut eksekusi):
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)
+Auth wajib: false
+Handler: h (main.go:13)
+  → 200 status (main.go:13)
+
+GET /defer  (didaftarkan main.go:61)
+Jalur setup: main.go:26 main() → main.go:61
+Rantai middleware (urut eksekusi):
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)
+Auth wajib: false
+Handler: h (main.go:13)
+  → 200 status (main.go:13)
+
+GET /else  (didaftarkan main.go:35)
+Jalur setup: main.go:26 main() → main.go:35
+Rantai middleware (urut eksekusi):
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)
+Auth wajib: false
+Handler: h (main.go:13)
+  → 200 status (main.go:13)
+
+GET /for  (didaftarkan main.go:38)
+Jalur setup: main.go:26 main() → main.go:38
+Rantai middleware (urut eksekusi):
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)
+Auth wajib: false
+Handler: h (main.go:13)
+  → 200 status (main.go:13)
+
+GET /go  (didaftarkan main.go:60)
+Jalur setup: main.go:26 main() → main.go:60
+Rantai middleware (urut eksekusi):
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)
+Auth wajib: false
+Handler: h (main.go:13)
+  → 200 status (main.go:13)
+
+GET /if-init  (didaftarkan main.go:33)
+Jalur setup: main.go:26 main() → main.go:33
+Rantai middleware (urut eksekusi):
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)
+Auth wajib: false
+Handler: h (main.go:13)
+  → 200 status (main.go:13)
+
+GET /iife  (didaftarkan main.go:63)
+Jalur setup: main.go:26 main() → main.go:63
+Rantai middleware (urut eksekusi):
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)
+Auth wajib: false
+Handler: h (main.go:13)
+  → 200 status (main.go:13)
+
+GET /in-setup  (didaftarkan main.go:17)
+Jalur setup: main.go:26 main() → main.go:30 setup() → main.go:17
+Rantai middleware (urut eksekusi):
+Auth wajib: false
+Handler: h (main.go:13)
+  → 200 status (main.go:13)
+
+GET /labeled  (didaftarkan main.go:57)
+Jalur setup: main.go:26 main() → main.go:57
+Rantai middleware (urut eksekusi):
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)
+Auth wajib: false
+Handler: h (main.go:13)
+  → 200 status (main.go:13)
+
+GET /lit  (didaftarkan main.go:70)
+Jalur setup: main.go:26 main() → main.go:70
+Rantai middleware (urut eksekusi):
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)
+Auth wajib: false
+Handler: func literal (main.go:70)
+  → 200 json fiber.Map{k} (main.go:70)
+
+GET /other  (didaftarkan main.go:80)
+Jalur setup: main.go:26 main() → main.go:74 setupOther() → main.go:80
+Rantai middleware (urut eksekusi):
+  1. jwtGuard (auth) {group /} — main.go:71
+  2. jwtGuard (auth) {global} — main.go:73
+Auth wajib: true
+Handler: h (main.go:13)
+  → 200 status (main.go:13)
+
+GET /range  (didaftarkan main.go:42)
+Jalur setup: main.go:26 main() → main.go:42
+Rantai middleware (urut eksekusi):
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)
+Auth wajib: false
+Handler: h (main.go:13)
+  → 200 status (main.go:13)
+
+GET /switch  (didaftarkan main.go:46)
+Jalur setup: main.go:26 main() → main.go:46
+Rantai middleware (urut eksekusi):
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)
+Auth wajib: false
+Handler: h (main.go:13)
+  → 200 status (main.go:13)
+
+GET /switch-default  (didaftarkan main.go:48)
+Jalur setup: main.go:26 main() → main.go:48
+Rantai middleware (urut eksekusi):
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)
+Auth wajib: false
+Handler: h (main.go:13)
+  → 200 status (main.go:13)
+
+GET /tswitch  (didaftarkan main.go:53)
+Jalur setup: main.go:26 main() → main.go:53
+Rantai middleware (urut eksekusi):
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)
+Auth wajib: false
+Handler: h (main.go:13)
+  → 200 status (main.go:13)
+
+GET /wired  (didaftarkan main.go:22)
+Jalur setup: main.go:26 main() → main.go:32 wire() → main.go:22
+Rantai middleware (urut eksekusi):
+  1. h [main.go:13] {route} — main.go:22
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)
+Auth wajib: false
+Handler: extra
+
+GET /x  (didaftarkan main.go:31)
+Jalur setup: main.go:26 main() → main.go:31
+Rantai middleware (urut eksekusi):
+Auth wajib: false
+Handler: h (main.go:13)
+  → 200 status (main.go:13)
+
+GET /{dynamicPath()}  (didaftarkan main.go:68)
+Jalur setup: main.go:26 main() → main.go:68
+Rantai middleware (urut eksekusi):
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)
+  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)
+Auth wajib: false
+Handler: h (main.go:13)
+  → 200 status (main.go:13)
+
+=== FILEROUTES
+main.go: GET /a; GET /block; GET /defer; GET /else; GET /for; GET /go; GET /if-init; GET /iife; GET /in-setup; GET /labeled; GET /lit; GET /other; GET /range; GET /switch; GET /switch-default; GET /tswitch; GET /x; GET /{dynamicPath()}
+=== QUERIES
+[  ] => GET /a, GET /block, GET /defer, GET /else, GET /for, GET /go, GET /if-init, GET /iife, GET /in-setup, GET /labeled, GET /lit, GET /other, GET /range, GET /switch, GET /switch-default, GET /tswitch, GET /wired, GET /x, GET /{dynamicPath()}
+[get  ] => GET /a, GET /block, GET /defer, GET /else, GET /for, GET /go, GET /if-init, GET /iife, GET /in-setup, GET /labeled, GET /lit, GET /other, GET /range, GET /switch, GET /switch-default, GET /tswitch, GET /wired, GET /x, GET /{dynamicPath()}
+[ /a ] => GET /a
+[POST  list] => 
+[  handlers.CreateUser] => 
+[  save] => 
+[  home] => 
+[  h/h.go] => 
+[  create] => 
+RouteAt(main.go:72) => GET /a
+ContextFor(main.go:13) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+14 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+15 rute lain menjangkau target ini)\n"
+RouteAt(main.go:66) => GET /block
+ContextFor(main.go:13) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+14 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+15 rute lain menjangkau target ini)\n"
+RouteAt(main.go:61) => GET /defer
+ContextFor(main.go:13) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+14 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+15 rute lain menjangkau target ini)\n"
+RouteAt(main.go:35) => GET /else
+ContextFor(main.go:13) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+14 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+15 rute lain menjangkau target ini)\n"
+RouteAt(main.go:38) => GET /for
+ContextFor(main.go:13) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+14 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+15 rute lain menjangkau target ini)\n"
+RouteAt(main.go:60) => GET /go
+ContextFor(main.go:13) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+14 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+15 rute lain menjangkau target ini)\n"
+RouteAt(main.go:33) => GET /if-init
+ContextFor(main.go:13) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+14 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+15 rute lain menjangkau target ini)\n"
+RouteAt(main.go:63) => GET /iife
+ContextFor(main.go:13) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+14 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+15 rute lain menjangkau target ini)\n"
+RouteAt(main.go:17) => GET /in-setup
+ContextFor(main.go:13) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+14 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+15 rute lain menjangkau target ini)\n"
+RouteAt(main.go:57) => GET /labeled
+ContextFor(main.go:13) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+14 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+15 rute lain menjangkau target ini)\n"
+RouteAt(main.go:70) => GET /lit
+ContextFor(main.go:70) => "GET /lit  (didaftarkan main.go:70)\nJalur setup: main.go:26 main() → main.go:70\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: func literal (main.go:70)\n  → 200 json fiber.Map{k} (main.go:70)\n\n"
+ContextFor(main.go,0) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+15 rute lain menjangkau target ini)\n"
+RouteAt(main.go:80) => GET /other
+ContextFor(main.go:13) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+14 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+15 rute lain menjangkau target ini)\n"
+RouteAt(main.go:42) => GET /range
+ContextFor(main.go:13) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+14 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+15 rute lain menjangkau target ini)\n"
+RouteAt(main.go:46) => GET /switch
+ContextFor(main.go:13) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+14 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+15 rute lain menjangkau target ini)\n"
+RouteAt(main.go:48) => GET /switch-default
+ContextFor(main.go:13) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+14 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+15 rute lain menjangkau target ini)\n"
+RouteAt(main.go:53) => GET /tswitch
+ContextFor(main.go:13) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+14 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+15 rute lain menjangkau target ini)\n"
+RouteAt(main.go:22) => GET /wired
+RouteAt(main.go:31) => GET /x
+ContextFor(main.go:13) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+14 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+15 rute lain menjangkau target ini)\n"
+RouteAt(main.go:68) => GET /{dynamicPath()}
+ContextFor(main.go:13) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+14 rute lain menjangkau target ini)\n"
+ContextFor(main.go,0) => "GET /a  (didaftarkan main.go:72)\nJalur setup: main.go:26 main() → main.go:72\nRantai middleware (urut eksekusi):\n  1. jwtGuard (auth) {group /} — main.go:71\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: true\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /block  (didaftarkan main.go:66)\nJalur setup: main.go:26 main() → main.go:66\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\nGET /defer  (didaftarkan main.go:61)\nJalur setup: main.go:26 main() → main.go:61\nRantai middleware (urut eksekusi):\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:71)\n  ✗ jwtGuard (auth) — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:73)\nAuth wajib: false\nHandler: h (main.go:13)\n  → 200 status (main.go:13)\n\n(+15 rute lain menjangkau target ini)\n"
+ContextFor(handlers.CreateUser) => ""
+ContextFor(empty) => ""

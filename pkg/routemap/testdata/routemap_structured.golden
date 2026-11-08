@@ -1,0 +1,408 @@
+=== JSON
+[
+ {
+  "module": "st",
+  "dir": ".",
+  "framework": "fiber",
+  "entries": [
+   "main.go:15"
+  ],
+  "routers": [
+   {
+    "id": 0,
+    "parent": -1,
+    "var": "",
+    "framework": "fiber",
+    "prefix": "/",
+    "pos": "server/server.go:17",
+    "stack": [
+     "main.go:10 func literal (variabel paket, mis. cobra RunE)",
+     "main.go:11 server.New()"
+    ],
+    "middlewares": [
+     {
+      "name": "handlers.RequireAuth()",
+      "scope": "global",
+      "pos": "server/server.go:24",
+      "decl": "handlers/h.go:9",
+      "auth": true
+     }
+    ]
+   },
+   {
+    "id": 1,
+    "parent": 0,
+    "var": "",
+    "framework": "fiber",
+    "prefix": "/v1",
+    "pos": "server/server.go:25",
+    "stack": [
+     "main.go:10 func literal (variabel paket, mis. cobra RunE)",
+     "main.go:11 server.New()",
+     "server/server.go:19 s.routes()"
+    ]
+   },
+   {
+    "id": 2,
+    "parent": -1,
+    "var": "app",
+    "framework": "fiber",
+    "prefix": "/",
+    "pos": "server/server.go:36",
+    "stack": [
+     "server/server.go:36 Orphan() — tidak terjangkau dari main"
+    ]
+   },
+   {
+    "id": 3,
+    "parent": -1,
+    "var": "r",
+    "framework": "fiber",
+    "prefix": "/",
+    "pos": "server/server.go:40",
+    "stack": [
+     "server/server.go:40 OrphanGroup() — tidak terjangkau dari main"
+    ]
+   }
+  ],
+  "routes": [
+   {
+    "method": "GET",
+    "path": "/factory",
+    "pos": "server/server.go:29",
+    "router_id": 0,
+    "stack": [
+     "main.go:10 func literal (variabel paket, mis. cobra RunE)",
+     "main.go:11 server.New()",
+     "server/server.go:19 s.routes()"
+    ],
+    "handler": "handlers.Make(\"x\")",
+    "handler_decl": "handlers/h.go:20",
+    "chain": [
+     {
+      "name": "handlers.RequireAuth()",
+      "scope": "global",
+      "pos": "server/server.go:24",
+      "decl": "handlers/h.go:9",
+      "auth": true
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "string",
+      "body": "name",
+      "pos": "handlers/h.go:24"
+     },
+     {
+      "status": 400,
+      "kind": "status",
+      "pos": "handlers/h.go:22"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/generic",
+    "pos": "server/server.go:30",
+    "router_id": 0,
+    "stack": [
+     "main.go:10 func literal (variabel paket, mis. cobra RunE)",
+     "main.go:11 server.New()",
+     "server/server.go:19 s.routes()"
+    ],
+    "handler": "handlers.Gen[int]",
+    "handler_decl": "handlers/h.go:28",
+    "chain": [
+     {
+      "name": "handlers.RequireAuth()",
+      "scope": "global",
+      "pos": "server/server.go:24",
+      "decl": "handlers/h.go:9",
+      "auth": true
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "json",
+      "body": "fiber.Map{t}",
+      "pos": "handlers/h.go:28"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/orphan",
+    "pos": "server/server.go:37",
+    "router_id": 2,
+    "stack": [
+     "server/server.go:36 Orphan() — tidak terjangkau dari main"
+    ],
+    "handler": "handlers.Make(\"o\")",
+    "handler_decl": "handlers/h.go:20",
+    "auth": false,
+    "unreachable": true,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "string",
+      "body": "name",
+      "pos": "handlers/h.go:24"
+     },
+     {
+      "status": 400,
+      "kind": "status",
+      "pos": "handlers/h.go:22"
+     }
+    ]
+   },
+   {
+    "method": "POST",
+    "path": "/orphan2",
+    "pos": "server/server.go:41",
+    "router_id": 3,
+    "stack": [
+     "server/server.go:40 OrphanGroup() — tidak terjangkau dari main"
+    ],
+    "handler": "handlers.Make(\"o\")",
+    "handler_decl": "handlers/h.go:20",
+    "auth": false,
+    "unreachable": true,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "string",
+      "body": "name",
+      "pos": "handlers/h.go:24"
+     },
+     {
+      "status": 400,
+      "kind": "status",
+      "pos": "handlers/h.go:22"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/v1/orders",
+    "pos": "handlers/h.go:15",
+    "router_id": 1,
+    "stack": [
+     "main.go:10 func literal (variabel paket, mis. cobra RunE)",
+     "main.go:11 server.New()",
+     "server/server.go:19 s.routes()",
+     "server/server.go:27 m.Register()"
+    ],
+    "handler": "list",
+    "handler_decl": "handlers/h.go:17",
+    "chain": [
+     {
+      "name": "handlers.RequireAuth()",
+      "scope": "global",
+      "pos": "server/server.go:24",
+      "decl": "handlers/h.go:9",
+      "auth": true
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "json",
+      "body": "[]int{…}",
+      "pos": "handlers/h.go:17"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/v1/users",
+    "pos": "handlers/h.go:14",
+    "router_id": 1,
+    "stack": [
+     "main.go:10 func literal (variabel paket, mis. cobra RunE)",
+     "main.go:11 server.New()",
+     "server/server.go:19 s.routes()",
+     "server/server.go:27 m.Register()"
+    ],
+    "handler": "list",
+    "handler_decl": "handlers/h.go:17",
+    "chain": [
+     {
+      "name": "handlers.RequireAuth()",
+      "scope": "global",
+      "pos": "server/server.go:24",
+      "decl": "handlers/h.go:9",
+      "auth": true
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "json",
+      "body": "[]int{…}",
+      "pos": "handlers/h.go:17"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/var",
+    "pos": "server/server.go:31",
+    "router_id": 0,
+    "stack": [
+     "main.go:10 func literal (variabel paket, mis. cobra RunE)",
+     "main.go:11 server.New()",
+     "server/server.go:19 s.routes()"
+    ],
+    "handler": "handlers.Var",
+    "chain": [
+     {
+      "name": "handlers.RequireAuth()",
+      "scope": "global",
+      "pos": "server/server.go:24",
+      "decl": "handlers/h.go:9",
+      "auth": true
+     }
+    ],
+    "auth": true
+   }
+  ],
+  "warnings": [
+   "Fungsi setup server.Orphan (server/server.go:36) tidak terjangkau dari main: 1 rutenya kemungkinan kode mati (tidak pernah dipasang) atau dipasang dinamis; middleware induknya tidak diketahui.",
+   "Fungsi setup server.OrphanGroup (server/server.go:40) tidak terjangkau dari main: 1 rutenya kemungkinan kode mati (tidak pernah dipasang) atau dipasang dinamis; middleware induknya tidak diketahui."
+  ]
+ }
+]
+=== MARKDOWN
+## Peta Rute (router → middleware → handler → response)
+
+> Ditelusuri statis dari `func main` dengan go/parser + go/types: prefix group, middleware efektif per rute sesuai semantik framework (urutan pendaftaran, prefix Use/Group, skip `Next`), status response handler (termasuk lewat helper), fungsi yang dijangkau. Sebelum menyimpulkan "rute tanpa auth/validasi", cek rantai di sini: middleware global & group tidak terlihat di baris rute. Detail per rute (jalur setup dari main, response + body, semua fungsi yang dipanggil) ada di `.vibeasik/routes.jsonl`; MCP `vibeasik_code_map_routes` (filter path/method, atau `function` untuk menelusur balik fungsi → rute).
+
+### Modul `st` (`.`, fiber) — 7 rute
+
+- Titik masuk: `main.go:15`
+- **Middleware global** (urut eksekusi, berlaku untuk rute yang didaftarkan sesudahnya):
+  1. handlers.RequireAuth() [handlers/h.go:9] (auth) — `server/server.go:24`
+- ⚠ Fungsi setup server.Orphan (server/server.go:36) tidak terjangkau dari main: 1 rutenya kemungkinan kode mati (tidak pernah dipasang) atau dipasang dinamis; middleware induknya tidak diketahui.
+- ⚠ Fungsi setup server.OrphanGroup (server/server.go:40) tidak terjangkau dari main: 1 rutenya kemungkinan kode mati (tidak pernah dipasang) atau dipasang dinamis; middleware induknya tidak diketahui.
+
+#### Rantai: global · auth (5 rute)
+
+- `GET /factory` → `handlers.Make("x")` `handlers/h.go:20` · 200 string,400
+- `GET /generic` → `handlers.Gen[int]` `handlers/h.go:28` · 200
+- `GET /v1/orders` → `list` `handlers/h.go:17` · 200
+- `GET /v1/users` → `list` `handlers/h.go:17` · 200
+- `GET /var` → `handlers.Var`
+
+#### Rantai: Tidak terpasang (fungsi setup tidak terjangkau dari main — kemungkinan kode mati) · tidak aktif (2 rute)
+
+- `GET /orphan` → `handlers.Make("o")` `handlers/h.go:20` · 200 string,400
+- `POST /orphan2` → `handlers.Make("o")` `handlers/h.go:20` · 200 string,400
+
+
+=== JSONL
+{"module":"st","method":"GET","path":"/factory","pos":"server/server.go:29","router_id":0,"stack":["main.go:10 func literal (variabel paket, mis. cobra RunE)","main.go:11 server.New()","server/server.go:19 s.routes()"],"handler":"handlers.Make(\"x\")","handler_decl":"handlers/h.go:20","chain":[{"name":"handlers.RequireAuth()","scope":"global","pos":"server/server.go:24","decl":"handlers/h.go:9","auth":true}],"auth":true,"responses":[{"status":200,"kind":"string","body":"name","pos":"handlers/h.go:24"},{"status":400,"kind":"status","pos":"handlers/h.go:22"}]}
+{"module":"st","method":"GET","path":"/generic","pos":"server/server.go:30","router_id":0,"stack":["main.go:10 func literal (variabel paket, mis. cobra RunE)","main.go:11 server.New()","server/server.go:19 s.routes()"],"handler":"handlers.Gen[int]","handler_decl":"handlers/h.go:28","chain":[{"name":"handlers.RequireAuth()","scope":"global","pos":"server/server.go:24","decl":"handlers/h.go:9","auth":true}],"auth":true,"responses":[{"status":200,"kind":"json","body":"fiber.Map{t}","pos":"handlers/h.go:28"}]}
+{"module":"st","method":"GET","path":"/orphan","pos":"server/server.go:37","router_id":2,"stack":["server/server.go:36 Orphan() — tidak terjangkau dari main"],"handler":"handlers.Make(\"o\")","handler_decl":"handlers/h.go:20","auth":false,"unreachable":true,"responses":[{"status":200,"kind":"string","body":"name","pos":"handlers/h.go:24"},{"status":400,"kind":"status","pos":"handlers/h.go:22"}]}
+{"module":"st","method":"POST","path":"/orphan2","pos":"server/server.go:41","router_id":3,"stack":["server/server.go:40 OrphanGroup() — tidak terjangkau dari main"],"handler":"handlers.Make(\"o\")","handler_decl":"handlers/h.go:20","auth":false,"unreachable":true,"responses":[{"status":200,"kind":"string","body":"name","pos":"handlers/h.go:24"},{"status":400,"kind":"status","pos":"handlers/h.go:22"}]}
+{"module":"st","method":"GET","path":"/v1/orders","pos":"handlers/h.go:15","router_id":1,"stack":["main.go:10 func literal (variabel paket, mis. cobra RunE)","main.go:11 server.New()","server/server.go:19 s.routes()","server/server.go:27 m.Register()"],"handler":"list","handler_decl":"handlers/h.go:17","chain":[{"name":"handlers.RequireAuth()","scope":"global","pos":"server/server.go:24","decl":"handlers/h.go:9","auth":true}],"auth":true,"responses":[{"status":200,"kind":"json","body":"[]int{…}","pos":"handlers/h.go:17"}]}
+{"module":"st","method":"GET","path":"/v1/users","pos":"handlers/h.go:14","router_id":1,"stack":["main.go:10 func literal (variabel paket, mis. cobra RunE)","main.go:11 server.New()","server/server.go:19 s.routes()","server/server.go:27 m.Register()"],"handler":"list","handler_decl":"handlers/h.go:17","chain":[{"name":"handlers.RequireAuth()","scope":"global","pos":"server/server.go:24","decl":"handlers/h.go:9","auth":true}],"auth":true,"responses":[{"status":200,"kind":"json","body":"[]int{…}","pos":"handlers/h.go:17"}]}
+{"module":"st","method":"GET","path":"/var","pos":"server/server.go:31","router_id":0,"stack":["main.go:10 func literal (variabel paket, mis. cobra RunE)","main.go:11 server.New()","server/server.go:19 s.routes()"],"handler":"handlers.Var","chain":[{"name":"handlers.RequireAuth()","scope":"global","pos":"server/server.go:24","decl":"handlers/h.go:9","auth":true}],"auth":true}
+
+=== TRACE
+GET /factory  (didaftarkan server/server.go:29)
+Jalur setup: main.go:10 func literal (variabel paket, mis. cobra RunE) → main.go:11 server.New() → server/server.go:19 s.routes() → server/server.go:29
+Rantai middleware (urut eksekusi):
+  1. handlers.RequireAuth() [handlers/h.go:9] (auth) {global} — server/server.go:24
+Auth wajib: true
+Handler: handlers.Make("x") (handlers/h.go:20)
+  → 200 string name (handlers/h.go:24)
+  → 400 status (handlers/h.go:22)
+
+GET /generic  (didaftarkan server/server.go:30)
+Jalur setup: main.go:10 func literal (variabel paket, mis. cobra RunE) → main.go:11 server.New() → server/server.go:19 s.routes() → server/server.go:30
+Rantai middleware (urut eksekusi):
+  1. handlers.RequireAuth() [handlers/h.go:9] (auth) {global} — server/server.go:24
+Auth wajib: true
+Handler: handlers.Gen[int] (handlers/h.go:28)
+  → 200 json fiber.Map{t} (handlers/h.go:28)
+
+GET /orphan  (didaftarkan server/server.go:37)
+⚠ Fungsi setup rute ini tidak terjangkau dari main — kemungkinan kode mati.
+Jalur setup: server/server.go:36 Orphan() — tidak terjangkau dari main → server/server.go:37
+Rantai middleware (urut eksekusi):
+Auth wajib: false
+Handler: handlers.Make("o") (handlers/h.go:20)
+  → 200 string name (handlers/h.go:24)
+  → 400 status (handlers/h.go:22)
+
+POST /orphan2  (didaftarkan server/server.go:41)
+⚠ Fungsi setup rute ini tidak terjangkau dari main — kemungkinan kode mati.
+Jalur setup: server/server.go:40 OrphanGroup() — tidak terjangkau dari main → server/server.go:41
+Rantai middleware (urut eksekusi):
+Auth wajib: false
+Handler: handlers.Make("o") (handlers/h.go:20)
+  → 200 string name (handlers/h.go:24)
+  → 400 status (handlers/h.go:22)
+
+GET /v1/orders  (didaftarkan handlers/h.go:15)
+Jalur setup: main.go:10 func literal (variabel paket, mis. cobra RunE) → main.go:11 server.New() → server/server.go:19 s.routes() → server/server.go:27 m.Register() → handlers/h.go:15
+Rantai middleware (urut eksekusi):
+  1. handlers.RequireAuth() [handlers/h.go:9] (auth) {global} — server/server.go:24
+Auth wajib: true
+Handler: list (handlers/h.go:17)
+  → 200 json []int{…} (handlers/h.go:17)
+
+GET /v1/users  (didaftarkan handlers/h.go:14)
+Jalur setup: main.go:10 func literal (variabel paket, mis. cobra RunE) → main.go:11 server.New() → server/server.go:19 s.routes() → server/server.go:27 m.Register() → handlers/h.go:14
+Rantai middleware (urut eksekusi):
+  1. handlers.RequireAuth() [handlers/h.go:9] (auth) {global} — server/server.go:24
+Auth wajib: true
+Handler: list (handlers/h.go:17)
+  → 200 json []int{…} (handlers/h.go:17)
+
+GET /var  (didaftarkan server/server.go:31)
+Jalur setup: main.go:10 func literal (variabel paket, mis. cobra RunE) → main.go:11 server.New() → server/server.go:19 s.routes() → server/server.go:31
+Rantai middleware (urut eksekusi):
+  1. handlers.RequireAuth() [handlers/h.go:9] (auth) {global} — server/server.go:24
+Auth wajib: true
+Handler: handlers.Var
+
+=== FILEROUTES
+handlers/h.go: GET /factory; GET /generic; GET /orphan; GET /v1/orders; GET /v1/users; POST /orphan2
+=== QUERIES
+[  ] => GET /factory, GET /generic, GET /orphan, POST /orphan2, GET /v1/orders, GET /v1/users, GET /var
+[get  ] => GET /factory, GET /generic, GET /orphan, GET /v1/orders, GET /v1/users, GET /var
+[ /a ] => 
+[POST  list] => 
+[  handlers.CreateUser] => 
+[  save] => 
+[  home] => 
+[  h/h.go] => 
+[  create] => 
+RouteAt(server/server.go:29) => GET /factory
+ContextFor(handlers/h.go:20) => ""
+ContextFor(handlers/h.go,0) => "GET /factory  (didaftarkan server/server.go:29)\nJalur setup: main.go:10 func literal (variabel paket, mis. cobra RunE) → main.go:11 server.New() → server/server.go:19 s.routes() → server/server.go:29\nRantai middleware (urut eksekusi):\n  1. handlers.RequireAuth() [handlers/h.go:9] (auth) {global} — server/server.go:24\nAuth wajib: true\nHandler: handlers.Make(\"x\") (handlers/h.go:20)\n  → 200 string name (handlers/h.go:24)\n  → 400 status (handlers/h.go:22)\n\nGET /generic  (didaftarkan server/server.go:30)\nJalur setup: main.go:10 func literal (variabel paket, mis. cobra RunE) → main.go:11 server.New() → server/server.go:19 s.routes() → server/server.go:30\nRantai middleware (urut eksekusi):\n  1. handlers.RequireAuth() [handlers/h.go:9] (auth) {global} — server/server.go:24\nAuth wajib: true\nHandler: handlers.Gen[int] (handlers/h.go:28)\n  → 200 json fiber.Map{t} (handlers/h.go:28)\n\nGET /orphan  (didaftarkan server/server.go:37)\n⚠ Fungsi setup rute ini tidak terjangkau dari main — kemungkinan kode mati.\nJalur setup: server/server.go:36 Orphan() — tidak terjangkau dari main → server/server.go:37\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: handlers.Make(\"o\") (handlers/h.go:20)\n  → 200 string name (handlers/h.go:24)\n  → 400 status (handlers/h.go:22)\n\n(+3 rute lain menjangkau target ini)\n"
+RouteAt(server/server.go:30) => GET /generic
+ContextFor(handlers/h.go:28) => "GET /generic  (didaftarkan server/server.go:30)\nJalur setup: main.go:10 func literal (variabel paket, mis. cobra RunE) → main.go:11 server.New() → server/server.go:19 s.routes() → server/server.go:30\nRantai middleware (urut eksekusi):\n  1. handlers.RequireAuth() [handlers/h.go:9] (auth) {global} — server/server.go:24\nAuth wajib: true\nHandler: handlers.Gen[int] (handlers/h.go:28)\n  → 200 json fiber.Map{t} (handlers/h.go:28)\n\n"
+ContextFor(handlers/h.go,0) => "GET /factory  (didaftarkan server/server.go:29)\nJalur setup: main.go:10 func literal (variabel paket, mis. cobra RunE) → main.go:11 server.New() → server/server.go:19 s.routes() → server/server.go:29\nRantai middleware (urut eksekusi):\n  1. handlers.RequireAuth() [handlers/h.go:9] (auth) {global} — server/server.go:24\nAuth wajib: true\nHandler: handlers.Make(\"x\") (handlers/h.go:20)\n  → 200 string name (handlers/h.go:24)\n  → 400 status (handlers/h.go:22)\n\nGET /generic  (didaftarkan server/server.go:30)\nJalur setup: main.go:10 func literal (variabel paket, mis. cobra RunE) → main.go:11 server.New() → server/server.go:19 s.routes() → server/server.go:30\nRantai middleware (urut eksekusi):\n  1. handlers.RequireAuth() [handlers/h.go:9] (auth) {global} — server/server.go:24\nAuth wajib: true\nHandler: handlers.Gen[int] (handlers/h.go:28)\n  → 200 json fiber.Map{t} (handlers/h.go:28)\n\nGET /orphan  (didaftarkan server/server.go:37)\n⚠ Fungsi setup rute ini tidak terjangkau dari main — kemungkinan kode mati.\nJalur setup: server/server.go:36 Orphan() — tidak terjangkau dari main → server/server.go:37\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: handlers.Make(\"o\") (handlers/h.go:20)\n  → 200 string name (handlers/h.go:24)\n  → 400 status (handlers/h.go:22)\n\n(+3 rute lain menjangkau target ini)\n"
+RouteAt(server/server.go:37) => GET /orphan
+ContextFor(handlers/h.go:20) => ""
+ContextFor(handlers/h.go,0) => "GET /factory  (didaftarkan server/server.go:29)\nJalur setup: main.go:10 func literal (variabel paket, mis. cobra RunE) → main.go:11 server.New() → server/server.go:19 s.routes() → server/server.go:29\nRantai middleware (urut eksekusi):\n  1. handlers.RequireAuth() [handlers/h.go:9] (auth) {global} — server/server.go:24\nAuth wajib: true\nHandler: handlers.Make(\"x\") (handlers/h.go:20)\n  → 200 string name (handlers/h.go:24)\n  → 400 status (handlers/h.go:22)\n\nGET /generic  (didaftarkan server/server.go:30)\nJalur setup: main.go:10 func literal (variabel paket, mis. cobra RunE) → main.go:11 server.New() → server/server.go:19 s.routes() → server/server.go:30\nRantai middleware (urut eksekusi):\n  1. handlers.RequireAuth() [handlers/h.go:9] (auth) {global} — server/server.go:24\nAuth wajib: true\nHandler: handlers.Gen[int] (handlers/h.go:28)\n  → 200 json fiber.Map{t} (handlers/h.go:28)\n\nGET /orphan  (didaftarkan server/server.go:37)\n⚠ Fungsi setup rute ini tidak terjangkau dari main — kemungkinan kode mati.\nJalur setup: server/server.go:36 Orphan() — tidak terjangkau dari main → server/server.go:37\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: handlers.Make(\"o\") (handlers/h.go:20)\n  → 200 string name (handlers/h.go:24)\n  → 400 status (handlers/h.go:22)\n\n(+3 rute lain menjangkau target ini)\n"
+RouteAt(server/server.go:41) => POST /orphan2
+ContextFor(handlers/h.go:20) => ""
+ContextFor(handlers/h.go,0) => "GET /factory  (didaftarkan server/server.go:29)\nJalur setup: main.go:10 func literal (variabel paket, mis. cobra RunE) → main.go:11 server.New() → server/server.go:19 s.routes() → server/server.go:29\nRantai middleware (urut eksekusi):\n  1. handlers.RequireAuth() [handlers/h.go:9] (auth) {global} — server/server.go:24\nAuth wajib: true\nHandler: handlers.Make(\"x\") (handlers/h.go:20)\n  → 200 string name (handlers/h.go:24)\n  → 400 status (handlers/h.go:22)\n\nGET /generic  (didaftarkan server/server.go:30)\nJalur setup: main.go:10 func literal (variabel paket, mis. cobra RunE) → main.go:11 server.New() → server/server.go:19 s.routes() → server/server.go:30\nRantai middleware (urut eksekusi):\n  1. handlers.RequireAuth() [handlers/h.go:9] (auth) {global} — server/server.go:24\nAuth wajib: true\nHandler: handlers.Gen[int] (handlers/h.go:28)\n  → 200 json fiber.Map{t} (handlers/h.go:28)\n\nGET /orphan  (didaftarkan server/server.go:37)\n⚠ Fungsi setup rute ini tidak terjangkau dari main — kemungkinan kode mati.\nJalur setup: server/server.go:36 Orphan() — tidak terjangkau dari main → server/server.go:37\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: handlers.Make(\"o\") (handlers/h.go:20)\n  → 200 string name (handlers/h.go:24)\n  → 400 status (handlers/h.go:22)\n\n(+3 rute lain menjangkau target ini)\n"
+RouteAt(handlers/h.go:15) => GET /v1/orders
+ContextFor(handlers/h.go:17) => "GET /v1/orders  (didaftarkan handlers/h.go:15)\nJalur setup: main.go:10 func literal (variabel paket, mis. cobra RunE) → main.go:11 server.New() → server/server.go:19 s.routes() → server/server.go:27 m.Register() → handlers/h.go:15\nRantai middleware (urut eksekusi):\n  1. handlers.RequireAuth() [handlers/h.go:9] (auth) {global} — server/server.go:24\nAuth wajib: true\nHandler: list (handlers/h.go:17)\n  → 200 json []int{…} (handlers/h.go:17)\n\nGET /v1/users  (didaftarkan handlers/h.go:14)\nJalur setup: main.go:10 func literal (variabel paket, mis. cobra RunE) → main.go:11 server.New() → server/server.go:19 s.routes() → server/server.go:27 m.Register() → handlers/h.go:14\nRantai middleware (urut eksekusi):\n  1. handlers.RequireAuth() [handlers/h.go:9] (auth) {global} — server/server.go:24\nAuth wajib: true\nHandler: list (handlers/h.go:17)\n  → 200 json []int{…} (handlers/h.go:17)\n\n"
+ContextFor(handlers/h.go,0) => "GET /factory  (didaftarkan server/server.go:29)\nJalur setup: main.go:10 func literal (variabel paket, mis. cobra RunE) → main.go:11 server.New() → server/server.go:19 s.routes() → server/server.go:29\nRantai middleware (urut eksekusi):\n  1. handlers.RequireAuth() [handlers/h.go:9] (auth) {global} — server/server.go:24\nAuth wajib: true\nHandler: handlers.Make(\"x\") (handlers/h.go:20)\n  → 200 string name (handlers/h.go:24)\n  → 400 status (handlers/h.go:22)\n\nGET /generic  (didaftarkan server/server.go:30)\nJalur setup: main.go:10 func literal (variabel paket, mis. cobra RunE) → main.go:11 server.New() → server/server.go:19 s.routes() → server/server.go:30\nRantai middleware (urut eksekusi):\n  1. handlers.RequireAuth() [handlers/h.go:9] (auth) {global} — server/server.go:24\nAuth wajib: true\nHandler: handlers.Gen[int] (handlers/h.go:28)\n  → 200 json fiber.Map{t} (handlers/h.go:28)\n\nGET /orphan  (didaftarkan server/server.go:37)\n⚠ Fungsi setup rute ini tidak terjangkau dari main — kemungkinan kode mati.\nJalur setup: server/server.go:36 Orphan() — tidak terjangkau dari main → server/server.go:37\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: handlers.Make(\"o\") (handlers/h.go:20)\n  → 200 string name (handlers/h.go:24)\n  → 400 status (handlers/h.go:22)\n\n(+3 rute lain menjangkau target ini)\n"
+RouteAt(handlers/h.go:14) => GET /v1/users
+ContextFor(handlers/h.go:17) => "GET /v1/orders  (didaftarkan handlers/h.go:15)\nJalur setup: main.go:10 func literal (variabel paket, mis. cobra RunE) → main.go:11 server.New() → server/server.go:19 s.routes() → server/server.go:27 m.Register() → handlers/h.go:15\nRantai middleware (urut eksekusi):\n  1. handlers.RequireAuth() [handlers/h.go:9] (auth) {global} — server/server.go:24\nAuth wajib: true\nHandler: list (handlers/h.go:17)\n  → 200 json []int{…} (handlers/h.go:17)\n\nGET /v1/users  (didaftarkan handlers/h.go:14)\nJalur setup: main.go:10 func literal (variabel paket, mis. cobra RunE) → main.go:11 server.New() → server/server.go:19 s.routes() → server/server.go:27 m.Register() → handlers/h.go:14\nRantai middleware (urut eksekusi):\n  1. handlers.RequireAuth() [handlers/h.go:9] (auth) {global} — server/server.go:24\nAuth wajib: true\nHandler: list (handlers/h.go:17)\n  → 200 json []int{…} (handlers/h.go:17)\n\n"
+ContextFor(handlers/h.go,0) => "GET /factory  (didaftarkan server/server.go:29)\nJalur setup: main.go:10 func literal (variabel paket, mis. cobra RunE) → main.go:11 server.New() → server/server.go:19 s.routes() → server/server.go:29\nRantai middleware (urut eksekusi):\n  1. handlers.RequireAuth() [handlers/h.go:9] (auth) {global} — server/server.go:24\nAuth wajib: true\nHandler: handlers.Make(\"x\") (handlers/h.go:20)\n  → 200 string name (handlers/h.go:24)\n  → 400 status (handlers/h.go:22)\n\nGET /generic  (didaftarkan server/server.go:30)\nJalur setup: main.go:10 func literal (variabel paket, mis. cobra RunE) → main.go:11 server.New() → server/server.go:19 s.routes() → server/server.go:30\nRantai middleware (urut eksekusi):\n  1. handlers.RequireAuth() [handlers/h.go:9] (auth) {global} — server/server.go:24\nAuth wajib: true\nHandler: handlers.Gen[int] (handlers/h.go:28)\n  → 200 json fiber.Map{t} (handlers/h.go:28)\n\nGET /orphan  (didaftarkan server/server.go:37)\n⚠ Fungsi setup rute ini tidak terjangkau dari main — kemungkinan kode mati.\nJalur setup: server/server.go:36 Orphan() — tidak terjangkau dari main → server/server.go:37\nRantai middleware (urut eksekusi):\nAuth wajib: false\nHandler: handlers.Make(\"o\") (handlers/h.go:20)\n  → 200 string name (handlers/h.go:24)\n  → 400 status (handlers/h.go:22)\n\n(+3 rute lain menjangkau target ini)\n"
+RouteAt(server/server.go:31) => GET /var
+ContextFor(handlers.CreateUser) => ""
+ContextFor(empty) => ""

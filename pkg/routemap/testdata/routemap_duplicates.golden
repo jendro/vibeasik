@@ -1,0 +1,287 @@
+=== JSON
+[
+ {
+  "module": "demo",
+  "dir": ".",
+  "framework": "fiber",
+  "entries": [
+   "main.go:9"
+  ],
+  "routers": [
+   {
+    "id": 0,
+    "parent": -1,
+    "var": "",
+    "framework": "fiber",
+    "prefix": "/",
+    "pos": "main.go:10",
+    "stack": [
+     "main.go:9 main()"
+    ]
+   },
+   {
+    "id": 1,
+    "parent": 0,
+    "var": "",
+    "framework": "fiber",
+    "prefix": "/api",
+    "pos": "main.go:11",
+    "stack": [
+     "main.go:9 main()"
+    ],
+    "middlewares": [
+     {
+      "name": "middleware.RequireAuth()",
+      "scope": "group",
+      "scope_path": "/api",
+      "pos": "main.go:11",
+      "decl": "middleware/auth.go:5",
+      "auth": true
+     }
+    ]
+   }
+  ],
+  "routes": [
+   {
+    "method": "POST",
+    "path": "/api/notes",
+    "pos": "main.go:13",
+    "router_id": 1,
+    "stack": [
+     "main.go:9 main()"
+    ],
+    "handler": "handlers.CreateNote",
+    "handler_decl": "handlers/user.go:29",
+    "chain": [
+     {
+      "name": "middleware.RequireAuth()",
+      "scope": "group",
+      "scope_path": "/api",
+      "pos": "main.go:11",
+      "decl": "middleware/auth.go:5",
+      "auth": true
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 201,
+      "kind": "status",
+      "pos": "handlers/user.go:34"
+     },
+     {
+      "status": 400,
+      "kind": "status",
+      "pos": "handlers/user.go:32"
+     }
+    ]
+   },
+   {
+    "method": "POST",
+    "path": "/api/users",
+    "pos": "main.go:12",
+    "router_id": 1,
+    "stack": [
+     "main.go:9 main()"
+    ],
+    "handler": "handlers.CreateUser",
+    "handler_decl": "handlers/user.go:12",
+    "chain": [
+     {
+      "name": "middleware.RequireAuth()",
+      "scope": "group",
+      "scope_path": "/api",
+      "pos": "main.go:11",
+      "decl": "middleware/auth.go:5",
+      "auth": true
+     },
+     {
+      "name": "middleware.RequireAuth()",
+      "scope": "route",
+      "pos": "main.go:12",
+      "decl": "middleware/auth.go:5",
+      "auth": true
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 201,
+      "kind": "status",
+      "pos": "handlers/user.go:26"
+     },
+     {
+      "status": 400,
+      "kind": "status",
+      "pos": "handlers/user.go:15"
+     },
+     {
+      "status": 400,
+      "kind": "json",
+      "body": "fiber.Map{error}",
+      "pos": "handlers/user.go:18"
+     },
+     {
+      "status": 500,
+      "kind": "status",
+      "pos": "handlers/user.go:24"
+     }
+    ],
+    "calls": [
+     "service.CreateUser (service/user.go:10)",
+     "service.save (service/user.go:29)"
+    ]
+   },
+   {
+    "method": "POST",
+    "path": "/api/validated",
+    "pos": "main.go:14",
+    "router_id": 1,
+    "stack": [
+     "main.go:9 main()"
+    ],
+    "handler": "handlers.Validated",
+    "handler_decl": "handlers/user.go:37",
+    "chain": [
+     {
+      "name": "middleware.RequireAuth()",
+      "scope": "group",
+      "scope_path": "/api",
+      "pos": "main.go:11",
+      "decl": "middleware/auth.go:5",
+      "auth": true
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 400,
+      "kind": "status",
+      "pos": "handlers/user.go:40"
+     }
+    ],
+    "calls": [
+     "handlers.validateReq (handlers/user.go:48)",
+     "service.IsValid (service/user.go:27)"
+    ]
+   }
+  ],
+  "duplicates": [
+   {
+    "kind": "middleware",
+    "name": "middleware.RequireAuth()",
+    "first": "main.go:11",
+    "pos": "main.go:12",
+    "detail": "group → route",
+    "routes": [
+     "POST /api/users"
+    ],
+    "count": 1
+   },
+   {
+    "kind": "validation",
+    "name": "TrimSpace(Email) == \"\"",
+    "first": "handlers/user.go:17",
+    "pos": "service/user.go:12",
+    "detail": "handlers.CreateUser → service.CreateUser",
+    "routes": [
+     "POST /api/users"
+    ],
+    "count": 1
+   },
+   {
+    "kind": "validation",
+    "name": "Age \u003c 0",
+    "first": "handlers/user.go:20",
+    "pos": "service/user.go:15",
+    "detail": "handlers.CreateUser → service.CreateUser",
+    "routes": [
+     "POST /api/users"
+    ],
+    "count": 1
+   }
+  ]
+ }
+]
+=== MARKDOWN
+## Peta Rute (router → middleware → handler → response)
+
+> Ditelusuri statis dari `func main` dengan go/parser + go/types: prefix group, middleware efektif per rute sesuai semantik framework (urutan pendaftaran, prefix Use/Group, skip `Next`), status response handler (termasuk lewat helper), fungsi yang dijangkau. Sebelum menyimpulkan "rute tanpa auth/validasi", cek rantai di sini: middleware global & group tidak terlihat di baris rute. Detail per rute (jalur setup dari main, response + body, semua fungsi yang dipanggil) ada di `.vibeasik/routes.jsonl`; MCP `vibeasik_code_map_routes` (filter path/method, atau `function` untuk menelusur balik fungsi → rute).
+
+### Modul `demo` (`.`, fiber) — 3 rute
+
+- Titik masuk: `main.go:9`
+- **Group bermiddleware**:
+  - `/api` (`main.go:11`): middleware.RequireAuth() [middleware/auth.go:5] (auth)
+- ⚠ Middleware `middleware.RequireAuth()` terpasang ulang di `main.go:12` (sudah di `main.go:11`, group → route) — 1 rute, mis. `POST /api/users` (redundan, patokan ARCH-004).
+- ⚠ Validasi `TrimSpace(Email) == ""` diperiksa ulang di `service/user.go:12` (sudah di `handlers/user.go:17`, handlers.CreateUser → service.CreateUser) — 1 rute, mis. `POST /api/users` (redundan, patokan ARCH-004).
+- ⚠ Validasi `Age < 0` diperiksa ulang di `service/user.go:15` (sudah di `handlers/user.go:20`, handlers.CreateUser → service.CreateUser) — 1 rute, mis. `POST /api/users` (redundan, patokan ARCH-004).
+
+#### Rantai: global → middleware.RequireAuth() [middleware/auth.go:5] (auth) {group /api} · auth (3 rute)
+
+- `POST /api/notes` → `handlers.CreateNote` `handlers/user.go:29` · 201,400
+- `POST /api/users` → `handlers.CreateUser` `handlers/user.go:12` · 201,400,500 · +rute: middleware.RequireAuth() [middleware/auth.go:5] (auth) (redundan)
+- `POST /api/validated` → `handlers.Validated` `handlers/user.go:37` · 400
+
+
+=== JSONL
+{"module":"demo","method":"POST","path":"/api/notes","pos":"main.go:13","router_id":1,"stack":["main.go:9 main()"],"handler":"handlers.CreateNote","handler_decl":"handlers/user.go:29","chain":[{"name":"middleware.RequireAuth()","scope":"group","scope_path":"/api","pos":"main.go:11","decl":"middleware/auth.go:5","auth":true}],"auth":true,"responses":[{"status":201,"kind":"status","pos":"handlers/user.go:34"},{"status":400,"kind":"status","pos":"handlers/user.go:32"}]}
+{"module":"demo","method":"POST","path":"/api/users","pos":"main.go:12","router_id":1,"stack":["main.go:9 main()"],"handler":"handlers.CreateUser","handler_decl":"handlers/user.go:12","chain":[{"name":"middleware.RequireAuth()","scope":"group","scope_path":"/api","pos":"main.go:11","decl":"middleware/auth.go:5","auth":true},{"name":"middleware.RequireAuth()","scope":"route","pos":"main.go:12","decl":"middleware/auth.go:5","auth":true}],"auth":true,"responses":[{"status":201,"kind":"status","pos":"handlers/user.go:26"},{"status":400,"kind":"status","pos":"handlers/user.go:15"},{"status":400,"kind":"json","body":"fiber.Map{error}","pos":"handlers/user.go:18"},{"status":500,"kind":"status","pos":"handlers/user.go:24"}],"calls":["service.CreateUser (service/user.go:10)","service.save (service/user.go:29)"]}
+{"module":"demo","method":"POST","path":"/api/validated","pos":"main.go:14","router_id":1,"stack":["main.go:9 main()"],"handler":"handlers.Validated","handler_decl":"handlers/user.go:37","chain":[{"name":"middleware.RequireAuth()","scope":"group","scope_path":"/api","pos":"main.go:11","decl":"middleware/auth.go:5","auth":true}],"auth":true,"responses":[{"status":400,"kind":"status","pos":"handlers/user.go:40"}],"calls":["handlers.validateReq (handlers/user.go:48)","service.IsValid (service/user.go:27)"]}
+
+=== TRACE
+POST /api/notes  (didaftarkan main.go:13)
+Jalur setup: main.go:9 main() → main.go:13
+Rantai middleware (urut eksekusi):
+  1. middleware.RequireAuth() [middleware/auth.go:5] (auth) {group /api} — main.go:11
+Auth wajib: true
+Handler: handlers.CreateNote (handlers/user.go:29)
+  → 201 status (handlers/user.go:34)
+  → 400 status (handlers/user.go:32)
+
+POST /api/users  (didaftarkan main.go:12)
+Jalur setup: main.go:9 main() → main.go:12
+Rantai middleware (urut eksekusi):
+  1. middleware.RequireAuth() [middleware/auth.go:5] (auth) {group /api} — main.go:11
+  2. middleware.RequireAuth() [middleware/auth.go:5] (auth) {route} — main.go:12
+Auth wajib: true
+Handler: handlers.CreateUser (handlers/user.go:12)
+  → 201 status (handlers/user.go:26)
+  → 400 status (handlers/user.go:15)
+  → 400 json fiber.Map{error} (handlers/user.go:18)
+  → 500 status (handlers/user.go:24)
+Memanggil: service.CreateUser (service/user.go:10), service.save (service/user.go:29)
+
+POST /api/validated  (didaftarkan main.go:14)
+Jalur setup: main.go:9 main() → main.go:14
+Rantai middleware (urut eksekusi):
+  1. middleware.RequireAuth() [middleware/auth.go:5] (auth) {group /api} — main.go:11
+Auth wajib: true
+Handler: handlers.Validated (handlers/user.go:37)
+  → 400 status (handlers/user.go:40)
+Memanggil: handlers.validateReq (handlers/user.go:48), service.IsValid (service/user.go:27)
+
+=== FILEROUTES
+handlers/user.go: POST /api/notes; POST /api/users; POST /api/validated
+service/user.go: POST /api/users; POST /api/validated
+=== QUERIES
+[  ] => POST /api/notes, POST /api/users, POST /api/validated
+[get  ] => 
+[ /a ] => POST /api/notes, POST /api/users, POST /api/validated
+[POST  list] => 
+[  handlers.CreateUser] => POST /api/users
+[  save] => POST /api/users
+[  home] => 
+[  h/h.go] => 
+[  create] => 
+RouteAt(main.go:13) => POST /api/notes
+ContextFor(handlers/user.go:29) => "POST /api/notes  (didaftarkan main.go:13)\nJalur setup: main.go:9 main() → main.go:13\nRantai middleware (urut eksekusi):\n  1. middleware.RequireAuth() [middleware/auth.go:5] (auth) {group /api} — main.go:11\nAuth wajib: true\nHandler: handlers.CreateNote (handlers/user.go:29)\n  → 201 status (handlers/user.go:34)\n  → 400 status (handlers/user.go:32)\n\n"
+ContextFor(handlers/user.go,0) => "POST /api/notes  (didaftarkan main.go:13)\nJalur setup: main.go:9 main() → main.go:13\nRantai middleware (urut eksekusi):\n  1. middleware.RequireAuth() [middleware/auth.go:5] (auth) {group /api} — main.go:11\nAuth wajib: true\nHandler: handlers.CreateNote (handlers/user.go:29)\n  → 201 status (handlers/user.go:34)\n  → 400 status (handlers/user.go:32)\n\nPOST /api/users  (didaftarkan main.go:12)\nJalur setup: main.go:9 main() → main.go:12\nRantai middleware (urut eksekusi):\n  1. middleware.RequireAuth() [middleware/auth.go:5] (auth) {group /api} — main.go:11\n  2. middleware.RequireAuth() [middleware/auth.go:5] (auth) {route} — main.go:12\nAuth wajib: true\nHandler: handlers.CreateUser (handlers/user.go:12)\n  → 201 status (handlers/user.go:26)\n  → 400 status (handlers/user.go:15)\n  → 400 json fiber.Map{error} (handlers/user.go:18)\n  → 500 status (handlers/user.go:24)\nMemanggil: service.CreateUser (service/user.go:10), service.save (service/user.go:29)\n\nPOST /api/validated  (didaftarkan main.go:14)\nJalur setup: main.go:9 main() → main.go:14\nRantai middleware (urut eksekusi):\n  1. middleware.RequireAuth() [middleware/auth.go:5] (auth) {group /api} — main.go:11\nAuth wajib: true\nHandler: handlers.Validated (handlers/user.go:37)\n  → 400 status (handlers/user.go:40)\nMemanggil: handlers.validateReq (handlers/user.go:48), service.IsValid (service/user.go:27)\n\n"
+RouteAt(main.go:12) => POST /api/users
+ContextFor(handlers/user.go:12) => "POST /api/users  (didaftarkan main.go:12)\nJalur setup: main.go:9 main() → main.go:12\nRantai middleware (urut eksekusi):\n  1. middleware.RequireAuth() [middleware/auth.go:5] (auth) {group /api} — main.go:11\n  2. middleware.RequireAuth() [middleware/auth.go:5] (auth) {route} — main.go:12\nAuth wajib: true\nHandler: handlers.CreateUser (handlers/user.go:12)\n  → 201 status (handlers/user.go:26)\n  → 400 status (handlers/user.go:15)\n  → 400 json fiber.Map{error} (handlers/user.go:18)\n  → 500 status (handlers/user.go:24)\nMemanggil: service.CreateUser (service/user.go:10), service.save (service/user.go:29)\n\n"
+ContextFor(handlers/user.go,0) => "POST /api/notes  (didaftarkan main.go:13)\nJalur setup: main.go:9 main() → main.go:13\nRantai middleware (urut eksekusi):\n  1. middleware.RequireAuth() [middleware/auth.go:5] (auth) {group /api} — main.go:11\nAuth wajib: true\nHandler: handlers.CreateNote (handlers/user.go:29)\n  → 201 status (handlers/user.go:34)\n  → 400 status (handlers/user.go:32)\n\nPOST /api/users  (didaftarkan main.go:12)\nJalur setup: main.go:9 main() → main.go:12\nRantai middleware (urut eksekusi):\n  1. middleware.RequireAuth() [middleware/auth.go:5] (auth) {group /api} — main.go:11\n  2. middleware.RequireAuth() [middleware/auth.go:5] (auth) {route} — main.go:12\nAuth wajib: true\nHandler: handlers.CreateUser (handlers/user.go:12)\n  → 201 status (handlers/user.go:26)\n  → 400 status (handlers/user.go:15)\n  → 400 json fiber.Map{error} (handlers/user.go:18)\n  → 500 status (handlers/user.go:24)\nMemanggil: service.CreateUser (service/user.go:10), service.save (service/user.go:29)\n\nPOST /api/validated  (didaftarkan main.go:14)\nJalur setup: main.go:9 main() → main.go:14\nRantai middleware (urut eksekusi):\n  1. middleware.RequireAuth() [middleware/auth.go:5] (auth) {group /api} — main.go:11\nAuth wajib: true\nHandler: handlers.Validated (handlers/user.go:37)\n  → 400 status (handlers/user.go:40)\nMemanggil: handlers.validateReq (handlers/user.go:48), service.IsValid (service/user.go:27)\n\n"
+RouteAt(main.go:14) => POST /api/validated
+ContextFor(handlers/user.go:37) => "POST /api/validated  (didaftarkan main.go:14)\nJalur setup: main.go:9 main() → main.go:14\nRantai middleware (urut eksekusi):\n  1. middleware.RequireAuth() [middleware/auth.go:5] (auth) {group /api} — main.go:11\nAuth wajib: true\nHandler: handlers.Validated (handlers/user.go:37)\n  → 400 status (handlers/user.go:40)\nMemanggil: handlers.validateReq (handlers/user.go:48), service.IsValid (service/user.go:27)\n\n"
+ContextFor(handlers/user.go,0) => "POST /api/notes  (didaftarkan main.go:13)\nJalur setup: main.go:9 main() → main.go:13\nRantai middleware (urut eksekusi):\n  1. middleware.RequireAuth() [middleware/auth.go:5] (auth) {group /api} — main.go:11\nAuth wajib: true\nHandler: handlers.CreateNote (handlers/user.go:29)\n  → 201 status (handlers/user.go:34)\n  → 400 status (handlers/user.go:32)\n\nPOST /api/users  (didaftarkan main.go:12)\nJalur setup: main.go:9 main() → main.go:12\nRantai middleware (urut eksekusi):\n  1. middleware.RequireAuth() [middleware/auth.go:5] (auth) {group /api} — main.go:11\n  2. middleware.RequireAuth() [middleware/auth.go:5] (auth) {route} — main.go:12\nAuth wajib: true\nHandler: handlers.CreateUser (handlers/user.go:12)\n  → 201 status (handlers/user.go:26)\n  → 400 status (handlers/user.go:15)\n  → 400 json fiber.Map{error} (handlers/user.go:18)\n  → 500 status (handlers/user.go:24)\nMemanggil: service.CreateUser (service/user.go:10), service.save (service/user.go:29)\n\nPOST /api/validated  (didaftarkan main.go:14)\nJalur setup: main.go:9 main() → main.go:14\nRantai middleware (urut eksekusi):\n  1. middleware.RequireAuth() [middleware/auth.go:5] (auth) {group /api} — main.go:11\nAuth wajib: true\nHandler: handlers.Validated (handlers/user.go:37)\n  → 400 status (handlers/user.go:40)\nMemanggil: handlers.validateReq (handlers/user.go:48), service.IsValid (service/user.go:27)\n\n"
+ContextFor(handlers.CreateUser) => "POST /api/users  (didaftarkan main.go:12)\nJalur setup: main.go:9 main() → main.go:12\nRantai middleware (urut eksekusi):\n  1. middleware.RequireAuth() [middleware/auth.go:5] (auth) {group /api} — main.go:11\n  2. middleware.RequireAuth() [middleware/auth.go:5] (auth) {route} — main.go:12\nAuth wajib: true\nHandler: handlers.CreateUser (handlers/user.go:12)\n  → 201 status (handlers/user.go:26)\n  → 400 status (handlers/user.go:15)\n  → 400 json fiber.Map{error} (handlers/user.go:18)\n  → 500 status (handlers/user.go:24)\nMemanggil: service.CreateUser (service/user.go:10), service.save (service/user.go:29)\n\n"
+ContextFor(empty) => ""

@@ -1,0 +1,1365 @@
+=== JSON
+[
+ {
+  "module": "demo",
+  "dir": ".",
+  "framework": "fiber",
+  "entries": [
+   "main.go:14"
+  ],
+  "routers": [
+   {
+    "id": 0,
+    "parent": -1,
+    "var": "",
+    "framework": "fiber",
+    "prefix": "/",
+    "pos": "main.go:15",
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "middlewares": [
+     {
+      "name": "mw.Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "mw/mw.go:9"
+     },
+     {
+      "name": "mw.CORS()",
+      "scope": "prefix",
+      "scope_path": "/static-ish",
+      "pos": "main.go:17",
+      "decl": "mw/mw.go:10"
+     },
+     {
+      "name": "limiter.New(limiter.Config{…})",
+      "scope": "global",
+      "pos": "main.go:18",
+      "skip_prefixes": [
+       "/health"
+      ],
+      "skip_paths": [
+       "/ping"
+      ]
+     },
+     {
+      "name": "func literal",
+      "scope": "global",
+      "pos": "main.go:21",
+      "decl": "main.go:21"
+     },
+     {
+      "name": "mw.Late()",
+      "scope": "global",
+      "pos": "main.go:41",
+      "decl": "mw/mw.go:11"
+     }
+    ]
+   },
+   {
+    "id": 1,
+    "parent": 0,
+    "var": "",
+    "framework": "fiber",
+    "prefix": "/api",
+    "pos": "main.go:25",
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "middlewares": [
+     {
+      "name": "mw.JWTProtected()",
+      "scope": "group",
+      "scope_path": "/api",
+      "pos": "main.go:25",
+      "decl": "mw/mw.go:13",
+      "auth": true,
+      "skip_prefixes": [
+       "/api/open"
+      ],
+      "skip_paths": [
+       "/api/things/skip"
+      ]
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "parent": 0,
+    "var": "",
+    "framework": "fiber",
+    "prefix": "/sub/",
+    "pos": "main.go:33",
+    "stack": [
+     "main.go:14 main()"
+    ]
+   },
+   {
+    "id": 3,
+    "parent": 0,
+    "var": "",
+    "framework": "fiber",
+    "prefix": "/r",
+    "pos": "main.go:37",
+    "stack": [
+     "main.go:14 main()"
+    ]
+   }
+  ],
+  "routes": [
+   {
+    "method": "POST",
+    "path": "/after",
+    "pos": "main.go:42",
+    "router_id": 0,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "h.Ping",
+    "handler_decl": "h/h.go:12",
+    "chain": [
+     {
+      "name": "mw.Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "mw/mw.go:9"
+     },
+     {
+      "name": "limiter.New(limiter.Config{…})",
+      "scope": "global",
+      "pos": "main.go:18",
+      "skip_prefixes": [
+       "/health"
+      ],
+      "skip_paths": [
+       "/ping"
+      ]
+     },
+     {
+      "name": "func literal",
+      "scope": "global",
+      "pos": "main.go:21",
+      "decl": "main.go:21"
+     },
+     {
+      "name": "mw.Late()",
+      "scope": "global",
+      "pos": "main.go:41",
+      "decl": "mw/mw.go:11"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "string",
+      "body": "\"pong\"",
+      "pos": "h/h.go:12"
+     }
+    ]
+   },
+   {
+    "method": "ANY",
+    "path": "/api/any",
+    "pos": "main.go:32",
+    "router_id": 1,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "h.Ping",
+    "handler_decl": "h/h.go:12",
+    "chain": [
+     {
+      "name": "mw.Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "mw/mw.go:9"
+     },
+     {
+      "name": "limiter.New(limiter.Config{…})",
+      "scope": "global",
+      "pos": "main.go:18",
+      "skip_prefixes": [
+       "/health"
+      ],
+      "skip_paths": [
+       "/ping"
+      ]
+     },
+     {
+      "name": "func literal",
+      "scope": "global",
+      "pos": "main.go:21",
+      "decl": "main.go:21"
+     },
+     {
+      "name": "mw.JWTProtected()",
+      "scope": "group",
+      "scope_path": "/api",
+      "pos": "main.go:25",
+      "decl": "mw/mw.go:13",
+      "auth": true,
+      "skip_prefixes": [
+       "/api/open"
+      ],
+      "skip_paths": [
+       "/api/things/skip"
+      ]
+     }
+    ],
+    "inactive": [
+     {
+      "name": "mw.Late()",
+      "scope": "global",
+      "pos": "main.go:41",
+      "decl": "mw/mw.go:11",
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "string",
+      "body": "\"pong\"",
+      "pos": "h/h.go:12"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/api/me",
+    "pos": "main.go:26",
+    "router_id": 1,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "h.Me",
+    "handler_decl": "h/h.go:13",
+    "chain": [
+     {
+      "name": "mw.Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "mw/mw.go:9"
+     },
+     {
+      "name": "limiter.New(limiter.Config{…})",
+      "scope": "global",
+      "pos": "main.go:18",
+      "skip_prefixes": [
+       "/health"
+      ],
+      "skip_paths": [
+       "/ping"
+      ]
+     },
+     {
+      "name": "func literal",
+      "scope": "global",
+      "pos": "main.go:21",
+      "decl": "main.go:21"
+     },
+     {
+      "name": "mw.JWTProtected()",
+      "scope": "group",
+      "scope_path": "/api",
+      "pos": "main.go:25",
+      "decl": "mw/mw.go:13",
+      "auth": true,
+      "skip_prefixes": [
+       "/api/open"
+      ],
+      "skip_paths": [
+       "/api/things/skip"
+      ]
+     },
+     {
+      "name": "optionalAuth",
+      "scope": "route",
+      "pos": "main.go:26",
+      "auth": true,
+      "optional": true
+     }
+    ],
+    "inactive": [
+     {
+      "name": "mw.Late()",
+      "scope": "global",
+      "pos": "main.go:41",
+      "decl": "mw/mw.go:11",
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "json",
+      "body": "fiber.Map{id, name}",
+      "pos": "h/h.go:17"
+     },
+     {
+      "status": 401,
+      "kind": "json",
+      "body": "body",
+      "via": "fail→respond",
+      "pos": "h/h.go:9"
+     }
+    ],
+    "calls": [
+     "h.fail (h/h.go:10)",
+     "h.respond (h/h.go:9)"
+    ]
+   },
+   {
+    "method": "POST",
+    "path": "/api/things",
+    "pos": "main.go:27",
+    "router_id": 1,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "h.CreateThing",
+    "handler_decl": "h/h.go:19",
+    "chain": [
+     {
+      "name": "mw.Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "mw/mw.go:9"
+     },
+     {
+      "name": "limiter.New(limiter.Config{…})",
+      "scope": "global",
+      "pos": "main.go:18",
+      "skip_prefixes": [
+       "/health"
+      ],
+      "skip_paths": [
+       "/ping"
+      ]
+     },
+     {
+      "name": "func literal",
+      "scope": "global",
+      "pos": "main.go:21",
+      "decl": "main.go:21"
+     },
+     {
+      "name": "mw.JWTProtected()",
+      "scope": "group",
+      "scope_path": "/api",
+      "pos": "main.go:25",
+      "decl": "mw/mw.go:13",
+      "auth": true,
+      "skip_prefixes": [
+       "/api/open"
+      ],
+      "skip_paths": [
+       "/api/things/skip"
+      ]
+     },
+     {
+      "name": "mw.JWTProtected()",
+      "scope": "route",
+      "pos": "main.go:27",
+      "decl": "mw/mw.go:13",
+      "auth": true,
+      "skip_prefixes": [
+       "/api/open"
+      ],
+      "skip_paths": [
+       "/api/things/skip"
+      ]
+     }
+    ],
+    "inactive": [
+     {
+      "name": "mw.Late()",
+      "scope": "global",
+      "pos": "main.go:41",
+      "decl": "mw/mw.go:11",
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 201,
+      "kind": "json",
+      "body": "Thing{ID}",
+      "pos": "h/h.go:20"
+     }
+    ]
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/things/:id",
+    "pos": "main.go:29",
+    "router_id": 1,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "h.DeleteThing",
+    "handler_decl": "h/h.go:28",
+    "chain": [
+     {
+      "name": "mw.Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "mw/mw.go:9"
+     },
+     {
+      "name": "limiter.New(limiter.Config{…})",
+      "scope": "global",
+      "pos": "main.go:18",
+      "skip_prefixes": [
+       "/health"
+      ],
+      "skip_paths": [
+       "/ping"
+      ]
+     },
+     {
+      "name": "func literal",
+      "scope": "global",
+      "pos": "main.go:21",
+      "decl": "main.go:21"
+     },
+     {
+      "name": "mw.JWTProtected()",
+      "scope": "group",
+      "scope_path": "/api",
+      "pos": "main.go:25",
+      "decl": "mw/mw.go:13",
+      "auth": true,
+      "skip_prefixes": [
+       "/api/open"
+      ],
+      "skip_paths": [
+       "/api/things/skip"
+      ]
+     }
+    ],
+    "inactive": [
+     {
+      "name": "mw.Late()",
+      "scope": "global",
+      "pos": "main.go:41",
+      "decl": "mw/mw.go:11",
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 204,
+      "kind": "status",
+      "pos": "h/h.go:28"
+     }
+    ]
+   },
+   {
+    "method": "PATCH",
+    "path": "/api/things/:id",
+    "pos": "main.go:30",
+    "router_id": 1,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "func literal",
+    "handler_decl": "main.go:30",
+    "chain": [
+     {
+      "name": "mw.Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "mw/mw.go:9"
+     },
+     {
+      "name": "limiter.New(limiter.Config{…})",
+      "scope": "global",
+      "pos": "main.go:18",
+      "skip_prefixes": [
+       "/health"
+      ],
+      "skip_paths": [
+       "/ping"
+      ]
+     },
+     {
+      "name": "func literal",
+      "scope": "global",
+      "pos": "main.go:21",
+      "decl": "main.go:21"
+     },
+     {
+      "name": "mw.JWTProtected()",
+      "scope": "group",
+      "scope_path": "/api",
+      "pos": "main.go:25",
+      "decl": "mw/mw.go:13",
+      "auth": true,
+      "skip_prefixes": [
+       "/api/open"
+      ],
+      "skip_paths": [
+       "/api/things/skip"
+      ]
+     }
+    ],
+    "inactive": [
+     {
+      "name": "mw.Late()",
+      "scope": "global",
+      "pos": "main.go:41",
+      "decl": "mw/mw.go:11",
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 202,
+      "kind": "status",
+      "pos": "main.go:30"
+     }
+    ]
+   },
+   {
+    "method": "PUT",
+    "path": "/api/things/:id",
+    "pos": "main.go:28",
+    "router_id": 1,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "h.UpdateThing",
+    "handler_decl": "h/h.go:22",
+    "chain": [
+     {
+      "name": "mw.Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "mw/mw.go:9"
+     },
+     {
+      "name": "limiter.New(limiter.Config{…})",
+      "scope": "global",
+      "pos": "main.go:18",
+      "skip_prefixes": [
+       "/health"
+      ],
+      "skip_paths": [
+       "/ping"
+      ]
+     },
+     {
+      "name": "func literal",
+      "scope": "global",
+      "pos": "main.go:21",
+      "decl": "main.go:21"
+     },
+     {
+      "name": "mw.JWTProtected()",
+      "scope": "group",
+      "scope_path": "/api",
+      "pos": "main.go:25",
+      "decl": "mw/mw.go:13",
+      "auth": true,
+      "skip_prefixes": [
+       "/api/open"
+      ],
+      "skip_paths": [
+       "/api/things/skip"
+      ]
+     }
+    ],
+    "inactive": [
+     {
+      "name": "mw.Late()",
+      "scope": "global",
+      "pos": "main.go:41",
+      "decl": "mw/mw.go:11",
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 303,
+      "kind": "redirect",
+      "pos": "h/h.go:26"
+     },
+     {
+      "status": 400,
+      "kind": "error",
+      "body": "\"id\"",
+      "pos": "h/h.go:24"
+     }
+    ]
+   },
+   {
+    "method": "TRACE",
+    "path": "/api/trace",
+    "pos": "main.go:31",
+    "router_id": 1,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "h.Ping",
+    "handler_decl": "h/h.go:12",
+    "chain": [
+     {
+      "name": "mw.Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "mw/mw.go:9"
+     },
+     {
+      "name": "limiter.New(limiter.Config{…})",
+      "scope": "global",
+      "pos": "main.go:18",
+      "skip_prefixes": [
+       "/health"
+      ],
+      "skip_paths": [
+       "/ping"
+      ]
+     },
+     {
+      "name": "func literal",
+      "scope": "global",
+      "pos": "main.go:21",
+      "decl": "main.go:21"
+     },
+     {
+      "name": "mw.JWTProtected()",
+      "scope": "group",
+      "scope_path": "/api",
+      "pos": "main.go:25",
+      "decl": "mw/mw.go:13",
+      "auth": true,
+      "skip_prefixes": [
+       "/api/open"
+      ],
+      "skip_paths": [
+       "/api/things/skip"
+      ]
+     }
+    ],
+    "inactive": [
+     {
+      "name": "mw.Late()",
+      "scope": "global",
+      "pos": "main.go:41",
+      "decl": "mw/mw.go:11",
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "string",
+      "body": "\"pong\"",
+      "pos": "h/h.go:12"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/assets",
+    "pos": "main.go:24",
+    "router_id": 0,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "static \"./public\"",
+    "chain": [
+     {
+      "name": "mw.Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "mw/mw.go:9"
+     },
+     {
+      "name": "limiter.New(limiter.Config{…})",
+      "scope": "global",
+      "pos": "main.go:18",
+      "skip_prefixes": [
+       "/health"
+      ],
+      "skip_paths": [
+       "/ping"
+      ]
+     },
+     {
+      "name": "func literal",
+      "scope": "global",
+      "pos": "main.go:21",
+      "decl": "main.go:21"
+     }
+    ],
+    "inactive": [
+     {
+      "name": "mw.Late()",
+      "scope": "global",
+      "pos": "main.go:41",
+      "decl": "mw/mw.go:11",
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": false
+   },
+   {
+    "method": "GET",
+    "path": "/health/live",
+    "pos": "main.go:23",
+    "router_id": 0,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "h.Ping",
+    "handler_decl": "h/h.go:12",
+    "chain": [
+     {
+      "name": "mw.Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "mw/mw.go:9"
+     },
+     {
+      "name": "func literal",
+      "scope": "global",
+      "pos": "main.go:21",
+      "decl": "main.go:21"
+     }
+    ],
+    "inactive": [
+     {
+      "name": "limiter.New(limiter.Config{…})",
+      "scope": "global",
+      "pos": "main.go:18",
+      "skip_prefixes": [
+       "/health"
+      ],
+      "skip_paths": [
+       "/ping"
+      ],
+      "reason": "dilewati untuk path ini (kondisi Next/skip di middleware)"
+     },
+     {
+      "name": "mw.Late()",
+      "scope": "global",
+      "pos": "main.go:41",
+      "decl": "mw/mw.go:11",
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "string",
+      "body": "\"pong\"",
+      "pos": "h/h.go:12"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/ping",
+    "pos": "main.go:22",
+    "router_id": 0,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "h.Ping",
+    "handler_decl": "h/h.go:12",
+    "chain": [
+     {
+      "name": "mw.Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "mw/mw.go:9"
+     },
+     {
+      "name": "func literal",
+      "scope": "global",
+      "pos": "main.go:21",
+      "decl": "main.go:21"
+     }
+    ],
+    "inactive": [
+     {
+      "name": "limiter.New(limiter.Config{…})",
+      "scope": "global",
+      "pos": "main.go:18",
+      "skip_prefixes": [
+       "/health"
+      ],
+      "skip_paths": [
+       "/ping"
+      ],
+      "reason": "dilewati untuk path ini (kondisi Next/skip di middleware)"
+     },
+     {
+      "name": "mw.Late()",
+      "scope": "global",
+      "pos": "main.go:41",
+      "decl": "mw/mw.go:11",
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "string",
+      "body": "\"pong\"",
+      "pos": "h/h.go:12"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/r/a",
+    "pos": "main.go:38",
+    "router_id": 3,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "h.Ping",
+    "handler_decl": "h/h.go:12",
+    "chain": [
+     {
+      "name": "mw.Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "mw/mw.go:9"
+     },
+     {
+      "name": "limiter.New(limiter.Config{…})",
+      "scope": "global",
+      "pos": "main.go:18",
+      "skip_prefixes": [
+       "/health"
+      ],
+      "skip_paths": [
+       "/ping"
+      ]
+     },
+     {
+      "name": "func literal",
+      "scope": "global",
+      "pos": "main.go:21",
+      "decl": "main.go:21"
+     }
+    ],
+    "inactive": [
+     {
+      "name": "mw.Late()",
+      "scope": "global",
+      "pos": "main.go:41",
+      "decl": "mw/mw.go:11",
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "string",
+      "body": "\"pong\"",
+      "pos": "h/h.go:12"
+     }
+    ]
+   },
+   {
+    "method": "POST",
+    "path": "/r/b",
+    "pos": "main.go:39",
+    "router_id": 3,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "h.Ping",
+    "handler_decl": "h/h.go:12",
+    "chain": [
+     {
+      "name": "mw.Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "mw/mw.go:9"
+     },
+     {
+      "name": "limiter.New(limiter.Config{…})",
+      "scope": "global",
+      "pos": "main.go:18",
+      "skip_prefixes": [
+       "/health"
+      ],
+      "skip_paths": [
+       "/ping"
+      ]
+     },
+     {
+      "name": "func literal",
+      "scope": "global",
+      "pos": "main.go:21",
+      "decl": "main.go:21"
+     },
+     {
+      "name": "mw.JWTProtected()",
+      "scope": "route",
+      "pos": "main.go:39",
+      "decl": "mw/mw.go:13",
+      "auth": true,
+      "skip_prefixes": [
+       "/api/open"
+      ],
+      "skip_paths": [
+       "/api/things/skip"
+      ]
+     }
+    ],
+    "inactive": [
+     {
+      "name": "mw.Late()",
+      "scope": "global",
+      "pos": "main.go:41",
+      "decl": "mw/mw.go:11",
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": true,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "string",
+      "body": "\"pong\"",
+      "pos": "h/h.go:12"
+     }
+    ]
+   },
+   {
+    "method": "GET",
+    "path": "/sub/x",
+    "pos": "main.go:34",
+    "router_id": 2,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "h.Ping",
+    "handler_decl": "h/h.go:12",
+    "chain": [
+     {
+      "name": "mw.Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "mw/mw.go:9"
+     },
+     {
+      "name": "limiter.New(limiter.Config{…})",
+      "scope": "global",
+      "pos": "main.go:18",
+      "skip_prefixes": [
+       "/health"
+      ],
+      "skip_paths": [
+       "/ping"
+      ]
+     },
+     {
+      "name": "func literal",
+      "scope": "global",
+      "pos": "main.go:21",
+      "decl": "main.go:21"
+     }
+    ],
+    "inactive": [
+     {
+      "name": "mw.Late()",
+      "scope": "global",
+      "pos": "main.go:41",
+      "decl": "mw/mw.go:11",
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "string",
+      "body": "\"pong\"",
+      "pos": "h/h.go:12"
+     }
+    ]
+   },
+   {
+    "method": "POST",
+    "path": "/sub/y",
+    "pos": "main.go:35",
+    "router_id": 2,
+    "stack": [
+     "main.go:14 main()"
+    ],
+    "handler": "h.Ping",
+    "handler_decl": "h/h.go:12",
+    "chain": [
+     {
+      "name": "mw.Logger()",
+      "scope": "global",
+      "pos": "main.go:16",
+      "decl": "mw/mw.go:9"
+     },
+     {
+      "name": "limiter.New(limiter.Config{…})",
+      "scope": "global",
+      "pos": "main.go:18",
+      "skip_prefixes": [
+       "/health"
+      ],
+      "skip_paths": [
+       "/ping"
+      ]
+     },
+     {
+      "name": "func literal",
+      "scope": "global",
+      "pos": "main.go:21",
+      "decl": "main.go:21"
+     }
+    ],
+    "inactive": [
+     {
+      "name": "mw.Late()",
+      "scope": "global",
+      "pos": "main.go:41",
+      "decl": "mw/mw.go:11",
+      "reason": "didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"
+     }
+    ],
+    "auth": false,
+    "responses": [
+     {
+      "status": 200,
+      "kind": "string",
+      "body": "\"pong\"",
+      "pos": "h/h.go:12"
+     }
+    ]
+   }
+  ],
+  "duplicates": [
+   {
+    "kind": "middleware",
+    "name": "mw.JWTProtected()",
+    "first": "main.go:25",
+    "pos": "main.go:27",
+    "detail": "group → route",
+    "routes": [
+     "POST /api/things"
+    ],
+    "count": 1
+   }
+  ]
+ }
+]
+=== MARKDOWN
+## Peta Rute (router → middleware → handler → response)
+
+> Ditelusuri statis dari `func main` dengan go/parser + go/types: prefix group, middleware efektif per rute sesuai semantik framework (urutan pendaftaran, prefix Use/Group, skip `Next`), status response handler (termasuk lewat helper), fungsi yang dijangkau. Sebelum menyimpulkan "rute tanpa auth/validasi", cek rantai di sini: middleware global & group tidak terlihat di baris rute. Detail per rute (jalur setup dari main, response + body, semua fungsi yang dipanggil) ada di `.vibeasik/routes.jsonl`; MCP `vibeasik_code_map_routes` (filter path/method, atau `function` untuk menelusur balik fungsi → rute).
+
+### Modul `demo` (`.`, fiber) — 15 rute
+
+- Titik masuk: `main.go:14`
+- **Middleware global** (urut eksekusi, berlaku untuk rute yang didaftarkan sesudahnya):
+  1. mw.Logger() [mw/mw.go:9] — `main.go:16`
+  2. mw.CORS() [mw/mw.go:10] — `main.go:17`
+  3. limiter.New(limiter.Config{…}) — `main.go:18` — tidak berjalan untuk 2 rute (didaftarkan sesudahnya/dilewati)
+  4. func literal [main.go:21] — `main.go:21`
+  5. mw.Late() [mw/mw.go:11] — `main.go:41` — tidak berjalan untuk 14 rute (didaftarkan sesudahnya/dilewati)
+- **Group bermiddleware**:
+  - `/api` (`main.go:25`): mw.JWTProtected() [mw/mw.go:13] (auth)
+- ⚠ Middleware `mw.JWTProtected()` terpasang ulang di `main.go:27` (sudah di `main.go:25`, group → route) — 1 rute, mis. `POST /api/things` (redundan, patokan ARCH-004).
+- Rute pengubah data **tanpa** middleware auth wajib (pastikan memang publik): `POST /after`, `POST /sub/y`
+
+#### Rantai: global · publik (8 rute)
+
+- `POST /after` → `h.Ping` `h/h.go:12` · 200 string
+- `GET /assets` → `static "./public"`
+- `GET /health/live` → `h.Ping` `h/h.go:12` · 200 string
+- `GET /ping` → `h.Ping` `h/h.go:12` · 200 string
+- `GET /r/a` → `h.Ping` `h/h.go:12` · 200 string
+- `POST /r/b` → `h.Ping` `h/h.go:12` · 200 string · +rute: mw.JWTProtected() [mw/mw.go:13] (auth) · **auth**
+- `GET /sub/x` → `h.Ping` `h/h.go:12` · 200 string
+- `POST /sub/y` → `h.Ping` `h/h.go:12` · 200 string
+
+#### Rantai: global → mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} · auth (7 rute)
+
+- `ANY /api/any` → `h.Ping` `h/h.go:12` · 200 string
+- `GET /api/me` → `h.Me` `h/h.go:13` · 200,401 · +rute: optionalAuth (auth opsional)
+- `POST /api/things` → `h.CreateThing` `h/h.go:19` · 201 · +rute: mw.JWTProtected() [mw/mw.go:13] (auth) (redundan)
+- `DELETE /api/things/:id` → `h.DeleteThing` `h/h.go:28` · 204
+- `PATCH /api/things/:id` → `func literal` `main.go:30` · 202
+- `PUT /api/things/:id` → `h.UpdateThing` `h/h.go:22` · 303 redirect,400
+- `TRACE /api/trace` → `h.Ping` `h/h.go:12` · 200 string
+
+
+=== JSONL
+{"module":"demo","method":"POST","path":"/after","pos":"main.go:42","router_id":0,"stack":["main.go:14 main()"],"handler":"h.Ping","handler_decl":"h/h.go:12","chain":[{"name":"mw.Logger()","scope":"global","pos":"main.go:16","decl":"mw/mw.go:9"},{"name":"limiter.New(limiter.Config{…})","scope":"global","pos":"main.go:18","skip_prefixes":["/health"],"skip_paths":["/ping"]},{"name":"func literal","scope":"global","pos":"main.go:21","decl":"main.go:21"},{"name":"mw.Late()","scope":"global","pos":"main.go:41","decl":"mw/mw.go:11"}],"auth":false,"responses":[{"status":200,"kind":"string","body":"\"pong\"","pos":"h/h.go:12"}]}
+{"module":"demo","method":"ANY","path":"/api/any","pos":"main.go:32","router_id":1,"stack":["main.go:14 main()"],"handler":"h.Ping","handler_decl":"h/h.go:12","chain":[{"name":"mw.Logger()","scope":"global","pos":"main.go:16","decl":"mw/mw.go:9"},{"name":"limiter.New(limiter.Config{…})","scope":"global","pos":"main.go:18","skip_prefixes":["/health"],"skip_paths":["/ping"]},{"name":"func literal","scope":"global","pos":"main.go:21","decl":"main.go:21"},{"name":"mw.JWTProtected()","scope":"group","scope_path":"/api","pos":"main.go:25","decl":"mw/mw.go:13","auth":true,"skip_prefixes":["/api/open"],"skip_paths":["/api/things/skip"]}],"inactive":[{"name":"mw.Late()","scope":"global","pos":"main.go:41","decl":"mw/mw.go:11","reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":true,"responses":[{"status":200,"kind":"string","body":"\"pong\"","pos":"h/h.go:12"}]}
+{"module":"demo","method":"GET","path":"/api/me","pos":"main.go:26","router_id":1,"stack":["main.go:14 main()"],"handler":"h.Me","handler_decl":"h/h.go:13","chain":[{"name":"mw.Logger()","scope":"global","pos":"main.go:16","decl":"mw/mw.go:9"},{"name":"limiter.New(limiter.Config{…})","scope":"global","pos":"main.go:18","skip_prefixes":["/health"],"skip_paths":["/ping"]},{"name":"func literal","scope":"global","pos":"main.go:21","decl":"main.go:21"},{"name":"mw.JWTProtected()","scope":"group","scope_path":"/api","pos":"main.go:25","decl":"mw/mw.go:13","auth":true,"skip_prefixes":["/api/open"],"skip_paths":["/api/things/skip"]},{"name":"optionalAuth","scope":"route","pos":"main.go:26","auth":true,"optional":true}],"inactive":[{"name":"mw.Late()","scope":"global","pos":"main.go:41","decl":"mw/mw.go:11","reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":true,"responses":[{"status":200,"kind":"json","body":"fiber.Map{id, name}","pos":"h/h.go:17"},{"status":401,"kind":"json","body":"body","via":"fail→respond","pos":"h/h.go:9"}],"calls":["h.fail (h/h.go:10)","h.respond (h/h.go:9)"]}
+{"module":"demo","method":"POST","path":"/api/things","pos":"main.go:27","router_id":1,"stack":["main.go:14 main()"],"handler":"h.CreateThing","handler_decl":"h/h.go:19","chain":[{"name":"mw.Logger()","scope":"global","pos":"main.go:16","decl":"mw/mw.go:9"},{"name":"limiter.New(limiter.Config{…})","scope":"global","pos":"main.go:18","skip_prefixes":["/health"],"skip_paths":["/ping"]},{"name":"func literal","scope":"global","pos":"main.go:21","decl":"main.go:21"},{"name":"mw.JWTProtected()","scope":"group","scope_path":"/api","pos":"main.go:25","decl":"mw/mw.go:13","auth":true,"skip_prefixes":["/api/open"],"skip_paths":["/api/things/skip"]},{"name":"mw.JWTProtected()","scope":"route","pos":"main.go:27","decl":"mw/mw.go:13","auth":true,"skip_prefixes":["/api/open"],"skip_paths":["/api/things/skip"]}],"inactive":[{"name":"mw.Late()","scope":"global","pos":"main.go:41","decl":"mw/mw.go:11","reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":true,"responses":[{"status":201,"kind":"json","body":"Thing{ID}","pos":"h/h.go:20"}]}
+{"module":"demo","method":"DELETE","path":"/api/things/:id","pos":"main.go:29","router_id":1,"stack":["main.go:14 main()"],"handler":"h.DeleteThing","handler_decl":"h/h.go:28","chain":[{"name":"mw.Logger()","scope":"global","pos":"main.go:16","decl":"mw/mw.go:9"},{"name":"limiter.New(limiter.Config{…})","scope":"global","pos":"main.go:18","skip_prefixes":["/health"],"skip_paths":["/ping"]},{"name":"func literal","scope":"global","pos":"main.go:21","decl":"main.go:21"},{"name":"mw.JWTProtected()","scope":"group","scope_path":"/api","pos":"main.go:25","decl":"mw/mw.go:13","auth":true,"skip_prefixes":["/api/open"],"skip_paths":["/api/things/skip"]}],"inactive":[{"name":"mw.Late()","scope":"global","pos":"main.go:41","decl":"mw/mw.go:11","reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":true,"responses":[{"status":204,"kind":"status","pos":"h/h.go:28"}]}
+{"module":"demo","method":"PATCH","path":"/api/things/:id","pos":"main.go:30","router_id":1,"stack":["main.go:14 main()"],"handler":"func literal","handler_decl":"main.go:30","chain":[{"name":"mw.Logger()","scope":"global","pos":"main.go:16","decl":"mw/mw.go:9"},{"name":"limiter.New(limiter.Config{…})","scope":"global","pos":"main.go:18","skip_prefixes":["/health"],"skip_paths":["/ping"]},{"name":"func literal","scope":"global","pos":"main.go:21","decl":"main.go:21"},{"name":"mw.JWTProtected()","scope":"group","scope_path":"/api","pos":"main.go:25","decl":"mw/mw.go:13","auth":true,"skip_prefixes":["/api/open"],"skip_paths":["/api/things/skip"]}],"inactive":[{"name":"mw.Late()","scope":"global","pos":"main.go:41","decl":"mw/mw.go:11","reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":true,"responses":[{"status":202,"kind":"status","pos":"main.go:30"}]}
+{"module":"demo","method":"PUT","path":"/api/things/:id","pos":"main.go:28","router_id":1,"stack":["main.go:14 main()"],"handler":"h.UpdateThing","handler_decl":"h/h.go:22","chain":[{"name":"mw.Logger()","scope":"global","pos":"main.go:16","decl":"mw/mw.go:9"},{"name":"limiter.New(limiter.Config{…})","scope":"global","pos":"main.go:18","skip_prefixes":["/health"],"skip_paths":["/ping"]},{"name":"func literal","scope":"global","pos":"main.go:21","decl":"main.go:21"},{"name":"mw.JWTProtected()","scope":"group","scope_path":"/api","pos":"main.go:25","decl":"mw/mw.go:13","auth":true,"skip_prefixes":["/api/open"],"skip_paths":["/api/things/skip"]}],"inactive":[{"name":"mw.Late()","scope":"global","pos":"main.go:41","decl":"mw/mw.go:11","reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":true,"responses":[{"status":303,"kind":"redirect","pos":"h/h.go:26"},{"status":400,"kind":"error","body":"\"id\"","pos":"h/h.go:24"}]}
+{"module":"demo","method":"TRACE","path":"/api/trace","pos":"main.go:31","router_id":1,"stack":["main.go:14 main()"],"handler":"h.Ping","handler_decl":"h/h.go:12","chain":[{"name":"mw.Logger()","scope":"global","pos":"main.go:16","decl":"mw/mw.go:9"},{"name":"limiter.New(limiter.Config{…})","scope":"global","pos":"main.go:18","skip_prefixes":["/health"],"skip_paths":["/ping"]},{"name":"func literal","scope":"global","pos":"main.go:21","decl":"main.go:21"},{"name":"mw.JWTProtected()","scope":"group","scope_path":"/api","pos":"main.go:25","decl":"mw/mw.go:13","auth":true,"skip_prefixes":["/api/open"],"skip_paths":["/api/things/skip"]}],"inactive":[{"name":"mw.Late()","scope":"global","pos":"main.go:41","decl":"mw/mw.go:11","reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":true,"responses":[{"status":200,"kind":"string","body":"\"pong\"","pos":"h/h.go:12"}]}
+{"module":"demo","method":"GET","path":"/assets","pos":"main.go:24","router_id":0,"stack":["main.go:14 main()"],"handler":"static \"./public\"","chain":[{"name":"mw.Logger()","scope":"global","pos":"main.go:16","decl":"mw/mw.go:9"},{"name":"limiter.New(limiter.Config{…})","scope":"global","pos":"main.go:18","skip_prefixes":["/health"],"skip_paths":["/ping"]},{"name":"func literal","scope":"global","pos":"main.go:21","decl":"main.go:21"}],"inactive":[{"name":"mw.Late()","scope":"global","pos":"main.go:41","decl":"mw/mw.go:11","reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":false}
+{"module":"demo","method":"GET","path":"/health/live","pos":"main.go:23","router_id":0,"stack":["main.go:14 main()"],"handler":"h.Ping","handler_decl":"h/h.go:12","chain":[{"name":"mw.Logger()","scope":"global","pos":"main.go:16","decl":"mw/mw.go:9"},{"name":"func literal","scope":"global","pos":"main.go:21","decl":"main.go:21"}],"inactive":[{"name":"limiter.New(limiter.Config{…})","scope":"global","pos":"main.go:18","skip_prefixes":["/health"],"skip_paths":["/ping"],"reason":"dilewati untuk path ini (kondisi Next/skip di middleware)"},{"name":"mw.Late()","scope":"global","pos":"main.go:41","decl":"mw/mw.go:11","reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":false,"responses":[{"status":200,"kind":"string","body":"\"pong\"","pos":"h/h.go:12"}]}
+{"module":"demo","method":"GET","path":"/ping","pos":"main.go:22","router_id":0,"stack":["main.go:14 main()"],"handler":"h.Ping","handler_decl":"h/h.go:12","chain":[{"name":"mw.Logger()","scope":"global","pos":"main.go:16","decl":"mw/mw.go:9"},{"name":"func literal","scope":"global","pos":"main.go:21","decl":"main.go:21"}],"inactive":[{"name":"limiter.New(limiter.Config{…})","scope":"global","pos":"main.go:18","skip_prefixes":["/health"],"skip_paths":["/ping"],"reason":"dilewati untuk path ini (kondisi Next/skip di middleware)"},{"name":"mw.Late()","scope":"global","pos":"main.go:41","decl":"mw/mw.go:11","reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":false,"responses":[{"status":200,"kind":"string","body":"\"pong\"","pos":"h/h.go:12"}]}
+{"module":"demo","method":"GET","path":"/r/a","pos":"main.go:38","router_id":3,"stack":["main.go:14 main()"],"handler":"h.Ping","handler_decl":"h/h.go:12","chain":[{"name":"mw.Logger()","scope":"global","pos":"main.go:16","decl":"mw/mw.go:9"},{"name":"limiter.New(limiter.Config{…})","scope":"global","pos":"main.go:18","skip_prefixes":["/health"],"skip_paths":["/ping"]},{"name":"func literal","scope":"global","pos":"main.go:21","decl":"main.go:21"}],"inactive":[{"name":"mw.Late()","scope":"global","pos":"main.go:41","decl":"mw/mw.go:11","reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":false,"responses":[{"status":200,"kind":"string","body":"\"pong\"","pos":"h/h.go:12"}]}
+{"module":"demo","method":"POST","path":"/r/b","pos":"main.go:39","router_id":3,"stack":["main.go:14 main()"],"handler":"h.Ping","handler_decl":"h/h.go:12","chain":[{"name":"mw.Logger()","scope":"global","pos":"main.go:16","decl":"mw/mw.go:9"},{"name":"limiter.New(limiter.Config{…})","scope":"global","pos":"main.go:18","skip_prefixes":["/health"],"skip_paths":["/ping"]},{"name":"func literal","scope":"global","pos":"main.go:21","decl":"main.go:21"},{"name":"mw.JWTProtected()","scope":"route","pos":"main.go:39","decl":"mw/mw.go:13","auth":true,"skip_prefixes":["/api/open"],"skip_paths":["/api/things/skip"]}],"inactive":[{"name":"mw.Late()","scope":"global","pos":"main.go:41","decl":"mw/mw.go:11","reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":true,"responses":[{"status":200,"kind":"string","body":"\"pong\"","pos":"h/h.go:12"}]}
+{"module":"demo","method":"GET","path":"/sub/x","pos":"main.go:34","router_id":2,"stack":["main.go:14 main()"],"handler":"h.Ping","handler_decl":"h/h.go:12","chain":[{"name":"mw.Logger()","scope":"global","pos":"main.go:16","decl":"mw/mw.go:9"},{"name":"limiter.New(limiter.Config{…})","scope":"global","pos":"main.go:18","skip_prefixes":["/health"],"skip_paths":["/ping"]},{"name":"func literal","scope":"global","pos":"main.go:21","decl":"main.go:21"}],"inactive":[{"name":"mw.Late()","scope":"global","pos":"main.go:41","decl":"mw/mw.go:11","reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":false,"responses":[{"status":200,"kind":"string","body":"\"pong\"","pos":"h/h.go:12"}]}
+{"module":"demo","method":"POST","path":"/sub/y","pos":"main.go:35","router_id":2,"stack":["main.go:14 main()"],"handler":"h.Ping","handler_decl":"h/h.go:12","chain":[{"name":"mw.Logger()","scope":"global","pos":"main.go:16","decl":"mw/mw.go:9"},{"name":"limiter.New(limiter.Config{…})","scope":"global","pos":"main.go:18","skip_prefixes":["/health"],"skip_paths":["/ping"]},{"name":"func literal","scope":"global","pos":"main.go:21","decl":"main.go:21"}],"inactive":[{"name":"mw.Late()","scope":"global","pos":"main.go:41","decl":"mw/mw.go:11","reason":"didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next)"}],"auth":false,"responses":[{"status":200,"kind":"string","body":"\"pong\"","pos":"h/h.go:12"}]}
+
+=== TRACE
+POST /after  (didaftarkan main.go:42)
+Jalur setup: main.go:14 main() → main.go:42
+Rantai middleware (urut eksekusi):
+  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16
+  2. limiter.New(limiter.Config{…}) {global} — main.go:18
+  3. func literal [main.go:21] {global} — main.go:21
+  4. mw.Late() [mw/mw.go:11] {global} — main.go:41
+Auth wajib: false
+Handler: h.Ping (h/h.go:12)
+  → 200 string "pong" (h/h.go:12)
+
+ANY /api/any  (didaftarkan main.go:32)
+Jalur setup: main.go:14 main() → main.go:32
+Rantai middleware (urut eksekusi):
+  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16
+  2. limiter.New(limiter.Config{…}) {global} — main.go:18
+  3. func literal [main.go:21] {global} — main.go:21
+  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25
+  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)
+Auth wajib: true
+Handler: h.Ping (h/h.go:12)
+  → 200 string "pong" (h/h.go:12)
+
+GET /api/me  (didaftarkan main.go:26)
+Jalur setup: main.go:14 main() → main.go:26
+Rantai middleware (urut eksekusi):
+  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16
+  2. limiter.New(limiter.Config{…}) {global} — main.go:18
+  3. func literal [main.go:21] {global} — main.go:21
+  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25
+  5. optionalAuth (auth opsional) {route} — main.go:26
+  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)
+Auth wajib: true
+Handler: h.Me (h/h.go:13)
+  → 200 json fiber.Map{id, name} (h/h.go:17)
+  → 401 json via fail→respond body (h/h.go:9)
+Memanggil: h.fail (h/h.go:10), h.respond (h/h.go:9)
+
+POST /api/things  (didaftarkan main.go:27)
+Jalur setup: main.go:14 main() → main.go:27
+Rantai middleware (urut eksekusi):
+  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16
+  2. limiter.New(limiter.Config{…}) {global} — main.go:18
+  3. func literal [main.go:21] {global} — main.go:21
+  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25
+  5. mw.JWTProtected() [mw/mw.go:13] (auth) {route} — main.go:27
+  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)
+Auth wajib: true
+Handler: h.CreateThing (h/h.go:19)
+  → 201 json Thing{ID} (h/h.go:20)
+
+DELETE /api/things/:id  (didaftarkan main.go:29)
+Jalur setup: main.go:14 main() → main.go:29
+Rantai middleware (urut eksekusi):
+  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16
+  2. limiter.New(limiter.Config{…}) {global} — main.go:18
+  3. func literal [main.go:21] {global} — main.go:21
+  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25
+  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)
+Auth wajib: true
+Handler: h.DeleteThing (h/h.go:28)
+  → 204 status (h/h.go:28)
+
+PATCH /api/things/:id  (didaftarkan main.go:30)
+Jalur setup: main.go:14 main() → main.go:30
+Rantai middleware (urut eksekusi):
+  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16
+  2. limiter.New(limiter.Config{…}) {global} — main.go:18
+  3. func literal [main.go:21] {global} — main.go:21
+  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25
+  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)
+Auth wajib: true
+Handler: func literal (main.go:30)
+  → 202 status (main.go:30)
+
+PUT /api/things/:id  (didaftarkan main.go:28)
+Jalur setup: main.go:14 main() → main.go:28
+Rantai middleware (urut eksekusi):
+  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16
+  2. limiter.New(limiter.Config{…}) {global} — main.go:18
+  3. func literal [main.go:21] {global} — main.go:21
+  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25
+  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)
+Auth wajib: true
+Handler: h.UpdateThing (h/h.go:22)
+  → 303 redirect (h/h.go:26)
+  → 400 error "id" (h/h.go:24)
+
+TRACE /api/trace  (didaftarkan main.go:31)
+Jalur setup: main.go:14 main() → main.go:31
+Rantai middleware (urut eksekusi):
+  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16
+  2. limiter.New(limiter.Config{…}) {global} — main.go:18
+  3. func literal [main.go:21] {global} — main.go:21
+  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25
+  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)
+Auth wajib: true
+Handler: h.Ping (h/h.go:12)
+  → 200 string "pong" (h/h.go:12)
+
+GET /assets  (didaftarkan main.go:24)
+Jalur setup: main.go:14 main() → main.go:24
+Rantai middleware (urut eksekusi):
+  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16
+  2. limiter.New(limiter.Config{…}) {global} — main.go:18
+  3. func literal [main.go:21] {global} — main.go:21
+  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)
+Auth wajib: false
+Handler: static "./public"
+
+GET /health/live  (didaftarkan main.go:23)
+Jalur setup: main.go:14 main() → main.go:23
+Rantai middleware (urut eksekusi):
+  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16
+  2. func literal [main.go:21] {global} — main.go:21
+  ✗ limiter.New(limiter.Config{…}) — dilewati untuk path ini (kondisi Next/skip di middleware) (main.go:18)
+  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)
+Auth wajib: false
+Handler: h.Ping (h/h.go:12)
+  → 200 string "pong" (h/h.go:12)
+
+GET /ping  (didaftarkan main.go:22)
+Jalur setup: main.go:14 main() → main.go:22
+Rantai middleware (urut eksekusi):
+  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16
+  2. func literal [main.go:21] {global} — main.go:21
+  ✗ limiter.New(limiter.Config{…}) — dilewati untuk path ini (kondisi Next/skip di middleware) (main.go:18)
+  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)
+Auth wajib: false
+Handler: h.Ping (h/h.go:12)
+  → 200 string "pong" (h/h.go:12)
+
+GET /r/a  (didaftarkan main.go:38)
+Jalur setup: main.go:14 main() → main.go:38
+Rantai middleware (urut eksekusi):
+  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16
+  2. limiter.New(limiter.Config{…}) {global} — main.go:18
+  3. func literal [main.go:21] {global} — main.go:21
+  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)
+Auth wajib: false
+Handler: h.Ping (h/h.go:12)
+  → 200 string "pong" (h/h.go:12)
+
+POST /r/b  (didaftarkan main.go:39)
+Jalur setup: main.go:14 main() → main.go:39
+Rantai middleware (urut eksekusi):
+  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16
+  2. limiter.New(limiter.Config{…}) {global} — main.go:18
+  3. func literal [main.go:21] {global} — main.go:21
+  4. mw.JWTProtected() [mw/mw.go:13] (auth) {route} — main.go:39
+  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)
+Auth wajib: true
+Handler: h.Ping (h/h.go:12)
+  → 200 string "pong" (h/h.go:12)
+
+GET /sub/x  (didaftarkan main.go:34)
+Jalur setup: main.go:14 main() → main.go:34
+Rantai middleware (urut eksekusi):
+  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16
+  2. limiter.New(limiter.Config{…}) {global} — main.go:18
+  3. func literal [main.go:21] {global} — main.go:21
+  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)
+Auth wajib: false
+Handler: h.Ping (h/h.go:12)
+  → 200 string "pong" (h/h.go:12)
+
+POST /sub/y  (didaftarkan main.go:35)
+Jalur setup: main.go:14 main() → main.go:35
+Rantai middleware (urut eksekusi):
+  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16
+  2. limiter.New(limiter.Config{…}) {global} — main.go:18
+  3. func literal [main.go:21] {global} — main.go:21
+  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)
+Auth wajib: false
+Handler: h.Ping (h/h.go:12)
+  → 200 string "pong" (h/h.go:12)
+
+=== FILEROUTES
+h/h.go: ANY /api/any; DELETE /api/things/:id; GET /api/me; GET /health/live; GET /ping; GET /r/a; GET /sub/x; POST /after; POST /api/things; POST /r/b; POST /sub/y; PUT /api/things/:id; TRACE /api/trace
+main.go: PATCH /api/things/:id
+=== QUERIES
+[  ] => POST /after, ANY /api/any, GET /api/me, POST /api/things, DELETE /api/things/:id, PATCH /api/things/:id, PUT /api/things/:id, TRACE /api/trace, GET /assets, GET /health/live, GET /ping, GET /r/a, POST /r/b, GET /sub/x, POST /sub/y
+[get  ] => ANY /api/any, GET /api/me, GET /assets, GET /health/live, GET /ping, GET /r/a, GET /sub/x
+[ /a ] => POST /after, ANY /api/any, GET /api/me, POST /api/things, DELETE /api/things/:id, PATCH /api/things/:id, PUT /api/things/:id, TRACE /api/trace, GET /assets, GET /r/a
+[POST  list] => 
+[  handlers.CreateUser] => 
+[  save] => 
+[  home] => 
+[  h/h.go] => POST /after, ANY /api/any, GET /api/me, POST /api/things, DELETE /api/things/:id, PUT /api/things/:id, TRACE /api/trace, GET /health/live, GET /ping, GET /r/a, POST /r/b, GET /sub/x, POST /sub/y
+[  create] => 
+RouteAt(main.go:42) => POST /after
+ContextFor(h/h.go:12) => "POST /after  (didaftarkan main.go:42)\nJalur setup: main.go:14 main() → main.go:42\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.Late() [mw/mw.go:11] {global} — main.go:41\nAuth wajib: false\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nANY /api/any  (didaftarkan main.go:32)\nJalur setup: main.go:14 main() → main.go:32\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nTRACE /api/trace  (didaftarkan main.go:31)\nJalur setup: main.go:14 main() → main.go:31\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\n(+6 rute lain menjangkau target ini)\n"
+ContextFor(h/h.go,0) => "POST /after  (didaftarkan main.go:42)\nJalur setup: main.go:14 main() → main.go:42\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.Late() [mw/mw.go:11] {global} — main.go:41\nAuth wajib: false\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nANY /api/any  (didaftarkan main.go:32)\nJalur setup: main.go:14 main() → main.go:32\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nGET /api/me  (didaftarkan main.go:26)\nJalur setup: main.go:14 main() → main.go:26\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  5. optionalAuth (auth opsional) {route} — main.go:26\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Me (h/h.go:13)\n  → 200 json fiber.Map{id, name} (h/h.go:17)\n  → 401 json via fail→respond body (h/h.go:9)\nMemanggil: h.fail (h/h.go:10), h.respond (h/h.go:9)\n\n(+10 rute lain menjangkau target ini)\n"
+RouteAt(main.go:32) => ANY /api/any
+ContextFor(h/h.go:12) => "POST /after  (didaftarkan main.go:42)\nJalur setup: main.go:14 main() → main.go:42\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.Late() [mw/mw.go:11] {global} — main.go:41\nAuth wajib: false\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nANY /api/any  (didaftarkan main.go:32)\nJalur setup: main.go:14 main() → main.go:32\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nTRACE /api/trace  (didaftarkan main.go:31)\nJalur setup: main.go:14 main() → main.go:31\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\n(+6 rute lain menjangkau target ini)\n"
+ContextFor(h/h.go,0) => "POST /after  (didaftarkan main.go:42)\nJalur setup: main.go:14 main() → main.go:42\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.Late() [mw/mw.go:11] {global} — main.go:41\nAuth wajib: false\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nANY /api/any  (didaftarkan main.go:32)\nJalur setup: main.go:14 main() → main.go:32\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nGET /api/me  (didaftarkan main.go:26)\nJalur setup: main.go:14 main() → main.go:26\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  5. optionalAuth (auth opsional) {route} — main.go:26\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Me (h/h.go:13)\n  → 200 json fiber.Map{id, name} (h/h.go:17)\n  → 401 json via fail→respond body (h/h.go:9)\nMemanggil: h.fail (h/h.go:10), h.respond (h/h.go:9)\n\n(+10 rute lain menjangkau target ini)\n"
+RouteAt(main.go:26) => GET /api/me
+ContextFor(h/h.go:13) => "GET /api/me  (didaftarkan main.go:26)\nJalur setup: main.go:14 main() → main.go:26\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  5. optionalAuth (auth opsional) {route} — main.go:26\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Me (h/h.go:13)\n  → 200 json fiber.Map{id, name} (h/h.go:17)\n  → 401 json via fail→respond body (h/h.go:9)\nMemanggil: h.fail (h/h.go:10), h.respond (h/h.go:9)\n\n"
+ContextFor(h/h.go,0) => "POST /after  (didaftarkan main.go:42)\nJalur setup: main.go:14 main() → main.go:42\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.Late() [mw/mw.go:11] {global} — main.go:41\nAuth wajib: false\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nANY /api/any  (didaftarkan main.go:32)\nJalur setup: main.go:14 main() → main.go:32\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nGET /api/me  (didaftarkan main.go:26)\nJalur setup: main.go:14 main() → main.go:26\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  5. optionalAuth (auth opsional) {route} — main.go:26\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Me (h/h.go:13)\n  → 200 json fiber.Map{id, name} (h/h.go:17)\n  → 401 json via fail→respond body (h/h.go:9)\nMemanggil: h.fail (h/h.go:10), h.respond (h/h.go:9)\n\n(+10 rute lain menjangkau target ini)\n"
+RouteAt(main.go:27) => POST /api/things
+ContextFor(h/h.go:19) => "POST /api/things  (didaftarkan main.go:27)\nJalur setup: main.go:14 main() → main.go:27\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  5. mw.JWTProtected() [mw/mw.go:13] (auth) {route} — main.go:27\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.CreateThing (h/h.go:19)\n  → 201 json Thing{ID} (h/h.go:20)\n\n"
+ContextFor(h/h.go,0) => "POST /after  (didaftarkan main.go:42)\nJalur setup: main.go:14 main() → main.go:42\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.Late() [mw/mw.go:11] {global} — main.go:41\nAuth wajib: false\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nANY /api/any  (didaftarkan main.go:32)\nJalur setup: main.go:14 main() → main.go:32\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nGET /api/me  (didaftarkan main.go:26)\nJalur setup: main.go:14 main() → main.go:26\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  5. optionalAuth (auth opsional) {route} — main.go:26\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Me (h/h.go:13)\n  → 200 json fiber.Map{id, name} (h/h.go:17)\n  → 401 json via fail→respond body (h/h.go:9)\nMemanggil: h.fail (h/h.go:10), h.respond (h/h.go:9)\n\n(+10 rute lain menjangkau target ini)\n"
+RouteAt(main.go:29) => DELETE /api/things/:id
+ContextFor(h/h.go:28) => "DELETE /api/things/:id  (didaftarkan main.go:29)\nJalur setup: main.go:14 main() → main.go:29\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.DeleteThing (h/h.go:28)\n  → 204 status (h/h.go:28)\n\n"
+ContextFor(h/h.go,0) => "POST /after  (didaftarkan main.go:42)\nJalur setup: main.go:14 main() → main.go:42\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.Late() [mw/mw.go:11] {global} — main.go:41\nAuth wajib: false\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nANY /api/any  (didaftarkan main.go:32)\nJalur setup: main.go:14 main() → main.go:32\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nGET /api/me  (didaftarkan main.go:26)\nJalur setup: main.go:14 main() → main.go:26\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  5. optionalAuth (auth opsional) {route} — main.go:26\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Me (h/h.go:13)\n  → 200 json fiber.Map{id, name} (h/h.go:17)\n  → 401 json via fail→respond body (h/h.go:9)\nMemanggil: h.fail (h/h.go:10), h.respond (h/h.go:9)\n\n(+10 rute lain menjangkau target ini)\n"
+RouteAt(main.go:30) => PATCH /api/things/:id
+ContextFor(main.go:30) => "PATCH /api/things/:id  (didaftarkan main.go:30)\nJalur setup: main.go:14 main() → main.go:30\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: func literal (main.go:30)\n  → 202 status (main.go:30)\n\n"
+ContextFor(main.go,0) => "PATCH /api/things/:id  (didaftarkan main.go:30)\nJalur setup: main.go:14 main() → main.go:30\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: func literal (main.go:30)\n  → 202 status (main.go:30)\n\n"
+RouteAt(main.go:28) => PUT /api/things/:id
+ContextFor(h/h.go:22) => "PUT /api/things/:id  (didaftarkan main.go:28)\nJalur setup: main.go:14 main() → main.go:28\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.UpdateThing (h/h.go:22)\n  → 303 redirect (h/h.go:26)\n  → 400 error \"id\" (h/h.go:24)\n\n"
+ContextFor(h/h.go,0) => "POST /after  (didaftarkan main.go:42)\nJalur setup: main.go:14 main() → main.go:42\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.Late() [mw/mw.go:11] {global} — main.go:41\nAuth wajib: false\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nANY /api/any  (didaftarkan main.go:32)\nJalur setup: main.go:14 main() → main.go:32\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nGET /api/me  (didaftarkan main.go:26)\nJalur setup: main.go:14 main() → main.go:26\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  5. optionalAuth (auth opsional) {route} — main.go:26\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Me (h/h.go:13)\n  → 200 json fiber.Map{id, name} (h/h.go:17)\n  → 401 json via fail→respond body (h/h.go:9)\nMemanggil: h.fail (h/h.go:10), h.respond (h/h.go:9)\n\n(+10 rute lain menjangkau target ini)\n"
+RouteAt(main.go:31) => TRACE /api/trace
+ContextFor(h/h.go:12) => "POST /after  (didaftarkan main.go:42)\nJalur setup: main.go:14 main() → main.go:42\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.Late() [mw/mw.go:11] {global} — main.go:41\nAuth wajib: false\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nANY /api/any  (didaftarkan main.go:32)\nJalur setup: main.go:14 main() → main.go:32\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nTRACE /api/trace  (didaftarkan main.go:31)\nJalur setup: main.go:14 main() → main.go:31\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\n(+6 rute lain menjangkau target ini)\n"
+ContextFor(h/h.go,0) => "POST /after  (didaftarkan main.go:42)\nJalur setup: main.go:14 main() → main.go:42\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.Late() [mw/mw.go:11] {global} — main.go:41\nAuth wajib: false\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nANY /api/any  (didaftarkan main.go:32)\nJalur setup: main.go:14 main() → main.go:32\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nGET /api/me  (didaftarkan main.go:26)\nJalur setup: main.go:14 main() → main.go:26\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  5. optionalAuth (auth opsional) {route} — main.go:26\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Me (h/h.go:13)\n  → 200 json fiber.Map{id, name} (h/h.go:17)\n  → 401 json via fail→respond body (h/h.go:9)\nMemanggil: h.fail (h/h.go:10), h.respond (h/h.go:9)\n\n(+10 rute lain menjangkau target ini)\n"
+RouteAt(main.go:24) => GET /assets
+RouteAt(main.go:23) => GET /health/live
+ContextFor(h/h.go:12) => "POST /after  (didaftarkan main.go:42)\nJalur setup: main.go:14 main() → main.go:42\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.Late() [mw/mw.go:11] {global} — main.go:41\nAuth wajib: false\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nANY /api/any  (didaftarkan main.go:32)\nJalur setup: main.go:14 main() → main.go:32\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nTRACE /api/trace  (didaftarkan main.go:31)\nJalur setup: main.go:14 main() → main.go:31\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\n(+6 rute lain menjangkau target ini)\n"
+ContextFor(h/h.go,0) => "POST /after  (didaftarkan main.go:42)\nJalur setup: main.go:14 main() → main.go:42\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.Late() [mw/mw.go:11] {global} — main.go:41\nAuth wajib: false\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nANY /api/any  (didaftarkan main.go:32)\nJalur setup: main.go:14 main() → main.go:32\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nGET /api/me  (didaftarkan main.go:26)\nJalur setup: main.go:14 main() → main.go:26\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  5. optionalAuth (auth opsional) {route} — main.go:26\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Me (h/h.go:13)\n  → 200 json fiber.Map{id, name} (h/h.go:17)\n  → 401 json via fail→respond body (h/h.go:9)\nMemanggil: h.fail (h/h.go:10), h.respond (h/h.go:9)\n\n(+10 rute lain menjangkau target ini)\n"
+RouteAt(main.go:22) => GET /ping
+ContextFor(h/h.go:12) => "POST /after  (didaftarkan main.go:42)\nJalur setup: main.go:14 main() → main.go:42\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.Late() [mw/mw.go:11] {global} — main.go:41\nAuth wajib: false\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nANY /api/any  (didaftarkan main.go:32)\nJalur setup: main.go:14 main() → main.go:32\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nTRACE /api/trace  (didaftarkan main.go:31)\nJalur setup: main.go:14 main() → main.go:31\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\n(+6 rute lain menjangkau target ini)\n"
+ContextFor(h/h.go,0) => "POST /after  (didaftarkan main.go:42)\nJalur setup: main.go:14 main() → main.go:42\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.Late() [mw/mw.go:11] {global} — main.go:41\nAuth wajib: false\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nANY /api/any  (didaftarkan main.go:32)\nJalur setup: main.go:14 main() → main.go:32\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nGET /api/me  (didaftarkan main.go:26)\nJalur setup: main.go:14 main() → main.go:26\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  5. optionalAuth (auth opsional) {route} — main.go:26\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Me (h/h.go:13)\n  → 200 json fiber.Map{id, name} (h/h.go:17)\n  → 401 json via fail→respond body (h/h.go:9)\nMemanggil: h.fail (h/h.go:10), h.respond (h/h.go:9)\n\n(+10 rute lain menjangkau target ini)\n"
+RouteAt(main.go:38) => GET /r/a
+ContextFor(h/h.go:12) => "POST /after  (didaftarkan main.go:42)\nJalur setup: main.go:14 main() → main.go:42\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.Late() [mw/mw.go:11] {global} — main.go:41\nAuth wajib: false\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nANY /api/any  (didaftarkan main.go:32)\nJalur setup: main.go:14 main() → main.go:32\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nTRACE /api/trace  (didaftarkan main.go:31)\nJalur setup: main.go:14 main() → main.go:31\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\n(+6 rute lain menjangkau target ini)\n"
+ContextFor(h/h.go,0) => "POST /after  (didaftarkan main.go:42)\nJalur setup: main.go:14 main() → main.go:42\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.Late() [mw/mw.go:11] {global} — main.go:41\nAuth wajib: false\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nANY /api/any  (didaftarkan main.go:32)\nJalur setup: main.go:14 main() → main.go:32\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nGET /api/me  (didaftarkan main.go:26)\nJalur setup: main.go:14 main() → main.go:26\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  5. optionalAuth (auth opsional) {route} — main.go:26\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Me (h/h.go:13)\n  → 200 json fiber.Map{id, name} (h/h.go:17)\n  → 401 json via fail→respond body (h/h.go:9)\nMemanggil: h.fail (h/h.go:10), h.respond (h/h.go:9)\n\n(+10 rute lain menjangkau target ini)\n"
+RouteAt(main.go:39) => POST /r/b
+ContextFor(h/h.go:12) => "POST /after  (didaftarkan main.go:42)\nJalur setup: main.go:14 main() → main.go:42\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.Late() [mw/mw.go:11] {global} — main.go:41\nAuth wajib: false\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nANY /api/any  (didaftarkan main.go:32)\nJalur setup: main.go:14 main() → main.go:32\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nTRACE /api/trace  (didaftarkan main.go:31)\nJalur setup: main.go:14 main() → main.go:31\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\n(+6 rute lain menjangkau target ini)\n"
+ContextFor(h/h.go,0) => "POST /after  (didaftarkan main.go:42)\nJalur setup: main.go:14 main() → main.go:42\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.Late() [mw/mw.go:11] {global} — main.go:41\nAuth wajib: false\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nANY /api/any  (didaftarkan main.go:32)\nJalur setup: main.go:14 main() → main.go:32\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nGET /api/me  (didaftarkan main.go:26)\nJalur setup: main.go:14 main() → main.go:26\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  5. optionalAuth (auth opsional) {route} — main.go:26\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Me (h/h.go:13)\n  → 200 json fiber.Map{id, name} (h/h.go:17)\n  → 401 json via fail→respond body (h/h.go:9)\nMemanggil: h.fail (h/h.go:10), h.respond (h/h.go:9)\n\n(+10 rute lain menjangkau target ini)\n"
+RouteAt(main.go:34) => GET /sub/x
+ContextFor(h/h.go:12) => "POST /after  (didaftarkan main.go:42)\nJalur setup: main.go:14 main() → main.go:42\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.Late() [mw/mw.go:11] {global} — main.go:41\nAuth wajib: false\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nANY /api/any  (didaftarkan main.go:32)\nJalur setup: main.go:14 main() → main.go:32\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nTRACE /api/trace  (didaftarkan main.go:31)\nJalur setup: main.go:14 main() → main.go:31\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\n(+6 rute lain menjangkau target ini)\n"
+ContextFor(h/h.go,0) => "POST /after  (didaftarkan main.go:42)\nJalur setup: main.go:14 main() → main.go:42\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.Late() [mw/mw.go:11] {global} — main.go:41\nAuth wajib: false\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nANY /api/any  (didaftarkan main.go:32)\nJalur setup: main.go:14 main() → main.go:32\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nGET /api/me  (didaftarkan main.go:26)\nJalur setup: main.go:14 main() → main.go:26\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  5. optionalAuth (auth opsional) {route} — main.go:26\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Me (h/h.go:13)\n  → 200 json fiber.Map{id, name} (h/h.go:17)\n  → 401 json via fail→respond body (h/h.go:9)\nMemanggil: h.fail (h/h.go:10), h.respond (h/h.go:9)\n\n(+10 rute lain menjangkau target ini)\n"
+RouteAt(main.go:35) => POST /sub/y
+ContextFor(h/h.go:12) => "POST /after  (didaftarkan main.go:42)\nJalur setup: main.go:14 main() → main.go:42\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.Late() [mw/mw.go:11] {global} — main.go:41\nAuth wajib: false\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nANY /api/any  (didaftarkan main.go:32)\nJalur setup: main.go:14 main() → main.go:32\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nTRACE /api/trace  (didaftarkan main.go:31)\nJalur setup: main.go:14 main() → main.go:31\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\n(+6 rute lain menjangkau target ini)\n"
+ContextFor(h/h.go,0) => "POST /after  (didaftarkan main.go:42)\nJalur setup: main.go:14 main() → main.go:42\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.Late() [mw/mw.go:11] {global} — main.go:41\nAuth wajib: false\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nANY /api/any  (didaftarkan main.go:32)\nJalur setup: main.go:14 main() → main.go:32\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Ping (h/h.go:12)\n  → 200 string \"pong\" (h/h.go:12)\n\nGET /api/me  (didaftarkan main.go:26)\nJalur setup: main.go:14 main() → main.go:26\nRantai middleware (urut eksekusi):\n  1. mw.Logger() [mw/mw.go:9] {global} — main.go:16\n  2. limiter.New(limiter.Config{…}) {global} — main.go:18\n  3. func literal [main.go:21] {global} — main.go:21\n  4. mw.JWTProtected() [mw/mw.go:13] (auth) {group /api} — main.go:25\n  5. optionalAuth (auth opsional) {route} — main.go:26\n  ✗ mw.Late() [mw/mw.go:11] — didaftarkan setelah rute ini (hanya berjalan bila handler memanggil Next) (main.go:41)\nAuth wajib: true\nHandler: h.Me (h/h.go:13)\n  → 200 json fiber.Map{id, name} (h/h.go:17)\n  → 401 json via fail→respond body (h/h.go:9)\nMemanggil: h.fail (h/h.go:10), h.respond (h/h.go:9)\n\n(+10 rute lain menjangkau target ini)\n"
+ContextFor(handlers.CreateUser) => ""
+ContextFor(empty) => ""
