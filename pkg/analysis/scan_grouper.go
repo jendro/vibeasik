@@ -11,52 +11,8 @@ import (
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
-// GroupScanComponents analyzes scanned components using active LLM (with heuristic fallback)
-// to identify logical project boundaries and match against existing projects in the system.
-func GroupScanComponents(db *gorm.DB, rootPath string, components []models.ComponentProposal, existingProjects []models.Project) (*models.ScanGroupingResult, error) {
-	if len(components) == 0 {
-		return &models.ScanGroupingResult{
-			Groups:  []models.ScanGroupProposal{},
-			LlmUsed: false,
-			Summary: "Tidak ada komponen untuk dikelompokkan.",
-		}, nil
-	}
-
-	// 1. If only 1 component, do quick single mapping
-	if len(components) == 1 {
-		res := heuristicGroupScanComponents(rootPath, components, existingProjects)
-		res.Summary = "Ditemukan 1 komponen tunggal."
-		return res, nil
-	}
-
-	// 2. Prepare concise brief of components for LLM
-	var compDescriptions []string
-	for i, c := range components {
-		desc := fmt.Sprintf("[%d] Nama: \"%s\" | Path: \"%s\" (Abs: \"%s\") | Role: %s | Stack: %s/%s",
-			i, c.Name, c.RelativePath, c.AbsolutePath, c.Role, c.Language, c.Framework)
-		if c.Port > 0 {
-			desc += fmt.Sprintf(" | Port: :%d", c.Port)
-		}
-		compDescriptions = append(compDescriptions, desc)
-	}
-
-	// 3. Prepare concise brief of existing projects
-	var existingProjDescriptions []string
-	for _, p := range existingProjects {
-		var compNames []string
-		for _, c := range p.Components {
-			compNames = append(compNames, c.Name)
-		}
-		desc := fmt.Sprintf("- ID %d: \"%s\" (Tipe: %s, Root: \"%s\", Komponen: [%s])",
-			p.ID, p.Name, p.ProjectType, p.RootPath, strings.Join(compNames, ", "))
-		existingProjDescriptions = append(existingProjDescriptions, desc)
-	}
-	existingProjText := "Belum ada project yang terdaftar di database."
-	if len(existingProjDescriptions) > 0 {
-		existingProjText = strings.Join(existingProjDescriptions, "\n")
-	}
-
-	systemPrompt := `Anda adalah Principal Software Architect yang ahli dalam struktur repositori modern (Monorepo, Polyrepo, Microservices, Web + Mobile bundles).
+// scanGroupSystemPrompt: prompt sistem pengelompokan komponen hasil scan menjadi project.
+const scanGroupSystemPrompt = `Anda adalah Principal Software Architect yang ahli dalam struktur repositori modern (Monorepo, Polyrepo, Microservices, Web + Mobile bundles).
 Tugas Anda adalah mengenali dan mengelompokkan komponen-komponen software hasil scan filesystem lokal laptop ke dalam satu atau beberapa Project yang logis.
 
 Kaidah Penting:
@@ -82,6 +38,160 @@ Keluarkan respon HANYA dalam format JSON valid berikut (tanpa blok kode pembungk
   ]
 }`
 
+// describeScanComponents menyusun ringkasan satu baris per komponen untuk prompt LLM.
+func describeScanComponents(components []models.ComponentProposal) []string {
+	var out []string
+	for i, c := range components {
+		desc := fmt.Sprintf("[%d] Nama: \"%s\" | Path: \"%s\" (Abs: \"%s\") | Role: %s | Stack: %s/%s",
+			i, c.Name, c.RelativePath, c.AbsolutePath, c.Role, c.Language, c.Framework)
+		if c.Port > 0 {
+			desc += fmt.Sprintf(" | Port: :%d", c.Port)
+		}
+		out = append(out, desc)
+	}
+	return out
+}
+
+// describeExistingProjects menyusun ringkasan project eksisting untuk prompt LLM.
+func describeExistingProjects(existingProjects []models.Project) string {
+	var descs []string
+	for _, p := range existingProjects {
+		var compNames []string
+		for _, c := range p.Components {
+			compNames = append(compNames, c.Name)
+		}
+		descs = append(descs, fmt.Sprintf("- ID %d: \"%s\" (Tipe: %s, Root: \"%s\", Komponen: [%s])",
+			p.ID, p.Name, p.ProjectType, p.RootPath, strings.Join(compNames, ", ")))
+	}
+	if len(descs) == 0 {
+		return "Belum ada project yang terdaftar di database."
+	}
+	return strings.Join(descs, "\n")
+}
+
+// stripCodeFence membuang pagar kode ``` di awal/akhir respons LLM.
+func stripCodeFence(raw string) string {
+	if !strings.HasPrefix(raw, "```") {
+		return raw
+	}
+	lines := strings.Split(raw, "\n")
+	if len(lines) < 2 {
+		return raw
+	}
+	if strings.HasPrefix(lines[0], "```") {
+		lines = lines[1:]
+	}
+	if len(lines) > 0 && strings.HasPrefix(lines[len(lines)-1], "```") {
+		lines = lines[:len(lines)-1]
+	}
+	return strings.Join(lines, "\n")
+}
+
+// normalizeLLMGroup melengkapi bidang kosong grup hasil LLM dan mencocokkan project eksisting.
+func normalizeLLMGroup(g models.ScanGroupProposal, i int, existingProjects []models.Project) models.ScanGroupProposal {
+	if g.ID == "" {
+		g.ID = fmt.Sprintf("group-%d", i+1)
+	}
+	if g.Slug == "" && g.Name != "" {
+		g.Slug = slugify(g.Name)
+	}
+	if g.ProjectType == "" {
+		g.ProjectType = models.TypeBundle
+	}
+	if g.MatchedExistingProjectID > 0 {
+		for _, ep := range existingProjects {
+			if ep.ID == g.MatchedExistingProjectID {
+				g.MatchedExistingProjectName = ep.Name
+				break
+			}
+		}
+	}
+	return g
+}
+
+// parseLLMGrouping memvalidasi respons LLM dan memastikan semua komponen terkelompok; nil bila tak dapat dipakai.
+func parseLLMGrouping(raw, rootPath string, components []models.ComponentProposal, existingProjects []models.Project) *models.ScanGroupingResult {
+	var parsed struct {
+		Summary string                     `json:"summary"`
+		Groups  []models.ScanGroupProposal `json:"groups"`
+	}
+	if err := json.Unmarshal([]byte(stripCodeFence(raw)), &parsed); err != nil || len(parsed.Groups) == 0 {
+		return nil
+	}
+
+	// Validate component indices & ensure complete coverage
+	assignedMap := make(map[int]bool)
+	validGroups := make([]models.ScanGroupProposal, 0, len(parsed.Groups))
+	for i, g := range parsed.Groups {
+		g = normalizeLLMGroup(g, i, existingProjects)
+		var validIndices []int
+		for _, idx := range g.ComponentIndices {
+			if idx >= 0 && idx < len(components) && !assignedMap[idx] {
+				assignedMap[idx] = true
+				validIndices = append(validIndices, idx)
+			}
+		}
+		g.ComponentIndices = validIndices
+		if len(g.ComponentIndices) > 0 {
+			validGroups = append(validGroups, g)
+		}
+	}
+	validGroups = attachUnassigned(validGroups, assignedMap, len(components), rootPath)
+	if len(validGroups) == 0 {
+		return nil
+	}
+
+	summary := parsed.Summary
+	if summary == "" {
+		summary = fmt.Sprintf("LLM berhasil mengenali dan mengelompokkan %d komponen ke dalam %d project.", len(components), len(validGroups))
+	}
+	return &models.ScanGroupingResult{Groups: validGroups, LlmUsed: true, Summary: summary}
+}
+
+// attachUnassigned menempelkan komponen yang belum terkelompok ke grup pertama (atau grup baru bila belum ada grup).
+func attachUnassigned(groups []models.ScanGroupProposal, assigned map[int]bool, total int, rootPath string) []models.ScanGroupProposal {
+	var unassigned []int
+	for idx := 0; idx < total; idx++ {
+		if !assigned[idx] {
+			unassigned = append(unassigned, idx)
+		}
+	}
+	if len(unassigned) == 0 {
+		return groups
+	}
+	if len(groups) > 0 {
+		groups[0].ComponentIndices = append(groups[0].ComponentIndices, unassigned...)
+		return groups
+	}
+	return append(groups, models.ScanGroupProposal{
+		ID:               "group-unassigned",
+		Name:             cleanName(filepath.Base(rootPath)),
+		Slug:             slugify(filepath.Base(rootPath)),
+		ProjectType:      models.TypeBundle,
+		Reason:           "Komponen yang belum terkelompokkan",
+		ComponentIndices: unassigned,
+	})
+}
+
+// GroupScanComponents analyzes scanned components using active LLM (with heuristic fallback)
+// to identify logical project boundaries and match against existing projects in the system.
+func GroupScanComponents(db *gorm.DB, rootPath string, components []models.ComponentProposal, existingProjects []models.Project) (*models.ScanGroupingResult, error) {
+	if len(components) == 0 {
+		return &models.ScanGroupingResult{
+			Groups:  []models.ScanGroupProposal{},
+			LlmUsed: false,
+			Summary: "Tidak ada komponen untuk dikelompokkan.",
+		}, nil
+	}
+
+	// 1. If only 1 component, do quick single mapping
+	if len(components) == 1 {
+		res := heuristicGroupScanComponents(rootPath, components, existingProjects)
+		res.Summary = "Ditemukan 1 komponen tunggal."
+		return res, nil
+	}
+
+	// 2-3. Prepare concise briefs of components and existing projects for LLM
 	userPrompt := fmt.Sprintf(`Direktori Root Scan: %s
 Jumlah Komponen Ditemukan: %d
 
@@ -92,108 +202,17 @@ Daftar Project Eksisting di Sistem:
 %s
 
 Silakan kelompokkan komponen-komponen di atas menjadi Project Groups dalam format JSON:`,
-		rootPath, len(components), strings.Join(compDescriptions, "\n"), existingProjText)
+		rootPath, len(components), strings.Join(describeScanComponents(components), "\n"), describeExistingProjects(existingProjects))
 
 	// 4. Query active LLM
 	var rawResponse string
 	if db != nil {
-		rawResponse, _ = queryActiveLLM(db, systemPrompt, userPrompt)
+		rawResponse, _ = queryActiveLLM(db, scanGroupSystemPrompt, userPrompt)
 	}
 
-	rawResponse = strings.TrimSpace(rawResponse)
-	if rawResponse != "" {
-		if strings.HasPrefix(rawResponse, "```") {
-			lines := strings.Split(rawResponse, "\n")
-			if len(lines) >= 2 {
-				if strings.HasPrefix(lines[0], "```") {
-					lines = lines[1:]
-				}
-				if len(lines) > 0 && strings.HasPrefix(lines[len(lines)-1], "```") {
-					lines = lines[:len(lines)-1]
-				}
-				rawResponse = strings.Join(lines, "\n")
-			}
-		}
-
-		var parsed struct {
-			Summary string                     `json:"summary"`
-			Groups  []models.ScanGroupProposal `json:"groups"`
-		}
-
-		if err := json.Unmarshal([]byte(rawResponse), &parsed); err == nil && len(parsed.Groups) > 0 {
-			// Validate component indices & ensure complete coverage
-			assignedMap := make(map[int]bool)
-			validGroups := make([]models.ScanGroupProposal, 0, len(parsed.Groups))
-
-			for i, g := range parsed.Groups {
-				if g.ID == "" {
-					g.ID = fmt.Sprintf("group-%d", i+1)
-				}
-				if g.Slug == "" && g.Name != "" {
-					g.Slug = slugify(g.Name)
-				}
-				if g.ProjectType == "" {
-					g.ProjectType = models.TypeBundle
-				}
-
-				// Check matched existing project name
-				if g.MatchedExistingProjectID > 0 {
-					for _, ep := range existingProjects {
-						if ep.ID == g.MatchedExistingProjectID {
-							g.MatchedExistingProjectName = ep.Name
-							break
-						}
-					}
-				}
-
-				var validIndices []int
-				for _, idx := range g.ComponentIndices {
-					if idx >= 0 && idx < len(components) && !assignedMap[idx] {
-						assignedMap[idx] = true
-						validIndices = append(validIndices, idx)
-					}
-				}
-				g.ComponentIndices = validIndices
-				if len(g.ComponentIndices) > 0 {
-					validGroups = append(validGroups, g)
-				}
-			}
-
-			// Check if any components were unassigned by LLM
-			var unassigned []int
-			for idx := 0; idx < len(components); idx++ {
-				if !assignedMap[idx] {
-					unassigned = append(unassigned, idx)
-				}
-			}
-
-			if len(unassigned) > 0 {
-				if len(validGroups) > 0 {
-					// Attach unassigned to first group
-					validGroups[0].ComponentIndices = append(validGroups[0].ComponentIndices, unassigned...)
-				} else {
-					validGroups = append(validGroups, models.ScanGroupProposal{
-						ID:               "group-unassigned",
-						Name:             cleanName(filepath.Base(rootPath)),
-						Slug:             slugify(filepath.Base(rootPath)),
-						ProjectType:      models.TypeBundle,
-						Reason:           "Komponen yang belum terkelompokkan",
-						ComponentIndices: unassigned,
-					})
-				}
-			}
-
-			if len(validGroups) > 0 {
-				summary := parsed.Summary
-				if summary == "" {
-					summary = fmt.Sprintf("LLM berhasil mengenali dan mengelompokkan %d komponen ke dalam %d project.", len(components), len(validGroups))
-				}
-				return &models.ScanGroupingResult{
-					Groups:  validGroups,
-					LlmUsed: true,
-					Summary: summary,
-				}, nil
-			}
+	if rawResponse = strings.TrimSpace(rawResponse); rawResponse != "" {
+		if res := parseLLMGrouping(rawResponse, rootPath, components, existingProjects); res != nil {
+			return res, nil
 		}
 	}
 
@@ -201,46 +220,17 @@ Silakan kelompokkan komponen-komponen di atas menjadi Project Groups dalam forma
 	return heuristicGroupScanComponents(rootPath, components, existingProjects), nil
 }
 
-// heuristicGroupScanComponents groups components based on directory hierarchy, tech stack synergy,
-// and existing project matches when LLM is unavailable.
-func heuristicGroupScanComponents(rootPath string, components []models.ComponentProposal, existingProjects []models.Project) *models.ScanGroupingResult {
-	if len(components) == 0 {
-		return &models.ScanGroupingResult{
-			Groups:  []models.ScanGroupProposal{},
-			LlmUsed: false,
-			Summary: "Tidak ada komponen ditemukan.",
-		}
-	}
-
-	assigned := make(map[int]bool)
+// matchExistingProjectGroups mengelompokkan komponen yang cocok dengan project eksisting (root path atau path komponen).
+func matchExistingProjectGroups(components []models.ComponentProposal, existingProjects []models.Project, assigned map[int]bool) []models.ScanGroupProposal {
 	var groups []models.ScanGroupProposal
-
-	// 1. Try matching components to existing projects
 	for _, ep := range existingProjects {
 		var matchedIndices []int
 		for i, c := range components {
-			if assigned[i] {
-				continue
-			}
-			// Match if component absolute path is inside project root path
-			if ep.RootPath != "" && ep.RootPath != "-" {
-				rel, err := filepath.Rel(ep.RootPath, c.AbsolutePath)
-				if err == nil && !strings.HasPrefix(rel, "..") {
-					matchedIndices = append(matchedIndices, i)
-					assigned[i] = true
-					continue
-				}
-			}
-			// Or check existing components paths
-			for _, ec := range ep.Components {
-				if ec.AbsolutePath != "" && ec.AbsolutePath == c.AbsolutePath {
-					matchedIndices = append(matchedIndices, i)
-					assigned[i] = true
-					break
-				}
+			if !assigned[i] && componentBelongsTo(ep, c) {
+				matchedIndices = append(matchedIndices, i)
+				assigned[i] = true
 			}
 		}
-
 		if len(matchedIndices) > 0 {
 			groups = append(groups, models.ScanGroupProposal{
 				ID:                         fmt.Sprintf("group-existing-%d", ep.ID),
@@ -255,6 +245,122 @@ func heuristicGroupScanComponents(rootPath string, components []models.Component
 			})
 		}
 	}
+	return groups
+}
+
+// componentBelongsTo: path absolut komponen berada di root project, atau sama dengan path komponen project.
+func componentBelongsTo(ep models.Project, c models.ComponentProposal) bool {
+	if ep.RootPath != "" && ep.RootPath != "-" {
+		rel, err := filepath.Rel(ep.RootPath, c.AbsolutePath)
+		if err == nil && !strings.HasPrefix(rel, "..") {
+			return true
+		}
+	}
+	for _, ec := range ep.Components {
+		if ec.AbsolutePath != "" && ec.AbsolutePath == c.AbsolutePath {
+			return true
+		}
+	}
+	return false
+}
+
+// folderGroupKey: folder teratas path relatif komponen ("root" bila tak ada).
+func folderGroupKey(relPath string) string {
+	parts := strings.Split(filepath.Clean(relPath), string(filepath.Separator))
+	if len(parts) > 1 && parts[0] != "." && parts[0] != "" {
+		// E.g. apps/web vs apps/api vs other-proj/service
+		return parts[0]
+	}
+	return "root"
+}
+
+// bundleProjectType menentukan tipe project untuk satu bundle komponen tersisa.
+func bundleProjectType(components []models.ComponentProposal, indices []int) string {
+	hasMobile := false
+	frontCount := 0
+	for _, idx := range indices {
+		c := components[idx]
+		if strings.Contains(c.Role, "mobile") {
+			hasMobile = true
+		}
+		if strings.Contains(c.Role, "front") {
+			frontCount++
+		}
+	}
+	if frontCount > 1 {
+		return models.TypeMultiFE
+	}
+	if !hasMobile && len(indices) == 1 {
+		return models.TypeSingleApp
+	}
+	return models.TypeBundle
+}
+
+// folderProposals membuat grup baru per folder independen.
+func folderProposals(rootPath string, folderGroups map[string][]int, startCount int) []models.ScanGroupProposal {
+	var groups []models.ScanGroupProposal
+	for folderName, indices := range folderGroups {
+		name := cleanName(folderName)
+		if folderName == "root" {
+			name = cleanName(filepath.Base(rootPath))
+		}
+		projType := models.TypeBundle
+		if len(indices) == 1 {
+			projType = models.TypeSingleApp
+		}
+		groups = append(groups, models.ScanGroupProposal{
+			ID:               fmt.Sprintf("group-new-%d", startCount+len(groups)+1),
+			Name:             name,
+			Slug:             slugify(name),
+			ProjectType:      projType,
+			Reason:           fmt.Sprintf("Dikelompokkan dalam folder independen '%s'.", folderName),
+			ComponentIndices: indices,
+		})
+	}
+	return groups
+}
+
+// groupRemaining mengelompokkan komponen yang belum cocok dengan project eksisting.
+func groupRemaining(rootPath string, components []models.ComponentProposal, remaining []int, existingCount int) []models.ScanGroupProposal {
+	// Group by immediate subdirectory or unified root
+	folderGroups := make(map[string][]int)
+	for _, idx := range remaining {
+		key := folderGroupKey(components[idx].RelativePath)
+		folderGroups[key] = append(folderGroups[key], idx)
+	}
+
+	// Multiple distinct folder groups
+	if len(folderGroups) > 1 && len(remaining) > 3 {
+		return folderProposals(rootPath, folderGroups, existingCount)
+	}
+
+	// If all components are in "root" or only 1 folder key, keep as single project
+	projName := cleanName(filepath.Base(rootPath))
+	return []models.ScanGroupProposal{{
+		ID:               fmt.Sprintf("group-new-%d", existingCount+1),
+		Name:             projName,
+		Slug:             slugify(projName),
+		ProjectType:      bundleProjectType(components, remaining),
+		Reason:           "Dikelompokkan otomatis berdasarkan kesamaan direktori root dan sinergi stack.",
+		ComponentIndices: remaining,
+	}}
+}
+
+// heuristicGroupScanComponents groups components based on directory hierarchy, tech stack synergy,
+// and existing project matches when LLM is unavailable.
+func heuristicGroupScanComponents(rootPath string, components []models.ComponentProposal, existingProjects []models.Project) *models.ScanGroupingResult {
+	if len(components) == 0 {
+		return &models.ScanGroupingResult{
+			Groups:  []models.ScanGroupProposal{},
+			LlmUsed: false,
+			Summary: "Tidak ada komponen ditemukan.",
+		}
+	}
+
+	assigned := make(map[int]bool)
+
+	// 1. Try matching components to existing projects
+	groups := matchExistingProjectGroups(components, existingProjects, assigned)
 
 	// 2. For remaining unmatched components, check if they can be grouped by top-level folder
 	// or form a cohesive bundle
@@ -264,76 +370,8 @@ func heuristicGroupScanComponents(rootPath string, components []models.Component
 			remainingIndices = append(remainingIndices, i)
 		}
 	}
-
 	if len(remainingIndices) > 0 {
-		// Group by immediate subdirectory or unified root
-		folderGroups := make(map[string][]int)
-		for _, idx := range remainingIndices {
-			c := components[idx]
-			// Check relative path top folder
-			rel := filepath.Clean(c.RelativePath)
-			parts := strings.Split(rel, string(filepath.Separator))
-			groupKey := "root"
-			if len(parts) > 1 && parts[0] != "." && parts[0] != "" {
-				// E.g. apps/web vs apps/api vs other-proj/service
-				groupKey = parts[0]
-			}
-			folderGroups[groupKey] = append(folderGroups[groupKey], idx)
-		}
-
-		// If all components are in "root" or only 1 folder key, keep as single project
-		if len(folderGroups) <= 1 || len(remainingIndices) <= 3 {
-			// Single bundle
-			projName := cleanName(filepath.Base(rootPath))
-			projType := models.TypeBundle
-			hasMobile := false
-			frontCount := 0
-			for _, idx := range remainingIndices {
-				c := components[idx]
-				if strings.Contains(c.Role, "mobile") {
-					hasMobile = true
-				}
-				if strings.Contains(c.Role, "front") {
-					frontCount++
-				}
-			}
-			if frontCount > 1 {
-				projType = models.TypeMultiFE
-			} else if hasMobile {
-				projType = models.TypeBundle
-			} else if len(remainingIndices) == 1 {
-				projType = models.TypeSingleApp
-			}
-
-			groups = append(groups, models.ScanGroupProposal{
-				ID:               fmt.Sprintf("group-new-%d", len(groups)+1),
-				Name:             projName,
-				Slug:             slugify(projName),
-				ProjectType:      projType,
-				Reason:           "Dikelompokkan otomatis berdasarkan kesamaan direktori root dan sinergi stack.",
-				ComponentIndices: remainingIndices,
-			})
-		} else {
-			// Multiple distinct folder groups
-			for folderName, indices := range folderGroups {
-				name := cleanName(folderName)
-				if folderName == "root" {
-					name = cleanName(filepath.Base(rootPath))
-				}
-				projType := models.TypeBundle
-				if len(indices) == 1 {
-					projType = models.TypeSingleApp
-				}
-				groups = append(groups, models.ScanGroupProposal{
-					ID:               fmt.Sprintf("group-new-%d", len(groups)+1),
-					Name:             name,
-					Slug:             slugify(name),
-					ProjectType:      projType,
-					Reason:           fmt.Sprintf("Dikelompokkan dalam folder independen '%s'.", folderName),
-					ComponentIndices: indices,
-				})
-			}
-		}
+		groups = append(groups, groupRemaining(rootPath, components, remainingIndices, len(groups))...)
 	}
 
 	summary := fmt.Sprintf("Berhasil mengelompokkan %d komponen ke dalam %d project berdasarkan analisis struktur direktori.", len(components), len(groups))
