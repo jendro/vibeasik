@@ -414,79 +414,90 @@ func inspectFileLevel(scan *fileScan, isFlutter bool, content string, lines []st
 	return findings
 }
 
+// firstLineContaining mengembalikan indeks baris pertama yang memuat needle (-1 bila tidak ada).
+func firstLineContaining(lines []string, needle string) int {
+	for idx, line := range lines {
+		if strings.Contains(line, needle) {
+			return idx
+		}
+	}
+	return -1
+}
+
+func containsAny(s string, subs ...string) bool {
+	for _, sub := range subs {
+		if strings.Contains(s, sub) {
+			return true
+		}
+	}
+	return false
+}
+
+// overfetchingFinding: komponen tab memanggil getProjectBaseKnowledge tanpa perlu.
+func overfetchingFinding(content, relPath string, lines []string, isTabComponent bool) []models.Finding {
+	if !strings.Contains(content, "getProjectBaseKnowledge") || !isTabComponent {
+		return nil
+	}
+	if strings.Contains(relPath, "BaseKnowledgeTab") || strings.Contains(relPath, "base-knowledge") {
+		return nil
+	}
+	idx := firstLineContaining(lines, "getProjectBaseKnowledge")
+	if idx < 0 {
+		return nil
+	}
+	return []models.Finding{{
+		Category:     "frontend",
+		Severity:     "WARNING",
+		RuleID:       "FE-OVERFETCHING-UNUSED-DATA",
+		Title:        "Overfetching API: Pemanggilan Data Base Knowledge pada Komponen yang Tidak Membutuhkannya",
+		Description:  fmt.Sprintf("Komponen '%s' pada baris %d memanggil 'getProjectBaseKnowledge()'. Endpoint ini menyusun pohon direktori, rute, dan env yang berat. Komponen ini sebaiknya tidak memanggil data tersebut atau menggunakan data yang sudah ada di props.", filepath.Base(relPath), idx+1),
+		Suggestion:   "Hapus pemanggilan 'getProjectBaseKnowledge()' dari komponen ini. Gunakan computed property dari props.project atau cached data.",
+		TargetFile:   relPath,
+		Line:         idx + 1,
+		Snippet:      strings.TrimSpace(lines[idx]),
+		TheoryBasis:  "REST/GraphQL Resource Optimization & Network Payload Minimization - Mencegah dead data fetching.",
+		SuggestedFix: "// Hindari memanggil endpoint agregasi berat:\nconst count = computed(() => props.project?.components?.length || 0)",
+	}}
+}
+
+// uncachedReloadFinding: tab memuat API pada onMounted tanpa pengecekan cache.
+func uncachedReloadFinding(content, relPath string, lines []string, isTabComponent bool) []models.Finding {
+	if !isTabComponent || !strings.Contains(content, "onMounted") {
+		return nil
+	}
+	hasApiCallInMount := containsAny(content, "loadBaseKnowledge(", "loadInitialData(", "fetchData(", "loadData(", "getProject(", "$fetch(")
+	hasCacheCheck := containsAny(content, "cachedData", "cachedBaseKnowledge", "cache", "if (!data.value)", "if (!props.", "v-model:cached")
+	if !hasApiCallInMount || hasCacheCheck {
+		return nil
+	}
+	idx := firstLineContaining(lines, "onMounted")
+	if idx < 0 {
+		return nil
+	}
+	return []models.Finding{{
+		Category:     "frontend",
+		Severity:     "WARNING",
+		RuleID:       "FE-API-RELOAD-UNCACHED",
+		Title:        "Pemanggilan API Berulang Tanpa Caching Variabel (Tab Switch Reload Smell)",
+		Description:  fmt.Sprintf("Komponen sub-tab '%s' pada baris %d memanggil pemuatan data API pada hook onMounted() tanpa mekanisme caching variabel/state. Saat pengguna berpindah tab, data akan selalu di-reload ulang dari backend.", filepath.Base(relPath), idx+1),
+		Suggestion:   "Simpan data pada state/ref di level halaman induk atau composable, lalu berikan cachedData sebagai prop ke sub-tab agar tidak reload saat tab berganti.",
+		TargetFile:   relPath,
+		Line:         idx + 1,
+		Snippet:      strings.TrimSpace(lines[idx]),
+		TheoryBasis:  "Single Page Application (SPA) State Management & Component Lifecycle Optimization.",
+		SuggestedFix: "// Simpan data di ref induk dan berikan sebagai prop:\nconst props = defineProps<{ cachedData?: MyData }>()\nonMounted(() => {\n  if (!props.cachedData) loadData()\n})",
+	}}
+}
+
 // inspectFrontendSmells audits frontend components for lifecycle API reloads, variable caching, and overfetching
 func inspectFrontendSmells(content string, relPath string, lines []string) []models.Finding {
-	var findings []models.Finding
-
 	isTabComponent := strings.Contains(relPath, "Tab.vue") ||
 		strings.Contains(relPath, "/tabs/") ||
 		(strings.Contains(relPath, "detail/") && strings.HasSuffix(relPath, ".vue"))
 
-	// 1. Check for Overfetching / Unused Heavy API Data
-	// Example: Calling getProjectBaseKnowledge in a chat/ide tab or a tab that doesn't actually need it
-	if strings.Contains(content, "getProjectBaseKnowledge") {
-		isBaseKnowledgeTab := strings.Contains(relPath, "BaseKnowledgeTab") || strings.Contains(relPath, "base-knowledge")
-		if !isBaseKnowledgeTab && isTabComponent {
-			for idx, line := range lines {
-				if strings.Contains(line, "getProjectBaseKnowledge") {
-					findings = append(findings, models.Finding{
-						Category:     "frontend",
-						Severity:     "WARNING",
-						RuleID:       "FE-OVERFETCHING-UNUSED-DATA",
-						Title:        "Overfetching API: Pemanggilan Data Base Knowledge pada Komponen yang Tidak Membutuhkannya",
-						Description:  fmt.Sprintf("Komponen '%s' pada baris %d memanggil 'getProjectBaseKnowledge()'. Endpoint ini menyusun pohon direktori, rute, dan env yang berat. Komponen ini sebaiknya tidak memanggil data tersebut atau menggunakan data yang sudah ada di props.", filepath.Base(relPath), idx+1),
-						Suggestion:   "Hapus pemanggilan 'getProjectBaseKnowledge()' dari komponen ini. Gunakan computed property dari props.project atau cached data.",
-						TargetFile:   relPath,
-						Line:         idx + 1,
-						Snippet:      strings.TrimSpace(line),
-						TheoryBasis:  "REST/GraphQL Resource Optimization & Network Payload Minimization - Mencegah dead data fetching.",
-						SuggestedFix: "// Hindari memanggil endpoint agregasi berat:\nconst count = computed(() => props.project?.components?.length || 0)",
-					})
-					break
-				}
-			}
-		}
-	}
-
-	// 2. Check for Uncached Tab Reload on Mount (FE-API-RELOAD-UNCACHED)
-	// If it's a tab component with onMounted calling API directly without checking cachedData or data.value
-	if isTabComponent && strings.Contains(content, "onMounted") {
-		hasApiCallInMount := strings.Contains(content, "loadBaseKnowledge(") ||
-			strings.Contains(content, "loadInitialData(") ||
-			strings.Contains(content, "fetchData(") ||
-			strings.Contains(content, "loadData(") ||
-			strings.Contains(content, "getProject(") ||
-			strings.Contains(content, "$fetch(")
-
-		hasCacheCheck := strings.Contains(content, "cachedData") ||
-			strings.Contains(content, "cachedBaseKnowledge") ||
-			strings.Contains(content, "cache") ||
-			strings.Contains(content, "if (!data.value)") ||
-			strings.Contains(content, "if (!props.") ||
-			strings.Contains(content, "v-model:cached")
-
-		if hasApiCallInMount && !hasCacheCheck {
-			for idx, line := range lines {
-				if strings.Contains(line, "onMounted") {
-					findings = append(findings, models.Finding{
-						Category:     "frontend",
-						Severity:     "WARNING",
-						RuleID:       "FE-API-RELOAD-UNCACHED",
-						Title:        "Pemanggilan API Berulang Tanpa Caching Variabel (Tab Switch Reload Smell)",
-						Description:  fmt.Sprintf("Komponen sub-tab '%s' pada baris %d memanggil pemuatan data API pada hook onMounted() tanpa mekanisme caching variabel/state. Saat pengguna berpindah tab, data akan selalu di-reload ulang dari backend.", filepath.Base(relPath), idx+1),
-						Suggestion:   "Simpan data pada state/ref di level halaman induk atau composable, lalu berikan cachedData sebagai prop ke sub-tab agar tidak reload saat tab berganti.",
-						TargetFile:   relPath,
-						Line:         idx + 1,
-						Snippet:      strings.TrimSpace(line),
-						TheoryBasis:  "Single Page Application (SPA) State Management & Component Lifecycle Optimization.",
-						SuggestedFix: "// Simpan data di ref induk dan berikan sebagai prop:\nconst props = defineProps<{ cachedData?: MyData }>()\nonMounted(() => {\n  if (!props.cachedData) loadData()\n})",
-					})
-					break
-				}
-			}
-		}
-	}
-
+	var findings []models.Finding
+	findings = append(findings, overfetchingFinding(content, relPath, lines, isTabComponent)...)
+	findings = append(findings, uncachedReloadFinding(content, relPath, lines, isTabComponent)...)
 	return findings
 }
 
@@ -613,34 +624,38 @@ func ListAuditableFiles(dir string, baseRelPath string, maxFiles int) []Auditabl
 		if baseRelPath != "" {
 			relPath = filepath.Join(baseRelPath, relPath)
 		}
-		lang, ok := auditFileExtensions[strings.ToLower(filepath.Ext(path))]
-		if !ok || (lang == "xml" && !isAndroidLayoutXML(relPath)) {
-			return nil
+		if f, ok := auditableFileAt(path, relPath, info.Name()); ok {
+			out = append(out, f)
 		}
-		if isTestOrGeneratedFile(info.Name()) {
-			return nil
-		}
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return nil
-		}
-		content := string(data)
-		if isGeneratedContent(content) {
-			return nil
-		}
-		isUI := isUISourceFile(relPath, lang)
-		isAndroid := (lang == "kotlin" || lang == "java") && isAndroidSourceFile(relPath, content)
-		out = append(out, AuditableFile{
-			AbsPath:   path,
-			RelPath:   relPath,
-			Lang:      lang,
-			Lines:     strings.Count(content, "\n") + 1,
-			IsUI:      isUI,
-			IsAndroid: isAndroid,
-			IsServer:  isServerLang(lang) && !isUI && !isAndroid,
-			IsFlutter: lang == "dart" && isFlutterSource(path, content),
-		})
 		return nil
 	})
 	return out
+}
+
+// auditableFileAt membaca satu berkas dan mengklasifikasikannya; ok=false bila tidak diaudit.
+func auditableFileAt(path, relPath, name string) (AuditableFile, bool) {
+	lang, ok := auditFileExtensions[strings.ToLower(filepath.Ext(path))]
+	if !ok || (lang == "xml" && !isAndroidLayoutXML(relPath)) || isTestOrGeneratedFile(name) {
+		return AuditableFile{}, false
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return AuditableFile{}, false
+	}
+	content := string(data)
+	if isGeneratedContent(content) {
+		return AuditableFile{}, false
+	}
+	isUI := isUISourceFile(relPath, lang)
+	isAndroid := (lang == "kotlin" || lang == "java") && isAndroidSourceFile(relPath, content)
+	return AuditableFile{
+		AbsPath:   path,
+		RelPath:   relPath,
+		Lang:      lang,
+		Lines:     strings.Count(content, "\n") + 1,
+		IsUI:      isUI,
+		IsAndroid: isAndroid,
+		IsServer:  isServerLang(lang) && !isUI && !isAndroid,
+		IsFlutter: lang == "dart" && isFlutterSource(path, content),
+	}, true
 }
