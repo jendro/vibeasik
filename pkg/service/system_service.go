@@ -64,87 +64,84 @@ func (s *systemService) BrowseDirectories(ctx context.Context, targetPath, searc
 
 	homeDir := models.UserHome()
 	documentsDir := filepath.Join(homeDir, "Documents")
+	targetPath = resolveBrowseTarget(targetPath, homeDir, documentsDir)
+	quickPaths := browseQuickPaths(homeDir, documentsDir)
 
-	if targetPath == "" {
-		if info, err := os.Stat(documentsDir); err == nil && info.IsDir() {
-			targetPath = documentsDir
-		} else {
-			targetPath = homeDir
-		}
-	} else {
-		if strings.HasPrefix(targetPath, "~") {
-			targetPath = filepath.Join(homeDir, strings.TrimPrefix(targetPath, "~"))
-		}
-		targetPath = filepath.Clean(targetPath)
+	if searchQuery != "" {
+		return searchDirectories(targetPath, documentsDir, searchQuery, quickPaths), nil
 	}
+	return listDirectories(targetPath, documentsDir, quickPaths)
+}
 
+func resolveBrowseTarget(targetPath, homeDir, documentsDir string) string {
+	if targetPath == "" {
+		if isDirPath(documentsDir) {
+			return documentsDir
+		}
+		return homeDir
+	}
+	if strings.HasPrefix(targetPath, "~") {
+		targetPath = filepath.Join(homeDir, strings.TrimPrefix(targetPath, "~"))
+	}
+	return filepath.Clean(targetPath)
+}
+
+func browseQuickPaths(homeDir, documentsDir string) []DirectoryItem {
 	quickPaths := []DirectoryItem{
 		{Name: "Documents", Path: documentsDir},
 		{Name: "Home (~)", Path: homeDir},
 	}
-	if info, err := os.Stat(filepath.Join(documentsDir, "Nuxt")); err == nil && info.IsDir() {
-		quickPaths = append(quickPaths, DirectoryItem{Name: "Nuxt", Path: filepath.Join(documentsDir, "Nuxt")})
-	}
-	if info, err := os.Stat(filepath.Join(documentsDir, "go")); err == nil && info.IsDir() {
-		quickPaths = append(quickPaths, DirectoryItem{Name: "go", Path: filepath.Join(documentsDir, "go")})
-	}
-
-	// Search mode
-	if searchQuery != "" {
-		basePath := targetPath
-		if info, err := os.Stat(basePath); err != nil || !info.IsDir() {
-			basePath = documentsDir
+	for _, name := range []string{"Nuxt", "go"} {
+		if p := filepath.Join(documentsDir, name); isDirPath(p) {
+			quickPaths = append(quickPaths, DirectoryItem{Name: name, Path: p})
 		}
+	}
+	return quickPaths
+}
 
-		var results []DirectoryItem
-		lowerQuery := strings.ToLower(searchQuery)
-		baseDepth := strings.Count(filepath.Clean(basePath), string(os.PathSeparator))
-		maxDepth := 3
+var searchSkipDirs = map[string]bool{"node_modules": true, "vendor": true, "dist": true, "build": true, ".next": true, ".nuxt": true, ".git": true}
 
-		_ = filepath.WalkDir(basePath, func(path string, d os.DirEntry, err error) error {
-			if err != nil {
-				return nil
-			}
-			if !d.IsDir() {
-				return nil
-			}
-			if path == basePath {
-				return nil
-			}
-
-			name := d.Name()
-			if strings.HasPrefix(name, ".") || name == "node_modules" || name == "vendor" || name == "dist" || name == "build" || name == ".next" || name == ".nuxt" || name == ".git" {
-				return filepath.SkipDir
-			}
-
-			curDepth := strings.Count(filepath.Clean(path), string(os.PathSeparator)) - baseDepth
-			if curDepth > maxDepth {
-				return filepath.SkipDir
-			}
-
-			if strings.Contains(strings.ToLower(name), lowerQuery) {
-				results = append(results, DirectoryItem{
-					Name: name,
-					Path: path,
-				})
-				if len(results) >= 40 {
-					return filepath.SkipAll
-				}
-			}
-			return nil
-		})
-
-		return &BrowseDirectoryResponse{
-			CurrentPath: basePath,
-			ParentPath:  filepath.Dir(basePath),
-			Directories: results,
-			QuickPaths:  quickPaths,
-		}, nil
+func searchDirectories(targetPath, documentsDir, searchQuery string, quickPaths []DirectoryItem) *BrowseDirectoryResponse {
+	basePath := targetPath
+	if !isDirPath(basePath) {
+		basePath = documentsDir
 	}
 
-	// Browse mode
-	info, err := os.Stat(targetPath)
-	if err != nil || !info.IsDir() {
+	var results []DirectoryItem
+	lowerQuery := strings.ToLower(searchQuery)
+	baseDepth := strings.Count(filepath.Clean(basePath), string(os.PathSeparator))
+	const maxDepth = 3
+
+	_ = filepath.WalkDir(basePath, func(path string, d os.DirEntry, err error) error {
+		if err != nil || !d.IsDir() || path == basePath {
+			return nil
+		}
+		name := d.Name()
+		if strings.HasPrefix(name, ".") || searchSkipDirs[name] {
+			return filepath.SkipDir
+		}
+		if strings.Count(filepath.Clean(path), string(os.PathSeparator))-baseDepth > maxDepth {
+			return filepath.SkipDir
+		}
+		if strings.Contains(strings.ToLower(name), lowerQuery) {
+			results = append(results, DirectoryItem{Name: name, Path: path})
+			if len(results) >= 40 {
+				return filepath.SkipAll
+			}
+		}
+		return nil
+	})
+
+	return &BrowseDirectoryResponse{
+		CurrentPath: basePath,
+		ParentPath:  filepath.Dir(basePath),
+		Directories: results,
+		QuickPaths:  quickPaths,
+	}
+}
+
+func listDirectories(targetPath, documentsDir string, quickPaths []DirectoryItem) (*BrowseDirectoryResponse, error) {
+	if !isDirPath(targetPath) {
 		targetPath = documentsDir
 	}
 
@@ -155,17 +152,11 @@ func (s *systemService) BrowseDirectories(ctx context.Context, targetPath, searc
 
 	var dirs []DirectoryItem
 	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
 		name := entry.Name()
-		if strings.HasPrefix(name, ".") || name == "node_modules" || name == "vendor" {
+		if !entry.IsDir() || strings.HasPrefix(name, ".") || name == "node_modules" || name == "vendor" {
 			continue
 		}
-		dirs = append(dirs, DirectoryItem{
-			Name: name,
-			Path: filepath.Join(targetPath, name),
-		})
+		dirs = append(dirs, DirectoryItem{Name: name, Path: filepath.Join(targetPath, name)})
 	}
 
 	parentPath := filepath.Dir(targetPath)

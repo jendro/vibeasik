@@ -1,0 +1,409 @@
+[
+  {
+    "current_path": "<TMP>/Documents",
+    "parent_path": "<TMP>",
+    "directories": [
+      {
+        "name": "Alphabet",
+        "path": "<TMP>/Documents/Alphabet"
+      },
+      {
+        "name": "Nuxt",
+        "path": "<TMP>/Documents/Nuxt"
+      },
+      {
+        "name": "alpha",
+        "path": "<TMP>/Documents/alpha"
+      },
+      {
+        "name": "beta",
+        "path": "<TMP>/Documents/beta"
+      },
+      {
+        "name": "go",
+        "path": "<TMP>/Documents/go"
+      }
+    ],
+    "quick_paths": [
+      {
+        "name": "Documents",
+        "path": "<TMP>/Documents"
+      },
+      {
+        "name": "Home (~)",
+        "path": "<TMP>"
+      },
+      {
+        "name": "Nuxt",
+        "path": "<TMP>/Documents/Nuxt"
+      },
+      {
+        "name": "go",
+        "path": "<TMP>/Documents/go"
+      }
+    ]
+  },
+  {
+    "current_path": "<TMP>/other",
+    "parent_path": "<TMP>",
+    "directories": [
+      {
+        "name": "zeta",
+        "path": "<TMP>/other/zeta"
+      }
+    ],
+    "quick_paths": [
+      {
+        "name": "Documents",
+        "path": "<TMP>/Documents"
+      },
+      {
+        "name": "Home (~)",
+        "path": "<TMP>"
+      },
+      {
+        "name": "Nuxt",
+        "path": "<TMP>/Documents/Nuxt"
+      },
+      {
+        "name": "go",
+        "path": "<TMP>/Documents/go"
+      }
+    ]
+  },
+  {
+    "current_path": "<TMP>/Documents/alpha",
+    "parent_path": "<TMP>/Documents",
+    "directories": [
+      {
+        "name": "deep",
+        "path": "<TMP>/Documents/alpha/deep"
+      },
+      {
+        "name": "dist",
+        "path": "<TMP>/Documents/alpha/dist"
+      },
+      {
+        "name": "n",
+        "path": "<TMP>/Documents/alpha/n"
+      }
+    ],
+    "quick_paths": [
+      {
+        "name": "Documents",
+        "path": "<TMP>/Documents"
+      },
+      {
+        "name": "Home (~)",
+        "path": "<TMP>"
+      },
+      {
+        "name": "Nuxt",
+        "path": "<TMP>/Documents/Nuxt"
+      },
+      {
+        "name": "go",
+        "path": "<TMP>/Documents/go"
+      }
+    ]
+  },
+  {
+    "current_path": "<TMP>/Documents",
+    "parent_path": "<TMP>",
+    "directories": [
+      {
+        "name": "Alphabet",
+        "path": "<TMP>/Documents/Alphabet"
+      },
+      {
+        "name": "Nuxt",
+        "path": "<TMP>/Documents/Nuxt"
+      },
+      {
+        "name": "alpha",
+        "path": "<TMP>/Documents/alpha"
+      },
+      {
+        "name": "beta",
+        "path": "<TMP>/Documents/beta"
+      },
+      {
+        "name": "go",
+        "path": "<TMP>/Documents/go"
+      }
+    ],
+    "quick_paths": [
+      {
+        "name": "Documents",
+        "path": "<TMP>/Documents"
+      },
+      {
+        "name": "Home (~)",
+        "path": "<TMP>"
+      },
+      {
+        "name": "Nuxt",
+        "path": "<TMP>/Documents/Nuxt"
+      },
+      {
+        "name": "go",
+        "path": "<TMP>/Documents/go"
+      }
+    ]
+  },
+  {
+    "current_path": "<TMP>/Documents",
+    "parent_path": "<TMP>",
+    "directories": [
+      {
+        "name": "Alphabet",
+        "path": "<TMP>/Documents/Alphabet"
+      },
+      {
+        "name": "Nuxt",
+        "path": "<TMP>/Documents/Nuxt"
+      },
+      {
+        "name": "alpha",
+        "path": "<TMP>/Documents/alpha"
+      },
+      {
+        "name": "beta",
+        "path": "<TMP>/Documents/beta"
+      },
+      {
+        "name": "go",
+        "path": "<TMP>/Documents/go"
+      }
+    ],
+    "quick_paths": [
+      {
+        "name": "Documents",
+        "path": "<TMP>/Documents"
+      },
+      {
+        "name": "Home (~)",
+        "path": "<TMP>"
+      },
+      {
+        "name": "Nuxt",
+        "path": "<TMP>/Documents/Nuxt"
+      },
+      {
+        "name": "go",
+        "path": "<TMP>/Documents/go"
+      }
+    ]
+  },
+  {
+    "current_path": "<TMP>/Documents",
+    "parent_path": "<TMP>",
+    "directories": [
+      {
+        "name": "Alphabet",
+        "path": "<TMP>/Documents/Alphabet"
+      },
+      {
+        "name": "alpha",
+        "path": "<TMP>/Documents/alpha"
+      },
+      {
+        "name": "alpha3",
+        "path": "<TMP>/Documents/alpha/n/alpha3"
+      }
+    ],
+    "quick_paths": [
+      {
+        "name": "Documents",
+        "path": "<TMP>/Documents"
+      },
+      {
+        "name": "Home (~)",
+        "path": "<TMP>"
+      },
+      {
+        "name": "Nuxt",
+        "path": "<TMP>/Documents/Nuxt"
+      },
+      {
+        "name": "go",
+        "path": "<TMP>/Documents/go"
+      }
+    ]
+  },
+  {
+    "current_path": "<TMP>/other",
+    "parent_path": "<TMP>",
+    "directories": [
+      {
+        "name": "zeta",
+        "path": "<TMP>/other/zeta"
+      }
+    ],
+    "quick_paths": [
+      {
+        "name": "Documents",
+        "path": "<TMP>/Documents"
+      },
+      {
+        "name": "Home (~)",
+        "path": "<TMP>"
+      },
+      {
+        "name": "Nuxt",
+        "path": "<TMP>/Documents/Nuxt"
+      },
+      {
+        "name": "go",
+        "path": "<TMP>/Documents/go"
+      }
+    ]
+  },
+  {
+    "current_path": "<TMP>/Documents",
+    "parent_path": "<TMP>",
+    "directories": [
+      {
+        "name": "beta",
+        "path": "<TMP>/Documents/beta"
+      }
+    ],
+    "quick_paths": [
+      {
+        "name": "Documents",
+        "path": "<TMP>/Documents"
+      },
+      {
+        "name": "Home (~)",
+        "path": "<TMP>"
+      },
+      {
+        "name": "Nuxt",
+        "path": "<TMP>/Documents/Nuxt"
+      },
+      {
+        "name": "go",
+        "path": "<TMP>/Documents/go"
+      }
+    ]
+  },
+  {
+    "current_path": "<TMP>/Documents",
+    "parent_path": "<TMP>",
+    "directories": [
+      {
+        "name": "deep",
+        "path": "<TMP>/Documents/alpha/deep"
+      },
+      {
+        "name": "deeper",
+        "path": "<TMP>/Documents/alpha/deep/deeper"
+      }
+    ],
+    "quick_paths": [
+      {
+        "name": "Documents",
+        "path": "<TMP>/Documents"
+      },
+      {
+        "name": "Home (~)",
+        "path": "<TMP>"
+      },
+      {
+        "name": "Nuxt",
+        "path": "<TMP>/Documents/Nuxt"
+      },
+      {
+        "name": "go",
+        "path": "<TMP>/Documents/go"
+      }
+    ]
+  },
+  {
+    "current_path": "<TMP>/Documents",
+    "parent_path": "<TMP>",
+    "directories": null,
+    "quick_paths": [
+      {
+        "name": "Documents",
+        "path": "<TMP>/Documents"
+      },
+      {
+        "name": "Home (~)",
+        "path": "<TMP>"
+      },
+      {
+        "name": "Nuxt",
+        "path": "<TMP>/Documents/Nuxt"
+      },
+      {
+        "name": "go",
+        "path": "<TMP>/Documents/go"
+      }
+    ]
+  },
+  {
+    "current_path": "<TMP>/Documents",
+    "parent_path": "<TMP>",
+    "directories": [
+      {
+        "name": "Alphabet",
+        "path": "<TMP>/Documents/Alphabet"
+      },
+      {
+        "name": "Nuxt",
+        "path": "<TMP>/Documents/Nuxt"
+      },
+      {
+        "name": "alpha",
+        "path": "<TMP>/Documents/alpha"
+      },
+      {
+        "name": "beta",
+        "path": "<TMP>/Documents/beta"
+      },
+      {
+        "name": "go",
+        "path": "<TMP>/Documents/go"
+      }
+    ],
+    "quick_paths": [
+      {
+        "name": "Documents",
+        "path": "<TMP>/Documents"
+      },
+      {
+        "name": "Home (~)",
+        "path": "<TMP>"
+      },
+      {
+        "name": "Nuxt",
+        "path": "<TMP>/Documents/Nuxt"
+      },
+      {
+        "name": "go",
+        "path": "<TMP>/Documents/go"
+      }
+    ]
+  },
+  {
+    "current_path": "<TMP>/h2",
+    "parent_path": "<TMP>",
+    "directories": [
+      {
+        "name": "sub",
+        "path": "<TMP>/h2/sub"
+      }
+    ],
+    "quick_paths": [
+      {
+        "name": "Documents",
+        "path": "<TMP>/h2/Documents"
+      },
+      {
+        "name": "Home (~)",
+        "path": "<TMP>/h2"
+      }
+    ]
+  }
+]
