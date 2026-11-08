@@ -240,3 +240,34 @@ func TestExtendedToolsCharacterization(t *testing.T) {
 		t.Fatalf("hasil tool extended berubah; bandingkan %s dengan %s.got", golden, golden)
 	}
 }
+
+// TestDispatchTablesLocked mengunci nama tool pada tiap tabel dispatch (sebelum == sesudah refaktor).
+func TestDispatchTablesLocked(t *testing.T) {
+	keys := func(m map[string]toolHandler) string {
+		var k []string
+		for n := range m {
+			k = append(k, n)
+		}
+		sort.Strings(k)
+		return strings.Join(k, ",")
+	}
+	want := map[string]string{
+		"core":     "create_todo,get_ai_recommendations,get_current_project,get_project_detail,link_project_workspace,list_guidelines,list_projects,list_todos,run_diagnostics,scan_directory,suggest_todos,update_todo,vibeasik_ai_templates,vibeasik_check_ports,vibeasik_deploy_plan,vibeasik_inject_ai_template,vibeasik_list_local_agents,vibeasik_rea_analyze,vibeasik_rea_status,vibeasik_run_local_agent,vibeasik_search_domain,vibeasik_tutorials",
+		"extended": "add_component,browse_directories,compare_projects,consolidate_project,create_project,delete_todo,diagnose_component,evaluate_architecture,fast_scan,get_component,get_latest_diagnostic,get_security_status,get_todo_impact_dimensions,list_architecture_patterns,list_component_routes,plan_workspace_reorg,preview_consolidate_project,scan_project_similarities,set_finding_status,sync_component_routes,test_secret_sanitizer,update_project_status,vibeasik_cloud_security_audit",
+		"runner":   "vibeasik_assign_port,vibeasik_ensure_unique_ports,vibeasik_port_registry,vibeasik_run_component,vibeasik_run_status,vibeasik_stop_component",
+	}
+	got := map[string]string{"core": keys(coreToolHandlers), "extended": keys(extendedToolHandlers), "runner": keys(runnerToolHandlers)}
+	for k, w := range want {
+		if got[k] != w {
+			t.Errorf("tabel %s berubah:\n got %s\nwant %s", k, got[k], w)
+		}
+	}
+	var cm []string
+	for n := range codeMapToolHandlers {
+		cm = append(cm, n)
+	}
+	sort.Strings(cm)
+	if w := "vibeasik_code_map_build,vibeasik_code_map_export,vibeasik_code_map_file,vibeasik_code_map_overview,vibeasik_code_map_routes,vibeasik_code_map_search,vibeasik_code_map_status"; strings.Join(cm, ",") != w {
+		t.Errorf("tabel codemap berubah: %v", cm)
+	}
+}

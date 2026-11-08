@@ -90,148 +90,163 @@ func (s *Server) runnerToolsList() []Tool {
 	}
 }
 
+// runnerToolHandlers memetakan tool runner (port & proses komponen) ke penanganannya.
+var runnerToolHandlers = map[string]toolHandler{
+	"vibeasik_port_registry":       (*Server).toolPortRegistry,
+	"vibeasik_assign_port":         (*Server).toolAssignPort,
+	"vibeasik_run_component":       (*Server).toolRunComponent,
+	"vibeasik_stop_component":      (*Server).toolStopComponent,
+	"vibeasik_run_status":          (*Server).toolRunStatus,
+	"vibeasik_ensure_unique_ports": (*Server).toolEnsureUniquePorts,
+}
+
 // callRunnerTool returns handled=false when name is not a runner tool.
 func (s *Server) callRunnerTool(name string, args map[string]interface{}) (*ToolCallResult, bool, error) {
+	h, ok := runnerToolHandlers[name]
+	if !ok {
+		return nil, false, nil
+	}
+	res, err := h(s, args)
+	return res, true, err
+}
+
+func (s *Server) toolPortRegistry(args map[string]interface{}) (*ToolCallResult, error) {
+	if s.daemonURL != "" {
+		return s.daemonCall(http.MethodGet, "/api/ports/registry", nil)
+	}
+	entries, err := s.runner.Registry()
+	if err != nil {
+		return nil, err
+	}
+	return jsonResult(map[string]interface{}{"entries": entries, "range": []int{runner.RangeStart, runner.RangeEnd}})
+}
+
+func (s *Server) toolAssignPort(args map[string]interface{}) (*ToolCallResult, error) {
+	cid := argUint(args, "component_id")
+	if cid == 0 {
+		return nil, fmt.Errorf("valid component_id is required")
+	}
+	port := int(argUint(args, "port"))
+	force, _ := args["reassign"].(bool)
+	if s.daemonURL != "" {
+		return s.daemonCall(http.MethodPost, fmt.Sprintf("/api/components/%d/port", cid), map[string]interface{}{"port": port, "reassign": force})
+	}
+	comp, err := s.runner.AssignPort(cid, port, force)
+	if err != nil {
+		return nil, err
+	}
+	return jsonResult(map[string]interface{}{"component_id": comp.ID, "run_port": comp.RunPort})
+}
+
+// componentOrProjectPath memilih path daemon: komponen bila cid ada, jika tidak proyek.
+func componentOrProjectPath(cid, pid uint, action string) string {
+	if cid == 0 {
+		return fmt.Sprintf("/api/projects/%d/%s", pid, action)
+	}
+	return fmt.Sprintf("/api/components/%d/%s", cid, action)
+}
+
+func (s *Server) toolRunComponent(args map[string]interface{}) (*ToolCallResult, error) {
 	cid := argUint(args, "component_id")
 	pid := argUint(args, "project_id")
 	reassign, _ := args["reassign_if_busy"].(bool)
-
-	switch name {
-	case "vibeasik_port_registry":
-		if s.daemonURL != "" {
-			res, err := s.daemonCall(http.MethodGet, "/api/ports/registry", nil)
-			return res, true, err
-		}
-		entries, err := s.runner.Registry()
-		if err != nil {
-			return nil, true, err
-		}
-		res, err := jsonResult(map[string]interface{}{"entries": entries, "range": []int{runner.RangeStart, runner.RangeEnd}})
-		return res, true, err
-
-	case "vibeasik_assign_port":
-		if cid == 0 {
-			return nil, true, fmt.Errorf("valid component_id is required")
-		}
-		port := int(argUint(args, "port"))
-		force, _ := args["reassign"].(bool)
-		if s.daemonURL != "" {
-			res, err := s.daemonCall(http.MethodPost, fmt.Sprintf("/api/components/%d/port", cid), map[string]interface{}{"port": port, "reassign": force})
-			return res, true, err
-		}
-		comp, err := s.runner.AssignPort(cid, port, force)
-		if err != nil {
-			return nil, true, err
-		}
-		res, err := jsonResult(map[string]interface{}{"component_id": comp.ID, "run_port": comp.RunPort})
-		return res, true, err
-
-	case "vibeasik_run_component":
-		if cid == 0 && pid == 0 {
-			return nil, true, fmt.Errorf("component_id or project_id is required")
-		}
-		body := map[string]interface{}{"reassign": reassign}
-		if s.daemonURL != "" {
-			path := fmt.Sprintf("/api/components/%d/run", cid)
-			if cid == 0 {
-				path = fmt.Sprintf("/api/projects/%d/run", pid)
-			}
-			res, err := s.daemonCall(http.MethodPost, path, body)
-			return res, true, err
-		}
-		var out interface{}
-		var err error
-		if cid > 0 {
-			out, err = s.runner.Run(cid, reassign)
-		} else {
-			out, err = s.runner.RunProject(pid, reassign)
-		}
-		if err != nil {
-			return nil, true, err
-		}
-		res, err := jsonResult(out)
-		return res, true, err
-
-	case "vibeasik_stop_component":
-		if cid == 0 && pid == 0 {
-			return nil, true, fmt.Errorf("component_id or project_id is required")
-		}
-		if s.daemonURL != "" {
-			path := fmt.Sprintf("/api/components/%d/stop", cid)
-			if cid == 0 {
-				path = fmt.Sprintf("/api/projects/%d/stop", pid)
-			}
-			res, err := s.daemonCall(http.MethodPost, path, nil)
-			return res, true, err
-		}
-		var out interface{}
-		var err error
-		if cid > 0 {
-			out, err = s.runner.Stop(cid)
-		} else {
-			out, err = s.runner.StopProject(pid)
-		}
-		if err != nil {
-			return nil, true, err
-		}
-		res, err := jsonResult(out)
-		return res, true, err
-
-	case "vibeasik_run_status":
-		lines := int(argUint(args, "log_lines"))
-		if lines <= 0 {
-			lines = 60
-		}
-		if cid == 0 {
-			if s.daemonURL != "" {
-				res, err := s.daemonCall(http.MethodGet, "/api/runs", nil)
-				return res, true, err
-			}
-			res, err := jsonResult(map[string]interface{}{"runs": s.runner.List()})
-			return res, true, err
-		}
-		var st runner.Status
-		if s.daemonURL != "" {
-			raw, err := s.daemonRequest(http.MethodGet, fmt.Sprintf("/api/components/%d/run", cid), nil)
-			if err != nil {
-				return nil, true, err
-			}
-			if err := json.Unmarshal(raw, &st); err != nil {
-				return nil, true, err
-			}
-		} else {
-			var err error
-			if st, err = s.runner.Status(cid, true); err != nil {
-				return nil, true, err
-			}
-		}
-		if len(st.Logs) > lines {
-			st.Logs = st.Logs[len(st.Logs)-lines:]
-		}
-		res, err := jsonResult(st)
-		return res, true, err
-
-	case "vibeasik_ensure_unique_ports":
-		if s.daemonURL != "" {
-			path := "/api/ports/ensure-unique"
-			if pid > 0 {
-				path = fmt.Sprintf("/api/projects/%d/ensure-unique-ports", pid)
-			}
-			res, err := s.daemonCall(http.MethodPost, path, nil)
-			return res, true, err
-		}
-		updated, err := s.runner.EnsureUniquePorts(pid)
-		if err != nil {
-			return nil, true, err
-		}
-		res, err := jsonResult(map[string]interface{}{
-			"message":       "Port unik lokal berhasil dialokasikan",
-			"updated_count": len(updated),
-			"components":    updated,
-		})
-		return res, true, err
+	if cid == 0 && pid == 0 {
+		return nil, fmt.Errorf("component_id or project_id is required")
 	}
-	return nil, false, nil
+	if s.daemonURL != "" {
+		return s.daemonCall(http.MethodPost, componentOrProjectPath(cid, pid, "run"), map[string]interface{}{"reassign": reassign})
+	}
+	var out interface{}
+	var err error
+	if cid > 0 {
+		out, err = s.runner.Run(cid, reassign)
+	} else {
+		out, err = s.runner.RunProject(pid, reassign)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return jsonResult(out)
+}
+
+func (s *Server) toolStopComponent(args map[string]interface{}) (*ToolCallResult, error) {
+	cid := argUint(args, "component_id")
+	pid := argUint(args, "project_id")
+	if cid == 0 && pid == 0 {
+		return nil, fmt.Errorf("component_id or project_id is required")
+	}
+	if s.daemonURL != "" {
+		return s.daemonCall(http.MethodPost, componentOrProjectPath(cid, pid, "stop"), nil)
+	}
+	var out interface{}
+	var err error
+	if cid > 0 {
+		out, err = s.runner.Stop(cid)
+	} else {
+		out, err = s.runner.StopProject(pid)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return jsonResult(out)
+}
+
+func (s *Server) toolRunStatus(args map[string]interface{}) (*ToolCallResult, error) {
+	cid := argUint(args, "component_id")
+	lines := int(argUint(args, "log_lines"))
+	if lines <= 0 {
+		lines = 60
+	}
+	if cid == 0 {
+		if s.daemonURL != "" {
+			return s.daemonCall(http.MethodGet, "/api/runs", nil)
+		}
+		return jsonResult(map[string]interface{}{"runs": s.runner.List()})
+	}
+	st, err := s.componentRunStatus(cid)
+	if err != nil {
+		return nil, err
+	}
+	if len(st.Logs) > lines {
+		st.Logs = st.Logs[len(st.Logs)-lines:]
+	}
+	return jsonResult(st)
+}
+
+// componentRunStatus membaca status proses komponen dari daemon lokal atau runner in-process.
+func (s *Server) componentRunStatus(cid uint) (runner.Status, error) {
+	var st runner.Status
+	if s.daemonURL == "" {
+		return s.runner.Status(cid, true)
+	}
+	raw, err := s.daemonRequest(http.MethodGet, fmt.Sprintf("/api/components/%d/run", cid), nil)
+	if err != nil {
+		return st, err
+	}
+	if err := json.Unmarshal(raw, &st); err != nil {
+		return st, err
+	}
+	return st, nil
+}
+
+func (s *Server) toolEnsureUniquePorts(args map[string]interface{}) (*ToolCallResult, error) {
+	pid := argUint(args, "project_id")
+	if s.daemonURL != "" {
+		path := "/api/ports/ensure-unique"
+		if pid > 0 {
+			path = fmt.Sprintf("/api/projects/%d/ensure-unique-ports", pid)
+		}
+		return s.daemonCall(http.MethodPost, path, nil)
+	}
+	updated, err := s.runner.EnsureUniquePorts(pid)
+	if err != nil {
+		return nil, err
+	}
+	return jsonResult(map[string]interface{}{
+		"message":       "Port unik lokal berhasil dialokasikan",
+		"updated_count": len(updated),
+		"components":    updated,
+	})
 }
 
 func (s *Server) daemonCall(method, path string, body interface{}) (*ToolCallResult, error) {

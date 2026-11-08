@@ -315,12 +315,7 @@ func (s *Server) toolUpdateTodo(args map[string]interface{}) (*ToolCallResult, e
 			todo.Memory = models.RefreshTodoMemory(s.db, todo.ID)
 		}
 	}
-	if c, i := complexityArg(args), impactArg(args); c != nil || i != nil || updates["category"] != nil {
-		todo.ApplyLLMRatings(c, i, models.ComplexitySourceManual)
-		todo.Rescore()
-		s.db.Model(&todo).Updates(todo.TodoComplexity.Columns())
-		s.db.Model(&todo).Updates(todo.TodoImpact.Columns())
-	}
+	s.rateUpdatedTodo(&todo, args, updates)
 
 	res := prettyJSONText(todo)
 	// Selesai tanpa pernah ditandai in_progress (agent langsung menutup todo) → tetap dicatat atas nama
@@ -336,6 +331,19 @@ func (s *Server) toolUpdateTodo(args map[string]interface{}) (*ToolCallResult, e
 		}
 	}
 	return res, nil
+}
+
+// rateUpdatedTodo menerapkan penilaian kompleksitas/dampak dari klien (atau penilaian ulang
+// bila kategori berubah) dan menyimpan kolomnya.
+func (s *Server) rateUpdatedTodo(todo *models.Todo, args, updates map[string]interface{}) {
+	c, i := complexityArg(args), impactArg(args)
+	if c == nil && i == nil && updates["category"] == nil {
+		return
+	}
+	todo.ApplyLLMRatings(c, i, models.ComplexitySourceManual)
+	todo.Rescore()
+	s.db.Model(todo).Updates(todo.TodoComplexity.Columns())
+	s.db.Model(todo).Updates(todo.TodoImpact.Columns())
 }
 
 // buildTodoUpdates menyusun kolom yang diubah dari argumen update_todo.

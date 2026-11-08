@@ -4,15 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
-	"github.com/vibeasik/vibeasik/pkg/cloud"
 	"github.com/vibeasik/vibeasik/pkg/diagnostics"
 	"github.com/vibeasik/vibeasik/pkg/models"
-	"github.com/vibeasik/vibeasik/pkg/registry"
-	"github.com/vibeasik/vibeasik/pkg/service"
 )
 
 // Extended tools expose the remaining local-engine features (project lifecycle, components,
@@ -354,293 +350,16 @@ func decodeArgs(src interface{}, dst interface{}) error {
 	return json.Unmarshal(b, dst)
 }
 
-// callExtendedTool returns handled=false when the tool name is not an extended tool.
-func (s *Server) callExtendedTool(name string, args map[string]interface{}) (*ToolCallResult, bool, error) {
-	ctx := context.Background()
-	svc := s.services
-
-	switch name {
-	case "create_project":
-		var input service.CreateProjectInput
-		if err := decodeArgs(args, &input); err != nil {
-			return nil, true, fmt.Errorf("invalid project payload: %w", err)
-		}
-		p, err := svc.Projects.Create(ctx, input)
-		if err != nil {
-			return nil, true, err
-		}
-		registry.ProjectCreated(s.db, p)
-		res, err := jsonResult(p)
-		return res, true, err
-
-	case "update_project_status":
-		pid := argUint(args, "project_id")
-		if pid == 0 {
-			return nil, true, fmt.Errorf("valid project_id is required")
-		}
-		var p *models.Project
-		var err error
-		switch argString(args, "action") {
-		case "deprecate":
-			p, err = svc.Projects.MarkDeprecated(ctx, pid, argString(args, "reason"))
-		case "undeprecate":
-			p, err = svc.Projects.UnmarkDeprecated(ctx, pid)
-		case "hold":
-			p, err = svc.Projects.MarkHold(ctx, pid)
-		case "done":
-			p, err = svc.Projects.MarkDone(ctx, pid)
-		case "activate":
-			p, err = svc.Projects.ActivateProject(ctx, pid)
-		default:
-			return nil, true, fmt.Errorf("action must be one of: deprecate, undeprecate, hold, done, activate")
-		}
-		if err != nil {
-			return nil, true, err
-		}
-		res, err := jsonResult(p)
-		return res, true, err
-
-	case "scan_project_similarities":
-		r, err := svc.Similarity.ScanSimilarities(ctx)
-		if err != nil {
-			return nil, true, err
-		}
-		res, err := jsonResult(r)
-		return res, true, err
-
-	case "compare_projects":
-		r, err := svc.Similarity.CompareTwoProjects(ctx, argUint(args, "project_id_a"), argUint(args, "project_id_b"))
-		if err != nil {
-			return nil, true, err
-		}
-		res, err := jsonResult(r)
-		return res, true, err
-
-	case "get_component":
-		comp, err := svc.Components.GetByID(ctx, argUint(args, "component_id"))
-		if err != nil {
-			return nil, true, err
-		}
-		res, err := jsonResult(comp)
-		return res, true, err
-
-	case "add_component":
-		var input service.AddComponentInput
-		if err := decodeArgs(args, &input); err != nil {
-			return nil, true, fmt.Errorf("invalid component payload: %w", err)
-		}
-		comp, err := svc.Components.AddToProject(ctx, argUint(args, "project_id"), input)
-		if err != nil {
-			return nil, true, err
-		}
-		res, err := jsonResult(comp)
-		return res, true, err
-
-	case "diagnose_component":
-		diag, err := svc.Diagnostics.DiagnoseComponent(ctx, argUint(args, "component_id"))
-		if err != nil {
-			return nil, true, err
-		}
-		res, err := jsonResult(diag)
-		return res, true, err
-
-	case "fast_scan":
-		var r interface{}
-		var err error
-		if cid := argUint(args, "component_id"); cid > 0 {
-			r, err = svc.Diagnostics.FastScanComponent(ctx, cid)
-		} else if pid := argUint(args, "project_id"); pid > 0 {
-			r, err = svc.Diagnostics.FastScanProject(ctx, pid)
-		} else {
-			return nil, true, fmt.Errorf("component_id or project_id is required")
-		}
-		if err != nil {
-			return nil, true, err
-		}
-		res, err := jsonResult(r)
-		return res, true, err
-
-	case "list_component_routes":
-		routes, err := svc.Routes.GetRoutes(ctx, argUint(args, "component_id"))
-		if err != nil {
-			return nil, true, err
-		}
-		res, err := jsonResult(routes)
-		return res, true, err
-
-	case "sync_component_routes":
-		cid := argUint(args, "component_id")
-		syncRes, err := svc.Routes.SyncRoutes(ctx, cid)
-		if err != nil {
-			return nil, true, err
-		}
-		out := map[string]interface{}{"sync": syncRes}
-		if enrich, _ := args["enrich"].(bool); enrich {
-			out["enrich"] = registry.UpgradeRequired("routes.enrich").Error()
-		}
-		res, err := jsonResult(out)
-		return res, true, err
-
-	case "get_latest_diagnostic":
-		res, err := s.latestDiagnostic(ctx, argUint(args, "project_id"), argUint(args, "component_id"))
-		return res, true, err
-
-	case "set_finding_status":
-		res, err := s.setFindingStatus(argUint(args, "project_id"), argString(args, "finding_id"), argString(args, "status"))
-		return res, true, err
-
-	case "get_todo_impact_dimensions":
-		res, err := jsonResult(models.ImpactReference())
-		return res, true, err
-
-	case "delete_todo":
-		tid := argUint(args, "todo_id")
-		if tid == 0 {
-			return nil, true, fmt.Errorf("valid todo_id is required")
-		}
-		if os.Getenv(envOrchestratorRunID) != "" {
-			return nil, true, fmt.Errorf("agent yang dijalankan orkestrator vibeasik tidak boleh menghapus todo; status todo diatur otomatis oleh orkestrator")
-		}
-		deleted, err := models.DeleteTodo(s.db, tid)
-		if err != nil {
-			return nil, true, err
-		}
-		if deleted == 0 {
-			return nil, true, fmt.Errorf("todo with ID %d not found", tid)
-		}
-		res, err := jsonResult(map[string]interface{}{"status": "deleted", "id": tid})
-		return res, true, err
-
-	case "list_architecture_patterns":
-		res, err := jsonResult(svc.ScaleUp.GetPatterns())
-		return res, true, err
-
-	case "evaluate_architecture":
-		var r interface{}
-		var err error
-		if cid := argUint(args, "component_id"); cid > 0 {
-			r, err = svc.ScaleUp.EvaluateComponent(ctx, cid)
-		} else if pid := argUint(args, "project_id"); pid > 0 {
-			r, err = svc.ScaleUp.EvaluateProject(ctx, pid)
-		} else {
-			return nil, true, fmt.Errorf("component_id or project_id is required")
-		}
-		if err != nil {
-			return nil, true, err
-		}
-		res, err := jsonResult(r)
-		return res, true, err
-
-	case "get_security_status":
-		status, err := svc.Security.GetStatus(ctx)
-		if err != nil {
-			return nil, true, err
-		}
-		keywords, err := svc.Security.GetKeywords(ctx)
-		if err != nil {
-			return nil, true, err
-		}
-		// Only expose keyword metadata: the keyword itself may be a secret.
-		kwMeta := make([]map[string]interface{}, 0, len(keywords))
-		for _, kw := range keywords {
-			kwMeta = append(kwMeta, map[string]interface{}{"id": kw.ID, "category": kw.Category, "is_active": kw.IsActive, "is_regex": kw.IsRegex})
-		}
-		status["keywords"] = kwMeta
-		res, err := jsonResult(status)
-		return res, true, err
-
-	case "test_secret_sanitizer":
-		out, err := svc.Security.TestCensor(ctx, argString(args, "payload"))
-		if err != nil {
-			return nil, true, err
-		}
-		res, err := jsonResult(out)
-		return res, true, err
-
-	case "vibeasik_cloud_security_audit":
-		r, err := cloud.NewClient().AuditProject(args)
-		if err != nil {
-			return nil, true, err
-		}
-		res, err := jsonResult(r)
-		return res, true, err
-
-	case "plan_workspace_reorg":
-		var req models.ReorgPlanRequest
-		if err := decodeArgs(args, &req); err != nil {
-			return nil, true, err
-		}
-		plan, err := svc.Organizer.GenerateReorgPlan(ctx, req)
-		if err != nil {
-			return nil, true, err
-		}
-		res, err := jsonResult(plan)
-		return res, true, err
-
-	case "preview_consolidate_project":
-		preview, err := svc.Organizer.PreviewConsolidate(ctx, argUint(args, "project_id"), argString(args, "target_parent_dir"))
-		if err != nil {
-			return nil, true, err
-		}
-		res, err := jsonResult(preview)
-		return res, true, err
-
-	case "consolidate_project":
-		if confirm, _ := args["confirm"].(bool); !confirm {
-			return nil, true, fmt.Errorf("consolidate_project memindahkan folder: tampilkan preview_consolidate_project ke pengguna lalu panggil lagi dengan confirm=true")
-		}
-		result, err := svc.Organizer.Consolidate(ctx, argUint(args, "project_id"), argString(args, "target_parent_dir"), "http://127.0.0.1:8765")
-		if err != nil {
-			return nil, true, err
-		}
-		res, err := jsonResult(result)
-		return res, true, err
-
-	case "browse_directories":
-		r, err := svc.System.BrowseDirectories(ctx, argString(args, "path"), argString(args, "query"))
-		if err != nil {
-			return nil, true, err
-		}
-		res, err := jsonResult(r)
-		return res, true, err
-	}
-
-	return nil, false, nil
-}
-
 func (s *Server) latestDiagnostic(ctx context.Context, pid, cid uint) (*ToolCallResult, error) {
-	var diag models.Diagnostic
-	switch {
-	case cid > 0:
-		if err := s.db.Where("component_id = ?", cid).Order("created_at DESC").First(&diag).Error; err != nil {
-			report, err := s.services.Diagnostics.DiagnoseComponent(ctx, cid)
-			if err != nil {
-				return nil, err
-			}
-			diag = *report
-		}
-	case pid > 0:
-		if err := s.db.Where("project_id = ? AND (component_id IS NULL OR component_id = 0)", pid).Order("created_at DESC").First(&diag).Error; err != nil {
-			report, err := s.services.Diagnostics.DiagnoseProject(ctx, pid)
-			if err != nil {
-				return nil, err
-			}
-			diag = *report
-		}
-	default:
-		return nil, fmt.Errorf("project_id or component_id is required")
+	diag, err := s.loadOrRunDiagnostic(ctx, pid, cid)
+	if err != nil {
+		return nil, err
 	}
 
 	var findings []models.Finding
 	_ = json.Unmarshal([]byte(diag.FindingsJSON), &findings)
 	if cid == 0 {
-		var deep models.DeepCheckReport
-		if err := s.db.Where("project_id = ?", pid).Order("created_at desc").First(&deep).Error; err == nil && deep.FindingsJSON != "" {
-			var deepFindings []models.Finding
-			if json.Unmarshal([]byte(deep.FindingsJSON), &deepFindings) == nil {
-				findings = models.MergeFindings(findings, deepFindings)
-			}
-		}
+		findings = s.mergeDeepFindings(pid, findings)
 	}
 	findings = models.DeduplicateFindings(findings)
 	for i := range findings {
@@ -652,16 +371,7 @@ func (s *Server) latestDiagnostic(ctx context.Context, pid, cid uint) (*ToolCall
 	var optimizations []models.Optimization
 	_ = json.Unmarshal([]byte(diag.Optimizations), &optimizations)
 
-	severity := map[string]int{}
-	active := 0
-	for _, f := range findings {
-		if f.Status == models.FindingStatusIgnored || f.Status == models.FindingStatusResolved {
-			continue
-		}
-		active++
-		severity[strings.ToUpper(f.Severity)]++
-	}
-
+	severity, active := countActiveFindings(findings)
 	return jsonResult(map[string]interface{}{
 		"diagnostic_id":         diag.ID,
 		"score":                 diag.Score,
@@ -673,6 +383,59 @@ func (s *Server) latestDiagnostic(ctx context.Context, pid, cid uint) (*ToolCall
 		"active_findings_count": active,
 		"severity_counts":       severity,
 	})
+}
+
+// loadOrRunDiagnostic mengambil diagnostik terbaru komponen/proyek, atau menjalankannya bila belum ada.
+func (s *Server) loadOrRunDiagnostic(ctx context.Context, pid, cid uint) (models.Diagnostic, error) {
+	var diag models.Diagnostic
+	switch {
+	case cid > 0:
+		if err := s.db.Where("component_id = ?", cid).Order("created_at DESC").First(&diag).Error; err != nil {
+			report, err := s.services.Diagnostics.DiagnoseComponent(ctx, cid)
+			if err != nil {
+				return diag, err
+			}
+			diag = *report
+		}
+	case pid > 0:
+		if err := s.db.Where("project_id = ? AND (component_id IS NULL OR component_id = 0)", pid).Order("created_at DESC").First(&diag).Error; err != nil {
+			report, err := s.services.Diagnostics.DiagnoseProject(ctx, pid)
+			if err != nil {
+				return diag, err
+			}
+			diag = *report
+		}
+	default:
+		return diag, fmt.Errorf("project_id or component_id is required")
+	}
+	return diag, nil
+}
+
+// mergeDeepFindings menggabungkan temuan deep check terbaru proyek ke findings.
+func (s *Server) mergeDeepFindings(pid uint, findings []models.Finding) []models.Finding {
+	var deep models.DeepCheckReport
+	if err := s.db.Where("project_id = ?", pid).Order("created_at desc").First(&deep).Error; err != nil || deep.FindingsJSON == "" {
+		return findings
+	}
+	var deepFindings []models.Finding
+	if json.Unmarshal([]byte(deep.FindingsJSON), &deepFindings) != nil {
+		return findings
+	}
+	return models.MergeFindings(findings, deepFindings)
+}
+
+// countActiveFindings menghitung temuan aktif (bukan ignored/resolved) per severity.
+func countActiveFindings(findings []models.Finding) (map[string]int, int) {
+	severity := map[string]int{}
+	active := 0
+	for _, f := range findings {
+		if f.Status == models.FindingStatusIgnored || f.Status == models.FindingStatusResolved {
+			continue
+		}
+		active++
+		severity[strings.ToUpper(f.Severity)]++
+	}
+	return severity, active
 }
 
 func (s *Server) setFindingStatus(pid uint, findingID, status string) (*ToolCallResult, error) {
@@ -692,19 +455,7 @@ func (s *Server) setFindingStatus(pid uint, findingID, status string) (*ToolCall
 		return nil, fmt.Errorf("failed to parse findings: %w", err)
 	}
 	findings = models.DeduplicateFindings(findings)
-
-	found := false
-	for i := range findings {
-		if findings[i].ID == findingID || models.GenerateFindingKey(findings[i]) == findingID {
-			findings[i].Status = status
-			if findings[i].ID == "" {
-				findings[i].ID = models.GenerateFindingKey(findings[i])
-			}
-			found = true
-			break
-		}
-	}
-	if !found {
+	if !markFinding(findings, findingID, status) {
 		return nil, fmt.Errorf("finding %s not found in latest diagnostic", findingID)
 	}
 
@@ -719,4 +470,18 @@ func (s *Server) setFindingStatus(pid uint, findingID, status string) (*ToolCall
 	s.db.Model(&models.Project{}).Where("id = ?", pid).Update("health_score", diag.Score)
 
 	return jsonResult(map[string]interface{}{"finding_id": findingID, "status": status, "score": diag.Score})
+}
+
+// markFinding memberi status pada temuan yang cocok (menurut ID atau kunci turunan); false bila tak ada.
+func markFinding(findings []models.Finding, findingID, status string) bool {
+	for i := range findings {
+		if findings[i].ID == findingID || models.GenerateFindingKey(findings[i]) == findingID {
+			findings[i].Status = status
+			if findings[i].ID == "" {
+				findings[i].ID = models.GenerateFindingKey(findings[i])
+			}
+			return true
+		}
+	}
+	return false
 }

@@ -104,6 +104,21 @@ func (s *Server) codeMapProjectID(args map[string]interface{}) (uint, error) {
 	return match.Project.ID, nil
 }
 
+// codeMapHandler menjalankan satu tool peta kode untuk proyek pid yang sudah dipastikan.
+type codeMapHandler func(s *Server, pid uint, args map[string]interface{}) (*ToolCallResult, error)
+
+var codeMapToolHandlers = map[string]codeMapHandler{
+	"vibeasik_code_map_search":   (*Server).codeMapSearch,
+	"vibeasik_code_map_overview": (*Server).codeMapOverview,
+	"vibeasik_code_map_file":     (*Server).codeMapFile,
+	"vibeasik_code_map_build":    (*Server).codeMapBuild,
+	"vibeasik_code_map_export":   (*Server).codeMapExport,
+	"vibeasik_code_map_routes":   codeMapRoutes,
+	"vibeasik_code_map_status": func(s *Server, pid uint, _ map[string]interface{}) (*ToolCallResult, error) {
+		return s.codeMapStatus(pid)
+	},
+}
+
 // callCodeMapTool returns handled=false when name is not a code map tool.
 func (s *Server) callCodeMapTool(name string, args map[string]interface{}) (*ToolCallResult, bool, error) {
 	if !strings.HasPrefix(name, "vibeasik_code_map_") {
@@ -113,66 +128,75 @@ func (s *Server) callCodeMapTool(name string, args map[string]interface{}) (*Too
 	if err != nil {
 		return nil, true, err
 	}
-	var res *ToolCallResult
-	switch name {
-	case "vibeasik_code_map_search":
-		q, _ := args["query"].(string)
-		if strings.TrimSpace(q) == "" {
-			return nil, true, fmt.Errorf("query is required")
-		}
-		kind, _ := args["kind"].(string)
-		snippet, _ := args["snippet"].(bool)
-		limit := int(argUint(args, "limit"))
-		var hits []codemap.SearchHit
-		if hits, err = codemap.Search(s.db, pid, codemap.SearchOptions{Query: q, Kind: kind, ComponentID: argUint(args, "component_id"), Limit: limit, Snippet: snippet}); err == nil {
-			res, err = jsonResult(map[string]interface{}{"query": q, "hits": hits})
-		}
-	case "vibeasik_code_map_overview":
-		detail, _ := args["detail"].(string)
-		var ov *codemap.Overview
-		if ov, err = codemap.BuildOverview(s.db, pid, argUint(args, "component_id"), detail == "files"); err == nil {
-			res, err = jsonResult(ov)
-		}
-	case "vibeasik_code_map_file":
-		file, _ := args["file"].(string)
-		fd, candidates, ferr := codemap.File(s.db, pid, file)
-		switch {
-		case ferr != nil:
-			err = ferr
-		case len(candidates) > 1:
-			res, err = jsonResult(map[string]interface{}{"error": "ambiguous path, pick one", "candidates": candidates})
-		case fd == nil:
-			err = fmt.Errorf("berkas %q tidak ada di peta kode (coba vibeasik_code_map_search)", file)
-		default:
-			res, err = jsonResult(fd)
-		}
-	case "vibeasik_code_map_build":
-		force, _ := args["force"].(bool)
-		export, _ := args["export"].(bool)
-		if export && !force {
-			var sr *codemap.SyncResult
-			if sr, err = codemap.Sync(s.db, pid, false); err == nil {
-				res, err = jsonResult(sr)
-			}
-			break
-		}
-		var br *codemap.BuildResult
-		if br, err = codemap.Build(s.db, pid, force); err == nil {
-			res, err = jsonResult(br)
-		}
-	case "vibeasik_code_map_export":
-		var er *codemap.ExportResult
-		if er, err = codemap.Export(s.db, pid); err == nil {
-			res, err = jsonResult(er)
-		}
-	case "vibeasik_code_map_routes":
-		res, err = codeMapRoutes(s, pid, args)
-	case "vibeasik_code_map_status":
-		res, err = s.codeMapStatus(pid)
-	default:
+	h, ok := codeMapToolHandlers[name]
+	if !ok {
 		return nil, false, nil
 	}
+	res, err := h(s, pid, args)
 	return res, true, err
+}
+
+func (s *Server) codeMapSearch(pid uint, args map[string]interface{}) (*ToolCallResult, error) {
+	q, _ := args["query"].(string)
+	if strings.TrimSpace(q) == "" {
+		return nil, fmt.Errorf("query is required")
+	}
+	kind, _ := args["kind"].(string)
+	snippet, _ := args["snippet"].(bool)
+	limit := int(argUint(args, "limit"))
+	hits, err := codemap.Search(s.db, pid, codemap.SearchOptions{Query: q, Kind: kind, ComponentID: argUint(args, "component_id"), Limit: limit, Snippet: snippet})
+	if err != nil {
+		return nil, err
+	}
+	return jsonResult(map[string]interface{}{"query": q, "hits": hits})
+}
+
+func (s *Server) codeMapOverview(pid uint, args map[string]interface{}) (*ToolCallResult, error) {
+	detail, _ := args["detail"].(string)
+	ov, err := codemap.BuildOverview(s.db, pid, argUint(args, "component_id"), detail == "files")
+	if err != nil {
+		return nil, err
+	}
+	return jsonResult(ov)
+}
+
+func (s *Server) codeMapFile(pid uint, args map[string]interface{}) (*ToolCallResult, error) {
+	file, _ := args["file"].(string)
+	fd, candidates, err := codemap.File(s.db, pid, file)
+	switch {
+	case err != nil:
+		return nil, err
+	case len(candidates) > 1:
+		return jsonResult(map[string]interface{}{"error": "ambiguous path, pick one", "candidates": candidates})
+	case fd == nil:
+		return nil, fmt.Errorf("berkas %q tidak ada di peta kode (coba vibeasik_code_map_search)", file)
+	}
+	return jsonResult(fd)
+}
+
+func (s *Server) codeMapBuild(pid uint, args map[string]interface{}) (*ToolCallResult, error) {
+	force, _ := args["force"].(bool)
+	export, _ := args["export"].(bool)
+	if export && !force {
+		sr, err := codemap.Sync(s.db, pid, false)
+		if err != nil {
+			return nil, err
+		}
+		return jsonResult(sr)
+	}
+	br, err := codemap.Build(s.db, pid, force)
+	if err != nil {
+		return nil, err
+	}
+	return jsonResult(br)
+}
+
+func (s *Server) codeMapExport(pid uint, _ map[string]interface{}) (*ToolCallResult, error) {
+	er, err := codemap.Export(s.db, pid)
+	if err != nil {
+		return nil, err
+	}
+	return jsonResult(er)
 }
 
 func codeMapRoutes(s *Server, pid uint, args map[string]interface{}) (*ToolCallResult, error) {
