@@ -81,10 +81,8 @@ func (s *organizerService) GenerateReorgPlan(ctx context.Context, req models.Reo
 	}
 
 	filterMap := make(map[uint]bool)
-	if len(req.ProjectIDs) > 0 {
-		for _, id := range req.ProjectIDs {
-			filterMap[id] = true
-		}
+	for _, id := range req.ProjectIDs {
+		filterMap[id] = true
 	}
 
 	plan := &models.ReorgPlan{
@@ -97,145 +95,154 @@ func (s *organizerService) GenerateReorgPlan(ctx context.Context, req models.Reo
 		plan.Strategy = models.StrategyProductCentric
 	}
 
-	moveCounter := 1
-	var totalSize int64
-
+	planner := &reorgPlanner{plan: plan, targetDir: targetDir, moveCounter: 1}
 	for _, p := range projects {
 		if len(filterMap) > 0 && !filterMap[p.ID] {
 			continue
 		}
-
-		cleanBaseName := normalizeProjectName(p.Name)
-		if cleanBaseName == "" {
-			cleanBaseName = Slugify(p.Name)
-		}
-
-		// If project has components, plan move per component
-		if len(p.Components) > 0 {
-			for _, c := range p.Components {
-				srcPath := strings.TrimSpace(c.AbsolutePath)
-				if srcPath == "" || srcPath == "-" {
-					continue
-				}
-				srcPath = filepath.Clean(srcPath)
-
-				// Determine friendly subfolder name based on role
-				roleSub := "backend"
-				switch c.Role {
-				case models.RoleBackend:
-					roleSub = "backend"
-				case models.RoleFrontendAdmin:
-					roleSub = "frontend-admin"
-				case models.RoleFrontendClient:
-					roleSub = "frontend"
-				case models.RoleFrontendMobile:
-					roleSub = "mobile"
-				case models.RoleCLI:
-					roleSub = "cli"
-				case models.RoleWorker:
-					roleSub = "worker"
-				case models.RoleDocs:
-					roleSub = "docs"
-				default:
-					if strings.Contains(c.Role, "front") {
-						roleSub = "frontend"
-					} else if strings.Contains(c.Role, "mobile") {
-						roleSub = "mobile"
-					} else {
-						roleSub = Slugify(c.Name)
-					}
-				}
-
-				destPath := filepath.Join(targetDir, cleanBaseName, roleSub)
-				relTarget := filepath.Join(cleanBaseName, roleSub)
-
-				// If source is already at destination, skip
-				if srcPath == destPath {
-					continue
-				}
-
-				item := models.FolderMoveItem{
-					ID:                 fmt.Sprintf("move-%d", moveCounter),
-					ProjectID:          p.ID,
-					ProjectName:        p.Name,
-					ComponentID:        c.ID,
-					ComponentName:      c.Name,
-					Role:               c.Role,
-					CurrentPath:        srcPath,
-					TargetPath:         destPath,
-					RelativeTargetPath: relTarget,
-					Status:             "pending",
-				}
-				moveCounter++
-
-				if fi, err := os.Stat(srcPath); err == nil && fi.IsDir() {
-					item.SizeBytes = getFolderSize(srcPath)
-					totalSize += item.SizeBytes
-					item.IsGitRepo, item.HasUncommittedChanges = checkIsGitRepo(srcPath)
-					if item.HasUncommittedChanges {
-						item.Warning = "Ada uncommitted git changes pada folder ini. Disarankan git commit terlebih dahulu."
-					}
-				} else {
-					item.Status = "conflict"
-					item.Error = "Folder sumber tidak ditemukan di komputer: " + srcPath
-				}
-
-				if _, err := os.Stat(destPath); err == nil {
-					item.Status = "conflict"
-					item.Error = "Target folder sudah ada di komputer: " + destPath
-				}
-
-				plan.PlannedMoves = append(plan.PlannedMoves, item)
-			}
-		} else {
-			// Standalone single project folder
-			srcPath := strings.TrimSpace(p.RootPath)
-			if srcPath == "" || srcPath == "-" {
-				continue
-			}
-			srcPath = filepath.Clean(srcPath)
-			destPath := filepath.Join(targetDir, cleanBaseName)
-
-			if srcPath == destPath {
-				continue
-			}
-
-			item := models.FolderMoveItem{
-				ID:                 fmt.Sprintf("move-%d", moveCounter),
-				ProjectID:          p.ID,
-				ProjectName:        p.Name,
-				CurrentPath:        srcPath,
-				TargetPath:         destPath,
-				RelativeTargetPath: cleanBaseName,
-				Status:             "pending",
-			}
-			moveCounter++
-
-			if fi, err := os.Stat(srcPath); err == nil && fi.IsDir() {
-				item.SizeBytes = getFolderSize(srcPath)
-				totalSize += item.SizeBytes
-				item.IsGitRepo, item.HasUncommittedChanges = checkIsGitRepo(srcPath)
-				if item.HasUncommittedChanges {
-					item.Warning = "Ada uncommitted git changes pada folder ini."
-				}
-			} else {
-				item.Status = "conflict"
-				item.Error = "Folder sumber tidak ditemukan di komputer: " + srcPath
-			}
-
-			if _, err := os.Stat(destPath); err == nil {
-				item.Status = "conflict"
-				item.Error = "Target folder sudah ada di komputer: " + destPath
-			}
-
-			plan.PlannedMoves = append(plan.PlannedMoves, item)
-		}
+		planner.planProject(p)
 	}
 
 	plan.TotalItems = len(plan.PlannedMoves)
-	plan.TotalSize = totalSize
+	plan.TotalSize = planner.totalSize
+	plan.GeneratedScript = buildReorgScript(plan.PlannedMoves, targetDir)
 
-	// Generate executable bash script as a safe, transparent alternative
+	return plan, nil
+}
+
+// reorgPlanner mengakumulasi langkah pemindahan ke dalam satu ReorgPlan.
+type reorgPlanner struct {
+	plan        *models.ReorgPlan
+	targetDir   string
+	moveCounter int
+	totalSize   int64
+}
+
+func (pl *reorgPlanner) nextID() string {
+	id := fmt.Sprintf("move-%d", pl.moveCounter)
+	pl.moveCounter++
+	return id
+}
+
+func (pl *reorgPlanner) planProject(p models.Project) {
+	cleanBaseName := normalizeProjectName(p.Name)
+	if cleanBaseName == "" {
+		cleanBaseName = Slugify(p.Name)
+	}
+	if len(p.Components) > 0 {
+		for _, c := range p.Components {
+			pl.planComponent(p, c, cleanBaseName)
+		}
+		return
+	}
+	pl.planStandalone(p, cleanBaseName)
+}
+
+func (pl *reorgPlanner) planComponent(p models.Project, c models.Component, cleanBaseName string) {
+	srcPath := strings.TrimSpace(c.AbsolutePath)
+	if srcPath == "" || srcPath == "-" {
+		return
+	}
+	srcPath = filepath.Clean(srcPath)
+
+	roleSub := reorgRoleSubfolder(c)
+	destPath := filepath.Join(pl.targetDir, cleanBaseName, roleSub)
+	if srcPath == destPath {
+		return
+	}
+
+	item := models.FolderMoveItem{
+		ID:                 pl.nextID(),
+		ProjectID:          p.ID,
+		ProjectName:        p.Name,
+		ComponentID:        c.ID,
+		ComponentName:      c.Name,
+		Role:               c.Role,
+		CurrentPath:        srcPath,
+		TargetPath:         destPath,
+		RelativeTargetPath: filepath.Join(cleanBaseName, roleSub),
+		Status:             "pending",
+	}
+	pl.assessAndAppend(item, "Ada uncommitted git changes pada folder ini. Disarankan git commit terlebih dahulu.")
+}
+
+func (pl *reorgPlanner) planStandalone(p models.Project, cleanBaseName string) {
+	srcPath := strings.TrimSpace(p.RootPath)
+	if srcPath == "" || srcPath == "-" {
+		return
+	}
+	srcPath = filepath.Clean(srcPath)
+	destPath := filepath.Join(pl.targetDir, cleanBaseName)
+	if srcPath == destPath {
+		return
+	}
+
+	item := models.FolderMoveItem{
+		ID:                 pl.nextID(),
+		ProjectID:          p.ID,
+		ProjectName:        p.Name,
+		CurrentPath:        srcPath,
+		TargetPath:         destPath,
+		RelativeTargetPath: cleanBaseName,
+		Status:             "pending",
+	}
+	pl.assessAndAppend(item, "Ada uncommitted git changes pada folder ini.")
+}
+
+// assessAndAppend memeriksa kondisi disk sumber/tujuan, lalu menambahkan item ke rencana.
+func (pl *reorgPlanner) assessAndAppend(item models.FolderMoveItem, dirtyWarning string) {
+	if isDirPath(item.CurrentPath) {
+		item.SizeBytes = getFolderSize(item.CurrentPath)
+		pl.totalSize += item.SizeBytes
+		item.IsGitRepo, item.HasUncommittedChanges = checkIsGitRepo(item.CurrentPath)
+		if item.HasUncommittedChanges {
+			item.Warning = dirtyWarning
+		}
+	} else {
+		item.Status = "conflict"
+		item.Error = "Folder sumber tidak ditemukan di komputer: " + item.CurrentPath
+	}
+	if _, err := os.Stat(item.TargetPath); err == nil {
+		item.Status = "conflict"
+		item.Error = "Target folder sudah ada di komputer: " + item.TargetPath
+	}
+	pl.plan.PlannedMoves = append(pl.plan.PlannedMoves, item)
+}
+
+// roleSubfolders memetakan peran komponen ke nama subfolder target.
+var roleSubfolders = map[string]string{
+	models.RoleBackend:        "backend",
+	models.RoleFrontendClient: "frontend",
+	models.RoleFrontendAdmin:  "frontend-admin",
+	models.RoleFrontendMobile: "mobile",
+	models.RoleDocs:           "docs",
+	models.RoleCLI:            "cli",
+	models.RoleWorker:         "worker",
+}
+
+// roleSubfolder mengembalikan subfolder untuk peran yang dikenal atau yang
+// mengandung "front"/"mobile"; ok=false bila perlu memakai nama komponen.
+func roleSubfolder(role string) (string, bool) {
+	if sub, ok := roleSubfolders[role]; ok {
+		return sub, true
+	}
+	if strings.Contains(role, "front") {
+		return "frontend", true
+	}
+	if strings.Contains(role, "mobile") {
+		return "mobile", true
+	}
+	return "", false
+}
+
+func reorgRoleSubfolder(c models.Component) string {
+	if sub, ok := roleSubfolder(c.Role); ok {
+		return sub
+	}
+	return Slugify(c.Name)
+}
+
+func buildReorgScript(moves []models.FolderMoveItem, targetDir string) string {
 	var sb strings.Builder
 	sb.WriteString("#!/usr/bin/env bash\n")
 	sb.WriteString("# vibeasik Workspace Reorganization Script\n")
@@ -245,7 +252,7 @@ func (s *organizerService) GenerateReorgPlan(ctx context.Context, req models.Reo
 	sb.WriteString("echo '=== Memulai Reorganisasi Folder Proyek vibeasik ==='\n")
 	sb.WriteString("mkdir -p \"" + targetDir + "\"\n\n")
 
-	for _, m := range plan.PlannedMoves {
+	for _, m := range moves {
 		if m.Status == "conflict" {
 			sb.WriteString("# [DILEWATI KARENA KONFLIK] " + m.CurrentPath + " -> " + m.TargetPath + "\n")
 			sb.WriteString("# Alasan: " + m.Error + "\n\n")
@@ -266,9 +273,7 @@ func (s *organizerService) GenerateReorgPlan(ctx context.Context, req models.Reo
 	}
 
 	sb.WriteString("echo '=== Reorganisasi Selesai! Silakan sinkronkan path di vibeasik. ==='\n")
-	plan.GeneratedScript = sb.String()
-
-	return plan, nil
+	return sb.String()
 }
 
 func moveOrCopy(src, dst string) error {
@@ -301,37 +306,9 @@ func (s *organizerService) ExecuteMoves(ctx context.Context, payload models.Exec
 		src := filepath.Clean(m.CurrentPath)
 		dst := filepath.Clean(m.TargetPath)
 
-		// Verification
-		fi, err := os.Stat(src)
-		if err != nil || !fi.IsDir() {
-			m.Status = "failed"
-			m.Error = "Folder sumber tidak ada di disk: " + src
-			result.FailedCount++
-			result.Moves = append(result.Moves, m)
-			continue
-		}
-
-		if _, err := os.Stat(dst); err == nil {
-			m.Status = "conflict"
-			m.Error = "Folder tujuan sudah ada di disk: " + dst
-			result.FailedCount++
-			result.Moves = append(result.Moves, m)
-			continue
-		}
-
-		// Ensure parent exists
-		if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
-			m.Status = "failed"
-			m.Error = "Gagal membuat direktori induk tujuan: " + err.Error()
-			result.FailedCount++
-			result.Moves = append(result.Moves, m)
-			continue
-		}
-
-		// Perform move
-		if err := moveOrCopy(src, dst); err != nil {
-			m.Status = "failed"
-			m.Error = "Gagal memindahkan folder: " + err.Error()
+		if status, msg := performMove(src, dst); status != "success" {
+			m.Status = status
+			m.Error = msg
 			result.FailedCount++
 			result.Moves = append(result.Moves, m)
 			continue
@@ -341,28 +318,9 @@ func (s *organizerService) ExecuteMoves(ctx context.Context, payload models.Exec
 		m.Error = ""
 		result.SuccessCount++
 
-		// Update Database if requested
 		if payload.UpdateDB {
-			if m.ComponentID > 0 {
-				comp, err := s.componentRepo.FindByID(ctx, m.ComponentID)
-				if err == nil && comp != nil {
-					comp.AbsolutePath = dst
-					comp.RelativePath = filepath.Base(dst)
-					_ = s.componentRepo.Update(ctx, comp)
-				}
-			}
-			if m.ProjectID > 0 {
-				p, err := s.projectRepo.FindByID(ctx, m.ProjectID)
-				if err == nil && p != nil {
-					// If project has no components or this was the root
-					if len(p.Components) <= 1 || p.RootPath == src {
-						p.RootPath = filepath.Dir(dst)
-						_ = s.projectRepo.Update(ctx, p)
-					}
-				}
-			}
+			s.syncMovedPaths(ctx, m, src, dst)
 		}
-
 		result.Moves = append(result.Moves, m)
 	}
 
@@ -370,34 +328,55 @@ func (s *organizerService) ExecuteMoves(ctx context.Context, payload models.Exec
 	return result, nil
 }
 
-func getComponentSubfolder(c models.Component) string {
-	switch c.Role {
-	case models.RoleBackend:
-		return "backend"
-	case models.RoleFrontendClient:
-		return "frontend"
-	case models.RoleFrontendAdmin:
-		return "frontend-admin"
-	case models.RoleFrontendMobile:
-		return "mobile"
-	case models.RoleDocs:
-		return "docs"
-	case models.RoleCLI:
-		return "cli"
-	case models.RoleWorker:
-		return "worker"
-	default:
-		if strings.Contains(c.Role, "front") {
-			return "frontend"
-		} else if strings.Contains(c.Role, "mobile") {
-			return "mobile"
-		}
-		clean := Slugify(c.Name)
-		if clean == "" {
-			clean = fmt.Sprintf("component-%d", c.ID)
-		}
-		return clean
+// performMove memverifikasi lalu memindahkan src ke dst. Mengembalikan status
+// "success", atau status gagal ("failed"/"conflict") beserta pesan galatnya.
+func performMove(src, dst string) (status, errMsg string) {
+	if !isDirPath(src) {
+		return "failed", "Folder sumber tidak ada di disk: " + src
 	}
+	if _, err := os.Stat(dst); err == nil {
+		return "conflict", "Folder tujuan sudah ada di disk: " + dst
+	}
+	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+		return "failed", "Gagal membuat direktori induk tujuan: " + err.Error()
+	}
+	if err := moveOrCopy(src, dst); err != nil {
+		return "failed", "Gagal memindahkan folder: " + err.Error()
+	}
+	return "success", ""
+}
+
+// syncMovedPaths memperbarui path komponen dan root proyek di database setelah pemindahan.
+func (s *organizerService) syncMovedPaths(ctx context.Context, m models.FolderMoveItem, src, dst string) {
+	if m.ComponentID > 0 {
+		comp, err := s.componentRepo.FindByID(ctx, m.ComponentID)
+		if err == nil && comp != nil {
+			comp.AbsolutePath = dst
+			comp.RelativePath = filepath.Base(dst)
+			_ = s.componentRepo.Update(ctx, comp)
+		}
+	}
+	if m.ProjectID > 0 {
+		p, err := s.projectRepo.FindByID(ctx, m.ProjectID)
+		if err == nil && p != nil {
+			// If project has no components or this was the root
+			if len(p.Components) <= 1 || p.RootPath == src {
+				p.RootPath = filepath.Dir(dst)
+				_ = s.projectRepo.Update(ctx, p)
+			}
+		}
+	}
+}
+
+func getComponentSubfolder(c models.Component) string {
+	if sub, ok := roleSubfolder(c.Role); ok {
+		return sub
+	}
+	clean := Slugify(c.Name)
+	if clean == "" {
+		clean = fmt.Sprintf("component-%d", c.ID)
+	}
+	return clean
 }
 
 func (s *organizerService) GetWorkspaceSettings(ctx context.Context) (*models.WorkspaceSettings, error) {
@@ -544,16 +523,7 @@ func (s *organizerService) PreviewConsolidate(ctx context.Context, projectID uin
 		return nil, fmt.Errorf("project not found (ID: %d)", projectID)
 	}
 
-	targetParentDir = strings.TrimSpace(targetParentDir)
-	if targetParentDir == "" {
-		ws, _ := s.GetWorkspaceSettings(ctx)
-		if ws != nil && ws.DefaultProjectsRoot != "" {
-			targetParentDir = ws.DefaultProjectsRoot
-		} else {
-			targetParentDir = models.DefaultProjectsRoot()
-		}
-	}
-	targetParentDir = filepath.Clean(targetParentDir)
+	targetParentDir = s.resolveConsolidateParent(ctx, targetParentDir)
 
 	slug := p.Slug
 	if slug == "" {
@@ -576,107 +546,147 @@ func (s *organizerService) PreviewConsolidate(ctx context.Context, projectID uin
 		CanConsolidate:   true,
 	}
 
-	usedSubfolders := make(map[string]int)
 	var totalSize int64
-
 	if len(p.Components) > 0 {
-		sources := groupConsolidateSources(p.Components)
-		// targetOf menyimpan tujuan setiap folder sumber agar komponen bersarang (folder di dalam komponen lain)
-		// ikut pindah bersama induknya alih-alih dipindahkan dua kali.
-		targetOf := map[string]string{}
-		for i, src := range sources {
-			c := src.components[0]
-			item := models.FolderMoveItem{
-				ID:            fmt.Sprintf("item-%d", i+1),
-				ProjectID:     p.ID,
-				ProjectName:   p.Name,
-				ComponentID:   c.ID,
-				ComponentName: c.Name,
-				Role:          c.Role,
-				CurrentPath:   src.path,
-				Status:        "pending",
-			}
-			for _, dup := range src.components {
-				item.ComponentIDs = append(item.ComponentIDs, dup.ID)
-			}
-			if len(src.components) > 1 {
-				names := make([]string, 0, len(src.components)-1)
-				for _, dup := range src.components[1:] {
-					names = append(names, dup.Name)
-				}
-				item.Warning = fmt.Sprintf("Folder ini juga dipakai komponen %s; dipindahkan sekali untuk semuanya.", strings.Join(names, ", "))
-			}
-
-			parent := ""
-			for _, other := range sources {
-				if pathWithin(other.path, src.path) && (parent == "" || len(other.path) > len(parent)) {
-					parent = other.path
-				}
-			}
-			if parent != "" {
-				// Diselesaikan setelah semua induk punya tujuan (lihat di bawah).
-				item.Status = "moves_with_parent"
-				item.Warning = "Berada di dalam folder komponen lain; ikut pindah bersama induknya."
-				item.Error = parent
-				preview.Items = append(preview.Items, item)
-				continue
-			}
-
-			subfolder := getComponentSubfolder(c)
-			usedSubfolders[subfolder]++
-			if usedSubfolders[subfolder] > 1 {
-				subfolder = fmt.Sprintf("%s-%s", subfolder, Slugify(c.Name))
-			}
-			item.TargetPath = filepath.Join(projectTargetDir, subfolder)
-			item.RelativeTargetPath = filepath.Join(slug, subfolder)
-			targetOf[src.path] = item.TargetPath
-
-			warning := item.Warning
-			if assessConsolidateMove(&item, p.ID) {
-				preview.HasConflict = true
-				preview.CanConsolidate = false
-			}
-			if warning != "" && item.Warning != warning {
-				item.Warning = strings.TrimSpace(warning + " " + item.Warning)
-			}
-			totalSize += item.SizeBytes
-			preview.Items = append(preview.Items, item)
-		}
-		for i := range preview.Items {
-			item := &preview.Items[i]
-			if item.Status != "moves_with_parent" {
-				continue
-			}
-			parent := item.Error
-			item.Error = ""
-			rel, _ := filepath.Rel(parent, item.CurrentPath)
-			item.TargetPath = filepath.Join(targetOf[parent], rel)
-			item.RelativeTargetPath, _ = filepath.Rel(targetParentDir, item.TargetPath)
-		}
+		totalSize = previewComponentMoves(preview, p, slug)
 	} else {
-		// Standalone project without components
-		srcPath := strings.TrimSpace(p.RootPath)
-		if srcPath != "" && srcPath != "-" {
-			item := models.FolderMoveItem{
-				ID:                 "item-1",
-				ProjectID:          p.ID,
-				ProjectName:        p.Name,
-				CurrentPath:        filepath.Clean(srcPath),
-				TargetPath:         projectTargetDir,
-				RelativeTargetPath: slug,
-				Status:             "pending",
-			}
-			if assessConsolidateMove(&item, p.ID) {
-				preview.HasConflict = true
-				preview.CanConsolidate = false
-			}
-			totalSize += item.SizeBytes
-			preview.Items = append(preview.Items, item)
-		}
+		totalSize = previewStandaloneMove(preview, p, slug)
 	}
 
 	preview.TotalSizeBytes = totalSize
 	return preview, nil
+}
+
+func (s *organizerService) resolveConsolidateParent(ctx context.Context, targetParentDir string) string {
+	targetParentDir = strings.TrimSpace(targetParentDir)
+	if targetParentDir == "" {
+		ws, _ := s.GetWorkspaceSettings(ctx)
+		if ws != nil && ws.DefaultProjectsRoot != "" {
+			targetParentDir = ws.DefaultProjectsRoot
+		} else {
+			targetParentDir = models.DefaultProjectsRoot()
+		}
+	}
+	return filepath.Clean(targetParentDir)
+}
+
+// previewStandaloneMove menyusun item tunggal untuk proyek tanpa komponen.
+func previewStandaloneMove(preview *models.ConsolidatePreview, p *models.Project, slug string) int64 {
+	srcPath := strings.TrimSpace(p.RootPath)
+	if srcPath == "" || srcPath == "-" {
+		return 0
+	}
+	item := models.FolderMoveItem{
+		ID:                 "item-1",
+		ProjectID:          p.ID,
+		ProjectName:        p.Name,
+		CurrentPath:        filepath.Clean(srcPath),
+		TargetPath:         preview.ProjectTargetDir,
+		RelativeTargetPath: slug,
+		Status:             "pending",
+	}
+	if assessConsolidateMove(&item, p.ID) {
+		preview.HasConflict = true
+		preview.CanConsolidate = false
+	}
+	preview.Items = append(preview.Items, item)
+	return item.SizeBytes
+}
+
+// newConsolidateItem membuat item awal untuk satu folder sumber (beserta komponen kembarannya).
+func newConsolidateItem(p *models.Project, idx int, src consolidateSource) models.FolderMoveItem {
+	c := src.components[0]
+	item := models.FolderMoveItem{
+		ID:            fmt.Sprintf("item-%d", idx+1),
+		ProjectID:     p.ID,
+		ProjectName:   p.Name,
+		ComponentID:   c.ID,
+		ComponentName: c.Name,
+		Role:          c.Role,
+		CurrentPath:   src.path,
+		Status:        "pending",
+	}
+	for _, dup := range src.components {
+		item.ComponentIDs = append(item.ComponentIDs, dup.ID)
+	}
+	if len(src.components) > 1 {
+		names := make([]string, 0, len(src.components)-1)
+		for _, dup := range src.components[1:] {
+			names = append(names, dup.Name)
+		}
+		item.Warning = fmt.Sprintf("Folder ini juga dipakai komponen %s; dipindahkan sekali untuk semuanya.", strings.Join(names, ", "))
+	}
+	return item
+}
+
+// enclosingSourcePath mencari folder komponen terdalam yang memuat src ("" bila tidak ada).
+func enclosingSourcePath(sources []consolidateSource, src consolidateSource) string {
+	parent := ""
+	for _, other := range sources {
+		if pathWithin(other.path, src.path) && (parent == "" || len(other.path) > len(parent)) {
+			parent = other.path
+		}
+	}
+	return parent
+}
+
+// previewComponentMoves menyusun item per folder sumber komponen dan mengembalikan total ukuran.
+func previewComponentMoves(preview *models.ConsolidatePreview, p *models.Project, slug string) int64 {
+	var totalSize int64
+	usedSubfolders := make(map[string]int)
+	sources := groupConsolidateSources(p.Components)
+	// targetOf menyimpan tujuan setiap folder sumber agar komponen bersarang (folder di dalam komponen lain)
+	// ikut pindah bersama induknya alih-alih dipindahkan dua kali.
+	targetOf := map[string]string{}
+	for i, src := range sources {
+		item := newConsolidateItem(p, i, src)
+
+		if parent := enclosingSourcePath(sources, src); parent != "" {
+			// Diselesaikan setelah semua induk punya tujuan (lihat resolveNestedTargets).
+			item.Status = "moves_with_parent"
+			item.Warning = "Berada di dalam folder komponen lain; ikut pindah bersama induknya."
+			item.Error = parent
+			preview.Items = append(preview.Items, item)
+			continue
+		}
+
+		subfolder := getComponentSubfolder(src.components[0])
+		usedSubfolders[subfolder]++
+		if usedSubfolders[subfolder] > 1 {
+			subfolder = fmt.Sprintf("%s-%s", subfolder, Slugify(src.components[0].Name))
+		}
+		item.TargetPath = filepath.Join(preview.ProjectTargetDir, subfolder)
+		item.RelativeTargetPath = filepath.Join(slug, subfolder)
+		targetOf[src.path] = item.TargetPath
+
+		warning := item.Warning
+		if assessConsolidateMove(&item, p.ID) {
+			preview.HasConflict = true
+			preview.CanConsolidate = false
+		}
+		if warning != "" && item.Warning != warning {
+			item.Warning = strings.TrimSpace(warning + " " + item.Warning)
+		}
+		totalSize += item.SizeBytes
+		preview.Items = append(preview.Items, item)
+	}
+	resolveNestedTargets(preview, targetOf)
+	return totalSize
+}
+
+// resolveNestedTargets mengisi tujuan item "moves_with_parent" dari tujuan induknya.
+func resolveNestedTargets(preview *models.ConsolidatePreview, targetOf map[string]string) {
+	for i := range preview.Items {
+		item := &preview.Items[i]
+		if item.Status != "moves_with_parent" {
+			continue
+		}
+		parent := item.Error
+		item.Error = ""
+		rel, _ := filepath.Rel(parent, item.CurrentPath)
+		item.TargetPath = filepath.Join(targetOf[parent], rel)
+		item.RelativeTargetPath, _ = filepath.Rel(preview.TargetParentDir, item.TargetPath)
+	}
 }
 
 // relocateVibeasikDirs memindahkan isi folder .vibeasik/ (peta kode, base_knowledge, cache) dari folder komponen ke
@@ -700,24 +710,30 @@ func relocateVibeasikDirs(root string, dirs []string) []string {
 		if err := os.MkdirAll(dstDir, 0o755); err != nil {
 			return append(warnings, fmt.Sprintf("gagal membuat %s: %v", dstDir, err))
 		}
-		for _, e := range entries {
-			from := filepath.Join(srcDir, e.Name())
-			switch e.Name() {
-			case "CODEMAP.md", "codemap.jsonl":
-				_ = os.Remove(from)
-				continue
-			}
-			to := filepath.Join(dstDir, e.Name())
-			if _, err := os.Stat(to); err == nil {
-				continue
-			}
-			if err := os.Rename(from, to); err != nil {
-				warnings = append(warnings, fmt.Sprintf("gagal memindahkan %s ke root: %v", from, err))
-			}
-		}
+		warnings = append(warnings, moveVibeasikEntries(srcDir, dstDir, entries)...)
 		// Hanya dihapus bila sudah kosong; sisa berkas (duplikat yang sudah ada di root) dibiarkan.
 		if err := os.Remove(srcDir); err != nil && !os.IsNotExist(err) {
 			warnings = append(warnings, fmt.Sprintf("%s tidak kosong, dibiarkan (berkas yang sama sudah ada di root)", srcDir))
+		}
+	}
+	return warnings
+}
+
+// moveVibeasikEntries memindahkan isi srcDir ke dstDir tanpa menimpa; peta kode lama dibuang.
+func moveVibeasikEntries(srcDir, dstDir string, entries []os.DirEntry) []string {
+	var warnings []string
+	for _, e := range entries {
+		from := filepath.Join(srcDir, e.Name())
+		if e.Name() == "CODEMAP.md" || e.Name() == "codemap.jsonl" {
+			_ = os.Remove(from)
+			continue
+		}
+		to := filepath.Join(dstDir, e.Name())
+		if _, err := os.Stat(to); err == nil {
+			continue
+		}
+		if err := os.Rename(from, to); err != nil {
+			warnings = append(warnings, fmt.Sprintf("gagal memindahkan %s ke root: %v", from, err))
 		}
 	}
 	return warnings
@@ -738,39 +754,13 @@ func (s *organizerService) Consolidate(ctx context.Context, projectID uint, targ
 		return nil, fmt.Errorf("gagal membuat direktori proyek induk (%s): %w", preview.ProjectTargetDir, err)
 	}
 
-	// Path komponen disimpan segera setelah foldernya dipindah, agar database tidak tertinggal dari isi disk bila
-	// pemindahan berikutnya gagal (penyatuan ulang lalu mengenali folder yang sudah di target).
-	savePaths := func(item models.FolderMoveItem) error {
-		for _, cid := range item.ComponentIDs {
-			if err := s.componentRepo.UpdateFields(ctx, cid, map[string]interface{}{
-				"absolute_path": item.TargetPath,
-				"relative_path": filepath.ToSlash(item.RelativeTargetPath),
-			}); err != nil {
-				return fmt.Errorf("folder %s sudah dipindah ke %s tetapi path komponen #%d gagal disimpan: %w", item.CurrentPath, item.TargetPath, cid, err)
-			}
-		}
-		return nil
-	}
-
-	var movedItems []models.FolderMoveItem
-	movedCount := 0
-
-	for _, item := range preview.Items {
-		if item.Status == "pending" {
-			if err := os.MkdirAll(filepath.Dir(item.TargetPath), 0755); err != nil {
-				return nil, fmt.Errorf("gagal membuat folder tujuan %s: %w", item.TargetPath, err)
-			}
-			if err := moveOrCopy(item.CurrentPath, item.TargetPath); err != nil {
-				return nil, fmt.Errorf("gagal memindahkan %s ke %s: %w", item.CurrentPath, item.TargetPath, err)
-			}
-			item.Status = "success"
-			movedCount++
-		}
-		movedItems = append(movedItems, item)
+	movedItems, movedCount, err := moveConsolidateItems(preview.Items)
+	if err != nil {
+		return nil, err
 	}
 	// Komponen bersarang baru ada di tujuannya setelah induknya pindah, jadi path disimpan setelah semua pemindahan.
 	for _, item := range movedItems {
-		if err := savePaths(item); err != nil {
+		if err := s.saveComponentPaths(ctx, item); err != nil {
 			return nil, err
 		}
 	}
@@ -788,22 +778,9 @@ func (s *organizerService) Consolidate(ctx context.Context, projectID uint, targ
 		compDirs = append(compDirs, item.TargetPath)
 	}
 	warnings := relocateVibeasikDirs(preview.ProjectTargetDir, compDirs)
+	linkedFiles, codeMapMarkdown, warnings := s.initUnifiedWorkspace(projectID, apiBase, warnings)
 
-	var linkedFiles []string
-	codeMapMarkdown := ""
-	if s.db != nil {
-		if init, err := workspace.InitProject(s.db, projectID, apiBase); err != nil {
-			warnings = append(warnings, "Init vibeasik di root gagal: "+err.Error())
-			if created, _, linkErr := workspace.LinkProjectWorkspaces(s.db, projectID, 0, apiBase); linkErr == nil {
-				linkedFiles = created
-			}
-		} else {
-			linkedFiles = init.FilesCreated
-			codeMapMarkdown = init.CodeMapMarkdown
-		}
-	}
-
-	result := &models.ConsolidateResult{
+	return &models.ConsolidateResult{
 		Success:         true,
 		Message:         fmt.Sprintf("Proyek '%s' berhasil disatukan ke dalam %s; peta kode & tautan AI kini berada di root folder induk.", preview.ProjectName, preview.ProjectTargetDir),
 		ProjectID:       preview.ProjectID,
@@ -815,7 +792,55 @@ func (s *organizerService) Consolidate(ctx context.Context, projectID uint, targ
 		LinkedFiles:     linkedFiles,
 		CodeMapMarkdown: codeMapMarkdown,
 		Warnings:        warnings,
-	}
+	}, nil
+}
 
-	return result, nil
+// moveConsolidateItems memindahkan item berstatus "pending" dan mengembalikan semua item (status diperbarui).
+func moveConsolidateItems(items []models.FolderMoveItem) ([]models.FolderMoveItem, int, error) {
+	var movedItems []models.FolderMoveItem
+	movedCount := 0
+	for _, item := range items {
+		if item.Status == "pending" {
+			if err := os.MkdirAll(filepath.Dir(item.TargetPath), 0755); err != nil {
+				return nil, 0, fmt.Errorf("gagal membuat folder tujuan %s: %w", item.TargetPath, err)
+			}
+			if err := moveOrCopy(item.CurrentPath, item.TargetPath); err != nil {
+				return nil, 0, fmt.Errorf("gagal memindahkan %s ke %s: %w", item.CurrentPath, item.TargetPath, err)
+			}
+			item.Status = "success"
+			movedCount++
+		}
+		movedItems = append(movedItems, item)
+	}
+	return movedItems, movedCount, nil
+}
+
+// saveComponentPaths menyimpan path komponen setelah foldernya dipindah, agar database tidak tertinggal dari isi
+// disk bila pemindahan berikutnya gagal (penyatuan ulang lalu mengenali folder yang sudah di target).
+func (s *organizerService) saveComponentPaths(ctx context.Context, item models.FolderMoveItem) error {
+	for _, cid := range item.ComponentIDs {
+		if err := s.componentRepo.UpdateFields(ctx, cid, map[string]interface{}{
+			"absolute_path": item.TargetPath,
+			"relative_path": filepath.ToSlash(item.RelativeTargetPath),
+		}); err != nil {
+			return fmt.Errorf("folder %s sudah dipindah ke %s tetapi path komponen #%d gagal disimpan: %w", item.CurrentPath, item.TargetPath, cid, err)
+		}
+	}
+	return nil
+}
+
+// initUnifiedWorkspace menjalankan Init vibeasik di root proyek tersatukan (bila db tersedia).
+func (s *organizerService) initUnifiedWorkspace(projectID uint, apiBase string, warnings []string) (linkedFiles []string, codeMap string, out []string) {
+	if s.db == nil {
+		return nil, "", warnings
+	}
+	init, err := workspace.InitProject(s.db, projectID, apiBase)
+	if err == nil {
+		return init.FilesCreated, init.CodeMapMarkdown, warnings
+	}
+	warnings = append(warnings, "Init vibeasik di root gagal: "+err.Error())
+	if created, _, linkErr := workspace.LinkProjectWorkspaces(s.db, projectID, 0, apiBase); linkErr == nil {
+		linkedFiles = created
+	}
+	return linkedFiles, "", warnings
 }
