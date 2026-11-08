@@ -14,6 +14,7 @@ import (
 	"github.com/vibeasik/vibeasik/pkg/models"
 	"github.com/vibeasik/vibeasik/pkg/registry"
 	"github.com/vibeasik/vibeasik/pkg/security"
+	"github.com/vibeasik/vibeasik/pkg/setup"
 )
 
 // Kirim otomatis pengetahuan berguna. Rancangan: vibeasik-docs/docs/KNOWLEDGE_AUTO_CONTRIBUTE.md.
@@ -79,10 +80,15 @@ func SetMode(m Mode) error {
 	return saveState(st)
 }
 
-// HasConsent true bila versi S&K terbaru sudah disetujui.
+// HasConsent true bila pengguna pernah menyetujui S&K, di wizard penyiapan awal atau di Setting.
+// Persetujuan awal tetap berlaku saat ConsentVersion naik: pembaruan ketentuan tidak meminta persetujuan
+// ulang (keputusan pemilik 2026-11-08). Versi yang disetujui tetap tercatat apa adanya untuk riwayat.
 func HasConsent() bool {
 	st := LoadState()
-	return st.ConsentVersion == ConsentVersion && !st.ConsentAt.IsZero()
+	if !st.ConsentAt.IsZero() {
+		return true
+	}
+	return !setup.Load().TermsAt.IsZero()
 }
 
 // Consent mencatat persetujuan S&K versi saat ini.

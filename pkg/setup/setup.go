@@ -55,8 +55,8 @@ func save(s State) error {
 }
 
 // Complete true bila penyiapan awal pernah diselesaikan. Penyiapan hanya sekali per komputer:
-// versi ketentuan yang lebih baru tidak membuka wizard (dan pilihan database) lagi; persetujuan
-// ulang ketentuan Pusat Pengetahuan diminta di Setting (knowledgesync punya pencatatan versinya sendiri).
+// versi ketentuan yang lebih baru tidak membuka wizard (dan pilihan database) lagi, dan persetujuan
+// awal tetap berlaku untuk Pusat Pengetahuan (lihat knowledgesync.HasConsent).
 func Complete() bool {
 	return !Load().CompletedAt.IsZero()
 }
@@ -101,11 +101,12 @@ func MarkDatabase() error {
 }
 
 // Finish menandai penyiapan selesai. Persetujuan ketentuan dan pilihan database wajib sudah ada.
-func Finish(termsVersion string) error {
+func Finish(_ string) error {
 	mu.Lock()
 	defer mu.Unlock()
 	s := load()
-	if s.TermsVersion != termsVersion || s.TermsAt.IsZero() {
+	// Versi yang disetujui boleh lebih lama (engine diperbarui di tengah wizard); persetujuan tetap berlaku.
+	if s.TermsVersion == "" || s.TermsAt.IsZero() {
 		return errors.New("Syarat & Ketentuan belum disetujui")
 	}
 	if s.DatabaseAt.IsZero() {

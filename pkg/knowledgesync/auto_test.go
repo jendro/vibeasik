@@ -15,6 +15,7 @@ import (
 
 	"github.com/vibeasik/vibeasik/pkg/models"
 	"github.com/vibeasik/vibeasik/pkg/registry"
+	"github.com/vibeasik/vibeasik/pkg/setup"
 )
 
 type autoEnv struct {
@@ -211,7 +212,7 @@ func TestPullRequiresConsent(t *testing.T) {
 	}
 }
 
-func TestConsentVersionMustMatch(t *testing.T) {
+func TestConsentCarriesOverVersionBump(t *testing.T) {
 	newAutoEnv(t, false)
 	if HasConsent() {
 		t.Fatal("belum ada persetujuan")
@@ -219,12 +220,18 @@ func TestConsentVersionMustMatch(t *testing.T) {
 	st := LoadState()
 	st.ConsentVersion, st.ConsentAt = "versi-lama", time.Now()
 	_ = saveState(st)
-	if HasConsent() {
-		t.Fatal("persetujuan versi lama tidak berlaku")
-	}
-	_ = Consent()
 	if !HasConsent() {
-		t.Fatal("persetujuan versi sekarang harus berlaku")
+		t.Fatal("persetujuan versi lama tetap berlaku setelah versi S&K naik")
+	}
+}
+
+func TestConsentFromSetupWizard(t *testing.T) {
+	newAutoEnv(t, false)
+	if err := setup.AcceptTerms("versi-lama"); err != nil {
+		t.Fatal(err)
+	}
+	if !HasConsent() {
+		t.Fatal("persetujuan di wizard penyiapan awal harus berlaku")
 	}
 }
 
