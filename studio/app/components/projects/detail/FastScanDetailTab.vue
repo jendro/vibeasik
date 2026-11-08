@@ -20,20 +20,7 @@ type SubTabId = 'context_pack' | 'architecture' | 'how_to_run' | 'env_database' 
 
 const activeSubTab = ref<SubTabId>('architecture')
 
-const { getRoleBadgeColor: getCompRoleBadgeColor } = useFormatters()
-
-const getCompRoleLabel = (role: string) => {
-  switch (role) {
-    case 'backend': return 'Backend API'
-    case 'frontend_admin': return 'Admin Dashboard'
-    case 'frontend_client': return 'Frontend Web'
-    case 'frontend_mobile': return 'Mobile App'
-    case 'docs': return 'Dokumentasi'
-    case 'cli': return 'CLI Tool'
-    case 'worker': return 'Worker Service'
-    default: return role === 'other' ? 'Folder Lain' : role
-  }
-}
+const { getRoleBadgeColor: getCompRoleBadgeColor, getCompRoleLabel } = useFormatters()
 
 const subTabs = computed(() => [
   { id: 'architecture', label: 'Arsitektur & Pattern', icon: 'i-lucide-cpu' },
