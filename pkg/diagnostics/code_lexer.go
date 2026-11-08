@@ -28,87 +28,119 @@ func lexSyntaxFor(lang string) lexSyntax {
 // stripCode mengosongkan isi komentar dan literal string (diganti spasi, panjang baris tetap)
 // agar pencocokan pola kode (percabangan, kurung kurawal, setState, ...) tidak tertipu teks
 // di dalam string atau komentar. Tanda kutip pembuka/penutup dipertahankan.
-func stripCode(lines []string, lang string) []string {
-	syn := lexSyntaxFor(lang)
-	out := make([]string, len(lines))
-	inBlock := false // di dalam /* */
-	inMulti := ""    // pembatas string multi-baris yang masih terbuka: "`", "'''", `"""`
+// codeStripper memproses satu baris karakter demi karakter; status komentar/string multi-baris
+// dibawa antar baris.
+type codeStripper struct {
+	syn     lexSyntax
+	lang    string
+	inBlock bool   // di dalam /* */
+	inMulti string // pembatas string multi-baris yang masih terbuka: "`", "'''", `"""`
+	line    string
+	b       []byte
+	i       int
+}
 
-	for li, line := range lines {
-		b := []byte(line)
-		i := 0
-		for i < len(b) {
-			if inBlock {
-				if strings.HasPrefix(line[i:], "*/") {
-					b[i], b[i+1] = ' ', ' '
-					i += 2
-					inBlock = false
-					continue
-				}
-				b[i] = ' '
-				i++
-				continue
-			}
-			if inMulti != "" {
-				if strings.HasPrefix(line[i:], inMulti) && (inMulti != "`" || i == 0 || line[i-1] != '\\') {
-					i += len(inMulti)
-					inMulti = ""
-					continue
-				}
-				b[i] = ' '
-				i++
-				continue
-			}
+func (c *codeStripper) blank(from, to int) {
+	for j := from; j < to; j++ {
+		c.b[j] = ' '
+	}
+}
 
-			rest := line[i:]
-			if syn.blockComment && strings.HasPrefix(rest, "/*") {
-				b[i], b[i+1] = ' ', ' '
-				i += 2
-				inBlock = true
-				continue
-			}
-			isLineComment := false
-			for _, lc := range syn.lineComments {
-				// PHP 8 attribute #[...] bukan komentar
-				if strings.HasPrefix(rest, lc) && !(lc == "#" && lang == "php" && strings.HasPrefix(rest, "#[")) {
-					isLineComment = true
-					break
-				}
-			}
-			if isLineComment {
-				for j := i; j < len(b); j++ {
-					b[j] = ' '
-				}
-				break
-			}
-			if syn.tripleQuote && (strings.HasPrefix(rest, `"""`) || strings.HasPrefix(rest, "'''")) {
-				inMulti = rest[:3]
-				i += 3
-				continue
-			}
-			if syn.backtick && b[i] == '`' {
-				inMulti = "`"
-				i++
-				continue
-			}
-			if b[i] == '"' || b[i] == '\'' {
-				q := b[i]
-				i++
-				for i < len(b) && b[i] != q {
-					if b[i] == '\\' && i+1 < len(b) {
-						b[i], b[i+1] = ' ', ' '
-						i += 2
-						continue
-					}
-					b[i] = ' '
-					i++
-				}
-				i++ // tanda kutip penutup (string satu baris yang tidak ditutup berakhir di ujung baris)
-				continue
-			}
-			i++
+// stepBlock: di dalam komentar blok.
+func (c *codeStripper) stepBlock() {
+	if strings.HasPrefix(c.line[c.i:], "*/") {
+		c.b[c.i], c.b[c.i+1] = ' ', ' '
+		c.i += 2
+		c.inBlock = false
+		return
+	}
+	c.b[c.i] = ' '
+	c.i++
+}
+
+// stepMulti: di dalam string multi-baris.
+func (c *codeStripper) stepMulti() {
+	if strings.HasPrefix(c.line[c.i:], c.inMulti) && (c.inMulti != "`" || c.i == 0 || c.line[c.i-1] != '\\') {
+		c.i += len(c.inMulti)
+		c.inMulti = ""
+		return
+	}
+	c.b[c.i] = ' '
+	c.i++
+}
+
+// startsLineComment: sisa baris diawali penanda komentar baris (PHP 8 attribute #[...] bukan komentar).
+func (c *codeStripper) startsLineComment(rest string) bool {
+	for _, lc := range c.syn.lineComments {
+		if strings.HasPrefix(rest, lc) && !(lc == "#" && c.lang == "php" && strings.HasPrefix(rest, "#[")) {
+			return true
 		}
-		out[li] = string(b)
+	}
+	return false
+}
+
+// skipQuoted mengosongkan isi string satu baris; tanda kutip pembuka/penutup dipertahankan.
+func (c *codeStripper) skipQuoted() {
+	q := c.b[c.i]
+	c.i++
+	for c.i < len(c.b) && c.b[c.i] != q {
+		if c.b[c.i] == '\\' && c.i+1 < len(c.b) {
+			c.b[c.i], c.b[c.i+1] = ' ', ' '
+			c.i += 2
+			continue
+		}
+		c.b[c.i] = ' '
+		c.i++
+	}
+	c.i++ // tanda kutip penutup (string satu baris yang tidak ditutup berakhir di ujung baris)
+}
+
+// stepCode: di luar komentar/string; mengembalikan true bila sisa baris adalah komentar baris.
+func (c *codeStripper) stepCode() (lineDone bool) {
+	rest := c.line[c.i:]
+	switch {
+	case c.syn.blockComment && strings.HasPrefix(rest, "/*"):
+		c.b[c.i], c.b[c.i+1] = ' ', ' '
+		c.i += 2
+		c.inBlock = true
+	case c.startsLineComment(rest):
+		c.blank(c.i, len(c.b))
+		return true
+	case c.syn.tripleQuote && (strings.HasPrefix(rest, `"""`) || strings.HasPrefix(rest, "'''")):
+		c.inMulti = rest[:3]
+		c.i += 3
+	case c.syn.backtick && c.b[c.i] == '`':
+		c.inMulti = "`"
+		c.i++
+	case c.b[c.i] == '"' || c.b[c.i] == '\'':
+		c.skipQuoted()
+	default:
+		c.i++
+	}
+	return false
+}
+
+// stripCode mengosongkan isi komentar dan literal string (diganti spasi, panjang baris tetap)
+// agar pencocokan pola kode (percabangan, kurung kurawal, setState, ...) tidak tertipu teks
+// di dalam string atau komentar. Tanda kutip pembuka/penutup dipertahankan.
+func stripCode(lines []string, lang string) []string {
+	c := &codeStripper{syn: lexSyntaxFor(lang), lang: lang}
+	out := make([]string, len(lines))
+	for li, line := range lines {
+		c.line, c.b, c.i = line, []byte(line), 0
+		for c.i < len(c.b) {
+			switch {
+			case c.inBlock:
+				c.stepBlock()
+			case c.inMulti != "":
+				c.stepMulti()
+			default:
+				if c.stepCode() {
+					c.i = len(c.b)
+				}
+			}
+		}
+		out[li] = string(c.b)
 	}
 	return out
 }
