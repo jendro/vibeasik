@@ -90,18 +90,42 @@ func BuildFrontendApiFunctionMap(dir string) map[string]string {
 	return fnMap
 }
 
-// ParseApiFunctionsFromSource inspects a JS/TS source file to extract API helper functions
-func ParseApiFunctionsFromSource(content string, fnMap map[string]string) {
-	matches := rxFnAssign.FindAllStringSubmatchIndex(content, -1)
-	funcMatches := rxFuncDef.FindAllStringSubmatchIndex(content, -1)
-	objMatches := rxObjMethod.FindAllStringSubmatchIndex(content, -1)
-
-	allMatches := append(matches, funcMatches...)
-	allMatches = append(allMatches, objMatches...)
+// apiFunctionMatches mengumpulkan posisi deklarasi fungsi (arrow, function, method objek) terurut.
+func apiFunctionMatches(content string) [][]int {
+	allMatches := append(rxFnAssign.FindAllStringSubmatchIndex(content, -1), rxFuncDef.FindAllStringSubmatchIndex(content, -1)...)
+	allMatches = append(allMatches, rxObjMethod.FindAllStringSubmatchIndex(content, -1)...)
 	sort.Slice(allMatches, func(i, j int) bool {
 		return allMatches[i][0] < allMatches[j][0]
 	})
+	return allMatches
+}
 
+// firstApiPath mencari literal path API pertama dalam blok fungsi.
+func firstApiPath(block string) string {
+	for _, urlMatch := range rxApiPath.FindAllString(block, -1) {
+		cleanUrl := strings.Trim(urlMatch, `'"`+"`")
+		if strings.Contains(cleanUrl, "/api") || strings.Contains(cleanUrl, "${") || strings.HasPrefix(cleanUrl, "/") {
+			return cleanUrl
+		}
+	}
+	return ""
+}
+
+// blockMethod mengambil metode HTTP pertama yang tertulis dalam blok; default GET.
+func blockMethod(block string) string {
+	if mm := rxMethod.FindStringSubmatch(block); len(mm) > 0 {
+		for k := 1; k < len(mm); k++ {
+			if mm[k] != "" {
+				return strings.ToUpper(mm[k])
+			}
+		}
+	}
+	return "GET"
+}
+
+// ParseApiFunctionsFromSource inspects a JS/TS source file to extract API helper functions
+func ParseApiFunctionsFromSource(content string, fnMap map[string]string) {
+	allMatches := apiFunctionMatches(content)
 	for i, m := range allMatches {
 		fnName := content[m[2]:m[3]]
 		if fnName == "useApi" || fnName == "useAuth" {
@@ -118,40 +142,81 @@ func ParseApiFunctionsFromSource(content string, fnMap map[string]string) {
 		}
 		block := content[startPos:endPos]
 
-		foundPath := ""
-		for _, urlMatch := range rxApiPath.FindAllString(block, -1) {
-			cleanUrl := strings.Trim(urlMatch, `'"`+"`")
-			if strings.Contains(cleanUrl, "/api") || strings.Contains(cleanUrl, "${") || strings.HasPrefix(cleanUrl, "/") {
-				foundPath = cleanUrl
-				break
-			}
-		}
-
+		foundPath := firstApiPath(block)
 		if foundPath == "" {
 			continue
 		}
 
-		isApiBase := strings.Contains(strings.ToLower(foundPath), "base") ||
-			strings.Contains(strings.ToLower(foundPath), "api") ||
-			strings.Contains(strings.ToLower(foundPath), "url")
+		lower := strings.ToLower(foundPath)
+		isApiBase := strings.Contains(lower, "base") || strings.Contains(lower, "api") || strings.Contains(lower, "url")
 
 		cleanPath := CleanEndpointURL(foundPath)
 		if isApiBase && !strings.HasPrefix(cleanPath, "/api") {
 			cleanPath = "/api" + cleanPath
 		}
-
-		method := "GET"
-		if mm := rxMethod.FindStringSubmatch(block); len(mm) > 0 {
-			for k := 1; k < len(mm); k++ {
-				if mm[k] != "" {
-					method = strings.ToUpper(mm[k])
-					break
-				}
-			}
-		}
-
-		fnMap[fnName] = fmt.Sprintf("%s %s", method, cleanPath)
+		fnMap[fnName] = fmt.Sprintf("%s %s", blockMethod(block), cleanPath)
 	}
+}
+
+// collectCalledHelpers menambahkan endpoint fungsi helper (apiFuncMap) yang dipakai dalam konten.
+func collectCalledHelpers(content string, apiFuncMap map[string]string, reqSet map[string]bool) {
+	for fnName, endpoint := range apiFuncMap {
+		pattern := `\b` + regexp.QuoteMeta(fnName) + `\b`
+		if matched, _ := regexp.MatchString(pattern, content); matched {
+			reqSet[endpoint] = true
+		}
+	}
+}
+
+// collectDirectRequests menambahkan $fetch, fetch, axios, useFetch, useAsyncData langsung dalam konten.
+func collectDirectRequests(content string, reqSet map[string]bool) {
+	for _, m := range rxDirectReq.FindAllStringSubmatch(content, -1) {
+		if len(m) < 3 {
+			continue
+		}
+		httpMethod := "GET"
+		if m[1] != "" {
+			httpMethod = strings.ToUpper(m[1])
+		}
+		urlPath := m[2]
+		if strings.Contains(urlPath, "/api") || strings.HasPrefix(urlPath, "/") || strings.Contains(urlPath, "${") {
+			cleanPath := CleanEndpointURL(urlPath)
+			if strings.Contains(strings.ToLower(urlPath), "api") && !strings.HasPrefix(cleanPath, "/api") {
+				cleanPath = "/api" + cleanPath
+			}
+			reqSet[fmt.Sprintf("%s %s", httpMethod, cleanPath)] = true
+		}
+	}
+}
+
+var importExts = []string{"", ".vue", ".tsx", ".jsx", ".ts", ".js"}
+
+// firstExistingWithExt mengembalikan candidate+ekstensi pertama yang ada, atau "".
+func firstExistingWithExt(candidate string) string {
+	for _, ext := range importExts {
+		if util.FileExists(candidate + ext) {
+			return candidate + ext
+		}
+	}
+	return ""
+}
+
+// resolveImport menerjemahkan path import komponen (relatif atau alias @/ ~/) menjadi berkas nyata, atau "".
+func resolveImport(impPath, pagePath, dir string) string {
+	if !strings.HasPrefix(impPath, "@/") && !strings.HasPrefix(impPath, "~/") {
+		return firstExistingWithExt(filepath.Join(filepath.Dir(pagePath), impPath))
+	}
+	rel := strings.TrimPrefix(strings.TrimPrefix(impPath, "@/"), "~/")
+	for _, tryPrefix := range []string{"app/", "src/", ""} {
+		if resolved := firstExistingWithExt(filepath.Join(dir, tryPrefix+rel)); resolved != "" {
+			return resolved
+		}
+	}
+	return ""
+}
+
+func isLocalImport(impPath string) bool {
+	return strings.HasPrefix(impPath, ".") || strings.HasPrefix(impPath, "@/") || strings.HasPrefix(impPath, "~/")
 }
 
 // ExtractPageTargetRequests parses a page component and detects all outgoing API requests
@@ -159,95 +224,27 @@ func ExtractPageTargetRequests(pagePath string, pageContent string, dir string, 
 	reqSet := make(map[string]bool)
 
 	// 1. Check helper functions from apiFuncMap used in page
-	for fnName, endpoint := range apiFuncMap {
-		pattern := `\b` + regexp.QuoteMeta(fnName) + `\b`
-		if matched, _ := regexp.MatchString(pattern, pageContent); matched {
-			reqSet[endpoint] = true
-		}
-	}
+	collectCalledHelpers(pageContent, apiFuncMap, reqSet)
 
 	// 2. Direct $fetch, fetch, axios, useFetch, useAsyncData
-	for _, m := range rxDirectReq.FindAllStringSubmatch(pageContent, -1) {
-		if len(m) >= 3 {
-			httpMethod := "GET"
-			if m[1] != "" {
-				httpMethod = strings.ToUpper(m[1])
-			}
-			urlPath := m[2]
-			if strings.Contains(urlPath, "/api") || strings.HasPrefix(urlPath, "/") || strings.Contains(urlPath, "${") {
-				cleanPath := CleanEndpointURL(urlPath)
-				if strings.Contains(strings.ToLower(urlPath), "api") && !strings.HasPrefix(cleanPath, "/api") {
-					cleanPath = "/api" + cleanPath
-				}
-				reqSet[fmt.Sprintf("%s %s", httpMethod, cleanPath)] = true
-			}
-		}
-	}
+	collectDirectRequests(pageContent, reqSet)
 
 	// 3. Child components API calls (scan components imported in this page)
 	for _, match := range rxImportPath.FindAllStringSubmatch(pageContent, -1) {
-		if len(match) < 2 {
+		if len(match) < 2 || !isLocalImport(match[1]) {
 			continue
 		}
-		impPath := match[1]
-		if !strings.HasPrefix(impPath, ".") && !strings.HasPrefix(impPath, "@/") && !strings.HasPrefix(impPath, "~/") {
+		resolvedPath := resolveImport(match[1], pagePath, dir)
+		if resolvedPath == "" || resolvedPath == pagePath {
 			continue
 		}
-
-		resolvedPath := ""
-		if strings.HasPrefix(impPath, "@/") || strings.HasPrefix(impPath, "~/") {
-			rel := strings.TrimPrefix(strings.TrimPrefix(impPath, "@/"), "~/")
-			for _, tryPrefix := range []string{"app/", "src/", ""} {
-				candidate := filepath.Join(dir, tryPrefix+rel)
-				for _, ext := range []string{"", ".vue", ".tsx", ".jsx", ".ts", ".js"} {
-					if util.FileExists(candidate + ext) {
-						resolvedPath = candidate + ext
-						break
-					}
-				}
-				if resolvedPath != "" {
-					break
-				}
-			}
-		} else {
-			dirOfPage := filepath.Dir(pagePath)
-			candidate := filepath.Join(dirOfPage, impPath)
-			for _, ext := range []string{"", ".vue", ".tsx", ".jsx", ".ts", ".js"} {
-				if util.FileExists(candidate + ext) {
-					resolvedPath = candidate + ext
-					break
-				}
-			}
+		childBytes, err := os.ReadFile(resolvedPath)
+		if err != nil {
+			continue
 		}
-
-		if resolvedPath != "" && resolvedPath != pagePath {
-			childBytes, err := os.ReadFile(resolvedPath)
-			if err == nil {
-				childContent := string(childBytes)
-				for fnName, endpoint := range apiFuncMap {
-					pattern := `\b` + regexp.QuoteMeta(fnName) + `\b`
-					if matched, _ := regexp.MatchString(pattern, childContent); matched {
-						reqSet[endpoint] = true
-					}
-				}
-				for _, m := range rxDirectReq.FindAllStringSubmatch(childContent, -1) {
-					if len(m) >= 3 {
-						httpMethod := "GET"
-						if m[1] != "" {
-							httpMethod = strings.ToUpper(m[1])
-						}
-						urlPath := m[2]
-						if strings.Contains(urlPath, "/api") || strings.HasPrefix(urlPath, "/") || strings.Contains(urlPath, "${") {
-							cleanPath := CleanEndpointURL(urlPath)
-							if strings.Contains(strings.ToLower(urlPath), "api") && !strings.HasPrefix(cleanPath, "/api") {
-								cleanPath = "/api" + cleanPath
-							}
-							reqSet[fmt.Sprintf("%s %s", httpMethod, cleanPath)] = true
-						}
-					}
-				}
-			}
-		}
+		childContent := string(childBytes)
+		collectCalledHelpers(childContent, apiFuncMap, reqSet)
+		collectDirectRequests(childContent, reqSet)
 	}
 
 	var results []string
