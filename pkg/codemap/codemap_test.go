@@ -248,3 +248,29 @@ func TestParsePHPRoutesAndSymbols(t *testing.T) {
 		t.Fatalf("refs missing %v, symbols %+v", want, p.symbols)
 	}
 }
+
+func TestEnsureFresh(t *testing.T) {
+	db, p, _ := setup(t)
+
+	// Panggilan pertama membangun code map
+	if err := EnsureFresh(db, p.ID, time.Minute); err != nil {
+		t.Fatalf("EnsureFresh gagal saat initial build: %v", err)
+	}
+
+	// Panggilan kedua saat masih segar (< maxAge) tidak mengembalikan error
+	if err := EnsureFresh(db, p.ID, time.Minute); err != nil {
+		t.Fatalf("EnsureFresh gagal saat cache hit: %v", err)
+	}
+
+	// Panggilan untuk project tidak ada harus mengembalikan error yang dibungkus (K1651)
+	nonExistentID := uint(999999)
+	err := EnsureFresh(db, nonExistentID, time.Minute)
+	if err == nil {
+		t.Fatal("ekspektasi error untuk proyek yang tidak ada, dapat nil")
+	}
+	expectedMsg := "gagal memperbarui code map proyek 999999"
+	if !strings.Contains(err.Error(), expectedMsg) {
+		t.Fatalf("error tidak memuat pesan pembungkus %q, didapat: %v", expectedMsg, err)
+	}
+}
+

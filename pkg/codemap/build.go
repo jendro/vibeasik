@@ -518,8 +518,10 @@ func EnsureFresh(db *gorm.DB, projectID uint, maxAge time.Duration) error {
 	if err := db.Where("project_id = ?", projectID).First(&meta).Error; err == nil && time.Since(meta.BuiltAt) < maxAge {
 		return nil
 	}
-	_, err := Build(db, projectID, false)
-	return err
+	if _, err := Build(db, projectID, false); err != nil {
+		return fmt.Errorf("gagal memperbarui code map proyek %d: %w", projectID, err)
+	}
+	return nil
 }
 
 // readLines membaca rentang baris [from, to] (1-based) sebuah berkas untuk cuplikan hasil pencarian.

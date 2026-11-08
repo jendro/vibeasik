@@ -41,12 +41,17 @@ func advisorTodo(project *models.Project, comp *models.Component, target string,
 	return t
 }
 
-// fileMissing melaporkan bahwa path tidak ada (galat selain "tidak ada" dianggap ada).
+// fileMissing adalah predikat boolean murni yang memeriksa ketiadaan berkas (K5088).
+// Kontrak predikat: os.IsNotExist(err) adalah jalur normal (bukan swallowed error).
+// Galat selain "tidak ada" (mis. izin akses) dianggap berkas ada agar tidak memicu saran keliru.
 func fileMissing(path string) bool {
 	_, err := os.Stat(path)
 	return os.IsNotExist(err)
 }
 
+// fileExists adalah predikat boolean murni yang memeriksa keberadaan berkas (K5088).
+// Kontrak predikat: err == nil menyatakan berkas ada dan dapat diakses; os.IsNotExist(err)
+// adalah jalur normal ketika berkas tidak ditemukan, bukan swallowed error.
 func fileExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
