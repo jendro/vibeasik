@@ -202,110 +202,142 @@ func MeasureComplexity(relPath, content string) []FuncComplexity {
 	return out
 }
 
+// cxMeasurer menyimpan status pengukuran CC: stack fungsi bersarang dan kedalaman kurung.
+type cxMeasurer struct {
+	profile      complexityProfile
+	lang         string
+	stack        []*cxFrame
+	done         []cxFrame
+	brace, paren int
+}
+
+func (m *cxMeasurer) top() *cxFrame { return m.stack[len(m.stack)-1] }
+
+func (m *cxMeasurer) pop() {
+	m.done = append(m.done, *m.top())
+	m.stack = m.stack[:len(m.stack)-1]
+}
+
+func (m *cxMeasurer) addParenDelta(dp int) {
+	m.paren += dp
+	if m.paren < 0 {
+		m.paren = 0
+	}
+}
+
+// stepIndent memproses satu baris pada bahasa berbasis indentasi (Python).
+func (m *cxMeasurer) stepIndent(idx int, s string) {
+	ind := len(s) - len(strings.TrimLeft(s, " \t"))
+	for m.paren == 0 && len(m.stack) > 0 && ind <= m.top().indent {
+		m.pop()
+	}
+	if name := matchFuncStart(m.profile, m.lang, s); name != "" {
+		m.stack = append(m.stack, &cxFrame{name: name, line: idx + 1, count: 1, indent: ind})
+	}
+	if len(m.stack) > 0 {
+		m.top().count += len(m.profile.branch.FindAllStringIndex(s, -1))
+	}
+	_, dp, _ := bracketDelta(s)
+	m.addParenDelta(dp)
+}
+
+// pushFrame menambah frame bila baris adalah deklarasi fungsi dengan badan; true bila frame baru dibuat.
+func (m *cxMeasurer) pushFrame(idx int, s, trimmed string) bool {
+	name := matchFuncStart(m.profile, m.lang, s)
+	// Deklarasi tanpa badan (abstract/interface) tidak dihitung
+	if name == "" || strings.HasSuffix(trimmed, ";") {
+		return false
+	}
+	// Frame sebelumnya yang belum punya badan ternyata hanya deklarasi → buang
+	if n := len(m.stack); n > 0 && !m.top().bodyOpened && !m.top().exprBody {
+		m.stack = m.stack[:n-1]
+	}
+	m.stack = append(m.stack, &cxFrame{name: name, line: idx + 1, count: 1, braceBase: m.brace, parenBase: m.paren})
+	return true
+}
+
+// countableText: baris deklarasi sendiri tidak dihitung kecuali badan ekspresinya (sesudah =>) atau kurawal pembuka.
+func countableText(s string, pushed bool) string {
+	if !pushed {
+		return s
+	}
+	if loc := strings.Index(s, "=>"); loc >= 0 {
+		return s[loc:]
+	}
+	if i := strings.Index(s, "{"); i >= 0 {
+		return s[i:]
+	}
+	return ""
+}
+
+func (m *cxMeasurer) countBranches(s string, pushed bool) {
+	if len(m.stack) == 0 {
+		return
+	}
+	top := m.top()
+	top.count += len(m.profile.branch.FindAllStringIndex(countableText(s, pushed), -1))
+	if !top.bodyOpened && m.profile.exprBody != nil && m.profile.exprBody.MatchString(s) {
+		top.exprBody = true
+	}
+}
+
+// updateDepth memperbarui kedalaman kurung dan menandai frame yang badannya sudah dibuka.
+func (m *cxMeasurer) updateDepth(s string) {
+	db, dp, maxB := bracketDelta(s)
+	for _, f := range m.stack {
+		if !f.bodyOpened && m.brace+maxB > f.braceBase && !f.exprBody {
+			f.bodyOpened = true
+		}
+	}
+	m.brace += db
+	if m.brace < 0 {
+		m.brace = 0
+	}
+	m.addParenDelta(dp)
+}
+
+func (m *cxMeasurer) frameEnded(top *cxFrame, trimmed string) bool {
+	switch {
+	case top.bodyOpened:
+		return m.brace <= top.braceBase
+	case top.exprBody:
+		return m.paren <= top.parenBase && m.brace <= top.braceBase && !isContinuationLine(trimmed)
+	}
+	return false
+}
+
+func (m *cxMeasurer) popEnded(trimmed string) {
+	for len(m.stack) > 0 && m.frameEnded(m.top(), trimmed) {
+		m.pop()
+	}
+}
+
+// stepBrace memproses satu baris pada bahasa berbasis kurung kurawal.
+func (m *cxMeasurer) stepBrace(idx int, s, trimmed string) {
+	pushed := m.pushFrame(idx, s, trimmed)
+	m.countBranches(s, pushed)
+	m.updateDepth(s)
+	m.popEnded(trimmed)
+}
+
 // measureFunctions menghitung CC tiap fungsi bernama; urutan hasil = urutan fungsi berakhir (fungsi bersarang dulu).
 func measureFunctions(lines []string, lang string, profile complexityProfile) []cxFrame {
-	stripped := stripCode(lines, lang)
-
-	var stack []*cxFrame
-	var done []cxFrame
-	brace, paren := 0, 0
-
-	pop := func() {
-		done = append(done, *stack[len(stack)-1])
-		stack = stack[:len(stack)-1]
-	}
-
-	for idx, s := range stripped {
+	m := &cxMeasurer{profile: profile, lang: lang}
+	for idx, s := range stripCode(lines, lang) {
 		trimmed := strings.TrimSpace(s)
 		if trimmed == "" {
 			continue
 		}
-
 		if profile.indent {
-			ind := len(s) - len(strings.TrimLeft(s, " \t"))
-			for paren == 0 && len(stack) > 0 && ind <= stack[len(stack)-1].indent {
-				pop()
-			}
-			if name := matchFuncStart(profile, lang, s); name != "" {
-				stack = append(stack, &cxFrame{name: name, line: idx + 1, count: 1, indent: ind})
-			}
-			if len(stack) > 0 {
-				stack[len(stack)-1].count += len(profile.branch.FindAllStringIndex(s, -1))
-			}
-			_, dp, _ := bracketDelta(s)
-			paren += dp
-			if paren < 0 {
-				paren = 0
-			}
+			m.stepIndent(idx, s)
 			continue
 		}
-
-		pushed := false
-		if name := matchFuncStart(profile, lang, s); name != "" {
-			// Deklarasi tanpa badan (abstract/interface) tidak dihitung
-			if !strings.HasSuffix(trimmed, ";") {
-				// Frame sebelumnya yang belum punya badan ternyata hanya deklarasi → buang
-				if n := len(stack); n > 0 && !stack[n-1].bodyOpened && !stack[n-1].exprBody {
-					stack = stack[:n-1]
-				}
-				stack = append(stack, &cxFrame{name: name, line: idx + 1, count: 1, braceBase: brace, parenBase: paren})
-				pushed = true
-			}
-		}
-
-		if len(stack) > 0 {
-			top := stack[len(stack)-1]
-			// Baris deklarasi sendiri tidak dihitung kecuali badan ekspresinya (sesudah =>)
-			counted := s
-			if pushed {
-				if loc := strings.Index(s, "=>"); loc >= 0 {
-					counted = s[loc:]
-				} else if !strings.Contains(s, "{") {
-					counted = ""
-				} else {
-					counted = s[strings.Index(s, "{"):]
-				}
-			}
-			top.count += len(profile.branch.FindAllStringIndex(counted, -1))
-			if !top.bodyOpened && profile.exprBody != nil && profile.exprBody.MatchString(s) {
-				top.exprBody = true
-			}
-		}
-
-		db, dp, maxB := bracketDelta(s)
-		for _, f := range stack {
-			if !f.bodyOpened && brace+maxB > f.braceBase && !f.exprBody {
-				f.bodyOpened = true
-			}
-		}
-		brace += db
-		paren += dp
-		if brace < 0 {
-			brace = 0
-		}
-		if paren < 0 {
-			paren = 0
-		}
-
-		for len(stack) > 0 {
-			top := stack[len(stack)-1]
-			ended := false
-			switch {
-			case top.bodyOpened:
-				ended = brace <= top.braceBase
-			case top.exprBody:
-				ended = paren <= top.parenBase && brace <= top.braceBase && !isContinuationLine(trimmed)
-			}
-			if !ended {
-				break
-			}
-			pop()
-		}
+		m.stepBrace(idx, s, trimmed)
 	}
-	for len(stack) > 0 {
-		pop()
+	for len(m.stack) > 0 {
+		m.pop()
 	}
-	return done
+	return m.done
 }
 
 func isControlKeyword(name string) bool {

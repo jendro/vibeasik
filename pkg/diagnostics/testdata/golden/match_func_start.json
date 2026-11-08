@@ -1,0 +1,18 @@
+{
+ "dart|  Future\u003cvoid\u003e load(int a) {": "load",
+ "dart|  await bar(2) {": "",
+ "dart|  final x = foo(1);": "",
+ "dart|  return foo(1);": "",
+ "dart|  void a();": "",
+ "go|func (r *R) Foo[T any](x T) {": "Foo",
+ "go|func main() {": "main",
+ "go|x := func() {": "",
+ "java|  public static void main(String[] a) {": "main",
+ "kotlin|  override fun \u003cT\u003e a.b(x: T): Int {": "b",
+ "python|  async def go(self):": "go",
+ "typescript|  async foo(a: number): Promise\u003cvoid\u003e {": "foo",
+ "typescript|  if (a) {": "",
+ "typescript|  while (x) {": "",
+ "typescript|const f = async (a) =\u003e": "f",
+ "typescript|export default async function* gen\u003cT\u003e(x) {": "gen"
+}

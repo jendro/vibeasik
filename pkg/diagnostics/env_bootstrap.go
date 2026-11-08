@@ -76,57 +76,103 @@ func singleBackendPort(p *models.Project) int {
 	return port
 }
 
+// envBootstrap memuat konteks pembuatan berkas env satu folder.
+type envBootstrap struct {
+	dir, rel string
+	inGit    bool
+	ignored  map[string]bool
+	tracked  map[string]bool
+}
+
+func (b *envBootstrap) has(name string) bool { return util.FileExists(filepath.Join(b.dir, name)) }
+
+func (b *envBootstrap) where(name string) string { return filepath.ToSlash(filepath.Join(b.rel, name)) }
+
+func (b *envBootstrap) canCreate(name string) bool { return !b.inGit || b.ignored[name] }
+
+func newEnvBootstrap(dir, rel string) *envBootstrap {
+	b := &envBootstrap{dir: dir, rel: rel, inGit: isGitWorkTree(dir), tracked: map[string]bool{}}
+	if b.inGit {
+		b.ignored = gitIgnored(dir, []string{".env.local", ".env.server"})
+		for _, f := range trackedEnvFiles(dir) {
+			b.tracked[f] = true
+		}
+	}
+	return b
+}
+
+// createEnvLocal membuat .env.local dari .env (atau .env.example); mengembalikan tindakan atau "".
+func (b *envBootstrap) createEnvLocal() string {
+	if b.has(".env.local") || !b.canCreate(".env.local") {
+		return ""
+	}
+	src := ".env"
+	if !b.has(src) {
+		src = ".env.example"
+	}
+	raw, err := os.ReadFile(filepath.Join(b.dir, src))
+	if err != nil {
+		return ""
+	}
+	content := string(raw)
+	if src != ".env" {
+		content = fmt.Sprintf(envLocalHeader, src) + content
+	}
+	if os.WriteFile(filepath.Join(b.dir, ".env.local"), []byte(content), 0o600) != nil {
+		return ""
+	}
+	return fmt.Sprintf("membuat %s dari %s", b.where(".env.local"), src)
+}
+
+// createEnvServer membuat .env.server dari .env.example (atau .env); mengembalikan tindakan atau "".
+func (b *envBootstrap) createEnvServer() string {
+	if b.has(".env.server") || !b.canCreate(".env.server") {
+		return ""
+	}
+	src := ".env.example"
+	if !b.has(src) {
+		src = ".env"
+	}
+	raw, err := os.ReadFile(filepath.Join(b.dir, src))
+	if err != nil {
+		return ""
+	}
+	content := fmt.Sprintf(envServerHeader, src) + serverEnvFrom(string(raw), src == ".env")
+	if os.WriteFile(filepath.Join(b.dir, ".env.server"), []byte(content), 0o600) != nil {
+		return ""
+	}
+	return fmt.Sprintf("membuat %s dari %s (isi nilainya untuk server)", b.where(".env.server"), src)
+}
+
+// syncPorts menyelaraskan port di .env/.env.local yang tidak di-track git.
+func (b *envBootstrap) syncPorts(comp *models.Component, bePort int) []string {
+	var actions []string
+	for _, name := range []string{".env", ".env.local"} {
+		if b.has(name) && !b.tracked[name] && syncEnvPorts(filepath.Join(b.dir, name), *comp, bePort) {
+			actions = append(actions, fmt.Sprintf("menyelaraskan port di %s dengan blok PORTS.md", b.where(name)))
+		}
+	}
+	return actions
+}
+
 func ensureEnvDir(dir, rel string, comp *models.Component, bePort int) []string {
-	has := func(name string) bool { return util.FileExists(filepath.Join(dir, name)) }
-	if !has(".env") && !has(".env.example") && !has(".env.local") {
+	usesEnv := false
+	for _, name := range []string{".env", ".env.example", ".env.local"} {
+		usesEnv = usesEnv || util.FileExists(filepath.Join(dir, name))
+	}
+	if !usesEnv {
 		return nil // folder tidak memakai env
 	}
-	where := func(name string) string { return filepath.ToSlash(filepath.Join(rel, name)) }
-	inGit := isGitWorkTree(dir)
-	var ignored map[string]bool
-	tracked := map[string]bool{}
-	if inGit {
-		ignored = gitIgnored(dir, []string{".env.local", ".env.server"})
-		for _, f := range trackedEnvFiles(dir) {
-			tracked[f] = true
-		}
-	}
-	canCreate := func(name string) bool { return !inGit || ignored[name] }
-
+	b := newEnvBootstrap(dir, rel)
 	var actions []string
-	if !has(".env.local") && canCreate(".env.local") {
-		src := ".env"
-		if !has(src) {
-			src = ".env.example"
-		}
-		if raw, err := os.ReadFile(filepath.Join(dir, src)); err == nil {
-			content := string(raw)
-			if src != ".env" {
-				content = fmt.Sprintf(envLocalHeader, src) + content
-			}
-			if os.WriteFile(filepath.Join(dir, ".env.local"), []byte(content), 0o600) == nil {
-				actions = append(actions, fmt.Sprintf("membuat %s dari %s", where(".env.local"), src))
-			}
-		}
+	if a := b.createEnvLocal(); a != "" {
+		actions = append(actions, a)
 	}
-	if !has(".env.server") && canCreate(".env.server") {
-		src := ".env.example"
-		if !has(src) {
-			src = ".env"
-		}
-		if raw, err := os.ReadFile(filepath.Join(dir, src)); err == nil {
-			content := fmt.Sprintf(envServerHeader, src) + serverEnvFrom(string(raw), src == ".env")
-			if os.WriteFile(filepath.Join(dir, ".env.server"), []byte(content), 0o600) == nil {
-				actions = append(actions, fmt.Sprintf("membuat %s dari %s (isi nilainya untuk server)", where(".env.server"), src))
-			}
-		}
+	if a := b.createEnvServer(); a != "" {
+		actions = append(actions, a)
 	}
 	if comp != nil {
-		for _, name := range []string{".env", ".env.local"} {
-			if has(name) && !tracked[name] && syncEnvPorts(filepath.Join(dir, name), *comp, bePort) {
-				actions = append(actions, fmt.Sprintf("menyelaraskan port di %s dengan blok PORTS.md", where(name)))
-			}
-		}
+		actions = append(actions, b.syncPorts(comp, bePort)...)
 	}
 	return actions
 }
