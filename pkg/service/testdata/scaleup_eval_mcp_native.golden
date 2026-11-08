@@ -1,0 +1,52 @@
+{
+  "component_id": 4,
+  "component_name": "mcp_native",
+  "role": "backend",
+  "language": "go",
+  "framework": "",
+  "absolute_path": "<TMP>",
+  "detected_pattern": "mcp_native",
+  "detected_pattern_name": "MCP-Native Architecture",
+  "maturity_score": 86,
+  "score_level": "Production \u0026 Enterprise Ready",
+  "metrics": {
+    "router_score": 24,
+    "controller_score": 12,
+    "service_score": 25,
+    "ai_mcp_score": 25
+  },
+  "detected_traits": {
+    "has_modular_routing": true,
+    "has_thin_controllers": false,
+    "has_service_layer": true,
+    "has_repository_layer": true,
+    "has_pure_functions": true,
+    "has_mcp_support": true,
+    "has_planner_layer": true,
+    "total_source_files": 8,
+    "total_routes": 0
+  },
+  "folder_summary": [
+    "api",
+    "mcp",
+    "planners",
+    "repository",
+    "service"
+  ],
+  "key_findings": [
+    "Router sudah terorganisir modular dan terpisah dari main entrypoint.",
+    "Logika bisnis telah diekstraksi ke Service Layer independen.",
+    "Kueri database telah diisolasi di Repository Layer terpisah.",
+    "Backend sudah siap terhubung dengan AI Coding Agent via Model Context Protocol (MCP)."
+  ],
+  "scale_up_recommendations": [
+    {
+      "phase": "Tahap 3",
+      "title": "Refactor Thin Controller",
+      "description": "Ditemukan 4 file sumber dengan ukuran \u003e 300 baris. Pecah controller menjadi sub-handler per use-case.",
+      "target_dir": "internal/api",
+      "priority": "medium"
+    }
+  ],
+  "recommended_next_pattern": "mvpp"
+}

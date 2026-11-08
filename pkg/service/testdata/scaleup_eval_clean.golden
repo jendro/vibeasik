@@ -1,0 +1,78 @@
+{
+  "component_id": 5,
+  "component_name": "clean",
+  "role": "backend",
+  "language": "go",
+  "framework": "",
+  "absolute_path": "<TMP>",
+  "detected_pattern": "clean_hexagonal",
+  "detected_pattern_name": "Clean / Hexagonal Architecture",
+  "maturity_score": 57,
+  "score_level": "Modularizing (Need Refactor)",
+  "metrics": {
+    "router_score": 24,
+    "controller_score": 18,
+    "service_score": 10,
+    "ai_mcp_score": 5
+  },
+  "detected_traits": {
+    "has_modular_routing": true,
+    "has_thin_controllers": true,
+    "has_service_layer": false,
+    "has_repository_layer": false,
+    "has_pure_functions": true,
+    "has_mcp_support": false,
+    "has_planner_layer": false,
+    "total_source_files": 3,
+    "total_routes": 0
+  },
+  "folder_summary": [
+    "adapters",
+    "api",
+    "core"
+  ],
+  "key_findings": [
+    "Router sudah terorganisir modular dan terpisah dari main entrypoint.",
+    "Belum terdeteksi Service Layer mandiri; handler mungkin masih menangani logika bisnis langsung.",
+    "Kueri basis data belum dienkapsulasi ke dalam antarmuka Repository terpisah.",
+    "Belum memiliki adapter MCP; AI coding agent harus mengandalkan pembacaan file manual."
+  ],
+  "scale_up_recommendations": [
+    {
+      "phase": "Tahap 1",
+      "title": "Ekstraksi Business Logic ke Service Layer",
+      "description": "Pindahkan kalkulasi dan validasi dari handler ke folder internal/service.",
+      "target_dir": "internal/service",
+      "priority": "urgent"
+    },
+    {
+      "phase": "Tahap 2",
+      "title": "Abstraksi Data Access ke Repository Layer",
+      "description": "Bungkus kueri GORM/SQL ke dalam interface repository agar mudah diuji dengan mock.",
+      "target_dir": "internal/repository",
+      "priority": "high"
+    },
+    {
+      "phase": "Tahap 3",
+      "title": "Refactor Thin Controller",
+      "description": "Ditemukan 1 file sumber dengan ukuran \u003e 300 baris. Pecah controller menjadi sub-handler per use-case.",
+      "target_dir": "internal/api",
+      "priority": "medium"
+    },
+    {
+      "phase": "Tahap 4",
+      "title": "Tambahkan Model Context Protocol (MCP) Adapter",
+      "description": "Buat internal/mcp/server.go untuk mengekspos domain service sebagai MCP Tools untuk Antigravity/Cursor.",
+      "target_dir": "internal/mcp",
+      "priority": "medium"
+    },
+    {
+      "phase": "Tahap 5",
+      "title": "Adopsi Paradigma MVPP (AI Cognitive Layer)",
+      "description": "Pisahkan prompt dan integrasi LLM/System One ke dalam layer Planner terisolasi.",
+      "target_dir": "internal/planners",
+      "priority": "low"
+    }
+  ],
+  "recommended_next_pattern": "mcp_native"
+}

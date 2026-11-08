@@ -1,0 +1,58 @@
+{
+  "component_id": 6,
+  "component_name": "layered",
+  "role": "backend",
+  "language": "go",
+  "framework": "",
+  "absolute_path": "<TMP>",
+  "detected_pattern": "layered",
+  "detected_pattern_name": "Traditional Layered (N-Tier)",
+  "maturity_score": 67,
+  "score_level": "Modularizing (Need Refactor)",
+  "metrics": {
+    "router_score": 15,
+    "controller_score": 22,
+    "service_score": 25,
+    "ai_mcp_score": 5
+  },
+  "detected_traits": {
+    "has_modular_routing": false,
+    "has_thin_controllers": true,
+    "has_service_layer": true,
+    "has_repository_layer": true,
+    "has_pure_functions": true,
+    "has_mcp_support": false,
+    "has_planner_layer": false,
+    "total_source_files": 2,
+    "total_routes": 0
+  },
+  "folder_summary": [
+    "internal",
+    "node_modules",
+    "internal/repo",
+    "internal/services"
+  ],
+  "key_findings": [
+    "Router masih banyak terkonsentrasi di satu file utama.",
+    "Logika bisnis telah diekstraksi ke Service Layer independen.",
+    "Kueri database telah diisolasi di Repository Layer terpisah.",
+    "Belum memiliki adapter MCP; AI coding agent harus mengandalkan pembacaan file manual."
+  ],
+  "scale_up_recommendations": [
+    {
+      "phase": "Tahap 4",
+      "title": "Tambahkan Model Context Protocol (MCP) Adapter",
+      "description": "Buat internal/mcp/server.go untuk mengekspos domain service sebagai MCP Tools untuk Antigravity/Cursor.",
+      "target_dir": "internal/mcp",
+      "priority": "medium"
+    },
+    {
+      "phase": "Tahap 5",
+      "title": "Adopsi Paradigma MVPP (AI Cognitive Layer)",
+      "description": "Pisahkan prompt dan integrasi LLM/System One ke dalam layer Planner terisolasi.",
+      "target_dir": "internal/planners",
+      "priority": "low"
+    }
+  ],
+  "recommended_next_pattern": "mcp_native"
+}

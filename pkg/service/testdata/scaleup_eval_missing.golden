@@ -1,0 +1,33 @@
+{
+  "component_id": 2,
+  "component_name": "missing",
+  "role": "backend",
+  "language": "go",
+  "framework": "",
+  "absolute_path": "<TMP>",
+  "detected_pattern": "unreachable",
+  "detected_pattern_name": "Direktori Tidak Dapat Dibaca",
+  "maturity_score": 10,
+  "score_level": "Initial",
+  "metrics": {
+    "router_score": 0,
+    "controller_score": 0,
+    "service_score": 0,
+    "ai_mcp_score": 0
+  },
+  "detected_traits": {
+    "has_modular_routing": false,
+    "has_thin_controllers": false,
+    "has_service_layer": false,
+    "has_repository_layer": false,
+    "has_pure_functions": false,
+    "has_mcp_support": false,
+    "has_planner_layer": false,
+    "total_source_files": 0,
+    "total_routes": 0
+  },
+  "folder_summary": [],
+  "key_findings": [],
+  "scale_up_recommendations": [],
+  "recommended_next_pattern": ""
+}

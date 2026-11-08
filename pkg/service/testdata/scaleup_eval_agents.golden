@@ -1,0 +1,57 @@
+{
+  "component_id": 8,
+  "component_name": "agents",
+  "role": "backend",
+  "language": "go",
+  "framework": "",
+  "absolute_path": "<TMP>",
+  "detected_pattern": "vertical_slice",
+  "detected_pattern_name": "Vertical Slice Architecture",
+  "maturity_score": 75,
+  "score_level": "Solid Architecture (Intermediate)",
+  "metrics": {
+    "router_score": 15,
+    "controller_score": 22,
+    "service_score": 18,
+    "ai_mcp_score": 20
+  },
+  "detected_traits": {
+    "has_modular_routing": false,
+    "has_thin_controllers": true,
+    "has_service_layer": true,
+    "has_repository_layer": false,
+    "has_pure_functions": true,
+    "has_mcp_support": true,
+    "has_planner_layer": false,
+    "total_source_files": 3,
+    "total_routes": 0
+  },
+  "folder_summary": [
+    "agents",
+    "slices",
+    "usecases"
+  ],
+  "key_findings": [
+    "Router masih banyak terkonsentrasi di satu file utama.",
+    "Logika bisnis telah diekstraksi ke Service Layer independen.",
+    "Kueri basis data belum dienkapsulasi ke dalam antarmuka Repository terpisah.",
+    "Backend sudah siap terhubung dengan AI Coding Agent via Model Context Protocol (MCP)."
+  ],
+  "scale_up_recommendations": [
+    {
+      "phase": "Tahap 2",
+      "title": "Abstraksi Data Access ke Repository Layer",
+      "description": "Bungkus kueri GORM/SQL ke dalam interface repository agar mudah diuji dengan mock.",
+      "target_dir": "internal/repository",
+      "priority": "high"
+    },
+    {
+      "phase": "Tahap 5",
+      "title": "Adopsi Paradigma MVPP (AI Cognitive Layer)",
+      "description": "Pisahkan prompt dan integrasi LLM/System One ke dalam layer Planner terisolasi.",
+      "target_dir": "internal/planners",
+      "priority": "low"
+    }
+  ],
+  "recommended_next_pattern": "mcp_native"
+}

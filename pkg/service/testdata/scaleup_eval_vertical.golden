@@ -1,0 +1,64 @@
+{
+  "component_id": 7,
+  "component_name": "vertical",
+  "role": "backend",
+  "language": "go",
+  "framework": "",
+  "absolute_path": "<TMP>",
+  "detected_pattern": "vertical_slice",
+  "detected_pattern_name": "Vertical Slice Architecture",
+  "maturity_score": 66,
+  "score_level": "Modularizing (Need Refactor)",
+  "metrics": {
+    "router_score": 15,
+    "controller_score": 18,
+    "service_score": 18,
+    "ai_mcp_score": 15
+  },
+  "detected_traits": {
+    "has_modular_routing": false,
+    "has_thin_controllers": true,
+    "has_service_layer": false,
+    "has_repository_layer": true,
+    "has_pure_functions": true,
+    "has_mcp_support": false,
+    "has_planner_layer": true,
+    "total_source_files": 3,
+    "total_routes": 0
+  },
+  "folder_summary": [
+    "ai",
+    "db",
+    "features"
+  ],
+  "key_findings": [
+    "Router masih banyak terkonsentrasi di satu file utama.",
+    "Belum terdeteksi Service Layer mandiri; handler mungkin masih menangani logika bisnis langsung.",
+    "Kueri database telah diisolasi di Repository Layer terpisah.",
+    "Belum memiliki adapter MCP; AI coding agent harus mengandalkan pembacaan file manual."
+  ],
+  "scale_up_recommendations": [
+    {
+      "phase": "Tahap 1",
+      "title": "Ekstraksi Business Logic ke Service Layer",
+      "description": "Pindahkan kalkulasi dan validasi dari handler ke folder internal/service.",
+      "target_dir": "internal/service",
+      "priority": "urgent"
+    },
+    {
+      "phase": "Tahap 3",
+      "title": "Refactor Thin Controller",
+      "description": "Ditemukan 1 file sumber dengan ukuran \u003e 300 baris. Pecah controller menjadi sub-handler per use-case.",
+      "target_dir": "internal/api",
+      "priority": "medium"
+    },
+    {
+      "phase": "Tahap 4",
+      "title": "Tambahkan Model Context Protocol (MCP) Adapter",
+      "description": "Buat internal/mcp/server.go untuk mengekspos domain service sebagai MCP Tools untuk Antigravity/Cursor.",
+      "target_dir": "internal/mcp",
+      "priority": "medium"
+    }
+  ],
+  "recommended_next_pattern": "mcp_native"
+}

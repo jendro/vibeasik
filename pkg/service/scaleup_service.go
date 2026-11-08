@@ -587,33 +587,53 @@ func (s *scaleUpService) EvaluateComponent(ctx context.Context, componentID uint
 
 	targetDir := comp.AbsolutePath
 	if targetDir == "" || targetDir == "-" {
-		eval.DetectedPattern = "unknown"
-		eval.DetectedPatternName = "Tidak Diketahui (Path Kosong)"
-		eval.MaturityScore = 20
-		eval.ScoreLevel = "Initial"
+		setEarlyEvaluation(eval, "unknown", "Tidak Diketahui (Path Kosong)", 20)
 		return eval, nil
 	}
 
-	// 1. Scan direct folder structure
 	entries, err := os.ReadDir(targetDir)
 	if err != nil {
-		eval.DetectedPattern = "unreachable"
-		eval.DetectedPatternName = "Direktori Tidak Dapat Dibaca"
-		eval.MaturityScore = 10
-		eval.ScoreLevel = "Initial"
+		setEarlyEvaluation(eval, "unreachable", "Direktori Tidak Dapat Dibaca", 10)
 		return eval, nil
 	}
 
+	folderSet := collectFolderSet(targetDir, entries, eval)
+	stats := scanSourceStats(targetDir)
+	traits := newArchTraits(folderSet, stats)
+	applyArchTraits(eval, traits, stats)
+
+	scores := computeArchScores(traits, stats.fatFiles)
+	eval.Metrics.RouterScore = scores.router
+	eval.Metrics.ControllerScore = scores.controller
+	eval.Metrics.ServiceScore = scores.service
+	eval.Metrics.AiMcpScore = scores.mcp
+	eval.MaturityScore = scores.router + scores.controller + scores.service + scores.mcp
+
+	classifyArchPattern(eval, traits, folderSet)
+	eval.ScoreLevel = archScoreLevel(eval.MaturityScore)
+	eval.KeyFindings = append(eval.KeyFindings, archKeyFindings(traits)...)
+	eval.ScaleUpRecommendations = append(eval.ScaleUpRecommendations, archRecommendations(traits, stats.fatFiles)...)
+
+	return eval, nil
+}
+
+func setEarlyEvaluation(eval *models.ArchitectureEvaluation, pattern, name string, score int) {
+	eval.DetectedPattern = pattern
+	eval.DetectedPatternName = name
+	eval.MaturityScore = score
+	eval.ScoreLevel = "Initial"
+}
+
+// collectFolderSet mencatat folder tingkat atas (dan internal/*) ke folderSet
+// sekaligus mengisi eval.FolderSummary.
+func collectFolderSet(targetDir string, entries []os.DirEntry, eval *models.ArchitectureEvaluation) map[string]bool {
 	folderSet := make(map[string]bool)
 	for _, e := range entries {
 		if e.IsDir() {
-			name := strings.ToLower(e.Name())
-			folderSet[name] = true
+			folderSet[strings.ToLower(e.Name())] = true
 			eval.FolderSummary = append(eval.FolderSummary, e.Name())
 		}
 	}
-
-	// Check for nested internal/ folders if Go or similar
 	internalDir := filepath.Join(targetDir, "internal")
 	if fi, err := os.Stat(internalDir); err == nil && fi.IsDir() {
 		intEntries, _ := os.ReadDir(internalDir)
@@ -624,212 +644,204 @@ func (s *scaleUpService) EvaluateComponent(ctx context.Context, componentID uint
 			}
 		}
 	}
+	return folderSet
+}
 
-	// 2. Count source code files and analyze patterns
-	var totalSourceFiles int
-	var fatFilesCount int
-	var hasModularRouting bool
-	var hasMCP bool
-	var hasServiceLayer bool
-	var hasRepoLayer bool
-	var hasPlanner bool
+type sourceStats struct {
+	totalFiles        int
+	fatFiles          int
+	hasModularRouting bool
+}
 
+var scanSkipDirs = map[string]bool{".git": true, "node_modules": true, "vendor": true, ".nuxt": true, "dist": true, "bin": true}
+var scanSourceExts = map[string]bool{".go": true, ".ts": true, ".js": true, ".py": true, ".php": true}
+
+func scanSourceStats(targetDir string) sourceStats {
+	var st sourceStats
 	_ = filepath.Walk(targetDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil || info == nil {
 			return nil
 		}
 		if info.IsDir() {
-			name := info.Name()
-			if name == ".git" || name == "node_modules" || name == "vendor" || name == ".nuxt" || name == "dist" || name == "bin" {
+			if scanSkipDirs[info.Name()] {
 				return filepath.SkipDir
 			}
 			return nil
 		}
-
-		ext := strings.ToLower(filepath.Ext(path))
-		if ext == ".go" || ext == ".ts" || ext == ".js" || ext == ".py" || ext == ".php" {
-			totalSourceFiles++
-			// Check line count
-			lines := countLines(path)
-			if lines > 300 {
-				fatFilesCount++
-			}
-
-			// Content inspection
-			lowerPath := strings.ToLower(path)
-			if strings.Contains(lowerPath, "route") || strings.Contains(lowerPath, "api") || strings.Contains(lowerPath, "server") {
-				hasModularRouting = true
-			}
+		if !scanSourceExts[strings.ToLower(filepath.Ext(path))] {
+			return nil
+		}
+		st.totalFiles++
+		if countLines(path) > 300 {
+			st.fatFiles++
+		}
+		lowerPath := strings.ToLower(path)
+		if containsAny(lowerPath, "route", "api", "server") {
+			st.hasModularRouting = true
 		}
 		return nil
 	})
+	return st
+}
 
-	if folderSet["service"] || folderSet["services"] || folderSet["usecase"] || folderSet["usecases"] {
-		hasServiceLayer = true
+func containsAny(s string, subs ...string) bool {
+	for _, sub := range subs {
+		if strings.Contains(s, sub) {
+			return true
+		}
 	}
-	if folderSet["repository"] || folderSet["repositories"] || folderSet["repo"] || folderSet["db"] {
-		hasRepoLayer = true
-	}
-	if folderSet["mcp"] || folderSet["agents"] {
-		hasMCP = true
-	}
-	if folderSet["planners"] || folderSet["ai"] || folderSet["cognitive"] {
-		hasPlanner = true
-	}
+	return false
+}
 
-	eval.DetectedTraits.TotalSourceFiles = totalSourceFiles
-	eval.DetectedTraits.HasModularRouting = hasModularRouting
-	eval.DetectedTraits.HasServiceLayer = hasServiceLayer
-	eval.DetectedTraits.HasRepositoryLayer = hasRepoLayer
-	eval.DetectedTraits.HasMcpSupport = hasMCP
-	eval.DetectedTraits.HasPlannerLayer = hasPlanner
-	eval.DetectedTraits.HasThinControllers = fatFilesCount <= 2
+func anyFolder(folderSet map[string]bool, names ...string) bool {
+	for _, n := range names {
+		if folderSet[n] {
+			return true
+		}
+	}
+	return false
+}
+
+type archTraits struct {
+	routing, service, repo, mcp, planner bool
+}
+
+func newArchTraits(folderSet map[string]bool, st sourceStats) archTraits {
+	return archTraits{
+		routing: st.hasModularRouting,
+		service: anyFolder(folderSet, "service", "services", "usecase", "usecases"),
+		repo:    anyFolder(folderSet, "repository", "repositories", "repo", "db"),
+		mcp:     anyFolder(folderSet, "mcp", "agents"),
+		planner: anyFolder(folderSet, "planners", "ai", "cognitive"),
+	}
+}
+
+func applyArchTraits(eval *models.ArchitectureEvaluation, t archTraits, st sourceStats) {
+	eval.DetectedTraits.TotalSourceFiles = st.totalFiles
+	eval.DetectedTraits.HasModularRouting = t.routing
+	eval.DetectedTraits.HasServiceLayer = t.service
+	eval.DetectedTraits.HasRepositoryLayer = t.repo
+	eval.DetectedTraits.HasMcpSupport = t.mcp
+	eval.DetectedTraits.HasPlannerLayer = t.planner
+	eval.DetectedTraits.HasThinControllers = st.fatFiles <= 2
 	eval.DetectedTraits.HasPureFunctions = true
+}
 
-	// Compute Scores
-	routerScore := 15
-	if hasModularRouting {
-		routerScore = 24
-	}
+type archScores struct{ router, controller, service, mcp int }
 
-	controllerScore := 22
-	if fatFilesCount > 3 {
-		controllerScore = 12
-	} else if fatFilesCount > 0 {
-		controllerScore = 18
+func pickScore(def int, cases ...[2]int) int {
+	// cases: pasangan {kondisi(0/1), nilai}; kondisi pertama yang benar menang.
+	for _, c := range cases {
+		if c[0] == 1 {
+			return c[1]
+		}
 	}
+	return def
+}
 
-	serviceScore := 10
-	if hasServiceLayer && hasRepoLayer {
-		serviceScore = 25
-	} else if hasServiceLayer || hasRepoLayer {
-		serviceScore = 18
+func b2i(b bool) int {
+	if b {
+		return 1
 	}
+	return 0
+}
 
-	mcpScore := 5
-	if hasMCP && hasPlanner {
-		mcpScore = 25
-	} else if hasMCP {
-		mcpScore = 20
-	} else if hasPlanner {
-		mcpScore = 15
+func computeArchScores(t archTraits, fat int) archScores {
+	return archScores{
+		router:     pickScore(15, [2]int{b2i(t.routing), 24}),
+		controller: pickScore(22, [2]int{b2i(fat > 3), 12}, [2]int{b2i(fat > 0), 18}),
+		service:    pickScore(10, [2]int{b2i(t.service && t.repo), 25}, [2]int{b2i(t.service || t.repo), 18}),
+		mcp: pickScore(5, [2]int{b2i(t.mcp && t.planner), 25}, [2]int{b2i(t.mcp), 20},
+			[2]int{b2i(t.planner), 15}),
 	}
+}
 
-	eval.Metrics.RouterScore = routerScore
-	eval.Metrics.ControllerScore = controllerScore
-	eval.Metrics.ServiceScore = serviceScore
-	eval.Metrics.AiMcpScore = mcpScore
+func classifyArchPattern(eval *models.ArchitectureEvaluation, t archTraits, folderSet map[string]bool) {
+	switch {
+	case t.mcp && t.service && t.repo:
+		eval.DetectedPattern, eval.DetectedPatternName, eval.RecommendedNextPattern = "mcp_native", "MCP-Native Architecture", "mvpp"
+	case folderSet["core"] && folderSet["adapters"]:
+		eval.DetectedPattern, eval.DetectedPatternName, eval.RecommendedNextPattern = "clean_hexagonal", "Clean / Hexagonal Architecture", "mcp_native"
+	case t.service && t.repo:
+		eval.DetectedPattern, eval.DetectedPatternName, eval.RecommendedNextPattern = "layered", "Traditional Layered (N-Tier)", "mcp_native"
+	case folderSet["features"] || folderSet["slices"]:
+		eval.DetectedPattern, eval.DetectedPatternName, eval.RecommendedNextPattern = "vertical_slice", "Vertical Slice Architecture", "mcp_native"
+	default:
+		eval.DetectedPattern, eval.DetectedPatternName, eval.RecommendedNextPattern = "monolithic_initial", "Arsitektur Awal / Monolitik Sederhana", "layered"
+	}
+}
 
-	totalScore := routerScore + controllerScore + serviceScore + mcpScore
-	eval.MaturityScore = totalScore
+func archScoreLevel(total int) string {
+	switch {
+	case total >= 85:
+		return "Production & Enterprise Ready"
+	case total >= 70:
+		return "Solid Architecture (Intermediate)"
+	case total >= 50:
+		return "Modularizing (Need Refactor)"
+	}
+	return "Initial Stage (High Tech Debt)"
+}
 
-	// Classify Pattern
-	if hasMCP && hasServiceLayer && hasRepoLayer {
-		eval.DetectedPattern = "mcp_native"
-		eval.DetectedPatternName = "MCP-Native Architecture"
-		eval.RecommendedNextPattern = "mvpp"
-	} else if folderSet["core"] && folderSet["adapters"] {
-		eval.DetectedPattern = "clean_hexagonal"
-		eval.DetectedPatternName = "Clean / Hexagonal Architecture"
-		eval.RecommendedNextPattern = "mcp_native"
-	} else if hasServiceLayer && hasRepoLayer {
-		eval.DetectedPattern = "layered"
-		eval.DetectedPatternName = "Traditional Layered (N-Tier)"
-		eval.RecommendedNextPattern = "mcp_native"
-	} else if folderSet["features"] || folderSet["slices"] {
-		eval.DetectedPattern = "vertical_slice"
-		eval.DetectedPatternName = "Vertical Slice Architecture"
-		eval.RecommendedNextPattern = "mcp_native"
-	} else {
-		eval.DetectedPattern = "monolithic_initial"
-		eval.DetectedPatternName = "Arsitektur Awal / Monolitik Sederhana"
-		eval.RecommendedNextPattern = "layered"
+func pickText(ok bool, yes, no string) string {
+	if ok {
+		return yes
 	}
+	return no
+}
 
-	// Score Level
-	if totalScore >= 85 {
-		eval.ScoreLevel = "Production & Enterprise Ready"
-	} else if totalScore >= 70 {
-		eval.ScoreLevel = "Solid Architecture (Intermediate)"
-	} else if totalScore >= 50 {
-		eval.ScoreLevel = "Modularizing (Need Refactor)"
-	} else {
-		eval.ScoreLevel = "Initial Stage (High Tech Debt)"
+func archKeyFindings(t archTraits) []string {
+	return []string{
+		pickText(t.routing, "Router sudah terorganisir modular dan terpisah dari main entrypoint.", "Router masih banyak terkonsentrasi di satu file utama."),
+		pickText(t.service, "Logika bisnis telah diekstraksi ke Service Layer independen.", "Belum terdeteksi Service Layer mandiri; handler mungkin masih menangani logika bisnis langsung."),
+		pickText(t.repo, "Kueri database telah diisolasi di Repository Layer terpisah.", "Kueri basis data belum dienkapsulasi ke dalam antarmuka Repository terpisah."),
+		pickText(t.mcp, "Backend sudah siap terhubung dengan AI Coding Agent via Model Context Protocol (MCP).", "Belum memiliki adapter MCP; AI coding agent harus mengandalkan pembacaan file manual."),
 	}
+}
 
-	// Key findings
-	if hasModularRouting {
-		eval.KeyFindings = append(eval.KeyFindings, "Router sudah terorganisir modular dan terpisah dari main entrypoint.")
-	} else {
-		eval.KeyFindings = append(eval.KeyFindings, "Router masih banyak terkonsentrasi di satu file utama.")
+func archRecommendations(t archTraits, fat int) []models.ScaleUpAction {
+	var recs []models.ScaleUpAction
+	add := func(cond bool, a models.ScaleUpAction) {
+		if cond {
+			recs = append(recs, a)
+		}
 	}
-
-	if hasServiceLayer {
-		eval.KeyFindings = append(eval.KeyFindings, "Logika bisnis telah diekstraksi ke Service Layer independen.")
-	} else {
-		eval.KeyFindings = append(eval.KeyFindings, "Belum terdeteksi Service Layer mandiri; handler mungkin masih menangani logika bisnis langsung.")
-	}
-
-	if hasRepoLayer {
-		eval.KeyFindings = append(eval.KeyFindings, "Kueri database telah diisolasi di Repository Layer terpisah.")
-	} else {
-		eval.KeyFindings = append(eval.KeyFindings, "Kueri basis data belum dienkapsulasi ke dalam antarmuka Repository terpisah.")
-	}
-
-	if hasMCP {
-		eval.KeyFindings = append(eval.KeyFindings, "Backend sudah siap terhubung dengan AI Coding Agent via Model Context Protocol (MCP).")
-	} else {
-		eval.KeyFindings = append(eval.KeyFindings, "Belum memiliki adapter MCP; AI coding agent harus mengandalkan pembacaan file manual.")
-	}
-
-	// Recommendations
-	if !hasServiceLayer {
-		eval.ScaleUpRecommendations = append(eval.ScaleUpRecommendations, models.ScaleUpAction{
-			Phase:       "Tahap 1",
-			Title:       "Ekstraksi Business Logic ke Service Layer",
-			Description: "Pindahkan kalkulasi dan validasi dari handler ke folder internal/service.",
-			TargetDir:   "internal/service",
-			Priority:    "urgent",
-		})
-	}
-	if !hasRepoLayer {
-		eval.ScaleUpRecommendations = append(eval.ScaleUpRecommendations, models.ScaleUpAction{
-			Phase:       "Tahap 2",
-			Title:       "Abstraksi Data Access ke Repository Layer",
-			Description: "Bungkus kueri GORM/SQL ke dalam interface repository agar mudah diuji dengan mock.",
-			TargetDir:   "internal/repository",
-			Priority:    "high",
-		})
-	}
-	if fatFilesCount > 0 {
-		eval.ScaleUpRecommendations = append(eval.ScaleUpRecommendations, models.ScaleUpAction{
-			Phase:       "Tahap 3",
-			Title:       "Refactor Thin Controller",
-			Description: fmt.Sprintf("Ditemukan %d file sumber dengan ukuran > 300 baris. Pecah controller menjadi sub-handler per use-case.", fatFilesCount),
-			TargetDir:   "internal/api",
-			Priority:    "medium",
-		})
-	}
-	if !hasMCP {
-		eval.ScaleUpRecommendations = append(eval.ScaleUpRecommendations, models.ScaleUpAction{
-			Phase:       "Tahap 4",
-			Title:       "Tambahkan Model Context Protocol (MCP) Adapter",
-			Description: "Buat internal/mcp/server.go untuk mengekspos domain service sebagai MCP Tools untuk Antigravity/Cursor.",
-			TargetDir:   "internal/mcp",
-			Priority:    "medium",
-		})
-	}
-	if !hasPlanner {
-		eval.ScaleUpRecommendations = append(eval.ScaleUpRecommendations, models.ScaleUpAction{
-			Phase:       "Tahap 5",
-			Title:       "Adopsi Paradigma MVPP (AI Cognitive Layer)",
-			Description: "Pisahkan prompt dan integrasi LLM/System One ke dalam layer Planner terisolasi.",
-			TargetDir:   "internal/planners",
-			Priority:    "low",
-		})
-	}
-
-	return eval, nil
+	add(!t.service, models.ScaleUpAction{
+		Phase:       "Tahap 1",
+		Title:       "Ekstraksi Business Logic ke Service Layer",
+		Description: "Pindahkan kalkulasi dan validasi dari handler ke folder internal/service.",
+		TargetDir:   "internal/service",
+		Priority:    "urgent",
+	})
+	add(!t.repo, models.ScaleUpAction{
+		Phase:       "Tahap 2",
+		Title:       "Abstraksi Data Access ke Repository Layer",
+		Description: "Bungkus kueri GORM/SQL ke dalam interface repository agar mudah diuji dengan mock.",
+		TargetDir:   "internal/repository",
+		Priority:    "high",
+	})
+	add(fat > 0, models.ScaleUpAction{
+		Phase:       "Tahap 3",
+		Title:       "Refactor Thin Controller",
+		Description: fmt.Sprintf("Ditemukan %d file sumber dengan ukuran > 300 baris. Pecah controller menjadi sub-handler per use-case.", fat),
+		TargetDir:   "internal/api",
+		Priority:    "medium",
+	})
+	add(!t.mcp, models.ScaleUpAction{
+		Phase:       "Tahap 4",
+		Title:       "Tambahkan Model Context Protocol (MCP) Adapter",
+		Description: "Buat internal/mcp/server.go untuk mengekspos domain service sebagai MCP Tools untuk Antigravity/Cursor.",
+		TargetDir:   "internal/mcp",
+		Priority:    "medium",
+	})
+	add(!t.planner, models.ScaleUpAction{
+		Phase:       "Tahap 5",
+		Title:       "Adopsi Paradigma MVPP (AI Cognitive Layer)",
+		Description: "Pisahkan prompt dan integrasi LLM/System One ke dalam layer Planner terisolasi.",
+		TargetDir:   "internal/planners",
+		Priority:    "low",
+	})
+	return recs
 }
 
 func (s *scaleUpService) EvaluateProject(ctx context.Context, projectID uint) ([]models.ArchitectureEvaluation, error) {
