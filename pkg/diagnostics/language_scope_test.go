@@ -193,3 +193,13 @@ func TestComplexityPythonIndentEnd(t *testing.T) {
 		t.Errorf("expected only big(), got %+v", got)
 	}
 }
+
+func TestAuditCriteriaNoFalsePositivePathTraversal(t *testing.T) {
+	fullPath := filepath.Join("..", "..", "studio", "app", "utils", "auditCriteria.ts")
+	findings := InspectFile(fullPath, "studio/app/utils/auditCriteria.ts", "typescript")
+	for _, f := range findings {
+		if f.RuleID == "SEC-PATH-TRAVERSAL" {
+			t.Errorf("found false positive SEC-PATH-TRAVERSAL in auditCriteria.ts at line %d: %s", f.Line, f.Snippet)
+		}
+	}
+}
