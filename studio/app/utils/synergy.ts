@@ -20,59 +20,102 @@ export const synergyTables = (map: ProjectSynergyMap | null): string[] => {
   return Array.from(set).sort()
 }
 
+export const matchesMethod = (req: SynergyRequestFlow, method: string): boolean => {
+  const m = (method || 'ALL').toUpperCase()
+  return m === 'ALL' || req.http_method.toUpperCase() === m
+}
+
+export const matchesTableOrStatus = (req: SynergyRequestFlow, filterVal: string): boolean => {
+  const val = (filterVal || 'all').toLowerCase()
+  if (val === 'all') return true
+  const reqTables = req.database_operation?.target_tables || []
+  const matchTable = reqTables.some(t => t.toLowerCase() === val)
+  const matchStatus = req.response_spec?.status_code != null && String(req.response_spec.status_code) === val
+  return matchTable || matchStatus
+}
+
+export const matchesMethodAndStatus = (req: SynergyRequestFlow, method: string, tableOrStatus = 'all'): boolean => {
+  return matchesMethod(req, method) && matchesTableOrStatus(req, tableOrStatus)
+}
+
+export const matchesMethodAndTable = matchesMethodAndStatus
+
+export const matchesPageSearch = (page: SynergyFrontendPage, query: string): boolean => {
+  const q = (query || '').trim().toLowerCase()
+  if (!q) return true
+  const pathMatch = page.page_path ? page.page_path.toLowerCase().includes(q) : false
+  const titleMatch = page.title ? page.title.toLowerCase().includes(q) : false
+  return pathMatch || titleMatch
+}
+
+export const matchesRequestSearch = (req: SynergyRequestFlow, query: string): boolean => {
+  const q = (query || '').trim().toLowerCase()
+  if (!q) return true
+
+  const fields = [
+    req.action_title,
+    req.route_path,
+    req.handler_function,
+    req.http_method,
+    req.middleware,
+    ...(req.database_operation?.target_tables || []),
+    ...(req.database_operation?.stored_fields || []),
+    ...(req.validation_rules || [])
+  ]
+
+  return fields.some(val => Boolean(val && val.toLowerCase().includes(q)))
+}
+
+export const matchesSearchQuery = (page: SynergyFrontendPage, req: SynergyRequestFlow, query: string): boolean => {
+  const q = (query || '').trim().toLowerCase()
+  if (!q) return true
+  if (matchesPageSearch(page, q)) return true
+  return matchesRequestSearch(req, q)
+}
+
+export const filterPageRequests = (page: SynergyFrontendPage, query: string, method: string, tableOrStatus = 'all'): SynergyRequestFlow[] => {
+  const reqs = page.outbound_requests || []
+  return reqs.filter(req => {
+    if (!matchesMethodAndStatus(req, method, tableOrStatus)) {
+      return false
+    }
+    return matchesSearchQuery(page, req, query)
+  })
+}
+
+export const shouldKeepPage = (pageMatches: boolean, reqCount: number, hasFilter: boolean): boolean => {
+  if (hasFilter) {
+    return reqCount > 0
+  }
+  return pageMatches || reqCount > 0
+}
+
 // Halaman + request yang lolos pencarian & filter metode/tabel (untuk pipeline, matriks & topologi).
 export const filterSynergyPages = (map: ProjectSynergyMap | null, search: string, method: string, table: string): SynergyFrontendPage[] => {
   if (!map?.pages) return []
-  const q = search.trim().toLowerCase()
-  const m = method.toUpperCase()
-  const tbl = table.toLowerCase()
 
-  return map.pages
-    .map((page) => {
-      const pageMatch = !q || page.page_path.toLowerCase().includes(q) || page.title.toLowerCase().includes(q)
+  const q = (search || '').trim().toLowerCase()
+  const m = (method || 'ALL').toUpperCase()
+  const tbl = (table || 'all').toLowerCase()
+  const hasFilter = m !== 'ALL' || tbl !== 'all'
 
-      const matchingRequests = page.outbound_requests.filter((req) => {
-        // Method filter
-        if (m !== 'ALL' && req.http_method.toUpperCase() !== m) {
-          return false
-        }
+  const filtered: SynergyFrontendPage[] = []
 
-        // Table filter
-        if (tbl !== 'all') {
-          const reqTables = req.database_operation?.target_tables || []
-          if (!reqTables.some(t => t.toLowerCase() === tbl)) {
-            return false
-          }
-        }
+  for (const page of map.pages) {
+    const matchingRequests = filterPageRequests(page, q, m, tbl)
+    const pageMatches = matchesPageSearch(page, q)
 
-        if (!q) return true
+    if (!shouldKeepPage(pageMatches, matchingRequests.length, hasFilter)) {
+      continue
+    }
 
-        return (
-          req.action_title.toLowerCase().includes(q)
-          || req.route_path.toLowerCase().includes(q)
-          || req.handler_function.toLowerCase().includes(q)
-          || req.http_method.toLowerCase().includes(q)
-          || (req.middleware && req.middleware.toLowerCase().includes(q))
-          || (req.database_operation?.target_tables && req.database_operation.target_tables.some(t => t.toLowerCase().includes(q)))
-          || (req.database_operation?.stored_fields && req.database_operation.stored_fields.some(f => f.toLowerCase().includes(q)))
-          || (req.validation_rules && req.validation_rules.some(r => r.toLowerCase().includes(q)))
-          || pageMatch
-        )
-      })
-
-      // When filtering by method or table, only keep pages that actually have matching requests
-      if (m !== 'ALL' || tbl !== 'all') {
-        if (matchingRequests.length === 0) return null
-      } else if (!pageMatch && matchingRequests.length === 0) {
-        return null
-      }
-
-      return {
-        ...page,
-        outbound_requests: matchingRequests
-      }
+    filtered.push({
+      ...page,
+      outbound_requests: matchingRequests
     })
-    .filter((p): p is SynergyFrontendPage => p !== null)
+  }
+
+  return filtered
 }
 
 export interface SynergyMatrixRow {

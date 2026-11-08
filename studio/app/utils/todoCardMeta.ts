@@ -106,81 +106,110 @@ export const todoRecommendedModelMeta = (todo: Todo) => {
   }
 }
 
-export const todoOriginMeta = (todo: Todo) => {
+export interface TodoOriginMetaResult {
+  type: string
+  label: string
+  sublabel: string
+  badgeClass: string
+  icon: string
+  title: string
+}
+
+export const isExecutiveOrigin = (todo: Todo): boolean => {
   const src = (todo.source || '').toLowerCase()
   const creator = (todo.creator_name || '').toLowerCase()
   const cType = (todo.creator_type || '').toLowerCase()
+  return src === 'autonomous_executive' || src === 'executive_chat' || creator.includes('eksekutif') || cType === 'executive'
+}
+
+export const isAuditOrigin = (todo: Todo): boolean => {
+  const src = (todo.source || '').toLowerCase()
   const auditKey = (todo as any).audit_key || ''
   const guideline = todo.guideline_ref || ''
+  return src === 'diagnostic_audit' || src === 'audit' || auditKey !== '' || guideline !== ''
+}
 
-  // 1. Dewan Eksekutif (Autonomus atau Chat Eksekutif)
-  if (src === 'autonomous_executive' || src === 'executive_chat' || creator.includes('eksekutif') || cType === 'executive') {
-    return {
-      type: 'executive',
-      label: '🏛️ Dewan Eksekutif',
-      sublabel: todo.creator_name || 'Dewan Eksekutif',
-      badgeClass: 'bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300 dark:border-amber-800 font-semibold',
-      icon: 'i-lucide-crown',
-      title: 'Dirumuskan melalui musyawarah Dewan Eksekutif (CEO, CTO, Product Owner, CMO)'
-    }
-  }
+export const isPmOrigin = (todo: Todo): boolean => {
+  const src = (todo.source || '').toLowerCase()
+  const creator = (todo.creator_name || '').toLowerCase()
+  return src === 'pm_agent' || src === 'planner' || creator.includes('project-manager') || creator.includes('pm')
+}
 
-  // 2. Optimasi Audit (Diagnostic Audit / Deep Check / Guideline Findings)
-  if (src === 'diagnostic_audit' || src === 'audit' || auditKey !== '' || guideline !== '') {
-    const modelOrEngine = todo.creator_name || 'Engine'
-    return {
-      type: 'audit',
-      label: '🔍 Optimasi Audit',
-      sublabel: guideline ? `${guideline}` : modelOrEngine,
-      badgeClass: 'bg-sky-100 text-sky-900 dark:bg-sky-950/60 dark:text-sky-300 border-sky-300 dark:border-sky-800 font-medium',
-      icon: 'i-lucide-shield-alert',
-      title: `Temuan dari hasil audit kualitas/arsitektur: ${guideline || modelOrEngine}`
-    }
-  }
+export const isAiSuggestionOrigin = (todo: Todo): boolean => {
+  const src = (todo.source || '').toLowerCase()
+  const creator = (todo.creator_name || '').toLowerCase()
+  return Boolean(todo.is_ai_suggestion) || creator.includes('advisor') || src === 'ai_template' || src === 'template'
+}
 
-  // 3. Project Manager / Planner
-  if (src === 'pm_agent' || src === 'planner' || creator.includes('project-manager') || creator.includes('pm')) {
-    return {
-      type: 'pm',
-      label: '📋 Project Manager',
-      sublabel: 'PM Planner',
-      badgeClass: 'bg-indigo-100 text-indigo-900 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800 font-medium',
-      icon: 'i-lucide-clipboard-list',
-      title: 'Dirumuskan oleh AI Project Manager / Product Planner'
-    }
-  }
+export const isAgentOrigin = (todo: Todo): boolean => {
+  const creator = (todo.creator_name || '').toLowerCase()
+  const cType = (todo.creator_type || '').toLowerCase()
+  return cType === 'ai_agent' || creator.includes('claude') || creator.includes('antigravity') || creator.includes('opencode') || creator.includes('agent')
+}
 
-  // 4. Rekomendasi AI (AI Advisor / Template)
-  if (todo.is_ai_suggestion || creator.includes('advisor') || src === 'ai_template' || src === 'template') {
-    return {
-      type: 'ai_suggestion',
-      label: '💡 Rekomendasi AI',
-      sublabel: todo.creator_name || 'AI Advisor',
-      badgeClass: 'bg-fuchsia-100 text-fuchsia-900 dark:bg-fuchsia-950/60 dark:text-fuchsia-300 border-fuchsia-300 dark:border-fuchsia-800 font-medium',
-      icon: 'i-lucide-sparkles',
-      title: 'Saran perbaikan/fitur dari Vibeasik AI Advisor'
-    }
-  }
+export const createExecutiveOriginMeta = (todo: Todo): TodoOriginMetaResult => ({
+  type: 'executive',
+  label: '🏛️ Dewan Eksekutif',
+  sublabel: todo.creator_name || 'Dewan Eksekutif',
+  badgeClass: 'bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300 dark:border-amber-800 font-semibold',
+  icon: 'i-lucide-crown',
+  title: 'Dirumuskan melalui musyawarah Dewan Eksekutif (CEO, CTO, Product Owner, CMO)'
+})
 
-  // 5. Agent Coding (Claude Code, Antigravity, OpenCode, Aider, dll)
-  if (cType === 'ai_agent' || creator.includes('claude') || creator.includes('antigravity') || creator.includes('opencode') || creator.includes('agent')) {
-    return {
-      type: 'agent',
-      label: '💻 Agent Coding',
-      sublabel: todo.creator_name || 'AI Agent',
-      badgeClass: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 font-medium',
-      icon: 'i-lucide-bot',
-      title: `Dibuat oleh AI Coding Agent: ${todo.creator_name}`
-    }
-  }
-
-  // 6. Developer (Manual / Human)
+export const createAuditOriginMeta = (todo: Todo): TodoOriginMetaResult => {
+  const guideline = todo.guideline_ref || ''
+  const modelOrEngine = todo.creator_name || 'Engine'
   return {
-    type: 'human',
-    label: '👤 Developer (Manual)',
-    sublabel: todo.creator_name || 'Developer',
-    badgeClass: 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-300 border-neutral-300 dark:border-neutral-700 font-medium',
-    icon: 'i-lucide-user',
-    title: `Dibuat manual oleh developer: ${todo.creator_name || 'developer'}`
+    type: 'audit',
+    label: '🔍 Optimasi Audit',
+    sublabel: guideline ? `${guideline}` : modelOrEngine,
+    badgeClass: 'bg-sky-100 text-sky-900 dark:bg-sky-950/60 dark:text-sky-300 border-sky-300 dark:border-sky-800 font-medium',
+    icon: 'i-lucide-shield-alert',
+    title: `Temuan dari hasil audit kualitas/arsitektur: ${guideline || modelOrEngine}`
   }
+}
+
+export const createPmOriginMeta = (_todo: Todo): TodoOriginMetaResult => ({
+  type: 'pm',
+  label: '📋 Project Manager',
+  sublabel: 'PM Planner',
+  badgeClass: 'bg-indigo-100 text-indigo-900 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800 font-medium',
+  icon: 'i-lucide-clipboard-list',
+  title: 'Dirumuskan oleh AI Project Manager / Product Planner'
+})
+
+export const createAiSuggestionOriginMeta = (todo: Todo): TodoOriginMetaResult => ({
+  type: 'ai_suggestion',
+  label: '💡 Rekomendasi AI',
+  sublabel: todo.creator_name || 'AI Advisor',
+  badgeClass: 'bg-fuchsia-100 text-fuchsia-900 dark:bg-fuchsia-950/60 dark:text-fuchsia-300 border-fuchsia-300 dark:border-fuchsia-800 font-medium',
+  icon: 'i-lucide-sparkles',
+  title: 'Saran perbaikan/fitur dari Vibeasik AI Advisor'
+})
+
+export const createAgentOriginMeta = (todo: Todo): TodoOriginMetaResult => ({
+  type: 'agent',
+  label: '💻 Agent Coding',
+  sublabel: todo.creator_name || 'AI Agent',
+  badgeClass: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 font-medium',
+  icon: 'i-lucide-bot',
+  title: `Dibuat oleh AI Coding Agent: ${todo.creator_name}`
+})
+
+export const createHumanOriginMeta = (todo: Todo): TodoOriginMetaResult => ({
+  type: 'human',
+  label: '👤 Developer (Manual)',
+  sublabel: todo.creator_name || 'Developer',
+  badgeClass: 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-300 border-neutral-300 dark:border-neutral-700 font-medium',
+  icon: 'i-lucide-user',
+  title: `Dibuat manual oleh developer: ${todo.creator_name || 'developer'}`
+})
+
+export const todoOriginMeta = (todo: Todo): TodoOriginMetaResult => {
+  if (isExecutiveOrigin(todo)) return createExecutiveOriginMeta(todo)
+  if (isAuditOrigin(todo)) return createAuditOriginMeta(todo)
+  if (isPmOrigin(todo)) return createPmOriginMeta(todo)
+  if (isAiSuggestionOrigin(todo)) return createAiSuggestionOriginMeta(todo)
+  if (isAgentOrigin(todo)) return createAgentOriginMeta(todo)
+  return createHumanOriginMeta(todo)
 }
