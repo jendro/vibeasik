@@ -60,7 +60,7 @@ func (r *ScannerRegistry) DetectBackend(dir string) BackendAdapter {
 // DetectFrontend returns the first matching frontend adapter (excluding generic fallback)
 func (r *ScannerRegistry) DetectFrontend(dir string) FrontendAdapter {
 	for _, a := range r.frontendAdapters {
-		if a.Name() == "Generic Frontend (SPA / MPA / Custom UI)" {
+		if a.Name() == genericFrontendName {
 			continue
 		}
 		if a.Detect(dir) {
@@ -70,80 +70,100 @@ func (r *ScannerRegistry) DetectFrontend(dir string) FrontendAdapter {
 	return nil
 }
 
+const genericFrontendName = "Generic Frontend (SPA / MPA / Custom UI)"
+
+// routeCollector menampung rute tanpa duplikat (kunci: METHOD + path).
+type routeCollector struct {
+	results []models.RouteInfo
+	seen    map[string]int // key -> index in results
+}
+
+func routeKeyOf(route models.RouteInfo) string {
+	return strings.ToUpper(route.Method) + " " + route.Path
+}
+
+// add menambahkan rute yang belum ada; bila mergeTargets, rute yang sudah ada tanpa TargetRequests mewarisinya.
+func (c *routeCollector) add(routes []models.RouteInfo, mergeTargets bool) {
+	for _, route := range routes {
+		key := routeKeyOf(route)
+		idx, exists := c.seen[key]
+		if !exists {
+			c.seen[key] = len(c.results)
+			c.results = append(c.results, route)
+			continue
+		}
+		// Merge target requests if existing didn't have any
+		if mergeTargets && len(c.results[idx].TargetRequests) == 0 && len(route.TargetRequests) > 0 {
+			c.results[idx].TargetRequests = route.TargetRequests
+		}
+	}
+}
+
+// scanWith menjalankan adapter bila terdeteksi; mengembalikan (terdeteksi, hasil kosong bila gagal).
+func scanWith(adapter RouterScanner, dir string) (detected bool, routes []models.RouteInfo) {
+	if !adapter.Detect(dir) {
+		return false, nil
+	}
+	routes, err := adapter.Scan(dir)
+	if err != nil {
+		return true, nil
+	}
+	return true, routes
+}
+
+func (r *ScannerRegistry) scanBackends(dir string, c *routeCollector) {
+	for _, adapter := range r.backendAdapters {
+		_, routes := scanWith(adapter, dir)
+		c.add(routes, false)
+	}
+}
+
+func (r *ScannerRegistry) scanFrontends(dir string, c *routeCollector) {
+	// First try specific frontend adapters
+	foundSpecific := false
+	for _, adapter := range r.frontendAdapters {
+		if adapter.Name() == genericFrontendName {
+			continue
+		}
+		detected, routes := scanWith(adapter, dir)
+		foundSpecific = foundSpecific || detected
+		c.add(routes, true)
+	}
+
+	// If no specific adapter matched or 0 routes returned, try generic adapter
+	if foundSpecific || len(c.results) != 0 {
+		return
+	}
+	for _, adapter := range r.frontendAdapters {
+		if adapter.Name() == genericFrontendName {
+			_, routes := scanWith(adapter, dir)
+			c.add(routes, false)
+		}
+	}
+}
+
+// roleKinds menerjemahkan peran komponen menjadi (backend, frontend).
+func roleKinds(role string) (isBE, isFE bool) {
+	isBE = role == models.RoleBackend || role == "backend" || role == "api"
+	isFE = role == models.RoleFrontendClient || role == models.RoleFrontendMobile || role == "frontend_client" || role == "frontend_mobile" || role == "frontend"
+	return
+}
+
 // ScanRoutes automatically executes matching adapters based on component role and directory inspection
 func (r *ScannerRegistry) ScanRoutes(dir string, role string) []models.RouteInfo {
-	var results []models.RouteInfo
-	seen := make(map[string]int) // key -> index in results
+	c := &routeCollector{seen: make(map[string]int)}
 
-	isBE := role == models.RoleBackend || role == "backend" || role == "api"
-	isFE := role == models.RoleFrontendClient || role == models.RoleFrontendMobile || role == "frontend_client" || role == "frontend_mobile" || role == "frontend"
+	isBE, isFE := roleKinds(role)
 
 	// 1. Run Backend Adapters if BE or role unspecified
 	if isBE || !isFE {
-		for _, adapter := range r.backendAdapters {
-			if adapter.Detect(dir) {
-				routes, err := adapter.Scan(dir)
-				if err == nil {
-					for _, route := range routes {
-						key := strings.ToUpper(route.Method) + " " + route.Path
-						if _, exists := seen[key]; !exists {
-							seen[key] = len(results)
-							results = append(results, route)
-						}
-					}
-				}
-			}
-		}
+		r.scanBackends(dir, c)
 	}
-
 	// 2. Run Frontend Adapters if FE or role unspecified
 	if isFE || !isBE {
-		// First try specific frontend adapters
-		foundSpecific := false
-		for _, adapter := range r.frontendAdapters {
-			if adapter.Name() == "Generic Frontend (SPA / MPA / Custom UI)" {
-				continue
-			}
-			if adapter.Detect(dir) {
-				foundSpecific = true
-				routes, err := adapter.Scan(dir)
-				if err == nil {
-					for _, route := range routes {
-						key := strings.ToUpper(route.Method) + " " + route.Path
-						if idx, exists := seen[key]; !exists {
-							seen[key] = len(results)
-							results = append(results, route)
-						} else {
-							// Merge target requests if existing didn't have any
-							if len(results[idx].TargetRequests) == 0 && len(route.TargetRequests) > 0 {
-								results[idx].TargetRequests = route.TargetRequests
-							}
-						}
-					}
-				}
-			}
-		}
-
-		// If no specific adapter matched or 0 routes returned, try generic adapter
-		if !foundSpecific && len(results) == 0 {
-			for _, adapter := range r.frontendAdapters {
-				if adapter.Name() == "Generic Frontend (SPA / MPA / Custom UI)" && adapter.Detect(dir) {
-					routes, err := adapter.Scan(dir)
-					if err == nil {
-						for _, route := range routes {
-							key := strings.ToUpper(route.Method) + " " + route.Path
-							if _, exists := seen[key]; !exists {
-								seen[key] = len(results)
-								results = append(results, route)
-							}
-						}
-					}
-				}
-			}
-		}
+		r.scanFrontends(dir, c)
 	}
-
-	return results
+	return c.results
 }
 
 // Global convenience wrappers
