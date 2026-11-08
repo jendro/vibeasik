@@ -975,7 +975,7 @@ text: {
   "project_id": 1
 }
 ### vibeasik_code_map_file
-ERR: proyek Demo tidak punya direktori yang bisa dipindai (root/komponen tidak ditemukan di disk)
+ERR: gagal memperbarui code map proyek 1: proyek Demo tidak punya direktori yang bisa dipindai (root/komponen tidak ditemukan di disk)
 ### vibeasik_code_map_routes
 ERR: root proyek Demo tidak ditemukan di disk
 ### vibeasik_code_map_unknown
