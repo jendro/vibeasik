@@ -20,9 +20,9 @@ export interface AuditCriterion {
 
 // Master Audit Criteria Catalog covering BE, FE, Mobile, Security, Critical Queries/Processes, Smelly Code & Design
 // Teks kriteria penanganan error dipakai bersama agar satu sumber kebenaran.
-const ERROR_HANDLING_RULE = 'Dilarang mengabaikan error return (misal: \'_ = err\' di Go, blok \'catch() {}\' kosong di JS, atau \'except: pass\' di Python). Setiap error wajib dicatat dalam log terstruktur atau diteruskan ke error handler layer.'
+const ERROR_HANDLING_RULE = 'Dilarang mengabaikan error return (misal: \'_ = err\' di Go, blok catch kosong tanpa penanganan di JS, atau \'except: pass\' di Python). Setiap error wajib dicatat dalam log terstruktur atau diteruskan ke error handler layer.'
 const ERROR_HANDLING_RATIONALE = 'Mengabaikan error menyebabkan silent failure: sistem tetap berjalan seolah berhasil padahal terjadi kegagalan database atau I/O, menghasilkan inkonsistensi data.'
-const ERROR_HANDLING_INSPECTION = 'Pindai pola _ = err, catch () {}, atau except: pass pada kode sumber.'
+const ERROR_HANDLING_INSPECTION = 'Pindai pola _ = err, blok catch kosong (tanpa statement), atau except: pass pada kode sumber.'
 
 export const AUDIT_CRITERIA: AuditCriterion[] = [
   // ================= 1. KEAMANAN & VULNERABILITY =================
