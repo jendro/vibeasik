@@ -138,7 +138,10 @@ func Send(cloudURL, event string, in Info) {
 	}
 }
 
-// Start mengirim "start" sebentar setelah engine berjalan, lalu "heartbeat" tiap 24 jam.
+// HeartbeatEvery jeda heartbeat; panel admin menganggap komputer online bila terlihat dalam 15 menit.
+const HeartbeatEvery = 5 * time.Minute
+
+// Start mengirim "start" sebentar setelah engine berjalan, lalu "heartbeat" tiap 5 menit.
 func Start(ctx context.Context, cloudURL string, info func() Info) {
 	if Disabled() {
 		return
@@ -150,7 +153,7 @@ func Start(ctx context.Context, cloudURL string, info func() Info) {
 		case <-time.After(10 * time.Second):
 		}
 		Send(cloudURL, "start", info())
-		t := time.NewTicker(24 * time.Hour)
+		t := time.NewTicker(HeartbeatEvery)
 		defer t.Stop()
 		for {
 			select {
