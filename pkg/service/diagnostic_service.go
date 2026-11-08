@@ -67,55 +67,16 @@ func (s *diagnosticService) DiagnoseProject(ctx context.Context, projectID uint)
 	}
 
 	// 1. Audit each individual component/application one by one!
-	for i := range project.Components {
-		comp := &project.Components[i]
-		compReport, err := diagnostics.AnalyzeComponent(comp, project, allProjects)
-		if err == nil && compReport != nil {
-			compID := comp.ID
-			compReport.ComponentID = &compID
-			_ = s.diagRepo.Create(ctx, compReport)
-			_ = s.componentRepo.UpdateHealthScore(ctx, comp.ID, compReport.Score)
-			comp.HealthScore = compReport.Score
-		}
-	}
+	s.auditComponents(ctx, project, allProjects)
 
 	report, err := diagnostics.AnalyzeProject(project, allProjects)
 	if err != nil {
 		return nil, fmt.Errorf("diagnostics failed: %w", err)
 	}
 
-	var freshFindings []models.Finding
-	if report.FindingsJSON != "" {
-		_ = json.Unmarshal([]byte(report.FindingsJSON), &freshFindings)
-	}
-	// Pengecekan fungsi global lintas berkas: fungsi kembar & fungsi privat yang tidak dipakai (codectx)
-	freshFindings = append(freshFindings, codectx.GlobalFunctionFindings(s.db, project)...)
+	mergedFindings := s.mergeProjectFindings(ctx, projectID, project, report)
 
-	// Load existing findings from latest project diagnostic so we do NOT delete already found issues
-	prevDiag, _ := s.diagRepo.FindLatestByProjectID(ctx, projectID)
-	var prevFindings []models.Finding
-	if prevDiag != nil && prevDiag.FindingsJSON != "" {
-		_ = json.Unmarshal([]byte(prevDiag.FindingsJSON), &prevFindings)
-	}
-
-	// Merge findings: keep all existing findings, and do not duplicate if already in table
-	mergedFindings := models.MergeFindings(prevFindings, freshFindings)
-	// Temuan yang pernah divonis audit keliru (pembelajaran audit) langsung diredam
-	registry.FilterFindings(s.db, projectID, mergedFindings)
-
-	// Accurately compute health score based ONLY on active findings
-	activeCount := 0
-	ignoredCount := 0
-	resolvedCount := 0
-	for _, f := range mergedFindings {
-		if f.Status == models.FindingStatusIgnored {
-			ignoredCount++
-		} else if f.Status == models.FindingStatusResolved {
-			resolvedCount++
-		} else {
-			activeCount++
-		}
-	}
+	activeCount, ignoredCount, resolvedCount := countFindingsByStatus(mergedFindings)
 
 	report.Score = diagnostics.CalculateHealthScore(mergedFindings)
 	report.Summary = fmt.Sprintf("Analyzed %d components across %s architecture. Total %d findings (%d aktif, %d diabaikan, %d diselesaikan). Codebase health score: %d/100.",
@@ -208,4 +169,55 @@ func (s *diagnosticService) FastScanProject(ctx context.Context, projectID uint)
 		ProjectSummary: summary,
 		ScannedAt:      time.Now(),
 	}, nil
+}
+
+// auditComponents menjalankan audit tiap komponen, menyimpan laporan dan skor kesehatannya.
+func (s *diagnosticService) auditComponents(ctx context.Context, project *models.Project, allProjects []models.Project) {
+	for i := range project.Components {
+		comp := &project.Components[i]
+		compReport, err := diagnostics.AnalyzeComponent(comp, project, allProjects)
+		if err == nil && compReport != nil {
+			compID := comp.ID
+			compReport.ComponentID = &compID
+			_ = s.diagRepo.Create(ctx, compReport)
+			_ = s.componentRepo.UpdateHealthScore(ctx, comp.ID, compReport.Score)
+			comp.HealthScore = compReport.Score
+		}
+	}
+}
+
+// mergeProjectFindings menggabungkan temuan baru dengan temuan diagnosa terakhir
+// (tanpa menghapus temuan lama) lalu meredam temuan yang pernah divonis keliru.
+func (s *diagnosticService) mergeProjectFindings(ctx context.Context, projectID uint, project *models.Project, report *models.Diagnostic) []models.Finding {
+	var freshFindings []models.Finding
+	if report.FindingsJSON != "" {
+		_ = json.Unmarshal([]byte(report.FindingsJSON), &freshFindings)
+	}
+	// Pengecekan fungsi global lintas berkas: fungsi kembar & fungsi privat yang tidak dipakai (codectx)
+	freshFindings = append(freshFindings, codectx.GlobalFunctionFindings(s.db, project)...)
+
+	prevDiag, _ := s.diagRepo.FindLatestByProjectID(ctx, projectID)
+	var prevFindings []models.Finding
+	if prevDiag != nil && prevDiag.FindingsJSON != "" {
+		_ = json.Unmarshal([]byte(prevDiag.FindingsJSON), &prevFindings)
+	}
+
+	mergedFindings := models.MergeFindings(prevFindings, freshFindings)
+	// Temuan yang pernah divonis audit keliru (pembelajaran audit) langsung diredam
+	registry.FilterFindings(s.db, projectID, mergedFindings)
+	return mergedFindings
+}
+
+func countFindingsByStatus(findings []models.Finding) (active, ignored, resolved int) {
+	for _, f := range findings {
+		switch f.Status {
+		case models.FindingStatusIgnored:
+			ignored++
+		case models.FindingStatusResolved:
+			resolved++
+		default:
+			active++
+		}
+	}
+	return active, ignored, resolved
 }
