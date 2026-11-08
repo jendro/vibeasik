@@ -335,7 +335,6 @@ func InspectFile(fullPath string, relPath string, lang string) []models.Finding 
 		return findings
 	}
 	lines := strings.Split(content, "\n")
-	lineCount := len(lines)
 
 	// Layout XML Android hanya diperiksa aturan tampilan (bukan aturan kode/server)
 	if lang == "xml" {
@@ -345,377 +344,43 @@ func InspectFile(fullPath string, relPath string, lang string) []models.Finding 
 	// Klasifikasi bahasa & peran berkas agar setiap aturan hanya berlaku pada ekosistem yang tepat:
 	// aturan server (rute, CORS, SQL, path traversal) tidak dijalankan pada komponen UI web,
 	// aplikasi Android, maupun Flutter; aturan UI web tidak dijalankan pada kode server.
+	scan := newFileScan(relPath, lang, content)
+	// Aturan Flutter hanya untuk Dart milik aplikasi Flutter, bukan Dart murni (server/CLI)
+	isFlutter := lang == "dart" && isFlutterSource(fullPath, content)
+
+	// Smell 1: God Controller / Fat File (>400 LOC in handler/controller/service)
+	if len(lines) > 400 && scan.isControllerOrHandler {
+		findings = append(findings, godControllerFinding(relPath, lines))
+	}
+
+	findings = append(findings, scanCodeLines(scan, lines)...)
+	return append(findings, inspectFileLevel(scan, isFlutter, content, lines)...)
+}
+
+// newFileScan mengklasifikasikan berkas (UI web / Android / server / SQL) untuk aturan per-baris.
+func newFileScan(relPath, lang, content string) *fileScan {
 	isUI := isUISourceFile(relPath, lang)
 	isAndroid := (lang == "kotlin" || lang == "java") && isAndroidSourceFile(relPath, content)
 	isServer := isServerLang(lang) && !isUI && !isAndroid
-	// Aturan Flutter hanya untuk Dart milik aplikasi Flutter, bukan Dart murni (server/CLI)
-	isFlutter := lang == "dart" && isFlutterSource(fullPath, content)
-	usesSQL := isServer || lang == "dart" || isAndroid // sqflite / Room rawQuery juga memakai SQL
-
-	// Smell 1: God Controller / Fat File (>400 LOC in handler/controller/service)
-	isControllerOrHandler := isServer && (strings.Contains(relPath, "handler") ||
-		strings.Contains(relPath, "controller") ||
-		strings.Contains(relPath, "router") ||
-		strings.Contains(relPath, "api"))
-
-	if lineCount > 400 && isControllerOrHandler {
-		findings = append(findings, models.Finding{
-			Category:     "code_smell",
-			Severity:     "WARNING",
-			RuleID:       "SMELL-GOD-CONTROLLER",
-			Title:        fmt.Sprintf("God Controller Smell: File Terlalu Besar (%d Baris)", lineCount),
-			Description:  fmt.Sprintf("Berkas handler '%s' memiliki %d baris kode. Ukuran yang membengkak mengindikasikan pelanggaran Single Responsibility Principle (SRP).", filepath.Base(relPath), lineCount),
-			Suggestion:   "Pecah handler menjadi beberapa modul controller yang lebih kecil berdasarkan domain entitas bisnis (misal: user_handler, order_handler).",
-			TargetFile:   relPath,
-			Line:         1,
-			Snippet:      lines[0],
-			TheoryBasis:  "Robert C. Martin (Uncle Bob) SOLID - Single Responsibility Principle (SRP) & Martin Fowler 'Large Class' Code Smell.",
-			SuggestedFix: "// Pisahkan tanggung jawab handler ke controller terpisah:\n// 1. Ekstrak action handlers ke sub-handler modular\n// 2. Gunakan dependency injection atau service layer terpisah",
-		})
+	return &fileScan{
+		relPath:       relPath,
+		lang:          lang,
+		isUI:          isUI,
+		isAndroid:     isAndroid,
+		isServer:      isServer,
+		usesSQL:       isServer || lang == "dart" || isAndroid, // sqflite / Room rawQuery juga memakai SQL
+		guardedGroups: map[string]bool{},
+		isControllerOrHandler: isServer && (strings.Contains(relPath, "handler") ||
+			strings.Contains(relPath, "controller") ||
+			strings.Contains(relPath, "router") ||
+			strings.Contains(relPath, "api")),
 	}
+}
 
-	// Line-by-line inspection with context tracking
-	inLoop := false
-	loopDepth := 0
-	// guardedGroups: variabel router group yang sudah dijaga middleware auth (Group(..., Auth) / .Use(Auth));
-	// group turunan dari group terjaga ikut terjaga, jadi rute di dalamnya bukan ROUTER-UNGUARDED-MUTATION.
-	guardedGroups := map[string]bool{}
-
-	for idx, line := range lines {
-		lineNum := idx + 1
-		trimmed := strings.TrimSpace(line)
-
-		if trimmed == "" || strings.HasPrefix(trimmed, "//") || strings.HasPrefix(trimmed, "/*") || strings.HasPrefix(trimmed, "*") ||
-			((lang == "python" || lang == "php") && strings.HasPrefix(trimmed, "#")) {
-			if stubHandlerRegex.MatchString(trimmed) || (lang == "python" && stubPythonRegex.MatchString(trimmed)) {
-				findings = append(findings, stubHandlerFinding(relPath, lineNum, trimmed))
-			}
-			continue
-		}
-
-		// Track loop blocks
-		if loopKeywordRegex.MatchString(trimmed) {
-			inLoop = true
-			loopDepth++
-		}
-
-		if inLoop {
-			if strings.Contains(trimmed, "{") {
-				loopDepth += strings.Count(trimmed, "{") - 1
-			}
-			if strings.Contains(trimmed, "}") {
-				loopDepth -= strings.Count(trimmed, "}")
-				if loopDepth <= 0 {
-					inLoop = false
-					loopDepth = 0
-				}
-			}
-
-			// Rule DB-001: N+1 Query in Loop
-			if usesSQL && dbQueryCallRegex.MatchString(trimmed) {
-				findings = append(findings, models.Finding{
-					Category:     "query",
-					Severity:     "CRITICAL",
-					RuleID:       "QUERY-NPLUS1",
-					Title:        "N+1 Query Anti-Pattern: Pemanggilan Database di Dalam Loop",
-					Description:  fmt.Sprintf("Pemanggilan kueri database terdeteksi di dalam perulangan (baris %d). Ini memicu latensi kumulatif O(N) dan saturasi connection pool.", lineNum),
-					Suggestion:   "Gunakan eager loading (GORM Preload, SQL JOIN, atau WHERE IN batching) di luar perulangan sebelum iterasi dilakukan.",
-					TargetFile:   relPath,
-					Line:         lineNum,
-					Snippet:      trimmed,
-					TheoryBasis:  "Martin Fowler PoEAA (Patterns of Enterprise Application Architecture): N+1 Selects Anti-Pattern. Menyebabkan bottleneck I/O jaringan database.",
-					SuggestedFix: "// Refactor ke Eager Loading (Contoh GORM):\n// SEBELUM:\n// for _, user := range users { db.Find(&orders, \"user_id = ?\", user.ID) }\n// SESUDAH:\n// db.Preload(\"Orders\").Find(&users)",
-				})
-			}
-		}
-
-		// Rule DB-002: SQL Injection / Unsafe Concatenation
-		if usesSQL && sqlConcatRegex.MatchString(trimmed) {
-			findings = append(findings, models.Finding{
-				Category:     "query",
-				Severity:     "CRITICAL",
-				RuleID:       "QUERY-SQLI",
-				Title:        "Potensi Kerentanan SQL Injection (String Concatenation Query)",
-				Description:  fmt.Sprintf("Query SQL dibentuk menggunakan penggabungan string langsung atau formatting dinamis pada baris %d.", lineNum),
-				Suggestion:   "Gunakan parameterized query (placeholder '?' atau prepared statement) agar input pengguna diperlakukan sebagai literal nilai, bukan kode SQL.",
-				TargetFile:   relPath,
-				Line:         lineNum,
-				Snippet:      trimmed,
-				TheoryBasis:  "OWASP Top 10 A03:2021-Injection & CWE-89 (Improper Neutralization of Special Elements in SQL Command).",
-				SuggestedFix: "// Gunakan parameterized query dengan placeholder dan kirim nilai sebagai argumen terpisah.\n// Contoh aman: db.Raw(\"SELECT * FROM users WHERE id = ?\", id)",
-			})
-		}
-
-		// Rule DB-003: SELECT * Anti-Pattern
-		if usesSQL && selectStarRegex.MatchString(trimmed) && !strings.Contains(trimmed, "COUNT(*)") {
-			findings = append(findings, models.Finding{
-				Category:     "query",
-				Severity:     "WARNING",
-				RuleID:       "QUERY-SELECT-STAR",
-				Title:        "SELECT * Anti-Pattern: Pengambilan Kolom Tanpa Batas (Projection Smell)",
-				Description:  fmt.Sprintf("Penggunaan 'SELECT *' terdeteksi pada baris %d. Mengambil semua kolom meningkatkan beban memori, transfer data jaringan, dan mematikan optimasi covering index.", lineNum),
-				Suggestion:   "Sebutkan hanya kolom yang dibutuhkan secara eksplisit (misal: 'SELECT id, name, email FROM ...') dan tambahkan klausa batas (LIMIT/Pagination).",
-				TargetFile:   relPath,
-				Line:         lineNum,
-				Snippet:      trimmed,
-				TheoryBasis:  "C.J. Date Relational Model Principles & Baron Schwartz High Performance MySQL Indexing Theory.",
-				SuggestedFix: "// Nyatakan kolom secara spesifik:\n// SEBELUM: db.Raw(\"SELECT * FROM orders WHERE status = ?\", status)\n// SESUDAH: db.Select(\"id, order_number, total, status\").Where(\"status = ?\", status).Limit(50)",
-			})
-		}
-
-		if m := routeGroupRegex.FindStringSubmatch(trimmed); m != nil {
-			guardedGroups[m[1]] = guardedGroups[m[2]] || hasAuthMiddleware(trimmed)
-		} else if m := routeUseRegex.FindStringSubmatch(trimmed); m != nil && hasAuthMiddleware(trimmed) {
-			guardedGroups[m[1]] = true
-		}
-
-		// Rule ROUTE-001: Unguarded State-Altering Route (POST, PUT, DELETE without Auth)
-		if matches := routeMutationRegex.FindStringSubmatch(trimmed); isServer && len(matches) >= 3 && !routeOnGuardedGroup(trimmed, guardedGroups) {
-			httpMethod := strings.ToUpper(matches[1])
-			routePath := matches[2]
-			// Exclude common public auth endpoints
-			isPublicAuth := strings.Contains(routePath, "login") ||
-				strings.Contains(routePath, "register") ||
-				strings.Contains(routePath, "forgot") ||
-				strings.Contains(routePath, "callback") ||
-				strings.Contains(routePath, "webhook") ||
-				strings.Contains(routePath, "public") ||
-				strings.Contains(routePath, "scan") ||
-				strings.Contains(routePath, "health")
-
-			hasAuthGuard := hasAuthMiddleware(trimmed)
-
-			if !isPublicAuth && !hasAuthGuard {
-				findings = append(findings, models.Finding{
-					Category:     "router",
-					Severity:     "WARNING",
-					RuleID:       "ROUTER-UNGUARDED-MUTATION",
-					Title:        fmt.Sprintf("Rute Mutasi Data (%s %s) Tanpa Proteksi Middleware", httpMethod, routePath),
-					Description:  fmt.Sprintf("Rute pengubah status '%s %s' pada baris %d tidak memiliki middleware otorisasi/autentikasi eksplisit.", httpMethod, routePath, lineNum),
-					Suggestion:   "Pasang middleware autentikasi (JWT Bearer Token / Session Guard / Role Checker) pada rantai handler rute.",
-					TargetFile:   relPath,
-					Line:         lineNum,
-					Snippet:      trimmed,
-					TheoryBasis:  "OWASP API Security Top 10 API1:2023 (Broken Object Level Authorization - BOLA) & API2:2023 (Broken Authentication).",
-					SuggestedFix: fmt.Sprintf("// Pasang middleware autentikasi sebelum handler:\n// SESUDAH: api.%s(\"%s\", authMiddleware, handler)", strings.Title(strings.ToLower(httpMethod)), routePath),
-				})
-			}
-		}
-
-		// Rule ROUTE-002: Wildcard CORS
-		if isServer && wildcardCorsRegex.MatchString(trimmed) {
-			findings = append(findings, models.Finding{
-				Category:     "router",
-				Severity:     "WARNING",
-				RuleID:       "ROUTER-WILDCARD-CORS",
-				Title:        "Kebijakan CORS Terlalu Permisif (AllowOrigins: '*')",
-				Description:  fmt.Sprintf("Konfigurasi CORS pada baris %d mengizinkan seluruh domain (*). Ini berisiko CSRF dan kebocoran data jika API menangani kredensial pengguna. Untuk pengembangan lokal (localhost) risikonya rendah, tetapi di production origin wajib dibatasi ke domain frontend resmi.", lineNum),
-				Suggestion:   "Tentukan origin domain frontend secara eksplisit (misal: 'http://localhost:3000' untuk dev, domain resmi untuk production) dan pisahkan konfigurasinya lewat environment variable.",
-				TargetFile:   relPath,
-				Line:         lineNum,
-				Snippet:      trimmed,
-				TheoryBasis:  "W3C Cross-Origin Resource Sharing Specification & RFC 6454 (The Web Origin Concept).",
-				SuggestedFix: "// Batasi AllowOrigins ke domain terpercaya:\n// SESUDAH: cors.New(cors.Config{ AllowOrigins: \"http://localhost:3000, https://myapp.com\" })",
-			})
-		}
-
-		// Rule ROUTE-003: Stub / Dangling Handler
-		if stubHandlerRegex.MatchString(trimmed) || (lang == "python" && stubPythonRegex.MatchString(trimmed)) {
-			findings = append(findings, stubHandlerFinding(relPath, lineNum, trimmed))
-		}
-
-		// Rule ROUTE-004: REST Verb in Path
-		if isServer && routerVerbRegex.MatchString(trimmed) {
-			findings = append(findings, models.Finding{
-				Category:     "router",
-				Severity:     "INFO",
-				RuleID:       "ROUTER-VERB-IN-PATH",
-				Title:        "Pelanggaran RESTful URI: Menggunakan Kata Kerja di Path Rute",
-				Description:  fmt.Sprintf("URL rute pada baris %d mengandung kata kerja (get/create/delete). Dalam paradigma REST, URI adalah kata benda (noun/resource).", lineNum),
-				Suggestion:   "Ganti kata kerja pada URI dengan kata benda plural dan gunakan HTTP method yang sesuai (GET, POST, PUT, DELETE).",
-				TargetFile:   relPath,
-				Line:         lineNum,
-				Snippet:      trimmed,
-				TheoryBasis:  "Roy Fielding Architectural Styles and the Design of Network-based Software Architectures (REST Chapter 5).",
-				SuggestedFix: "// Ubah pola rute ke standar REST:\n// SEBELUM: app.Get(\"/getUser/:id\", ...)\n// SESUDAH: app.Get(\"/users/:id\", ...)",
-			})
-		}
-
-		// Rule SMELL-002: Swallowed Error
-		if (lang == "go" && (swallowedErrorGoRegex.MatchString(trimmed) || ignoredErrGoRegex.MatchString(trimmed))) ||
-			((lang == "javascript" || lang == "typescript" || lang == "vue" || lang == "svelte" || lang == "kotlin" || lang == "java" || lang == "dart" || lang == "php") && emptyCatchRegex.MatchString(trimmed)) ||
-			(lang == "python" && emptyExceptRegex.MatchString(trimmed)) {
-			findings = append(findings, models.Finding{
-				Category:     "code_smell",
-				Severity:     "WARNING",
-				RuleID:       "SMELL-SWALLOWED-ERROR",
-				Title:        "Swallowed Error Smell: Kesalahan / Error Diabaikan Tanpa Penanganan",
-				Description:  fmt.Sprintf("Error return diabaikan atau ditangkap tanpa log/handling pada baris %d. Ini memicu silent failure dan inkonsistensi state data.", lineNum),
-				Suggestion:   "Periksa error return secara eksplisit. Log error dengan context yang relevan atau teruskan error ke error-handling layer.",
-				TargetFile:   relPath,
-				Line:         lineNum,
-				Snippet:      trimmed,
-				TheoryBasis:  "Jim Shore's Fail-Fast Principle & Google SRE Observability Engineering.",
-				SuggestedFix: "// Tangani error secara eksplisit:\n// SESUDAH:\nif err != nil {\n    log.Printf(\"[ERROR] failed operation: %v\", err)\n    return err\n}",
-			})
-		}
-
-		// Rule SMELL-003: Missing HTTP Client Timeout
-		if lang == "go" && noTimeoutClientRegex.MatchString(trimmed) {
-			findings = append(findings, models.Finding{
-				Category:     "code_smell",
-				Severity:     "WARNING",
-				RuleID:       "SMELL-MISSING-TIMEOUT",
-				Title:        "HTTP Client Tanpa Batas Waktu (Infinite Timeout Hazard)",
-				Description:  fmt.Sprintf("Inisialisasi HTTP client default tanpa field Timeout terdeteksi pada baris %d. Permintaan dapat menggantung selamanya jika server tujuan macet.", lineNum),
-				Suggestion:   "Atur timeout eksplisit pada struct http.Client (contoh: Timeout: 10 * time.Second) atau sertakan context.WithTimeout.",
-				TargetFile:   relPath,
-				Line:         lineNum,
-				Snippet:      trimmed,
-				TheoryBasis:  "Michael Nygard 'Release It!': Design and Deploy Production-Ready Software (Circuit Breakers & Timeouts).",
-				SuggestedFix: "// Gunakan client dengan timeout terkonfigurasi:\nclient := &http.Client{\n    Timeout: 10 * time.Second,\n}",
-			})
-		}
-
-		// Rule SMELL-004: Hardcoded Secrets
-		if matches := hardcodedSecretRegex.FindStringSubmatch(trimmed); len(matches) >= 3 {
-			val := matches[2]
-			if !strings.Contains(val, "xxx") && !strings.Contains(val, "CHANGE_ME") && !strings.Contains(val, "dummy") && !strings.Contains(val, "test") {
-				findings = append(findings, models.Finding{
-					Category:     "security",
-					Severity:     "CRITICAL",
-					RuleID:       "SMELL-HARDCODED-SECRET",
-					Title:        "Kredensial / Secret Tertulis Langsung (Hardcoded Secret)",
-					Description:  fmt.Sprintf("Kunci rahasia atau kredensial '%s' terdeteksi langsung di dalam kode sumber pada baris %d.", matches[1], lineNum),
-					Suggestion:   "Pindahkan nilai secret ke file .env dan panggil via environment variables (os.Getenv atau process.env).",
-					TargetFile:   relPath,
-					Line:         lineNum,
-					Snippet:      trimmed,
-					TheoryBasis:  "The Twelve-Factor App (Factor III: Config - Store config in the environment) & OWASP Secrets Management Cheat Sheet.",
-					SuggestedFix: fmt.Sprintf("// Panggil secret dari environment:\nsecret := os.Getenv(\"%s\")", strings.ToUpper(matches[1])),
-				})
-			}
-		}
-
-		// Rule SEC-001: Command Injection / Remote Code Execution (RCE)
-		if !isAndroid && lang != "dart" && commandInjectionRegex.MatchString(trimmed) && (strings.Contains(trimmed, "+") || strings.Contains(trimmed, "$") || strings.Contains(trimmed, "fmt.Sprintf")) {
-			findings = append(findings, models.Finding{
-				Category:     "security",
-				Severity:     "CRITICAL",
-				RuleID:       "SEC-COMMAND-INJECTION",
-				Title:        "Celah Keamanan Kritis: Potensi Command Injection / RCE",
-				Description:  fmt.Sprintf("Pemanggilan eksekusi shell / proses sistem terdeteksi dengan penggabungan parameter dinamis pada baris %d. Penyerang dapat menyusupkan perintah arbitrary untuk merusak sistem host.", lineNum),
-				Suggestion:   "Gunakan whitelist argumen tetap, pisahkan executable dari daftar argumen (tanpa shell invocation 'sh -c'), atau gunakan library API native.",
-				TargetFile:   relPath,
-				Line:         lineNum,
-				Snippet:      trimmed,
-				TheoryBasis:  "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection') & OWASP Top 10 A03:2021.",
-				SuggestedFix: "// Lewatkan argumen sebagai array slice terpisah tanpa pemanggilan shell:\n// SEBELUM: exec.Command(\"sh\", \"-c\", \"ping \" + host)\n// SESUDAH: exec.Command(\"ping\", \"-c\", \"1\", validatedHost)",
-			})
-		}
-
-		// Rule SEC-002: Path Traversal / Arbitrary File Access
-		if isServer && pathTraversalRegex.MatchString(trimmed) {
-			findings = append(findings, models.Finding{
-				Category:     "security",
-				Severity:     "CRITICAL",
-				RuleID:       "SEC-PATH-TRAVERSAL",
-				Title:        "Celah Keamanan: Potensi Path Traversal / Arbitrary File Access",
-				Description:  fmt.Sprintf("Operasi I/O file membaca parameter request secara langsung pada baris %d tanpa verifikasi batasan folder dasar. Karakter '../' dapat disalahgunakan untuk membaca file sistem rahasia.", lineNum),
-				Suggestion:   "Terapkan filepath.Clean(), bersihkan karakter '../', dan pastikan jalur berada di dalam direktori penyimpanan yang aman (safe root directory check).",
-				TargetFile:   relPath,
-				Line:         lineNum,
-				Snippet:      trimmed,
-				TheoryBasis:  "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal').",
-				SuggestedFix: "// Bersihkan path dan validasi batas folder:\ncleanPath := filepath.Clean(filepath.Join(baseDir, requestedPath))\nif !strings.HasPrefix(cleanPath, baseDir) { return errors.New(\"akses ilegal\") }",
-			})
-		}
-
-		// Rule SEC-003: Dangerous HTML Injection / XSS in Frontend
-		if (isUI || ((lang == "typescript" || lang == "javascript") && !isServer)) && unsafeHtmlRegex.MatchString(trimmed) && !strings.Contains(trimmed, "DOMPurify") && !strings.Contains(trimmed, "sanitize") {
-			findings = append(findings, models.Finding{
-				Category:     "security",
-				Severity:     "CRITICAL",
-				RuleID:       "SEC-XSS-UNSAFE-HTML",
-				Title:        "Celah Keamanan: Dangerous Raw HTML Rendering (XSS Hazard)",
-				Description:  fmt.Sprintf("Penyisipan HTML mentah tanpa sanitizer (v-html / innerHTML) pada baris %d berisiko memicu Cross-Site Scripting (XSS) jika memuat input pengguna.", lineNum),
-				Suggestion:   "Gunakan text binding biasa ({{ text }}) atau lewatkan konten melalui DOMPurify.sanitize() sebelum dirender ke DOM.",
-				TargetFile:   relPath,
-				Line:         lineNum,
-				Snippet:      trimmed,
-				TheoryBasis:  "OWASP Top 10 A03:2021-Injection (Cross-Site Scripting XSS) & CWE-79.",
-				SuggestedFix: "// Bersihkan HTML sebelum rendering:\nimport DOMPurify from 'dompurify'\nconst safeContent = computed(() => DOMPurify.sanitize(rawHtml))",
-			})
-		}
-
-		// Rule PERF-001: Heavy Query - Leading Wildcard LIKE Full Table Scan
-		if usesSQL && wildcardLikeRegex.MatchString(trimmed) {
-			findings = append(findings, models.Finding{
-				Category:     "query",
-				Severity:     "WARNING",
-				RuleID:       "PERF-WILDCARD-LIKE",
-				Title:        "Kueri Berat: Leading-Wildcard LIKE",
-				Description:  fmt.Sprintf("Pola LIKE dengan wildcard di awal pada baris %d dapat menonaktifkan pemakaian indeks B-Tree dan menyebabkan pemindaian tabel.", lineNum),
-				Suggestion:   "Hapus wildcard di awal (gunakan LIKE 'prefix%%') atau beralih ke Full-Text Search (FTS) index untuk pencarian teks bebas skala besar.",
-				TargetFile:   relPath,
-				Line:         lineNum,
-				Snippet:      trimmed,
-				TheoryBasis:  "Relational Database B-Tree Index Mechanics & SQL Query Execution Plan Optimization.",
-				SuggestedFix: "// Gunakan indexing berbasis prefix atau FTS:\n// SEBELUM: db.Where(\"name LIKE ?\", \"%\" + query + \"%\")\n// SESUDAH: db.Where(\"name LIKE ?\", query + \"%\") // atau gunakan FTS5",
-			})
-		}
-
-		// Rule PERF-002: Heavy Process - Blocking Synchronous I/O in Handlers
-		if (lang == "javascript" || lang == "typescript") && syncIoRegex.MatchString(trimmed) && isControllerOrHandler {
-			findings = append(findings, models.Finding{
-				Category:     "code_smell",
-				Severity:     "CRITICAL",
-				RuleID:       "PERF-SYNC-IO-BLOCKING",
-				Title:        "Proses Berat: Operasi File Sinkron Memblokir Event Loop Server",
-				Description:  fmt.Sprintf("Pemanggilan fs.readFileSync / writeFileSync pada baris %d di dalam handler HTTP membekukan NodeJS event loop dan menahan semua request koneksi pengguna lain.", lineNum),
-				Suggestion:   "Ganti dengan operasi file asinkron (fs.promises.readFile atau fs.readFile non-blocking) dengan async/await.",
-				TargetFile:   relPath,
-				Line:         lineNum,
-				Snippet:      trimmed,
-				TheoryBasis:  "Node.js Event Loop Architecture & Concurrency Model (Reactive Non-blocking I/O).",
-				SuggestedFix: "// Gunakan async I/O:\nconst data = await fs.promises.readFile(filePath, 'utf-8')",
-			})
-		}
-
-		// Rule PERF-003: Heavy Process - Unbounded Memory Buffering (OOM Hazard)
-		if lang == "go" && unboundedBodyReadRegex.MatchString(trimmed) && isControllerOrHandler {
-			findings = append(findings, models.Finding{
-				Category:     "code_smell",
-				Severity:     "WARNING",
-				RuleID:       "PERF-UNBOUNDED-BODY-READ",
-				Title:        "Proses Berat: Pembacaan Request Body Tanpa Batas Ukuran (OOM Risk)",
-				Description:  fmt.Sprintf("Pembacaan seluruh request body menggunakan io.ReadAll pada baris %d tanpa pembatas ukuran dapat menguras memori RAM hingga server crash (Out-Of-Memory).", lineNum),
-				Suggestion:   "Bungkus body dengan http.MaxBytesReader(w, r.Body, maxBytes) atau gunakan middleware BodyLimit.",
-				TargetFile:   relPath,
-				Line:         lineNum,
-				Snippet:      trimmed,
-				TheoryBasis:  "Resource Allocation Management & Resilience Engineering (Buffer Over-allocation Mitigation).",
-				SuggestedFix: "// Batasi ukuran pembacaan stream:\nlimitedReader := io.LimitReader(r.Body, 2*1024*1024) // Maksimal 2MB\ndata, err := io.ReadAll(limitedReader)",
-			})
-		}
-
-		// Rule DESIGN-001: Smelly Design - Native Browser Alert / Confirm Violation
-		if isUI && nativeDialogRegex.MatchString(trimmed) {
-			findings = append(findings, models.Finding{
-				Category:     "code_smell",
-				Severity:     "WARNING",
-				RuleID:       "DESIGN-NATIVE-DIALOG",
-				Title:        "Smelly Design: Penggunaan Dialog Bawaan Browser (Zero Alert Policy)",
-				Description:  fmt.Sprintf("Terdeteksi pemanggilan alert(), confirm(), atau prompt() pada baris %d. Dialog bawaan browser bersifat synchronous blocking dan merusak tampilan profesional aplikasi modern.", lineNum),
-				Suggestion:   "Ganti alert() dengan toast notification elegan (useToast()) dan ganti confirm() dengan modal dialog kustom.",
-				TargetFile:   relPath,
-				Line:         lineNum,
-				Snippet:      trimmed,
-				TheoryBasis:  "Vibeasik UX Guidelines & Modern Non-blocking Modal Dialog Design Systems.",
-				SuggestedFix: "// Gunakan useToast() dari Nuxt UI:\nconst toast = useToast()\ntoast.add({ title: 'Berhasil', description: 'Operasi selesai', color: 'success' })",
-			})
-		}
-	}
+// inspectFileLevel menjalankan pemeriksaan tingkat berkas (bukan per-baris) sesuai peran berkas.
+func inspectFileLevel(scan *fileScan, isFlutter bool, content string, lines []string) []models.Finding {
+	var findings []models.Finding
+	relPath, lang := scan.relPath, scan.lang
 
 	// Best practice Flutter: lifecycle controller, build(), async gap, penyimpanan aman, logging
 	if isFlutter {
@@ -723,7 +388,7 @@ func InspectFile(fullPath string, relPath string, lang string) []models.Finding 
 	}
 
 	// Lokasi simpan/muat berkas harus tetap setelah aplikasi di-build & diunggah ke server
-	if isServer {
+	if scan.isServer {
 		findings = append(findings, inspectStoragePaths(content, relPath, lang, lines)...)
 	}
 
@@ -737,7 +402,7 @@ func InspectFile(fullPath string, relPath string, lang string) []models.Finding 
 	}
 
 	// Frontend-specific inspection for Tab API Caching & Overfetching
-	if isUI {
+	if scan.isUI {
 		findings = append(findings, inspectFrontendSmells(content, relPath, lines)...)
 	}
 
@@ -746,7 +411,6 @@ func InspectFile(fullPath string, relPath string, lang string) []models.Finding 
 	if lang != "dart" || isFlutter {
 		findings = append(findings, inspectUIPerformance(content, relPath, lang, lines)...)
 	}
-
 	return findings
 }
 
