@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"github.com/spf13/cobra"
 
 	"github.com/vibeasik/vibeasik/pkg/activity"
@@ -113,7 +115,7 @@ func hookEventToReport(agent string, raw []byte) (map[string]interface{}, bool) 
 			r["task"] = task
 		}
 	case "Notification":
-		r["status"], r["action"] = "idle", firstNonEmpty(ev.Message, "Menunggu respons pengguna")
+		r["status"], r["action"] = "idle", util.FirstNonEmpty(ev.Message, "Menunggu respons pengguna")
 	case "Stop":
 		// "idle", bukan "done": jumlah task selesai dihitung watcher transkrip agar tidak terhitung ganda.
 		r["status"], r["action"] = "idle", "Menunggu instruksi berikutnya"
@@ -123,15 +125,6 @@ func hookEventToReport(agent string, raw []byte) (map[string]interface{}, bool) 
 		return nil, false
 	}
 	return r, true
-}
-
-func firstNonEmpty(vals ...string) string {
-	for _, v := range vals {
-		if strings.TrimSpace(v) != "" {
-			return strings.TrimSpace(v)
-		}
-	}
-	return ""
 }
 
 func init() {

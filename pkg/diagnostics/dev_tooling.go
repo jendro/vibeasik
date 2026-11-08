@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
@@ -92,7 +94,7 @@ func inspectProjectTooling(project *models.Project) []models.Finding {
 	findings = append(findings, inspectMobileDevScript(project)...)
 
 	deployPath := filepath.Join(root, "deploy.sh")
-	if !fileExists(deployPath) {
+	if !util.FileExists(deployPath) {
 		findings = append(findings, models.Finding{
 			Category:     "deployment",
 			Severity:     "WARNING",
@@ -457,7 +459,7 @@ func inspectDuplicateImports(relPath string, lines []string) []models.Finding {
 // diekspor dari lebih dari satu berkas di composables/ atau utils/, sehingga salah satunya diabaikan diam-diam.
 func inspectNuxtDuplicateAutoImports(c models.Component) []models.Finding {
 	isNuxt := strings.Contains(strings.ToLower(c.Framework), "nuxt") ||
-		fileExists(filepath.Join(c.AbsolutePath, "nuxt.config.ts")) || fileExists(filepath.Join(c.AbsolutePath, "nuxt.config.js"))
+		util.FileExists(filepath.Join(c.AbsolutePath, "nuxt.config.ts")) || util.FileExists(filepath.Join(c.AbsolutePath, "nuxt.config.js"))
 	if !isNuxt {
 		return nil
 	}

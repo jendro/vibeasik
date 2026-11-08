@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
@@ -141,7 +143,7 @@ func TestEnsureEnvFiles(t *testing.T) {
 	// .gitignore belum memuat .env.* → berkas env lokal/server tidak boleh dibuat (bisa ter-commit)
 	os.WriteFile(filepath.Join(dir, ".gitignore"), []byte(".env\n"), 0o644)
 	EnsureEnvFiles(p)
-	if fileExists(filepath.Join(dir, ".env.local")) || fileExists(filepath.Join(dir, ".env.server")) {
+	if util.FileExists(filepath.Join(dir, ".env.local")) || util.FileExists(filepath.Join(dir, ".env.server")) {
 		t.Fatal("env files must not be created while git would not ignore them")
 	}
 

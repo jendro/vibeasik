@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"gorm.io/gorm"
 
 	"github.com/vibeasik/vibeasik/pkg/activity"
@@ -1009,7 +1011,7 @@ func (s *Server) callTool(name string, args map[string]interface{}) (*ToolCallRe
 				compact[i] = toCompactTodo(t)
 				compact[i].Similarity = sims[t.ID]
 				if search == "" {
-					compact[i].Memory = oneLine(t.Memory, listMemoryMax) // daftar biasa: cukup ringkasan; kueri: memori utuh
+					compact[i].Memory = util.OneLine(t.Memory, listMemoryMax) // daftar biasa: cukup ringkasan; kueri: memori utuh
 				}
 			}
 			out = compact

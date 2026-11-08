@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
@@ -30,21 +32,21 @@ func (a *CodeIgniterAdapter) Type() string {
 
 func (a *CodeIgniterAdapter) Detect(dir string) bool {
 	// 1. Check for spark (CodeIgniter 4 CLI)
-	if fileExists(filepath.Join(dir, "spark")) {
+	if util.FileExists(filepath.Join(dir, "spark")) {
 		return true
 	}
 	// 2. Check for CI4 route file
-	if fileExists(filepath.Join(dir, "app/Config/Routes.php")) {
+	if util.FileExists(filepath.Join(dir, "app/Config/Routes.php")) {
 		return true
 	}
 	// 3. Check for CI3 route file
-	if fileExists(filepath.Join(dir, "application/config/routes.php")) {
+	if util.FileExists(filepath.Join(dir, "application/config/routes.php")) {
 		return true
 	}
 	// 4. Check composer.json for CodeIgniter framework
 	composerPath := filepath.Join(dir, "composer.json")
-	if fileExists(composerPath) {
-		content := readFileString(composerPath)
+	if util.FileExists(composerPath) {
+		content := util.ReadFileString(composerPath)
 		if strings.Contains(content, "codeigniter4/framework") ||
 			strings.Contains(content, "codeigniter4/appstarter") ||
 			strings.Contains(content, "codeigniter") {
@@ -57,7 +59,7 @@ func (a *CodeIgniterAdapter) Detect(dir string) bool {
 func (a *CodeIgniterAdapter) Scan(dir string) ([]models.RouteInfo, error) {
 	// 1. If spark exists, try executing `php spark routes`
 	sparkPath := filepath.Join(dir, "spark")
-	if fileExists(sparkPath) {
+	if util.FileExists(sparkPath) {
 		if routes, err := a.scanSparkRoutes(dir); err == nil && len(routes) > 0 {
 			return routes, nil
 		}
@@ -68,7 +70,7 @@ func (a *CodeIgniterAdapter) Scan(dir string) ([]models.RouteInfo, error) {
 	seen := make(map[string]bool)
 
 	ci4RoutesPath := filepath.Join(dir, "app/Config/Routes.php")
-	if fileExists(ci4RoutesPath) {
+	if util.FileExists(ci4RoutesPath) {
 		for _, r := range ParseCodeIgniter4RoutesFromFile(ci4RoutesPath) {
 			key := strings.ToUpper(r.Method) + " " + r.Path
 			if !seen[key] {
@@ -79,7 +81,7 @@ func (a *CodeIgniterAdapter) Scan(dir string) ([]models.RouteInfo, error) {
 	}
 
 	ci3RoutesPath := filepath.Join(dir, "application/config/routes.php")
-	if fileExists(ci3RoutesPath) {
+	if util.FileExists(ci3RoutesPath) {
 		for _, r := range ParseCodeIgniter3RoutesFromFile(ci3RoutesPath) {
 			key := strings.ToUpper(r.Method) + " " + r.Path
 			if !seen[key] {

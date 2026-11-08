@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
@@ -26,17 +28,17 @@ func (a *LaravelAdapter) Type() string {
 }
 
 func (a *LaravelAdapter) Detect(dir string) bool {
-	if fileExists(filepath.Join(dir, "artisan")) {
+	if util.FileExists(filepath.Join(dir, "artisan")) {
 		return true
 	}
 	composerPath := filepath.Join(dir, "composer.json")
-	if fileExists(composerPath) {
-		content := readFileString(composerPath)
+	if util.FileExists(composerPath) {
+		content := util.ReadFileString(composerPath)
 		if strings.Contains(content, "laravel/framework") || strings.Contains(content, "illuminate/") {
 			return true
 		}
 	}
-	if fileExists(filepath.Join(dir, "routes/web.php")) || fileExists(filepath.Join(dir, "routes/api.php")) {
+	if util.FileExists(filepath.Join(dir, "routes/web.php")) || util.FileExists(filepath.Join(dir, "routes/api.php")) {
 		return true
 	}
 	return false

@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/vibeasik/vibeasik/pkg/util"
 )
 
 var (
@@ -198,7 +200,7 @@ func ExtractPageTargetRequests(pagePath string, pageContent string, dir string, 
 			for _, tryPrefix := range []string{"app/", "src/", ""} {
 				candidate := filepath.Join(dir, tryPrefix+rel)
 				for _, ext := range []string{"", ".vue", ".tsx", ".jsx", ".ts", ".js"} {
-					if fileExists(candidate + ext) {
+					if util.FileExists(candidate + ext) {
 						resolvedPath = candidate + ext
 						break
 					}
@@ -211,7 +213,7 @@ func ExtractPageTargetRequests(pagePath string, pageContent string, dir string, 
 			dirOfPage := filepath.Dir(pagePath)
 			candidate := filepath.Join(dirOfPage, impPath)
 			for _, ext := range []string{"", ".vue", ".tsx", ".jsx", ".ts", ".js"} {
-				if fileExists(candidate + ext) {
+				if util.FileExists(candidate + ext) {
 					resolvedPath = candidate + ext
 					break
 				}

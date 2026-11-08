@@ -3,6 +3,8 @@ package activity
 import (
 	"path/filepath"
 	"strings"
+
+	"github.com/vibeasik/vibeasik/pkg/util"
 )
 
 // Helper bersama untuk event Claude Code: dipakai `vibeasik hook claude-code` dan watcher transkrip.
@@ -18,17 +20,17 @@ func ClaudeToolAction(tool string, in map[string]interface{}) string {
 	}
 	switch tool {
 	case "Edit", "MultiEdit", "Write", "NotebookEdit":
-		return "Mengedit " + firstNonEmpty(base("file_path"), base("notebook_path"), "file")
+		return "Mengedit " + util.FirstNonEmpty(base("file_path"), base("notebook_path"), "file")
 	case "Read":
-		return "Membaca " + firstNonEmpty(base("file_path"), "file")
+		return "Membaca " + util.FirstNonEmpty(base("file_path"), "file")
 	case "Bash":
-		return "Menjalankan: " + firstNonEmpty(str("description"), str("command"))
+		return "Menjalankan: " + util.FirstNonEmpty(str("description"), str("command"))
 	case "Grep", "Glob":
-		return "Mencari " + firstNonEmpty(str("pattern"), "di kode")
+		return "Mencari " + util.FirstNonEmpty(str("pattern"), "di kode")
 	case "WebFetch", "WebSearch":
-		return "Browsing " + firstNonEmpty(str("url"), str("query"), "web")
+		return "Browsing " + util.FirstNonEmpty(str("url"), str("query"), "web")
 	case "Task", "Agent":
-		return "Mendelegasikan ke subagent: " + firstNonEmpty(str("description"), "tugas")
+		return "Mendelegasikan ke subagent: " + util.FirstNonEmpty(str("description"), "tugas")
 	case "TodoWrite", "TaskCreate", "TaskUpdate":
 		return "Memperbarui daftar tugas"
 	}
@@ -36,7 +38,7 @@ func ClaudeToolAction(tool string, in map[string]interface{}) string {
 		parts := strings.Split(tool, "__")
 		return "MCP: " + parts[len(parts)-1]
 	}
-	return "Memakai " + firstNonEmpty(tool, "tool")
+	return "Memakai " + util.FirstNonEmpty(tool, "tool")
 }
 
 // ClaudeActiveTask mengambil item yang sedang dikerjakan dari daftar tugas internal agent.
@@ -49,23 +51,14 @@ func ClaudeActiveTask(tool string, in map[string]interface{}) string {
 			if s, _ := item["status"].(string); s == "in_progress" {
 				form, _ := item["activeForm"].(string)
 				content, _ := item["content"].(string)
-				return firstNonEmpty(form, content)
+				return util.FirstNonEmpty(form, content)
 			}
 		}
 	case "TaskUpdate":
 		if s, _ := in["status"].(string); s == "in_progress" {
 			form, _ := in["activeForm"].(string)
 			subject, _ := in["subject"].(string)
-			return firstNonEmpty(form, subject)
-		}
-	}
-	return ""
-}
-
-func firstNonEmpty(vals ...string) string {
-	for _, v := range vals {
-		if strings.TrimSpace(v) != "" {
-			return strings.TrimSpace(v)
+			return util.FirstNonEmpty(form, subject)
 		}
 	}
 	return ""

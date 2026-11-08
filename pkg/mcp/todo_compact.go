@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"github.com/vibeasik/vibeasik/pkg/models"
 	"github.com/vibeasik/vibeasik/pkg/todorag"
 )
@@ -51,16 +53,8 @@ func toCompactTodo(t models.Todo) compactTodo {
 		ProjectID: t.ProjectID, ComponentID: t.ComponentID, ComponentName: t.ComponentName, TargetApps: t.TargetApps,
 		Tags: t.Tags, Source: t.Source, ComplexityLevel: t.ComplexityLevel, ImpactScore: t.ImpactScore, Score: t.Score,
 		EmployeeName: t.EmployeeName, CompletedByAgent: t.CompletedByAgent, CompletedAt: t.CompletedAt, CreatedAt: t.CreatedAt,
-		Preview: oneLine(todorag.IndexText(t.Description, ""), todoPreviewMax), Memory: t.Memory,
+		Preview: util.OneLine(todorag.IndexText(t.Description, ""), todoPreviewMax), Memory: t.Memory,
 	}
-}
-
-func oneLine(s string, n int) string {
-	s = strings.Join(strings.Fields(s), " ")
-	if r := []rune(s); len(r) > n {
-		return string(r[:n]) + "…"
-	}
-	return s
 }
 
 type compactComponent struct {
@@ -86,7 +80,7 @@ type compactProject struct {
 
 func toCompactProject(p models.Project) compactProject {
 	out := compactProject{ID: p.ID, Name: p.Name, Slug: p.Slug, Status: p.Status, ProjectType: p.ProjectType, RootPath: p.RootPath,
-		Summary: oneLine(p.ShortDescription, 240)}
+		Summary: util.OneLine(p.ShortDescription, 240)}
 	for _, c := range p.Components {
 		out.Components = append(out.Components, compactComponent{ID: c.ID, Name: c.Name, Role: c.Role, RelativePath: c.RelativePath,
 			Language: c.Language, Framework: c.Framework, Port: c.Port})
@@ -110,7 +104,7 @@ func duplicateNotice(hits []todorag.Hit) string {
 	b.WriteString("Todo serupa sudah ada di proyek ini — pastikan ini bukan pekerjaan ganda:\n")
 	for _, h := range hits {
 		fmt.Fprintf(&b, "- #%d [%s] %s (kemiripan %.2f)\n", h.ID, h.Status, h.Title, h.Sim)
-		if m := oneLine(h.Memory, 200); m != "" {
+		if m := util.OneLine(h.Memory, 200); m != "" {
 			b.WriteString("  " + m + "\n")
 		}
 	}

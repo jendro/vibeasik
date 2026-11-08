@@ -27,11 +27,6 @@ type FrontendAdapter interface {
 
 // Helper utilities for all adapters
 
-func fileExists(p string) bool {
-	info, err := os.Stat(p)
-	return err == nil && !info.IsDir()
-}
-
 func dirExists(p string) bool {
 	info, err := os.Stat(p)
 	return err == nil && info.IsDir()
@@ -55,14 +50,6 @@ func shouldIgnoreName(name string) bool {
 		"coverage":     true,
 	}
 	return ignored[name] || strings.HasPrefix(name, ".")
-}
-
-func readFileString(p string) string {
-	b, err := os.ReadFile(p)
-	if err != nil {
-		return ""
-	}
-	return string(b)
 }
 
 // CleanURLPath normalizes URL paths: trims redundant slashes, ensures leading slash, removes trailing slash (except root "/")

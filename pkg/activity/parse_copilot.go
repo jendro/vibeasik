@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
@@ -45,7 +47,7 @@ func (p *copilotCLIParser) feed(line []byte) {
 	}
 	p.at(e.Timestamp)
 	d := e.Data
-	if m := firstNonEmpty(d.NewModel, d.Model); m != "" {
+	if m := util.FirstNonEmpty(d.NewModel, d.Model); m != "" {
 		p.model = m
 	}
 	switch e.Type {
@@ -68,7 +70,7 @@ func (p *copilotCLIParser) feed(line []byte) {
 		}
 		p.todoCall(d.ToolName, args)
 		p.status = models.WorkerStatusWorking
-		p.action = firstNonEmpty(d.ToolTitle, strings.TrimSpace(d.ToolName+" "+detail))
+		p.action = util.FirstNonEmpty(d.ToolTitle, strings.TrimSpace(d.ToolName+" "+detail))
 	case "assistant.message":
 		if len(d.ToolRequests) == 0 && strings.TrimSpace(d.Content) != "" {
 			p.done++
@@ -247,7 +249,7 @@ func vscodeWorkspacePath(file string) string {
 	if json.Unmarshal(raw, &ws) != nil {
 		return ""
 	}
-	u, err := url.Parse(firstNonEmpty(ws.Folder, ws.Workspace))
+	u, err := url.Parse(util.FirstNonEmpty(ws.Folder, ws.Workspace))
 	if err != nil || u.Scheme != "file" {
 		return ""
 	}

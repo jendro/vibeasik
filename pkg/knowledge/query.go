@@ -3,6 +3,8 @@ package knowledge
 import (
 	"strings"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"gorm.io/gorm"
 
 	"github.com/vibeasik/vibeasik/pkg/models"
@@ -103,7 +105,7 @@ func List(db *gorm.DB, f Filter) []Hit {
 		return out
 	}
 	q := db.Order("weight + 5 * (helpful - harmful) DESC, id DESC").Limit(f.Limit)
-	q = q.Where("status = ?", firstNonEmpty(f.Status, models.KnowledgeNodeActive))
+	q = q.Where("status = ?", util.FirstNonBlank(f.Status, models.KnowledgeNodeActive))
 	if f.Domain != "" {
 		q = q.Where("domain = ?", f.Domain)
 	}

@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"gorm.io/gorm"
 
 	"github.com/vibeasik/vibeasik/pkg/models"
@@ -182,7 +184,7 @@ func ReportActivity(c Caller, r Report) *models.AgentWorker {
 	if parent := strings.TrimSpace(r.ParentSessionID); parent != "" {
 		// Sub agent berbagi koneksi MCP dengan koordinatornya, jadi key-nya selalu dari session_id sendiri.
 		parentKey = "report:" + slug(name) + ":" + slug(parent)
-		key = parentKey + ":sub:" + slug(firstNonEmpty(r.SessionID, r.Task, "sub"))
+		key = parentKey + ":sub:" + slug(util.FirstNonEmpty(r.SessionID, r.Task, "sub"))
 	} else if key == "" {
 		id := strings.TrimSpace(r.SessionID)
 		if id == "" {

@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"gorm.io/gorm"
 
 	"github.com/vibeasik/vibeasik/pkg/models"
@@ -116,7 +118,7 @@ func GapByID(db *gorm.DB, id uint) (*models.KnowledgeGap, error) {
 // DismissGap mengabaikan celah (mis. ekstensi yang ternyata bukan bahasa pemrograman).
 func DismissGap(db *gorm.DB, id uint, note string) error {
 	res := db.Model(&models.KnowledgeGap{}).Where("id = ?", id).
-		Updates(map[string]interface{}{"status": models.KnowledgeGapDismissed, "note": clip(firstNonEmpty(note, "Diabaikan manual"), 500)})
+		Updates(map[string]interface{}{"status": models.KnowledgeGapDismissed, "note": clip(util.FirstNonBlank(note, "Diabaikan manual"), 500)})
 	if res.RowsAffected == 0 {
 		return errors.New("celah tidak ditemukan")
 	}
@@ -140,13 +142,4 @@ func CheckGapAgendas(db *gorm.DB) {
 		}
 		db.Model(&g).Updates(updates)
 	}
-}
-
-func firstNonEmpty(vals ...string) string {
-	for _, v := range vals {
-		if strings.TrimSpace(v) != "" {
-			return v
-		}
-	}
-	return ""
 }

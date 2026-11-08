@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
@@ -26,7 +28,7 @@ func (a *PythonAdapter) Type() string {
 
 func (a *PythonAdapter) Detect(dir string) bool {
 	for _, f := range []string{"requirements.txt", "pyproject.toml", "Pipfile", "setup.py", "manage.py"} {
-		if fileExists(filepath.Join(dir, f)) {
+		if util.FileExists(filepath.Join(dir, f)) {
 			return true
 		}
 	}

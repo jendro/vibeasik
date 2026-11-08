@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
@@ -25,7 +27,7 @@ func (a *GoAdapter) Type() string {
 }
 
 func (a *GoAdapter) Detect(dir string) bool {
-	if fileExists(filepath.Join(dir, "go.mod")) {
+	if util.FileExists(filepath.Join(dir, "go.mod")) {
 		return true
 	}
 	// Check if any .go file exists
@@ -66,7 +68,7 @@ func (a *GoAdapter) Scan(dir string) ([]models.RouteInfo, error) {
 
 	for _, cf := range candidateFiles {
 		p := filepath.Join(dir, cf)
-		if fileExists(p) && !scannedFiles[p] {
+		if util.FileExists(p) && !scannedFiles[p] {
 			scannedFiles[p] = true
 			r := ParseGoRoutesFromFile(p)
 			if len(r) > 0 {

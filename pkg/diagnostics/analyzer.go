@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"github.com/vibeasik/vibeasik/pkg/models"
 	"github.com/vibeasik/vibeasik/pkg/security"
 )
@@ -106,7 +108,7 @@ func AnalyzeProject(project *models.Project, allProjects []models.Project) (*mod
 	// 2. Check Essential Project Files at Root (if root_path is configured)
 	if project.RootPath != "" && project.RootPath != "-" {
 		rootGitignore := filepath.Join(project.RootPath, ".gitignore")
-		if !fileExists(rootGitignore) {
+		if !util.FileExists(rootGitignore) {
 			findings = append(findings, models.Finding{
 				Category:    "config",
 				Severity:    "WARNING",
@@ -123,7 +125,7 @@ func AnalyzeProject(project *models.Project, allProjects []models.Project) (*mod
 		findings = append(findings, inspectProjectTooling(project)...)
 
 		rootReadme := filepath.Join(project.RootPath, "README.md")
-		if !fileExists(rootReadme) {
+		if !util.FileExists(rootReadme) {
 			findings = append(findings, models.Finding{
 				Category:    "documentation",
 				Severity:    "INFO",
@@ -355,11 +357,6 @@ func getGitStatusShort(dir string) string {
 		return ""
 	}
 	return strings.TrimSpace(string(out))
-}
-
-func fileExists(path string) bool {
-	info, err := os.Stat(path)
-	return err == nil && !info.IsDir()
 }
 
 func generateFolderTree(root string, maxDepth int) string {

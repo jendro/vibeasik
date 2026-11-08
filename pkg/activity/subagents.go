@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
@@ -59,9 +61,9 @@ func (t *subagentTracker) start(useID string, in map[string]interface{}, at time
 	if useID == "" || prompt == "" || t.byUse[useID] != nil {
 		return
 	}
-	sub := &claudeSub{useID: useID, key: SubagentKey(t.parentKey, prompt), model: firstNonEmpty(str("model"), parentModel),
-		role: firstNonEmpty(str("subagent_type"), "general-purpose"), last: at, action: "Menerima tugas dari koordinator"}
-	sub.task = firstNonEmpty(strings.TrimPrefix(firstLine(prompt), "Tugas: "), str("description"))
+	sub := &claudeSub{useID: useID, key: SubagentKey(t.parentKey, prompt), model: util.FirstNonEmpty(str("model"), parentModel),
+		role: util.FirstNonEmpty(str("subagent_type"), "general-purpose"), last: at, action: "Menerima tugas dari koordinator"}
+	sub.task = util.FirstNonEmpty(strings.TrimPrefix(firstLine(prompt), "Tugas: "), str("description"))
 	if m := subTodoRef.FindStringSubmatch(prompt); m != nil {
 		if id, err := strconv.Atoi(m[1]); err == nil {
 			sub.todoID = uint(id)

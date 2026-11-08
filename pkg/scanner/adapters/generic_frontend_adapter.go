@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
@@ -29,7 +31,7 @@ func (a *GenericFrontendAdapter) Detect(dir string) bool {
 			return true
 		}
 	}
-	return fileExists(filepath.Join(dir, "package.json")) || fileExists(filepath.Join(dir, "index.html"))
+	return util.FileExists(filepath.Join(dir, "package.json")) || util.FileExists(filepath.Join(dir, "index.html"))
 }
 
 func (a *GenericFrontendAdapter) Scan(dir string) ([]models.RouteInfo, error) {

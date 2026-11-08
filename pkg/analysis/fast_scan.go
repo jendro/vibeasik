@@ -4,13 +4,14 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/vibeasik/vibeasik/pkg/util"
 
 	"gorm.io/gorm"
 
@@ -315,7 +316,7 @@ func fallbackHeuristic(result *models.FastScanResult, absDir string, comp *model
 	var steps []string
 
 	// Detect by files on disk
-	if fileExists(filepath.Join(absDir, "go.mod")) {
+	if util.PathExists(filepath.Join(absDir, "go.mod")) {
 		lang = "go"
 		pkgMgr = "go"
 		if devCmd == "" {
@@ -336,7 +337,7 @@ func fallbackHeuristic(result *models.FastScanResult, absDir string, comp *model
 			"3. Jalankan `go run main.go` untuk mode development.",
 			"4. Akses server di port :" + strconv.Itoa(port) + ".",
 		}
-	} else if fileExists(filepath.Join(absDir, "pubspec.yaml")) {
+	} else if util.PathExists(filepath.Join(absDir, "pubspec.yaml")) {
 		lang = "dart"
 		comp.Framework = "flutter"
 		pkgMgr = "pub"
@@ -355,17 +356,17 @@ func fallbackHeuristic(result *models.FastScanResult, absDir string, comp *model
 			"3. Buka emulator atau sambungkan perangkat fisik.",
 			"4. Jalankan `flutter run` untuk memulai aplikasi mobile.",
 		}
-	} else if fileExists(filepath.Join(absDir, "package.json")) {
+	} else if util.PathExists(filepath.Join(absDir, "package.json")) {
 		pkgMgr = "bun"
-		if fileExists(filepath.Join(absDir, "pnpm-lock.yaml")) {
+		if util.PathExists(filepath.Join(absDir, "pnpm-lock.yaml")) {
 			pkgMgr = "pnpm"
-		} else if fileExists(filepath.Join(absDir, "yarn.lock")) {
+		} else if util.PathExists(filepath.Join(absDir, "yarn.lock")) {
 			pkgMgr = "yarn"
-		} else if fileExists(filepath.Join(absDir, "package-lock.json")) {
+		} else if util.PathExists(filepath.Join(absDir, "package-lock.json")) {
 			pkgMgr = "npm"
 		}
 
-		if fileExists(filepath.Join(absDir, "nuxt.config.ts")) || fileExists(filepath.Join(absDir, "nuxt.config.js")) {
+		if util.PathExists(filepath.Join(absDir, "nuxt.config.ts")) || util.PathExists(filepath.Join(absDir, "nuxt.config.js")) {
 			comp.Framework = "nuxt"
 			if port == 0 {
 				port = 3000
@@ -387,7 +388,7 @@ func fallbackHeuristic(result *models.FastScanResult, absDir string, comp *model
 			fmt.Sprintf("2. Jalankan `%s` untuk menjalankan dev server.", devCmd),
 			fmt.Sprintf("3. Buka browser di http://localhost:%d", port),
 		}
-	} else if fileExists(filepath.Join(absDir, "spark")) || fileExists(filepath.Join(absDir, "app/Config/Routes.php")) || (fileExists(filepath.Join(absDir, "composer.json")) && strings.Contains(readFileString(filepath.Join(absDir, "composer.json")), "codeigniter")) {
+	} else if util.PathExists(filepath.Join(absDir, "spark")) || util.PathExists(filepath.Join(absDir, "app/Config/Routes.php")) || (util.PathExists(filepath.Join(absDir, "composer.json")) && strings.Contains(util.ReadFileString(filepath.Join(absDir, "composer.json")), "codeigniter")) {
 		lang = "php"
 		comp.Framework = "codeigniter"
 		pkgMgr = "composer"
@@ -407,7 +408,7 @@ func fallbackHeuristic(result *models.FastScanResult, absDir string, comp *model
 			"4. Jalankan `php spark serve` untuk memulai server development lokal.",
 			"5. Akses server di port :" + strconv.Itoa(port) + ".",
 		}
-	} else if fileExists(filepath.Join(absDir, "artisan")) || (fileExists(filepath.Join(absDir, "composer.json")) && strings.Contains(readFileString(filepath.Join(absDir, "composer.json")), "laravel")) {
+	} else if util.PathExists(filepath.Join(absDir, "artisan")) || (util.PathExists(filepath.Join(absDir, "composer.json")) && strings.Contains(util.ReadFileString(filepath.Join(absDir, "composer.json")), "laravel")) {
 		lang = "php"
 		comp.Framework = "laravel"
 		pkgMgr = "composer"
@@ -472,7 +473,7 @@ func extractEnvHeuristic(dir string) models.ExtractedEnvInfo {
 	foundEnvPath := ""
 	for _, ef := range envFiles {
 		p := filepath.Join(dir, ef)
-		if fileExists(p) {
+		if util.PathExists(p) {
 			foundEnvPath = p
 			break
 		}
@@ -575,7 +576,7 @@ func extractEnvHeuristic(dir string) models.ExtractedEnvInfo {
 	}
 	for _, dbf := range dbFiles {
 		p := filepath.Join(dir, dbf)
-		if fileExists(p) {
+		if util.PathExists(p) {
 			content, err := os.ReadFile(p)
 			if err == nil {
 				sContent := string(content)
@@ -609,7 +610,7 @@ func extractEnvHeuristic(dir string) models.ExtractedEnvInfo {
 	}
 
 	// Detect DB from manifest
-	if fileExists(filepath.Join(dir, "go.mod")) {
+	if util.PathExists(filepath.Join(dir, "go.mod")) {
 		modContent, _ := os.ReadFile(filepath.Join(dir, "go.mod"))
 		sMod := string(modContent)
 		if strings.Contains(sMod, "gorm.io/gorm") {
@@ -624,7 +625,7 @@ func extractEnvHeuristic(dir string) models.ExtractedEnvInfo {
 		if strings.Contains(sMod, "sqlite") && dbType == "None detected" {
 			dbType = "SQLite"
 		}
-	} else if fileExists(filepath.Join(dir, "prisma/schema.prisma")) {
+	} else if util.PathExists(filepath.Join(dir, "prisma/schema.prisma")) {
 		ormDriver = "Prisma ORM"
 		prismaContent, _ := os.ReadFile(filepath.Join(dir, "prisma/schema.prisma"))
 		if strings.Contains(string(prismaContent), `provider = "postgresql"`) {
@@ -638,7 +639,7 @@ func extractEnvHeuristic(dir string) models.ExtractedEnvInfo {
 
 	// Detect Auth methods
 	if len(envInfo.AuthMethods) == 0 {
-		if fileExists(filepath.Join(dir, "server/api/auth.ts")) || fileExists(filepath.Join(dir, "server/api/auth/[...].ts")) {
+		if util.PathExists(filepath.Join(dir, "server/api/auth.ts")) || util.PathExists(filepath.Join(dir, "server/api/auth/[...].ts")) {
 			envInfo.AuthMethods = append(envInfo.AuthMethods, "Nuxt Auth / OAuth")
 			envInfo.LoginEndpoints = append(envInfo.LoginEndpoints, "/api/auth/login")
 		} else {
@@ -647,11 +648,11 @@ func extractEnvHeuristic(dir string) models.ExtractedEnvInfo {
 	}
 
 	// Detect if this is a Frontend component
-	isFrontend := fileExists(filepath.Join(dir, "package.json")) ||
-		fileExists(filepath.Join(dir, "nuxt.config.ts")) ||
-		fileExists(filepath.Join(dir, "nuxt.config.js")) ||
-		fileExists(filepath.Join(dir, "next.config.js")) ||
-		fileExists(filepath.Join(dir, "pubspec.yaml"))
+	isFrontend := util.PathExists(filepath.Join(dir, "package.json")) ||
+		util.PathExists(filepath.Join(dir, "nuxt.config.ts")) ||
+		util.PathExists(filepath.Join(dir, "nuxt.config.js")) ||
+		util.PathExists(filepath.Join(dir, "next.config.js")) ||
+		util.PathExists(filepath.Join(dir, "pubspec.yaml"))
 
 	if isFrontend && (dbType == "None detected" || dbType == "") {
 		dbType = "Client Cache & Remote REST API"
@@ -664,7 +665,7 @@ func extractEnvHeuristic(dir string) models.ExtractedEnvInfo {
 
 	if isFrontend {
 		pkgPath := filepath.Join(dir, "package.json")
-		if fileExists(pkgPath) {
+		if util.PathExists(pkgPath) {
 			data, err := os.ReadFile(pkgPath)
 			if err == nil {
 				var pkg packageJSON
@@ -874,7 +875,7 @@ func extractKeyFiles(dir string, withCode bool) string {
 
 	for _, t := range targets {
 		p := filepath.Join(dir, t)
-		if fileExists(p) {
+		if util.PathExists(p) {
 			maxLines := 60
 			switch {
 			case withCode && (strings.HasSuffix(t, "main.go") || strings.Contains(t, "routes") || strings.Contains(t, "Routes") || strings.Contains(t, "useApi")):
@@ -935,23 +936,6 @@ func readSnippet(path string, maxLines int) (string, error) {
 	return string(data), nil
 }
 
-func fileExists(p string) bool {
-	_, err := os.Stat(p)
-	if err != nil && !os.IsNotExist(err) {
-		// Berkas tidak ada adalah jalur normal; error sistem (izin, I/O) dicatat agar terlihat.
-		log.Printf("[WARN] fileExists: os.Stat(%q): %v", p, err)
-	}
-	return err == nil
-}
-
-func readFileString(p string) string {
-	b, err := os.ReadFile(p)
-	if err != nil {
-		return ""
-	}
-	return string(b)
-}
-
 // detectArchitecture analyzes manifests, go.mod, directory hierarchy, and key files to identify framework, plugins, and design patterns
 func detectArchitecture(dir string) models.ArchitectureInfo {
 	var arch models.ArchitectureInfo
@@ -959,7 +943,7 @@ func detectArchitecture(dir string) models.ArchitectureInfo {
 
 	// 1. Check Go projects
 	goModPath := filepath.Join(dir, "go.mod")
-	if fileExists(goModPath) {
+	if util.PathExists(goModPath) {
 		modBytes, err := os.ReadFile(goModPath)
 		if err == nil {
 			sMod := string(modBytes)
@@ -1086,17 +1070,17 @@ func detectArchitecture(dir string) models.ArchitectureInfo {
 		}
 
 		// Design Pattern Detection
-		hasCleanArch := fileExists(filepath.Join(dir, "domain")) &&
-			(fileExists(filepath.Join(dir, "usecase")) || fileExists(filepath.Join(dir, "usecases"))) &&
-			(fileExists(filepath.Join(dir, "repository")) || fileExists(filepath.Join(dir, "repositories")))
+		hasCleanArch := util.PathExists(filepath.Join(dir, "domain")) &&
+			(util.PathExists(filepath.Join(dir, "usecase")) || util.PathExists(filepath.Join(dir, "usecases"))) &&
+			(util.PathExists(filepath.Join(dir, "repository")) || util.PathExists(filepath.Join(dir, "repositories")))
 
-		hasMVC := fileExists(filepath.Join(dir, "controllers")) && fileExists(filepath.Join(dir, "models"))
-		has3Tier := fileExists(filepath.Join(dir, "handlers")) && fileExists(filepath.Join(dir, "services"))
-		hasStdLayout := fileExists(filepath.Join(dir, "cmd")) && fileExists(filepath.Join(dir, "internal"))
+		hasMVC := util.PathExists(filepath.Join(dir, "controllers")) && util.PathExists(filepath.Join(dir, "models"))
+		has3Tier := util.PathExists(filepath.Join(dir, "handlers")) && util.PathExists(filepath.Join(dir, "services"))
+		hasStdLayout := util.PathExists(filepath.Join(dir, "cmd")) && util.PathExists(filepath.Join(dir, "internal"))
 
 		// Check for E2EE or Zero-Knowledge vault
-		hasE2EE := fileExists(filepath.Join(dir, "MEKANISME_ENKRIPSI.md")) ||
-			fileExists(filepath.Join(dir, "KEAMANAN_DAN_PEMULIHAN_AKUN.md"))
+		hasE2EE := util.PathExists(filepath.Join(dir, "MEKANISME_ENKRIPSI.md")) ||
+			util.PathExists(filepath.Join(dir, "KEAMANAN_DAN_PEMULIHAN_AKUN.md"))
 
 		if !hasE2EE {
 			ctrlPath := filepath.Join(dir, "controllers")
@@ -1140,24 +1124,24 @@ func detectArchitecture(dir string) models.ArchitectureInfo {
 
 	// 2. Check Node / Nuxt / Next / Vue / React / Svelte / Angular projects
 	pkgJsonPath := filepath.Join(dir, "package.json")
-	if fileExists(pkgJsonPath) {
+	if util.PathExists(pkgJsonPath) {
 		return detectNodeAndFrontendArchitecture(dir, pkgJsonPath)
 	}
 
 	// 3. Check Flutter / Dart projects
 	pubspecPath := filepath.Join(dir, "pubspec.yaml")
-	if fileExists(pubspecPath) {
+	if util.PathExists(pubspecPath) {
 		return detectFlutterArchitecture(dir, pubspecPath)
 	}
 
 	// 4. Check PHP projects (CodeIgniter, Laravel, etc.)
 	composerPath := filepath.Join(dir, "composer.json")
 	composerContent := ""
-	if fileExists(composerPath) {
-		composerContent = readFileString(composerPath)
+	if util.PathExists(composerPath) {
+		composerContent = util.ReadFileString(composerPath)
 	}
 
-	if fileExists(filepath.Join(dir, "spark")) || fileExists(filepath.Join(dir, "app/Config/Routes.php")) || strings.Contains(composerContent, "codeigniter4") {
+	if util.PathExists(filepath.Join(dir, "spark")) || util.PathExists(filepath.Join(dir, "app/Config/Routes.php")) || strings.Contains(composerContent, "codeigniter4") {
 		arch.Framework = "CodeIgniter 4"
 		arch.FrameworkType = "Lightweight High-Performance PHP MVC Framework"
 		arch.DesignPattern = "MVC (Model-View-Controller)"
@@ -1165,7 +1149,7 @@ func detectArchitecture(dir string) models.ArchitectureInfo {
 		return arch
 	}
 
-	if fileExists(filepath.Join(dir, "application/config/routes.php")) || fileExists(filepath.Join(dir, "system/core/CodeIgniter.php")) {
+	if util.PathExists(filepath.Join(dir, "application/config/routes.php")) || util.PathExists(filepath.Join(dir, "system/core/CodeIgniter.php")) {
 		arch.Framework = "CodeIgniter 3"
 		arch.FrameworkType = "Classic PHP MVC Framework"
 		arch.DesignPattern = "MVC (Model-View-Controller)"
@@ -1173,7 +1157,7 @@ func detectArchitecture(dir string) models.ArchitectureInfo {
 		return arch
 	}
 
-	if fileExists(filepath.Join(dir, "artisan")) || strings.Contains(composerContent, "laravel") {
+	if util.PathExists(filepath.Join(dir, "artisan")) || strings.Contains(composerContent, "laravel") {
 		arch.Framework = "Laravel"
 		arch.FrameworkType = "Fullstack PHP Framework (Eloquent ORM & Artisan CLI)"
 		arch.DesignPattern = "MVC (Model-View-Controller)"
@@ -1229,8 +1213,8 @@ func detectNodeAndFrontendArchitecture(dir, pkgPath string) models.ArchitectureI
 		return false
 	}
 
-	isNuxt := hasDep("nuxt") || fileExists(filepath.Join(dir, "nuxt.config.ts")) || fileExists(filepath.Join(dir, "nuxt.config.js"))
-	isNext := hasDep("next") || fileExists(filepath.Join(dir, "next.config.js")) || fileExists(filepath.Join(dir, "next.config.mjs")) || fileExists(filepath.Join(dir, "next.config.ts"))
+	isNuxt := hasDep("nuxt") || util.PathExists(filepath.Join(dir, "nuxt.config.ts")) || util.PathExists(filepath.Join(dir, "nuxt.config.js"))
+	isNext := hasDep("next") || util.PathExists(filepath.Join(dir, "next.config.js")) || util.PathExists(filepath.Join(dir, "next.config.mjs")) || util.PathExists(filepath.Join(dir, "next.config.ts"))
 	isSvelte := hasDep("@sveltejs/kit") || hasDep("svelte")
 	isVue := hasDep("vue")
 	isReact := hasDep("react")
@@ -1382,11 +1366,11 @@ func detectNodeAndFrontendArchitecture(dir, pkgPath string) models.ArchitectureI
 	}
 
 	// Design Pattern Detection based on directory hierarchy
-	hasPages := fileExists(filepath.Join(dir, "pages")) || fileExists(filepath.Join(dir, "app/pages"))
-	hasComposables := fileExists(filepath.Join(dir, "composables")) || fileExists(filepath.Join(dir, "app/composables"))
-	hasComponents := fileExists(filepath.Join(dir, "components")) || fileExists(filepath.Join(dir, "app/components"))
-	hasServerApi := fileExists(filepath.Join(dir, "server/api")) || fileExists(filepath.Join(dir, "server/routes"))
-	hasMiddleware := fileExists(filepath.Join(dir, "middleware")) || fileExists(filepath.Join(dir, "app/middleware"))
+	hasPages := util.PathExists(filepath.Join(dir, "pages")) || util.PathExists(filepath.Join(dir, "app/pages"))
+	hasComposables := util.PathExists(filepath.Join(dir, "composables")) || util.PathExists(filepath.Join(dir, "app/composables"))
+	hasComponents := util.PathExists(filepath.Join(dir, "components")) || util.PathExists(filepath.Join(dir, "app/components"))
+	hasServerApi := util.PathExists(filepath.Join(dir, "server/api")) || util.PathExists(filepath.Join(dir, "server/routes"))
+	hasMiddleware := util.PathExists(filepath.Join(dir, "middleware")) || util.PathExists(filepath.Join(dir, "app/middleware"))
 
 	if isNuxt && hasPages && hasComposables {
 		arch.DesignPattern = "Vue 3 Composition API with Feature-Driven Architecture & File-Based Routing"

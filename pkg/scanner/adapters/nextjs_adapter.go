@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
@@ -25,13 +27,13 @@ func (a *NextJsAdapter) Type() string {
 
 func (a *NextJsAdapter) Detect(dir string) bool {
 	for _, f := range []string{"next.config.js", "next.config.mjs", "next.config.ts"} {
-		if fileExists(filepath.Join(dir, f)) {
+		if util.FileExists(filepath.Join(dir, f)) {
 			return true
 		}
 	}
 	pkgPath := filepath.Join(dir, "package.json")
-	if fileExists(pkgPath) {
-		content := readFileString(pkgPath)
+	if util.FileExists(pkgPath) {
+		content := util.ReadFileString(pkgPath)
 		if strings.Contains(content, `"next"`) {
 			return true
 		}

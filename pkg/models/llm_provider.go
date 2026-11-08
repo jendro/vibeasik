@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"gorm.io/gorm"
 )
 
@@ -112,24 +114,17 @@ func upsertProviderState(db *gorm.DB, url, apiKey string, apply func(*LLMProvide
 	db.Save(&st)
 }
 
-func clipText(s string, n int) string {
-	if r := []rune(strings.TrimSpace(s)); len(r) > n {
-		return string(r[:n]) + "…"
-	}
-	return strings.TrimSpace(s)
-}
-
 // MarkLLMProviderQuota menandai provider kehabisan kuota: tidak dipakai lagi sampai diaktifkan ulang.
 func MarkLLMProviderQuota(db *gorm.DB, url, apiKey, reason string) {
 	upsertProviderState(db, url, apiKey, func(st *LLMProviderState) {
 		now := time.Now()
-		st.Blocked, st.BlockedAt, st.BlockReason = true, &now, clipText(reason, 400)
+		st.Blocked, st.BlockedAt, st.BlockReason = true, &now, util.ClipText(reason, 400)
 		st.BlockedUntil = nil
 		if d := quotaBlockDuration(); d > 0 {
 			until := now.Add(d)
 			st.BlockedUntil = &until
 		}
-		st.LastError, st.Failures = clipText(reason, 400), st.Failures+1
+		st.LastError, st.Failures = util.ClipText(reason, 400), st.Failures+1
 	})
 }
 
@@ -137,7 +132,7 @@ func MarkLLMProviderQuota(db *gorm.DB, url, apiKey, reason string) {
 func MarkLLMProviderCooldown(db *gorm.DB, url, apiKey string, d time.Duration, reason string) {
 	upsertProviderState(db, url, apiKey, func(st *LLMProviderState) {
 		until := time.Now().Add(d)
-		st.CooldownUntil, st.LastError, st.Failures = &until, clipText(reason, 400), st.Failures+1
+		st.CooldownUntil, st.LastError, st.Failures = &until, util.ClipText(reason, 400), st.Failures+1
 	})
 }
 

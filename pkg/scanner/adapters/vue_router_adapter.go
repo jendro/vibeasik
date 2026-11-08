@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
@@ -25,18 +27,18 @@ func (a *VueRouterAdapter) Type() string {
 
 func (a *VueRouterAdapter) Detect(dir string) bool {
 	// If it's Nuxt, let NuxtAdapter handle it
-	if fileExists(filepath.Join(dir, "nuxt.config.ts")) || fileExists(filepath.Join(dir, "nuxt.config.js")) {
+	if util.FileExists(filepath.Join(dir, "nuxt.config.ts")) || util.FileExists(filepath.Join(dir, "nuxt.config.js")) {
 		return false
 	}
 	pkgPath := filepath.Join(dir, "package.json")
-	if fileExists(pkgPath) {
-		content := readFileString(pkgPath)
+	if util.FileExists(pkgPath) {
+		content := util.ReadFileString(pkgPath)
 		if strings.Contains(content, `"vue-router"`) || (strings.Contains(content, `"vue"`) && !strings.Contains(content, `"nuxt"`)) {
 			return true
 		}
 	}
 	for _, rf := range []string{"src/router/index.ts", "src/router/index.js", "src/router.ts", "src/router.js"} {
-		if fileExists(filepath.Join(dir, rf)) {
+		if util.FileExists(filepath.Join(dir, rf)) {
 			return true
 		}
 	}
@@ -59,7 +61,7 @@ func (a *VueRouterAdapter) Scan(dir string) ([]models.RouteInfo, error) {
 
 	for _, rf := range routerFiles {
 		fullPath := filepath.Join(dir, rf)
-		if fileExists(fullPath) {
+		if util.FileExists(fullPath) {
 			contentBytes, _ := os.ReadFile(fullPath)
 			contentStr := string(contentBytes)
 

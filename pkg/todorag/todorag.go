@@ -13,6 +13,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"gorm.io/gorm"
 
 	"github.com/vibeasik/vibeasik/pkg/knowledge"
@@ -224,19 +226,11 @@ func PromptSection(db *gorm.DB, t models.Todo, k int, exclude ...uint) string {
 			state += fmt.Sprintf(", nilai QA %d", *h.Score)
 		}
 		fmt.Fprintf(&b, "- #%d %s (%s, kemiripan %.2f)\n", h.ID, h.Title, state, h.Sim)
-		if m := oneLine(h.Memory, 320); m != "" {
+		if m := util.OneLine(h.Memory, 320); m != "" {
 			b.WriteString("  " + m + "\n")
 		}
 	}
 	return b.String()
-}
-
-func oneLine(s string, n int) string {
-	s = strings.Join(strings.Fields(s), " ")
-	if r := []rune(s); len(r) > n {
-		return string(r[:n]) + "…"
-	}
-	return s
 }
 
 func round(f float64) float64 { return float64(int(f*1000+0.5)) / 1000 }

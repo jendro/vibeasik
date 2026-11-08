@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"gorm.io/gorm"
 
 	"github.com/vibeasik/vibeasik/pkg/models"
@@ -29,7 +31,7 @@ func SyncComponentRoutes(db *gorm.DB, comp *models.Component, proj *models.Proje
 
 	// Auto-detect language and framework if not set or set to auto
 	if comp.Language == "auto" || comp.Language == "" || comp.Framework == "" {
-		if fileExists(filepath.Join(absDir, "spark")) || fileExists(filepath.Join(absDir, "app/Config/Routes.php")) {
+		if util.PathExists(filepath.Join(absDir, "spark")) || util.PathExists(filepath.Join(absDir, "app/Config/Routes.php")) {
 			comp.Language = "php"
 			comp.Framework = "codeigniter"
 			comp.PackageManager = "composer"

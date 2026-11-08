@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
@@ -24,12 +26,12 @@ func (a *SvelteKitAdapter) Type() string {
 }
 
 func (a *SvelteKitAdapter) Detect(dir string) bool {
-	if fileExists(filepath.Join(dir, "svelte.config.js")) || fileExists(filepath.Join(dir, "svelte.config.ts")) {
+	if util.FileExists(filepath.Join(dir, "svelte.config.js")) || util.FileExists(filepath.Join(dir, "svelte.config.ts")) {
 		return true
 	}
 	pkgPath := filepath.Join(dir, "package.json")
-	if fileExists(pkgPath) {
-		content := readFileString(pkgPath)
+	if util.FileExists(pkgPath) {
+		content := util.ReadFileString(pkgPath)
 		if strings.Contains(content, `"@sveltejs/kit"`) || strings.Contains(content, `"svelte"`) {
 			return true
 		}

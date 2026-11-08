@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
@@ -125,11 +127,11 @@ func (p *antigravityParser) feed(line []byte) {
 				}
 			}
 			tc := e.ToolCalls[len(e.ToolCalls)-1]
-			action := firstNonEmpty(argText(tc.Args["toolAction"]), argText(tc.Args["toolSummary"]))
+			action := util.FirstNonEmpty(argText(tc.Args["toolAction"]), argText(tc.Args["toolSummary"]))
 			if action == "" && tc.Name == "call_mcp_tool" {
 				action = "MCP: " + argText(tc.Args["ToolName"])
 			}
-			p.status, p.action = models.WorkerStatusWorking, firstNonEmpty(action, tc.Name)
+			p.status, p.action = models.WorkerStatusWorking, util.FirstNonEmpty(action, tc.Name)
 		} else if strings.TrimSpace(e.Content) != "" {
 			p.done++
 			p.finished(actionWaiting)

@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
@@ -111,7 +113,7 @@ func inspectDirectory(rootPath, dirPath, relPath string) *models.ComponentPropos
 	dirName := filepath.Base(dirPath)
 
 	// Check for Go
-	if fileExists(filepath.Join(dirPath, "go.mod")) {
+	if util.FileExists(filepath.Join(dirPath, "go.mod")) {
 		comp := &models.ComponentProposal{
 			Name:           formatComponentName(dirName, "Go Backend"),
 			Role:           models.RoleBackend,
@@ -129,14 +131,14 @@ func inspectDirectory(rootPath, dirPath, relPath string) *models.ComponentPropos
 	}
 
 	// Check for Node / Bun / TypeScript (package.json)
-	if fileExists(filepath.Join(dirPath, "package.json")) {
+	if util.FileExists(filepath.Join(dirPath, "package.json")) {
 		comp := inspectPackageJSON(dirPath, relPath, dirName)
 		inspectEnv(dirPath, comp)
 		return comp
 	}
 
 	// Check for Flutter / Dart (pubspec.yaml)
-	if fileExists(filepath.Join(dirPath, "pubspec.yaml")) {
+	if util.FileExists(filepath.Join(dirPath, "pubspec.yaml")) {
 		comp := &models.ComponentProposal{
 			Name:           formatComponentName(dirName, "Flutter App"),
 			Role:           models.RoleFrontendMobile,
@@ -154,7 +156,7 @@ func inspectDirectory(rootPath, dirPath, relPath string) *models.ComponentPropos
 	}
 
 	// Check for Python (requirements.txt, pyproject.toml)
-	if fileExists(filepath.Join(dirPath, "requirements.txt")) || fileExists(filepath.Join(dirPath, "pyproject.toml")) {
+	if util.FileExists(filepath.Join(dirPath, "requirements.txt")) || util.FileExists(filepath.Join(dirPath, "pyproject.toml")) {
 		comp := &models.ComponentProposal{
 			Name:           formatComponentName(dirName, "Python Service"),
 			Role:           models.RoleBackend,
@@ -172,18 +174,18 @@ func inspectDirectory(rootPath, dirPath, relPath string) *models.ComponentPropos
 	}
 
 	// Check for PHP (composer.json, spark, artisan, or routes)
-	if fileExists(filepath.Join(dirPath, "composer.json")) ||
-		fileExists(filepath.Join(dirPath, "spark")) ||
-		fileExists(filepath.Join(dirPath, "artisan")) ||
-		fileExists(filepath.Join(dirPath, "app/Config/Routes.php")) ||
-		fileExists(filepath.Join(dirPath, "application/config/routes.php")) {
+	if util.FileExists(filepath.Join(dirPath, "composer.json")) ||
+		util.FileExists(filepath.Join(dirPath, "spark")) ||
+		util.FileExists(filepath.Join(dirPath, "artisan")) ||
+		util.FileExists(filepath.Join(dirPath, "app/Config/Routes.php")) ||
+		util.FileExists(filepath.Join(dirPath, "application/config/routes.php")) {
 		comp := inspectPhpDirectory(dirPath, relPath, dirName)
 		inspectEnv(dirPath, comp)
 		return comp
 	}
 
 	// Check for Rust (Cargo.toml)
-	if fileExists(filepath.Join(dirPath, "Cargo.toml")) {
+	if util.FileExists(filepath.Join(dirPath, "Cargo.toml")) {
 		comp := &models.ComponentProposal{
 			Name:           formatComponentName(dirName, "Rust Service"),
 			Role:           models.RoleBackend,
@@ -205,15 +207,15 @@ func inspectDirectory(rootPath, dirPath, relPath string) *models.ComponentPropos
 func inspectPhpDirectory(dirPath, relPath, dirName string) *models.ComponentProposal {
 	composerPath := filepath.Join(dirPath, "composer.json")
 	composerContent := ""
-	if fileExists(composerPath) {
+	if util.FileExists(composerPath) {
 		if b, err := os.ReadFile(composerPath); err == nil {
 			composerContent = string(b)
 		}
 	}
 
 	// 1. CodeIgniter 4
-	isCI4 := fileExists(filepath.Join(dirPath, "spark")) ||
-		fileExists(filepath.Join(dirPath, "app/Config/Routes.php")) ||
+	isCI4 := util.FileExists(filepath.Join(dirPath, "spark")) ||
+		util.FileExists(filepath.Join(dirPath, "app/Config/Routes.php")) ||
 		strings.Contains(composerContent, "codeigniter4/framework") ||
 		strings.Contains(composerContent, "codeigniter4/appstarter")
 
@@ -248,8 +250,8 @@ func inspectPhpDirectory(dirPath, relPath, dirName string) *models.ComponentProp
 	}
 
 	// 2. CodeIgniter 3
-	isCI3 := fileExists(filepath.Join(dirPath, "application/config/routes.php")) ||
-		fileExists(filepath.Join(dirPath, "system/core/CodeIgniter.php"))
+	isCI3 := util.FileExists(filepath.Join(dirPath, "application/config/routes.php")) ||
+		util.FileExists(filepath.Join(dirPath, "system/core/CodeIgniter.php"))
 
 	if isCI3 {
 		return &models.ComponentProposal{
@@ -267,10 +269,10 @@ func inspectPhpDirectory(dirPath, relPath, dirName string) *models.ComponentProp
 	}
 
 	// 3. Laravel
-	isLaravel := fileExists(filepath.Join(dirPath, "artisan")) ||
+	isLaravel := util.FileExists(filepath.Join(dirPath, "artisan")) ||
 		strings.Contains(composerContent, "laravel/framework") ||
 		strings.Contains(composerContent, "illuminate/") ||
-		fileExists(filepath.Join(dirPath, "routes/web.php"))
+		util.FileExists(filepath.Join(dirPath, "routes/web.php"))
 
 	if isLaravel {
 		return &models.ComponentProposal{
@@ -319,11 +321,11 @@ func inspectPackageJSON(dirPath, relPath, dirName string) *models.ComponentPropo
 
 	// Detect package manager
 	pm := "npm"
-	if fileExists(filepath.Join(dirPath, "bun.lockb")) || fileExists(filepath.Join(dirPath, "bun.lock")) {
+	if util.FileExists(filepath.Join(dirPath, "bun.lockb")) || util.FileExists(filepath.Join(dirPath, "bun.lock")) {
 		pm = "bun"
-	} else if fileExists(filepath.Join(dirPath, "pnpm-lock.yaml")) {
+	} else if util.FileExists(filepath.Join(dirPath, "pnpm-lock.yaml")) {
 		pm = "pnpm"
-	} else if fileExists(filepath.Join(dirPath, "yarn.lock")) {
+	} else if util.FileExists(filepath.Join(dirPath, "yarn.lock")) {
 		pm = "yarn"
 	}
 
@@ -340,7 +342,7 @@ func inspectPackageJSON(dirPath, relPath, dirName string) *models.ComponentPropo
 	role := models.RoleFrontendClient
 	defaultPort := 3000
 
-	if fileExists(filepath.Join(dirPath, "tsconfig.json")) {
+	if util.FileExists(filepath.Join(dirPath, "tsconfig.json")) {
 		lang = "typescript"
 	}
 
@@ -436,7 +438,7 @@ func detectGoFramework(goModPath string) string {
 
 func detectPythonFramework(dirPath string) string {
 	reqPath := filepath.Join(dirPath, "requirements.txt")
-	if fileExists(reqPath) {
+	if util.FileExists(reqPath) {
 		data, _ := os.ReadFile(reqPath)
 		content := strings.ToLower(string(data))
 		if strings.Contains(content, "fastapi") {
@@ -455,7 +457,7 @@ func detectPythonFramework(dirPath string) string {
 func inspectEnv(dirPath string, comp *models.ComponentProposal) {
 	for _, envCandidate := range []string{".env.example", ".env.sample", ".env.local", ".env"} {
 		target := filepath.Join(dirPath, envCandidate)
-		if fileExists(target) {
+		if util.FileExists(target) {
 			comp.EnvFile = envCandidate
 			keys := extractEnvKeys(target)
 			if len(keys) > 0 {
@@ -496,7 +498,7 @@ func findPortInDir(dirPath string, fallback int) int {
 	// Look inside .env files for PORT
 	for _, envCandidate := range []string{".env", ".env.local", ".env.development", ".env.example"} {
 		fPath := filepath.Join(dirPath, envCandidate)
-		if fileExists(fPath) {
+		if util.FileExists(fPath) {
 			content, _ := os.ReadFile(fPath)
 			re := regexp.MustCompile(`(?m)^PORT\s*=\s*(\d+)`)
 			matches := re.FindStringSubmatch(string(content))
@@ -631,11 +633,6 @@ func shouldSkipDir(name string) bool {
 		}
 	}
 	return false
-}
-
-func fileExists(path string) bool {
-	info, err := os.Stat(path)
-	return err == nil && !info.IsDir()
 }
 
 func isDuplicateComponent(list []models.ComponentProposal, absPath string) bool {

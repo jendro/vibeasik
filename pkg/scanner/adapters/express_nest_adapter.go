@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
@@ -26,10 +28,10 @@ func (a *ExpressNestAdapter) Type() string {
 
 func (a *ExpressNestAdapter) Detect(dir string) bool {
 	pkgPath := filepath.Join(dir, "package.json")
-	if !fileExists(pkgPath) {
+	if !util.FileExists(pkgPath) {
 		return false
 	}
-	content := readFileString(pkgPath)
+	content := util.ReadFileString(pkgPath)
 	return strings.Contains(content, `"express"`) ||
 		strings.Contains(content, `"@nestjs/core"`) ||
 		strings.Contains(content, `"fastify"`)
@@ -66,7 +68,7 @@ func (a *ExpressNestAdapter) Scan(dir string) ([]models.RouteInfo, error) {
 	}
 	for _, cf := range candidateFiles {
 		p := filepath.Join(dir, cf)
-		if fileExists(p) && !scannedFiles[p] {
+		if util.FileExists(p) && !scannedFiles[p] {
 			scannedFiles[p] = true
 			r := parseExpressRoutes(p)
 			routes = append(routes, r...)
@@ -97,7 +99,7 @@ func (a *ExpressNestAdapter) Scan(dir string) ([]models.RouteInfo, error) {
 
 func parseNestJsController(filePath string) []models.RouteInfo {
 	var routes []models.RouteInfo
-	content := readFileString(filePath)
+	content := util.ReadFileString(filePath)
 
 	ctrlRegex := regexp.MustCompile(`@Controller\(\s*['"]?([^'")]*)['"]?\s*\)`)
 	ctrlPrefix := ""

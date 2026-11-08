@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
@@ -75,7 +77,7 @@ func singleBackendPort(p *models.Project) int {
 }
 
 func ensureEnvDir(dir, rel string, comp *models.Component, bePort int) []string {
-	has := func(name string) bool { return fileExists(filepath.Join(dir, name)) }
+	has := func(name string) bool { return util.FileExists(filepath.Join(dir, name)) }
 	if !has(".env") && !has(".env.example") && !has(".env.local") {
 		return nil // folder tidak memakai env
 	}

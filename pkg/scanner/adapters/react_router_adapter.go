@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
@@ -25,8 +27,8 @@ func (a *ReactRouterAdapter) Type() string {
 
 func (a *ReactRouterAdapter) Detect(dir string) bool {
 	pkgPath := filepath.Join(dir, "package.json")
-	if fileExists(pkgPath) {
-		content := readFileString(pkgPath)
+	if util.FileExists(pkgPath) {
+		content := util.ReadFileString(pkgPath)
 		if strings.Contains(content, `"react-router"`) ||
 			strings.Contains(content, `"react-router-dom"`) ||
 			strings.Contains(content, `"@tanstack/react-router"`) ||
@@ -55,7 +57,7 @@ func (a *ReactRouterAdapter) Scan(dir string) ([]models.RouteInfo, error) {
 
 	for _, rf := range candidateRouterFiles {
 		fullPath := filepath.Join(dir, rf)
-		if fileExists(fullPath) {
+		if util.FileExists(fullPath) {
 			contentBytes, _ := os.ReadFile(fullPath)
 			contentStr := string(contentBytes)
 

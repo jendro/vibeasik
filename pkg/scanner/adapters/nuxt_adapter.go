@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/vibeasik/vibeasik/pkg/util"
+
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
@@ -24,19 +26,19 @@ func (a *NuxtAdapter) Type() string {
 
 func (a *NuxtAdapter) Detect(dir string) bool {
 	for _, f := range []string{"nuxt.config.ts", "nuxt.config.js", "nuxt.config.mjs"} {
-		if fileExists(filepath.Join(dir, f)) {
+		if util.FileExists(filepath.Join(dir, f)) {
 			return true
 		}
 	}
 	pkgPath := filepath.Join(dir, "package.json")
-	if fileExists(pkgPath) {
-		content := readFileString(pkgPath)
+	if util.FileExists(pkgPath) {
+		content := util.ReadFileString(pkgPath)
 		if strings.Contains(content, `"nuxt"`) || strings.Contains(content, `"@nuxt/`) {
 			return true
 		}
 	}
 	// Nuxt 3 directory conventions
-	if fileExists(filepath.Join(dir, "app.vue")) || dirExists(filepath.Join(dir, "app/pages")) || dirExists(filepath.Join(dir, "app/composables")) {
+	if util.FileExists(filepath.Join(dir, "app.vue")) || dirExists(filepath.Join(dir, "app/pages")) || dirExists(filepath.Join(dir, "app/composables")) {
 		return true
 	}
 	return false
@@ -148,7 +150,7 @@ func (a *NuxtAdapter) Scan(dir string) ([]models.RouteInfo, error) {
 	if len(routes) == 0 {
 		for _, appFile := range []string{"app.vue", "app/app.vue", "src/App.vue"} {
 			appPath := filepath.Join(dir, appFile)
-			if fileExists(appPath) {
+			if util.FileExists(appPath) {
 				contentBytes, _ := os.ReadFile(appPath)
 				contentStr := string(contentBytes)
 				targetRequests := ExtractPageTargetRequests(appPath, contentStr, dir, apiFuncMap)
