@@ -1,0 +1,81 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`recapHighlights semua kategori terisi, urutan tetap 1`] = `
+[
+  {
+    "icon": "i-lucide-flame",
+    "text": "5 hari produktif beruntun — rekor terpanjang!",
+    "tone": "text-orange-500",
+  },
+  {
+    "icon": "i-lucide-git-commit-horizontal",
+    "text": "4 commit hari ini (+1.200 baris), naik dari 2 kemarin",
+    "tone": "text-sky-500",
+  },
+  {
+    "icon": "i-lucide-circle-check-big",
+    "text": "3 todo diselesaikan hari ini",
+    "tone": "text-emerald-500",
+  },
+  {
+    "icon": "i-lucide-bot",
+    "text": "Agent AI menuntaskan 2 todo hari ini",
+    "tone": "text-indigo-500",
+  },
+  {
+    "icon": "i-lucide-sparkles",
+    "text": "1 commit hari ini ditulis bersama agent AI",
+    "tone": "text-violet-500",
+  },
+  {
+    "icon": "i-lucide-network",
+    "text": "2 run Orkestrator Agent selesai sukses",
+    "tone": "text-teal-500",
+  },
+  {
+    "icon": "i-lucide-lightbulb",
+    "text": "6 ide/todo baru dicatat hari ini",
+    "tone": "text-amber-500",
+  },
+  {
+    "icon": "i-lucide-trending-down",
+    "text": "Backlog terkendali: 1.500 todo selesai vs 1.200 dibuat",
+    "tone": "text-emerald-500",
+  },
+  {
+    "icon": "i-lucide-shield-check",
+    "text": "3 todo prioritas tinggi/kritis berhasil ditutup",
+    "tone": "text-rose-500",
+  },
+  {
+    "icon": "i-lucide-lock",
+    "text": "3 perbaikan keamanan selesai",
+    "tone": "text-rose-500",
+  },
+  {
+    "icon": "i-lucide-trophy",
+    "text": "Hari ini adalah hari terbaik di rentang rekap!",
+    "tone": "text-yellow-500",
+  },
+  {
+    "icon": "i-lucide-folder-git-2",
+    "text": "Kemajuan di 2 repo sekaligus hari ini",
+    "tone": "text-sky-500",
+  },
+]
+`;
+
+exports[`recapHighlights cabang alternatif 1`] = `
+[
+  {
+    "icon": "i-lucide-flame",
+    "text": "3 hari produktif beruntun",
+    "tone": "text-orange-500",
+  },
+  {
+    "icon": "i-lucide-git-commit-horizontal",
+    "text": "1 commit hari ini",
+    "tone": "text-sky-500",
+  },
+]
+`;

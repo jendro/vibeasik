@@ -96,7 +96,7 @@ const sourceLabel: Record<string, string> = {
           <span class="w-2 h-2 rounded-full bg-rose-400" /><span class="w-2 h-2 rounded-full bg-amber-400" /><span class="w-2 h-2 rounded-full bg-emerald-400" />
           <span class="ml-2 text-[9px] font-mono text-neutral-500 truncate">{{ comp.url }}</span>
         </div>
-        <img :src="shotSrc(comp.screenshot)" :alt="`Tampilan ${comp.name}`" class="w-full max-h-48 object-cover object-top group-hover:opacity-90 transition-opacity">
+        <img loading="lazy" decoding="async" :src="shotSrc(comp.screenshot)" :alt="`Tampilan ${comp.name}`" class="w-full max-h-48 object-cover object-top group-hover:opacity-90 transition-opacity">
       </button>
       <div
         v-else-if="running && comp.state === 'running' && comp.role.startsWith('frontend')"

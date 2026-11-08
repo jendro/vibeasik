@@ -265,7 +265,7 @@ const quickRoutes = ['/', '/dashboard', '/login', '/admin', '/products', '/setti
 
         <!-- Preview Image Body -->
         <div class="relative max-h-120 overflow-y-auto flex items-start justify-center p-2 bg-slate-950">
-          <img
+          <img loading="lazy" decoding="async"
             :src="latestCapture?.image_path || latestAudit?.screenshot_path"
             alt="Target Project Live Screenshot"
             class="w-full h-auto rounded-lg shadow-sm"
