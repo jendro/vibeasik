@@ -242,15 +242,6 @@ func normalizeRouteKey(method, path string) string {
 	return strings.ToUpper(strings.TrimSpace(method)) + " " + strings.TrimSpace(path)
 }
 
-// containsAny melaporkan apakah s memuat salah satu dari subs.
-func containsAny(s string, subs ...string) bool {
-	for _, sub := range subs {
-		if strings.Contains(s, sub) {
-			return true
-		}
-	}
-	return false
-}
 
 // routeSub: aturan fungsi di dalam sebuah domain. Cocok bila (keys kosong atau path memuat salah satu keys)
 // dan (methods kosong atau method sama dengan salah satunya).
@@ -261,7 +252,7 @@ type routeSub struct {
 }
 
 func (s routeSub) match(p, m string) bool {
-	if len(s.keys) > 0 && !containsAny(p, s.keys...) {
+	if len(s.keys) > 0 && !util.ContainsAny(p, s.keys...) {
 		return false
 	}
 	if len(s.methods) == 0 {
@@ -381,7 +372,7 @@ var routePageRules = []routePageRule{
 
 func inferPageDomain(p string) (string, string) {
 	for _, r := range routePageRules {
-		if (r.exact != "" && p == r.exact) || containsAny(p, r.keys...) {
+		if (r.exact != "" && p == r.exact) || util.ContainsAny(p, r.keys...) {
 			return r.domain, r.group
 		}
 	}
@@ -402,7 +393,7 @@ func InferRouteDomainAndFunction(path, method string) (string, string) {
 	m := strings.ToUpper(method)
 
 	for _, r := range routeDomainRules {
-		if containsAny(p, r.keys...) {
+		if util.ContainsAny(p, r.keys...) {
 			return r.domain, r.group(p, m)
 		}
 	}
@@ -456,12 +447,12 @@ func InferRouteDescription(method, path string) string {
 		return adapters.InferFrontendPageDescription(path)
 	}
 	for _, r := range routeDescRules {
-		if containsAny(p, r.keys...) {
+		if util.ContainsAny(p, r.keys...) {
 			return r.desc
 		}
 	}
 	if m == "GET" {
-		if containsAny(p, ":id", "[id]") {
+		if util.ContainsAny(p, ":id", "[id]") {
 			return fmt.Sprintf("Mengambil rincian data tunggal untuk entitas '%s' berdasarkan ID.", cleanPath)
 		}
 		return fmt.Sprintf("Mengambil daftar koleksi data untuk layanan '%s'.", cleanPath)

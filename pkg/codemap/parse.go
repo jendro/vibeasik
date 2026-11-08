@@ -8,6 +8,7 @@ import (
 	"unicode"
 
 	"github.com/vibeasik/vibeasik/pkg/models"
+	"github.com/vibeasik/vibeasik/pkg/util"
 )
 
 // parsed adalah hasil ekstraksi satu berkas: simbol, spesifikasi impor mentah, rute/panggilan API, dan ringkasan.
@@ -427,7 +428,7 @@ func skipRuleLine(t string) bool {
 
 // ruleSymbol mencocokkan satu aturan pada satu baris; ok=false bila tak cocok.
 func ruleSymbol(r symRule, line string, exported func(string) bool) (name, kind string, exp, ok bool) {
-	if !containsAny(line, r.need) {
+	if !util.ContainsAny(line, r.need...) {
 		return
 	}
 	m := r.re.FindStringSubmatchIndex(line)
@@ -468,18 +469,6 @@ func applyRules(all []string, rules []symRule, exported func(string) bool) []mod
 		}
 	}
 	return out
-}
-
-func containsAny(s string, needles []string) bool {
-	if len(needles) == 0 {
-		return true
-	}
-	for _, n := range needles {
-		if strings.Contains(s, n) {
-			return true
-		}
-	}
-	return false
 }
 
 // matchLines menjalankan re per baris yang mengandung salah satu needle (pra-saring murah).

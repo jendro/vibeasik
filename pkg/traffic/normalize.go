@@ -5,6 +5,8 @@ import (
 	"path"
 	"regexp"
 	"strings"
+
+	"github.com/vibeasik/vibeasik/pkg/util"
 )
 
 // Event = satu request dari SDK (bentuk sama dengan models.TrafficIngestEvent di cloud-server).
@@ -146,18 +148,9 @@ var browserFamilies = []struct {
 
 var mobileMarkers = []string{"mobile", "android", "iphone", "ipad"}
 
-func containsAny(l string, keys []string) bool {
-	for _, k := range keys {
-		if strings.Contains(l, k) {
-			return true
-		}
-	}
-	return false
-}
-
 func browserFamily(l string) string {
 	for _, f := range browserFamilies {
-		if containsAny(l, f.keys) {
+		if util.ContainsAny(l, f.keys...) {
 			return f.name
 		}
 	}
@@ -170,7 +163,7 @@ func ClassifyUA(ua string) (string, string) {
 	if l == "" {
 		return "unknown", "-"
 	}
-	if containsAny(l, botMarkers) {
+	if util.ContainsAny(l, botMarkers...) {
 		return "bot", botFamily(l)
 	}
 	for _, c := range apiClients {
@@ -179,7 +172,7 @@ func ClassifyUA(ua string) (string, string) {
 		}
 	}
 	family := browserFamily(l)
-	if containsAny(l, mobileMarkers) {
+	if util.ContainsAny(l, mobileMarkers...) {
 		return "mobile", family
 	}
 	if strings.Contains(l, "mozilla/") {

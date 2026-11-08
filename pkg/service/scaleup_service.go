@@ -11,6 +11,7 @@ import (
 
 	"github.com/vibeasik/vibeasik/pkg/models"
 	"github.com/vibeasik/vibeasik/pkg/repository"
+	"github.com/vibeasik/vibeasik/pkg/util"
 )
 
 // ScaleUpService coordinates architectural pattern learning and codebase evaluation
@@ -676,21 +677,12 @@ func scanSourceStats(targetDir string) sourceStats {
 			st.fatFiles++
 		}
 		lowerPath := strings.ToLower(path)
-		if containsAny(lowerPath, "route", "api", "server") {
+		if util.ContainsAny(lowerPath, "route", "api", "server") {
 			st.hasModularRouting = true
 		}
 		return nil
 	})
 	return st
-}
-
-func containsAny(s string, subs ...string) bool {
-	for _, sub := range subs {
-		if strings.Contains(s, sub) {
-			return true
-		}
-	}
-	return false
 }
 
 func anyFolder(folderSet map[string]bool, names ...string) bool {

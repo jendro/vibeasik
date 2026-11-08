@@ -541,7 +541,7 @@ type envKeyRule struct {
 }
 
 func (r envKeyRule) match(u string) bool {
-	return (r.exact != "" && u == r.exact) || containsAny(u, r.keys...)
+	return (r.exact != "" && u == r.exact) || util.ContainsAny(u, r.keys...)
 }
 
 func envMeta(name string) func(st *envScan, v string) {
@@ -621,7 +621,7 @@ func (st *envScan) scanEnvFile(path string) {
 func (st *envScan) addEnvKey(key, rawVal string) {
 	cleanVal := security.SanitizeText(rawVal)
 	upperKey := strings.ToUpper(key)
-	isSecret := containsAny(upperKey, "KEY", "SECRET", "PASS", "TOKEN")
+	isSecret := util.ContainsAny(upperKey, "KEY", "SECRET", "PASS", "TOKEN")
 
 	purpose := "Konfigurasi runtime lingkungan"
 	for _, r := range envKeyRules {
@@ -684,7 +684,7 @@ func (st *envScan) scanDBSource() {
 
 func (st *envScan) applyDBSource(content string) {
 	for _, k := range dbSourceKeywords {
-		if containsAny(content, k.keys...) {
+		if util.ContainsAny(content, k.keys...) {
 			st.dbType = k.dbType
 			if strings.Contains(content, "gorm") {
 				st.orm = gormORMName
@@ -720,7 +720,7 @@ func (st *envScan) scanManifestDB() {
 			st.orm = gormORMName
 		}
 		for _, k := range goModDBKeywords {
-			if containsAny(sMod, k.keys...) && st.dbType == envDBNone {
+			if util.ContainsAny(sMod, k.keys...) && st.dbType == envDBNone {
 				st.dbType = k.dbType
 			}
 		}
@@ -728,7 +728,7 @@ func (st *envScan) scanManifestDB() {
 		st.orm = "Prisma ORM"
 		prismaContent, _ := os.ReadFile(filepath.Join(st.dir, "prisma/schema.prisma"))
 		for _, k := range prismaProviders {
-			if containsAny(string(prismaContent), k.keys...) {
+			if util.ContainsAny(string(prismaContent), k.keys...) {
 				st.dbType = k.dbType
 				break
 			}
@@ -1020,7 +1020,7 @@ var keyFileCtrlDirs = []string{"controllers", "routes", "handlers", "api", "comp
 // keyFileMaxLines: batas baris cuplikan per berkas.
 func keyFileMaxLines(t string, withCode bool) int {
 	switch {
-	case withCode && (strings.HasSuffix(t, "main.go") || containsAny(t, "routes", "Routes", "useApi")):
+	case withCode && (strings.HasSuffix(t, "main.go") || util.ContainsAny(t, "routes", "Routes", "useApi")):
 		return 400
 	case strings.Contains(t, "database"):
 		return 150
@@ -1193,7 +1193,7 @@ func matchPlugins(text string, table []archPlugin) []string {
 		if p.group != "" && seenGroup[p.group] {
 			continue
 		}
-		if containsAny(text, p.keys...) {
+		if util.ContainsAny(text, p.keys...) {
 			out = append(out, p.name)
 			if p.group != "" {
 				seenGroup[p.group] = true
@@ -1214,11 +1214,11 @@ func goHasE2EE(dir string) bool {
 		return false
 	}
 	for _, ce := range cEntries {
-		if !containsAny(ce.Name(), "key", "asset") {
+		if !util.ContainsAny(ce.Name(), "key", "asset") {
 			continue
 		}
 		data, _ := os.ReadFile(filepath.Join(ctrlPath, ce.Name()))
-		if containsAny(string(data), "encrypted_", "family_key", "AES") {
+		if util.ContainsAny(string(data), "encrypted_", "family_key", "AES") {
 			return true
 		}
 	}
@@ -1261,7 +1261,7 @@ func detectGoArchitecture(dir, goModPath string, arch models.ArchitectureInfo) m
 		arch.Framework = "Standard net/http"
 		arch.FrameworkType = "Go Standard Library HTTP Multiplexer (Go 1.22+ Enhanced)"
 		for _, f := range goFrameworks {
-			if containsAny(sMod, f.keys...) {
+			if util.ContainsAny(sMod, f.keys...) {
 				arch.Framework, arch.FrameworkType = f.framework, f.fwType
 				break
 			}
@@ -1309,7 +1309,7 @@ func detectPHPArchitecture(dir string, arch models.ArchitectureInfo) models.Arch
 		composerContent = util.ReadFileString(composerPath)
 	}
 	for _, r := range phpArchRules {
-		if pathExistsAny(dir, r.paths...) || containsAny(composerContent, r.composer...) {
+		if pathExistsAny(dir, r.paths...) || util.ContainsAny(composerContent, r.composer...) {
 			found := r.arch
 			found.Plugins = arch.Plugins
 			return found
@@ -1512,7 +1512,7 @@ func detectFlutterArchitecture(dir, pubspecPath string) models.ArchitectureInfo 
 	arch.DesignPattern = "Clean Architecture for Flutter (lib/domain/data/presentation)"
 	arch.PatternDetails = "Pemisahan UI deklaratif dengan state management dan repository layer pada direktori lib/."
 	for _, r := range flutterStateRules {
-		if containsAny(s, r.keys...) {
+		if util.ContainsAny(s, r.keys...) {
 			arch.Plugins = append(arch.Plugins, r.plugin)
 			arch.DesignPattern, arch.PatternDetails = r.pattern, r.details
 			break
