@@ -149,133 +149,182 @@ func (l lineIndex) line(offset int) int {
 	return sort.Search(len(l), func(i int) bool { return l[i] > offset })
 }
 
+// parseCtx membawa isi berkas dan indeks barisnya ke parser per bahasa.
+type parseCtx struct {
+	lang  string
+	src   string
+	lines lineIndex
+	all   []string
+}
+
+func parseGo(p *parsed, c *parseCtx) {
+	p.symbols = applyRules(c.all, goRules, goExported)
+	p.refs = append(goImports(c.all), goSelectors(c.all)...)
+	for _, m := range matchLines(c.all, goRoute, `("/`) {
+		p.routes = append(p.routes, strings.ToUpper(m[1])+" "+m[2])
+	}
+	if loc := goPackage.FindStringIndex(c.src); loc != nil {
+		p.summary = docAbove(c.all, c.lines.line(loc[0]))
+	}
+}
+
+// vueMacroIndex mencari pemakaian makro compiler Vue (name( atau name<); -1 bila tidak ada.
+func vueMacroIndex(src, name string) int {
+	if i := strings.Index(src, name+"("); i >= 0 {
+		return i
+	}
+	return strings.Index(src, name+"<")
+}
+
+// parseVueHeader mengisi ringkasan komentar, makro, dan tag komponen SFC lalu mengembalikan isi <script> + offsetnya.
+func parseVueHeader(p *parsed, c *parseCtx) (string, int) {
+	if m := htmlComment.FindStringSubmatch(c.src); m != nil {
+		p.summary = cleanComment(m[1])
+	}
+	script, offset := vueScripts(c.src)
+	for _, m := range []string{"defineProps", "defineEmits", "definePageMeta", "defineModel"} {
+		if i := vueMacroIndex(c.src, m); i >= 0 {
+			p.symbols = appendSym(p.symbols, models.CodeSymbol{Name: m, Kind: "macro", Line: c.lines.line(i)})
+		}
+	}
+	for _, m := range matchLines(c.all, vueTag, "<") {
+		p.refs = append(p.refs, "auto:"+m[1])
+	}
+	return script, offset
+}
+
+func parseJSLike(p *parsed, c *parseCtx) {
+	script := c.src
+	offset := 0
+	if c.lang == "vue" || c.lang == "svelte" {
+		script, offset = parseVueHeader(p, c)
+	}
+	scriptAll := strings.Split(script, "\n")
+	base := c.lines.line(offset) - 1
+	for _, s := range applyRules(scriptAll, jsRules, nil) {
+		s.Line += base
+		p.symbols = appendSym(p.symbols, s)
+	}
+	for _, m := range matchLines(scriptAll, jsImport, "import", "require", "from") {
+		p.refs = append(p.refs, m[1])
+	}
+	for _, m := range matchLines(scriptAll, composable, "use") {
+		p.refs = append(p.refs, "auto:"+m[1])
+	}
+	for _, m := range matchLines(scriptAll, jsServerRoute, ".get(", ".post(", ".put(", ".delete(", ".patch(", ".all(") {
+		p.routes = append(p.routes, strings.ToUpper(m[1])+" "+m[2])
+	}
+	p.routes = append(p.routes, apiCalls(c.all)...)
+	if p.summary == "" {
+		p.summary = leadingComment(scriptAll)
+	}
+}
+
+func notUnderscore(n string) bool { return !strings.HasPrefix(n, "_") }
+
+func parsePython(p *parsed, c *parseCtx) {
+	p.symbols = applyRules(c.all, pyRules, notUnderscore)
+	for _, m := range pyImport.FindAllStringSubmatch(c.src, -1) {
+		p.refs = append(p.refs, "py:"+m[1]+m[2])
+	}
+	p.routes = matchRoutes(pyRoute, c.src)
+	if m := pyDoc.FindStringSubmatch(c.src); m != nil {
+		p.summary = cleanComment(m[1])
+	}
+}
+
+func parsePHP(p *parsed, c *parseCtx) {
+	p.symbols = applyRules(c.all, phpRules, nil)
+	for _, m := range phpUse.FindAllStringSubmatch(c.src, -1) {
+		p.refs = append(p.refs, "php:"+m[1])
+	}
+	p.routes = matchRoutes(phpRoute, c.src)
+	for _, m := range matchLines(c.all, ci4Route, "$routes->") {
+		p.routes = append(p.routes, strings.ToUpper(m[1])+" /"+strings.TrimPrefix(m[2], "/"))
+		if m[3] != "" {
+			p.refs = append(p.refs, "php:"+m[3])
+		}
+	}
+}
+
+func parseDart(p *parsed, c *parseCtx) {
+	p.symbols = applyRules(c.all, dartRules, notUnderscore)
+	for _, m := range dartImport.FindAllStringSubmatch(c.src, -1) {
+		p.refs = append(p.refs, "dart:"+m[1])
+	}
+}
+
+func parseJVM(p *parsed, c *parseCtx) {
+	p.symbols = applyRules(c.all, jvmRules, nil)
+	for _, m := range jvmImport.FindAllStringSubmatch(c.src, -1) {
+		p.refs = append(p.refs, "jvm:"+m[1])
+	}
+	p.routes = matchRoutes(jvmRoute, c.src)
+}
+
+// rulesOnly membuat parser yang hanya menerapkan aturan simbol.
+func rulesOnly(rules []symRule) func(p *parsed, c *parseCtx) {
+	return func(p *parsed, c *parseCtx) { p.symbols = applyRules(c.all, rules, nil) }
+}
+
+func parseSQL(p *parsed, c *parseCtx) {
+	for _, m := range sqlTable.FindAllStringSubmatchIndex(c.src, -1) {
+		p.symbols = appendSym(p.symbols, models.CodeSymbol{Name: c.src[m[2]:m[3]], Kind: "table", Line: c.lines.line(m[0]), Exported: true})
+	}
+}
+
+func parseMarkdown(p *parsed, c *parseCtx) {
+	for _, m := range mdHeading.FindAllStringSubmatchIndex(c.src, -1) {
+		p.symbols = appendSym(p.symbols, models.CodeSymbol{Name: strings.TrimSpace(c.src[m[4]:m[5]]), Kind: "heading", Line: c.lines.line(m[0]), Exported: true})
+	}
+	p.summary = markdownSummary(c.all)
+}
+
+func parseCSS(p *parsed, c *parseCtx) {
+	for _, m := range cssRule.FindAllStringSubmatchIndex(c.src, -1) {
+		if len(p.symbols) >= 30 {
+			break
+		}
+		p.symbols = appendSym(p.symbols, models.CodeSymbol{Name: c.src[m[2]:m[3]], Kind: "selector", Line: c.lines.line(m[0])})
+	}
+}
+
+// langParsers memetakan bahasa ke parser khususnya.
+var langParsers = map[string]func(p *parsed, c *parseCtx){
+	"go": parseGo, "typescript": parseJSLike, "javascript": parseJSLike, "vue": parseJSLike, "svelte": parseJSLike,
+	"python": parsePython, "php": parsePHP, "dart": parseDart, "java": parseJVM, "kotlin": parseJVM,
+	"rust": rulesOnly(rustRules), "ruby": rulesOnly(rubyRules), "csharp": rulesOnly(csRules), "swift": rulesOnly(swiftRules),
+	"sql": parseSQL, "markdown": parseMarkdown, "css": parseCSS,
+}
+
 // parseSource mengekstrak simbol, impor, rute, dan ringkasan dari isi sebuah berkas.
 func parseSource(lang, relPath, src string) parsed {
 	var p parsed
-	lines := newLineIndex(src)
-	allLines := strings.Split(src, "\n")
-	switch lang {
-	case "go":
-		p.symbols = applyRules(allLines, goRules, goExported)
-		p.refs = append(goImports(allLines), goSelectors(allLines)...)
-		for _, m := range matchLines(allLines, goRoute, `("/`) {
-			p.routes = append(p.routes, strings.ToUpper(m[1])+" "+m[2])
-		}
-		if loc := goPackage.FindStringIndex(src); loc != nil {
-			p.summary = docAbove(allLines, lines.line(loc[0]))
-		}
-	case "typescript", "javascript", "vue", "svelte":
-		script := src
-		offset := 0
-		if lang == "vue" || lang == "svelte" {
-			if m := htmlComment.FindStringSubmatch(src); m != nil {
-				p.summary = cleanComment(m[1])
-			}
-			script, offset = vueScripts(src)
-			for _, m := range []string{"defineProps", "defineEmits", "definePageMeta", "defineModel"} {
-				if i := strings.Index(src, m+"("); i >= 0 || strings.Index(src, m+"<") >= 0 {
-					if i < 0 {
-						i = strings.Index(src, m+"<")
-					}
-					p.symbols = appendSym(p.symbols, models.CodeSymbol{Name: m, Kind: "macro", Line: lines.line(i)})
-				}
-			}
-			for _, m := range matchLines(allLines, vueTag, "<") {
-				p.refs = append(p.refs, "auto:"+m[1])
-			}
-		}
-		scriptAll := strings.Split(script, "\n")
-		base := lines.line(offset) - 1
-		for _, s := range applyRules(scriptAll, jsRules, nil) {
-			s.Line += base
-			p.symbols = appendSym(p.symbols, s)
-		}
-		for _, m := range matchLines(scriptAll, jsImport, "import", "require", "from") {
-			p.refs = append(p.refs, m[1])
-		}
-		for _, m := range matchLines(scriptAll, composable, "use") {
-			p.refs = append(p.refs, "auto:"+m[1])
-		}
-		for _, m := range matchLines(scriptAll, jsServerRoute, ".get(", ".post(", ".put(", ".delete(", ".patch(", ".all(") {
-			p.routes = append(p.routes, strings.ToUpper(m[1])+" "+m[2])
-		}
-		p.routes = append(p.routes, apiCalls(allLines)...)
-		if p.summary == "" {
-			p.summary = leadingComment(scriptAll)
-		}
-	case "python":
-		p.symbols = applyRules(allLines, pyRules, func(n string) bool { return !strings.HasPrefix(n, "_") })
-		for _, m := range pyImport.FindAllStringSubmatch(src, -1) {
-			p.refs = append(p.refs, "py:"+m[1]+m[2])
-		}
-		p.routes = matchRoutes(pyRoute, src)
-		if m := pyDoc.FindStringSubmatch(src); m != nil {
-			p.summary = cleanComment(m[1])
-		}
-	case "php":
-		p.symbols = applyRules(allLines, phpRules, nil)
-		for _, m := range phpUse.FindAllStringSubmatch(src, -1) {
-			p.refs = append(p.refs, "php:"+m[1])
-		}
-		p.routes = matchRoutes(phpRoute, src)
-		for _, m := range matchLines(allLines, ci4Route, "$routes->") {
-			p.routes = append(p.routes, strings.ToUpper(m[1])+" /"+strings.TrimPrefix(m[2], "/"))
-			if m[3] != "" {
-				p.refs = append(p.refs, "php:"+m[3])
-			}
-		}
-	case "dart":
-		p.symbols = applyRules(allLines, dartRules, func(n string) bool { return !strings.HasPrefix(n, "_") })
-		for _, m := range dartImport.FindAllStringSubmatch(src, -1) {
-			p.refs = append(p.refs, "dart:"+m[1])
-		}
-	case "java", "kotlin":
-		p.symbols = applyRules(allLines, jvmRules, nil)
-		for _, m := range jvmImport.FindAllStringSubmatch(src, -1) {
-			p.refs = append(p.refs, "jvm:"+m[1])
-		}
-		p.routes = matchRoutes(jvmRoute, src)
-	case "rust":
-		p.symbols = applyRules(allLines, rustRules, nil)
-	case "ruby":
-		p.symbols = applyRules(allLines, rubyRules, nil)
-	case "csharp":
-		p.symbols = applyRules(allLines, csRules, nil)
-	case "swift":
-		p.symbols = applyRules(allLines, swiftRules, nil)
-	case "sql":
-		for _, m := range sqlTable.FindAllStringSubmatchIndex(src, -1) {
-			p.symbols = appendSym(p.symbols, models.CodeSymbol{Name: src[m[2]:m[3]], Kind: "table", Line: lines.line(m[0]), Exported: true})
-		}
-	case "markdown":
-		for _, m := range mdHeading.FindAllStringSubmatchIndex(src, -1) {
-			p.symbols = appendSym(p.symbols, models.CodeSymbol{Name: strings.TrimSpace(src[m[4]:m[5]]), Kind: "heading", Line: lines.line(m[0]), Exported: true})
-		}
-		p.summary = markdownSummary(allLines)
-	case "css":
-		for _, m := range cssRule.FindAllStringSubmatchIndex(src, -1) {
-			if len(p.symbols) >= 30 {
-				break
-			}
-			p.symbols = appendSym(p.symbols, models.CodeSymbol{Name: src[m[2]:m[3]], Kind: "selector", Line: lines.line(m[0])})
-		}
+	c := &parseCtx{lang: lang, src: src, lines: newLineIndex(src), all: strings.Split(src, "\n")}
+	if parse := langParsers[lang]; parse != nil {
+		parse(&p, c)
 	}
 	if p.summary == "" && lang != "markdown" {
-		p.summary = leadingComment(allLines)
+		p.summary = leadingComment(c.all)
 	}
 	if p.summary == "" {
 		// Dokumen simbol publik pertama sering menjelaskan tujuan berkas (mis. berkas Go tanpa package doc).
-		for _, s := range p.symbols {
-			if s.Exported && s.Doc != "" {
-				p.summary = s.Doc
-				break
-			}
-		}
+		p.summary = firstExportedDoc(p.symbols)
 	}
 	p.summary = truncate(p.summary, maxSummaryLen)
 	p.refs = uniqueStrings(p.refs)
 	p.routes = uniqueStrings(p.routes)
 	return p
+}
+
+// firstExportedDoc mengembalikan dokumen simbol publik pertama yang punya dokumen.
+func firstExportedDoc(symbols []models.CodeSymbol) string {
+	for _, s := range symbols {
+		if s.Exported && s.Doc != "" {
+			return s.Doc
+		}
+	}
+	return ""
 }
 
 // goImports membaca deklarasi import Go (tunggal maupun blok) per baris.
@@ -371,6 +420,35 @@ func vueScripts(src string) (string, int) {
 
 func goExported(name string) bool { return name != "" && unicode.IsUpper(rune(name[0])) }
 
+// skipRuleLine: baris kosong atau berawalan komentar/penutup tidak diperiksa aturan simbol.
+func skipRuleLine(t string) bool {
+	return t == "" || strings.IndexByte("/*#})<", t[0]) >= 0
+}
+
+// ruleSymbol mencocokkan satu aturan pada satu baris; ok=false bila tak cocok.
+func ruleSymbol(r symRule, line string, exported func(string) bool) (name, kind string, exp, ok bool) {
+	if !containsAny(line, r.need) {
+		return
+	}
+	m := r.re.FindStringSubmatchIndex(line)
+	if m == nil || m[2*r.nameIdx] < 0 {
+		return
+	}
+	name = line[m[2*r.nameIdx]:m[2*r.nameIdx+1]]
+	kind = r.kind
+	if r.kindIdx > 0 && m[2*r.kindIdx] >= 0 {
+		kind = line[m[2*r.kindIdx]:m[2*r.kindIdx+1]]
+	}
+	if kind == "struct" {
+		kind = "type"
+	}
+	exp = r.exported
+	if !exp && exported != nil {
+		exp = exported(name)
+	}
+	return name, kind, exp, true
+}
+
 // applyRules mencocokkan aturan simbol per baris (jauh lebih cepat daripada regex (?m)^ atas seluruh berkas);
 // simbol pada baris yang sama hanya dicatat sekali, aturan yang lebih awal menang.
 func applyRules(all []string, rules []symRule, exported func(string) bool) []models.CodeSymbol {
@@ -379,32 +457,14 @@ func applyRules(all []string, rules []symRule, exported func(string) bool) []mod
 		if len(out) >= maxSymbolsPerFile {
 			break
 		}
-		t := strings.TrimLeft(line, " \t")
-		if t == "" || t[0] == '/' || t[0] == '*' || t[0] == '#' || t[0] == '}' || t[0] == ')' || t[0] == '<' {
+		if skipRuleLine(strings.TrimLeft(line, " \t")) {
 			continue
 		}
 		for _, r := range rules {
-			if !containsAny(line, r.need) {
-				continue
+			if name, kind, exp, ok := ruleSymbol(r, line, exported); ok {
+				out = append(out, models.CodeSymbol{Name: name, Kind: kind, Line: i + 1, Exported: exp, Doc: truncate(docAbove(all, i+1), 160)})
+				break
 			}
-			m := r.re.FindStringSubmatchIndex(line)
-			if m == nil || m[2*r.nameIdx] < 0 {
-				continue
-			}
-			name := line[m[2*r.nameIdx]:m[2*r.nameIdx+1]]
-			kind := r.kind
-			if r.kindIdx > 0 && m[2*r.kindIdx] >= 0 {
-				kind = line[m[2*r.kindIdx]:m[2*r.kindIdx+1]]
-			}
-			if kind == "struct" {
-				kind = "type"
-			}
-			exp := r.exported
-			if !exp && exported != nil {
-				exp = exported(name)
-			}
-			out = append(out, models.CodeSymbol{Name: name, Kind: kind, Line: i + 1, Exported: exp, Doc: truncate(docAbove(all, i+1), 160)})
-			break
 		}
 	}
 	return out
@@ -482,6 +542,47 @@ func docAbove(all []string, ln int) string {
 	return cleanComment(strings.Join(parts, " "))
 }
 
+// isLeadingComment: baris komentar (awalan * hanya dihitung setelah komentar dimulai).
+func isLeadingComment(t string, started bool) bool {
+	if strings.HasPrefix(t, "//") || strings.HasPrefix(t, "/*") || (started && strings.HasPrefix(t, "*")) {
+		return true
+	}
+	return strings.HasPrefix(t, "#") && !strings.HasPrefix(t, "#!") && !strings.HasPrefix(t, "#include")
+}
+
+// lintDirective: komentar direktif lint/generator yang dilewati.
+func lintDirective(lc string) bool {
+	return containsSub(lc, "eslint", "@ts-", "prettier", "nolint") || strings.HasPrefix(lc, "go:")
+}
+
+// preambleLine: baris pembuka berkas (kosong, shebang, 'use strict', <?php, package) yang dilewati.
+func preambleLine(t string) bool {
+	return t == "" || hasAnyPrefix(t, "#!", "'use ", "\"use ", "<?php", "package ")
+}
+
+// importLine: baris impor/skrip; komentar boleh berada setelahnya.
+func importLine(t string) bool {
+	return hasAnyPrefix(t, "import ", "from ", "<script", "@file:")
+}
+
+func containsSub(s string, subs ...string) bool {
+	for _, x := range subs {
+		if strings.Contains(s, x) {
+			return true
+		}
+	}
+	return false
+}
+
+func hasAnyPrefix(s string, prefixes ...string) bool {
+	for _, x := range prefixes {
+		if strings.HasPrefix(s, x) {
+			return true
+		}
+	}
+	return false
+}
+
 // leadingComment mengambil blok komentar pertama di awal berkas (melewati shebang, lisensi, dan direktif lint).
 func leadingComment(all []string) string {
 	var parts []string
@@ -491,16 +592,14 @@ func leadingComment(all []string) string {
 			break
 		}
 		t := strings.TrimSpace(raw)
-		isComment := strings.HasPrefix(t, "//") || strings.HasPrefix(t, "/*") || (started && strings.HasPrefix(t, "*")) ||
-			(strings.HasPrefix(t, "#") && !strings.HasPrefix(t, "#!") && !strings.HasPrefix(t, "#include"))
 		switch {
-		case isComment:
+		case isLeadingComment(t, started):
 			c := commentPrefix.ReplaceAllString(t, "")
 			lc := strings.ToLower(c)
-			if strings.Contains(lc, "eslint") || strings.Contains(lc, "@ts-") || strings.Contains(lc, "prettier") || strings.HasPrefix(lc, "go:") || strings.Contains(lc, "nolint") {
+			if lintDirective(lc) {
 				continue
 			}
-			if strings.Contains(lc, "copyright") || strings.Contains(lc, "license") || strings.Contains(lc, "spdx") {
+			if containsSub(lc, "copyright", "license", "spdx") {
 				parts = nil
 				continue
 			}
@@ -508,9 +607,7 @@ func leadingComment(all []string) string {
 			parts = append(parts, c)
 		case started:
 			return cleanComment(strings.Join(parts, " "))
-		case t == "" || strings.HasPrefix(t, "#!") || strings.HasPrefix(t, "'use ") || strings.HasPrefix(t, "\"use ") || strings.HasPrefix(t, "<?php") || strings.HasPrefix(t, "package "):
-			continue
-		case strings.HasPrefix(t, "import ") || strings.HasPrefix(t, "from ") || strings.HasPrefix(t, "<script") || strings.HasPrefix(t, "@file:"):
+		case preambleLine(t), importLine(t):
 			// komentar boleh berada setelah impor; lanjut mencari
 			continue
 		default:
@@ -581,55 +678,100 @@ func uniqueStrings(in []string) []string {
 	return out
 }
 
+// clsCtx: bentuk path yang dipakai aturan klasifikasi berkas.
+type clsCtx struct {
+	p    string // "/" + path huruf kecil
+	base string
+	stem string
+	orig string // nama berkas asli (huruf asli)
+	lang string
+}
+
+// clsRule cocok bila SALAH SATU kondisi terpenuhi: path memuat pathHas, nama dasar memuat baseHas /
+// berawalan basePrefix / berakhiran baseSuffix / sama dengan baseIs, bahasa ada di langs, atau extra true.
+type clsRule struct {
+	kind       string
+	pathHas    []string
+	baseHas    []string
+	basePrefix []string
+	baseSuffix []string
+	baseIs     []string
+	langs      []string
+	extra      func(c *clsCtx) bool
+}
+
+func (r clsRule) match(c *clsCtx) bool {
+	if containsSub(c.p, r.pathHas...) || containsSub(c.base, r.baseHas...) ||
+		hasAnyPrefix(c.base, r.basePrefix...) || hasAnySuffix(c.base, r.baseSuffix...) {
+		return true
+	}
+	for _, x := range r.baseIs {
+		if c.base == x {
+			return true
+		}
+	}
+	for _, x := range r.langs {
+		if c.lang == x {
+			return true
+		}
+	}
+	return r.extra != nil && r.extra(c)
+}
+
+func hasAnySuffix(s string, suffixes ...string) bool {
+	for _, x := range suffixes {
+		if strings.HasSuffix(s, x) {
+			return true
+		}
+	}
+	return false
+}
+
+func isConfigBase(c *clsCtx) bool { return configFiles[c.base] != "" }
+
+func isDartTest(c *clsCtx) bool { return strings.HasSuffix(c.stem, "test") && c.lang == "dart" }
+
+func isUseHook(c *clsCtx) bool {
+	return len(c.orig) > 4 && strings.HasPrefix(c.orig, "use") && unicode.IsUpper(rune(c.orig[3]))
+}
+
+func isTypesStem(c *clsCtx) bool { return c.stem == "types" }
+
+// classifyRules: urut prioritas; aturan pertama yang cocok menentukan peran berkas.
+var classifyRules = []clsRule{
+	{kind: "doc", langs: []string{"markdown"}},
+	{kind: "config", basePrefix: []string{"nuxt.config", "vite.config", "tailwind.config", "next.config"}, extra: isConfigBase},
+	{kind: "test", baseSuffix: []string{"_test.go"}, baseHas: []string{".test.", ".spec."}, basePrefix: []string{"test_"},
+		pathHas: []string{"/__tests__/", "/tests/"}, extra: isDartTest},
+	{kind: "migration", langs: []string{"sql"}, pathHas: []string{"/migrations/", "/migration/"}},
+	{kind: "style", langs: []string{"css"}},
+	{kind: "page", pathHas: []string{"/pages/", "/views/", "/screens/", "/app/routes/"}},
+	{kind: "layout", pathHas: []string{"/layouts/"}},
+	{kind: "composable", pathHas: []string{"/composables/", "/hooks/"}, extra: isUseHook},
+	{kind: "store", pathHas: []string{"/stores/", "/store/"}},
+	{kind: "component", pathHas: []string{"/components/", "/widgets/"}, langs: []string{"vue", "svelte"}, baseSuffix: []string{".tsx", ".jsx"}},
+	{kind: "model", pathHas: []string{"/models/", "/model/", "/entities/", "/entity/", "/schemas/"}},
+	{kind: "type", pathHas: []string{"/types/"}, baseSuffix: []string{".d.ts"}, extra: isTypesStem},
+	{kind: "middleware", pathHas: []string{"/middleware"}, baseHas: []string{"middleware", "guard"}},
+	{kind: "handler", pathHas: []string{"/handlers/", "/controllers/", "/server/api/"}, baseHas: []string{"handler", "controller"}},
+	{kind: "route", baseHas: []string{"route", "router"}, pathHas: []string{"/routes/"}},
+	{kind: "service", pathHas: []string{"/services/", "/service/", "/usecase"}, baseHas: []string{"service"}},
+	{kind: "repository", pathHas: []string{"/repositor"}, baseHas: []string{"repository", "repo."}},
+	{kind: "entry", pathHas: []string{"/cmd/"}, baseIs: []string{"main.go", "main.dart", "main.py", "app.vue", "index.php", "main.ts"}},
+	{kind: "util", pathHas: []string{"/utils/", "/helpers/", "/lib/", "/pkg/"}, baseHas: []string{"util", "helper"}},
+	{kind: "config", pathHas: []string{"/config/"}, baseHas: []string{"config", "settings"}},
+	{kind: "script", pathHas: []string{"/scripts/"}, langs: []string{"shell"}},
+}
+
 // classify menentukan peran berkas dari path & bahasanya, agar agent bisa menyaring (mis. kind=handler).
 func classify(relPath, lang string) string {
 	p := "/" + strings.ToLower(relPath)
 	base := path.Base(p)
-	stem := strings.TrimSuffix(base, path.Ext(base))
-	orig := path.Base(relPath)
-	switch {
-	case lang == "markdown":
-		return "doc"
-	case configFiles[base] != "" || strings.HasPrefix(base, "nuxt.config") || strings.HasPrefix(base, "vite.config") || strings.HasPrefix(base, "tailwind.config") || strings.HasPrefix(base, "next.config"):
-		return "config"
-	case strings.HasSuffix(base, "_test.go") || strings.Contains(base, ".test.") || strings.Contains(base, ".spec.") || strings.HasPrefix(base, "test_") || strings.Contains(p, "/__tests__/") || strings.Contains(p, "/tests/") || strings.HasSuffix(stem, "test") && lang == "dart":
-		return "test"
-	case lang == "sql" || strings.Contains(p, "/migrations/") || strings.Contains(p, "/migration/"):
-		return "migration"
-	case lang == "css":
-		return "style"
-	case strings.Contains(p, "/pages/") || strings.Contains(p, "/views/") || strings.Contains(p, "/screens/") || strings.Contains(p, "/app/routes/"):
-		return "page"
-	case strings.Contains(p, "/layouts/"):
-		return "layout"
-	case strings.Contains(p, "/composables/") || strings.Contains(p, "/hooks/") || len(orig) > 4 && strings.HasPrefix(orig, "use") && unicode.IsUpper(rune(orig[3])):
-		return "composable"
-	case strings.Contains(p, "/stores/") || strings.Contains(p, "/store/"):
-		return "store"
-	case strings.Contains(p, "/components/") || strings.Contains(p, "/widgets/") || lang == "vue" || lang == "svelte" || strings.HasSuffix(base, ".tsx") || strings.HasSuffix(base, ".jsx"):
-		return "component"
-	case strings.Contains(p, "/models/") || strings.Contains(p, "/model/") || strings.Contains(p, "/entities/") || strings.Contains(p, "/entity/") || strings.Contains(p, "/schemas/"):
-		return "model"
-	case strings.Contains(p, "/types/") || strings.HasSuffix(base, ".d.ts") || stem == "types":
-		return "type"
-	case strings.Contains(p, "/middleware") || strings.Contains(base, "middleware") || strings.Contains(base, "guard"):
-		return "middleware"
-	case strings.Contains(p, "/handlers/") || strings.Contains(p, "/controllers/") || strings.Contains(base, "handler") || strings.Contains(base, "controller") || strings.Contains(p, "/server/api/"):
-		return "handler"
-	case strings.Contains(base, "route") || strings.Contains(base, "router") || strings.Contains(p, "/routes/"):
-		return "route"
-	case strings.Contains(p, "/services/") || strings.Contains(p, "/service/") || strings.Contains(base, "service") || strings.Contains(p, "/usecase"):
-		return "service"
-	case strings.Contains(p, "/repositor") || strings.Contains(base, "repository") || strings.Contains(base, "repo."):
-		return "repository"
-	case strings.Contains(p, "/cmd/") || base == "main.go" || base == "main.dart" || base == "main.py" || base == "app.vue" || base == "index.php" || base == "main.ts":
-		return "entry"
-	case strings.Contains(p, "/utils/") || strings.Contains(p, "/helpers/") || strings.Contains(p, "/lib/") || strings.Contains(p, "/pkg/") || strings.Contains(base, "util") || strings.Contains(base, "helper"):
-		return "util"
-	case strings.Contains(p, "/config/") || strings.Contains(base, "config") || strings.Contains(base, "settings"):
-		return "config"
-	case strings.Contains(p, "/scripts/") || lang == "shell":
-		return "script"
+	c := &clsCtx{p: p, base: base, stem: strings.TrimSuffix(base, path.Ext(base)), orig: path.Base(relPath), lang: lang}
+	for _, r := range classifyRules {
+		if r.match(c) {
+			return r.kind
+		}
 	}
 	return "module"
 }
