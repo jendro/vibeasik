@@ -1,7 +1,9 @@
 package api
 
 import (
+	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -36,6 +38,60 @@ type Server struct {
 	runner    *runner.Service
 	updater   *update.Updater
 	restart   func() error // mulai ulang engine (dipasang serve); nil bila tidak didukung
+}
+
+const (
+	envCORSOrigins     = "VIBEASIK_CORS_ORIGINS"
+	envFrontendOrigins = "FRONTEND_ORIGINS"
+	envAllowedOrigins  = "ALLOWED_ORIGINS"
+	defaultCORSOrigins = "http://localhost:8760,http://127.0.0.1:8760"
+)
+
+// validateOrigin memeriksa dan menormalisasi URL origin sesuai RFC 6454.
+// Origin wildcard (*) dilarang untuk mencegah risiko keamanan kredensial dan CSRF (K36).
+// Origin harus memiliki skema http/https dan host yang valid (K3158).
+func validateOrigin(raw string) (string, bool) {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" || trimmed == "*" {
+		return "", false
+	}
+	u, err := url.Parse(trimmed)
+	if err != nil {
+		return "", false
+	}
+	scheme := strings.ToLower(u.Scheme)
+	if scheme != "http" && scheme != "https" {
+		return "", false
+	}
+	if u.Host == "" {
+		return "", false
+	}
+	return fmt.Sprintf("%s://%s", scheme, strings.ToLower(u.Host)), true
+}
+
+// corsOrigins membaca allowlist origin dari environment variable (VIBEASIK_CORS_ORIGINS, FRONTEND_ORIGINS, ALLOWED_ORIGINS).
+// Jika disetel, hanya origin yang tervalidasi yang diizinkan dan origin liar ditolak (K36, K4942).
+// Jika tidak disetel, digunakan fallback aman untuk local dev Studio (defaultCORSOrigins).
+func corsOrigins() string {
+	for _, envKey := range []string{envCORSOrigins, envFrontendOrigins, envAllowedOrigins} {
+		if raw := strings.TrimSpace(os.Getenv(envKey)); raw != "" {
+			var valid []string
+			seen := make(map[string]bool)
+			for _, part := range strings.Split(raw, ",") {
+				if origin, ok := validateOrigin(part); ok && !seen[origin] {
+					seen[origin] = true
+					valid = append(valid, origin)
+				}
+			}
+			if len(valid) > 0 {
+				return strings.Join(valid, ",")
+			}
+			// Env disetel tetapi tidak ada origin valid (misal hanya wildcard '*');
+			// tolak semua cross-origin request dengan mengembalikan allowlist kosong.
+			return ""
+		}
+	}
+	return defaultCORSOrigins
 }
 
 // NewServer builds and configures the Fiber application with layered architecture

@@ -159,12 +159,13 @@ func ruleWildcardCORS(s *fileScan) (models.Finding, bool) {
 	if !s.isServer || !wildcardCorsRegex.MatchString(s.trimmed) {
 		return models.Finding{}, false
 	}
+
 	return s.newFinding("router", "WARNING", "ROUTER-WILDCARD-CORS",
-		"Kebijakan CORS Terlalu Permisif (AllowOrigins: '*')",
-		fmt.Sprintf("Konfigurasi CORS pada baris %d mengizinkan seluruh domain (*). Ini berisiko CSRF dan kebocoran data jika API menangani kredensial pengguna. Untuk pengembangan lokal (localhost) risikonya rendah, tetapi di production origin wajib dibatasi ke domain frontend resmi.", s.lineNum),
-		"Tentukan origin domain frontend secara eksplisit (misal: 'http://localhost:3000' untuk dev, domain resmi untuk production) dan pisahkan konfigurasinya lewat environment variable.",
-		"W3C Cross-Origin Resource Sharing Specification & RFC 6454 (The Web Origin Concept).",
-		"// Batasi AllowOrigins ke domain terpercaya:\n// SESUDAH: cors.New(cors.Config{ AllowOrigins: \"http://localhost:3000, https://myapp.com\" })"), true
+		"Kebijakan CORS Mengizinkan Semua Origin",
+		fmt.Sprintf("Konfigurasi CORS pada baris %d mengizinkan semua origin (*). Pada API yang menggunakan cookie, token, atau kredensial pengguna, konfigurasi ini dapat memperluas permukaan CSRF dan kebocoran data. Origin production harus dibatasi ke allowlist frontend resmi.", s.lineNum),
+		"Simpan allowlist origin pada environment variable, validasi setiap origin, dan gunakan hanya origin yang terdaftar. Contoh: FRONTEND_ORIGINS=http://localhost:3000,https://app.example.com; jangan gunakan wildcard untuk API berkredensial.",
+		"W3C Cross-Origin Resource Sharing Specification, RFC 6454 (The Web Origin Concept), dan OWASP API Security API8:2023 Security Misconfiguration.",
+		"// Contoh konfigurasi berbasis allowlist environment:\n// FRONTEND_ORIGINS=http://localhost:3000,https://app.example.com\n// Set AllowOrigins dari origin yang tervalidasi; jangan gunakan AllowOrigins: \"*\" pada production."), true
 }
 
 func ruleStubHandler(s *fileScan) (models.Finding, bool) {

@@ -844,11 +844,11 @@ ERR: komponen tidak sedang berjalan
 ### vibeasik_run_component
 ERR: komponen tidak ditemukan
 ### vibeasik_code_map_overview
-ERR: proyek Alpha tidak punya direktori yang bisa dipindai (root/komponen tidak ditemukan di disk)
+ERR: gagal memperbarui code map proyek 1: proyek Alpha tidak punya direktori yang bisa dipindai (root/komponen tidak ditemukan di disk)
 ### vibeasik_code_map_build
 ERR: proyek Alpha tidak punya direktori yang bisa dipindai (root/komponen tidak ditemukan di disk)
 ### vibeasik_code_map_export
-ERR: proyek Alpha tidak punya direktori yang bisa dipindai (root/komponen tidak ditemukan di disk)
+ERR: gagal memperbarui code map proyek 1: proyek Alpha tidak punya direktori yang bisa dipindai (root/komponen tidak ditemukan di disk)
 ### vibeasik_code_map_status
 text: {
   "built": false,
@@ -858,4 +858,4 @@ text: {
 ### vibeasik_code_map_routes
 ERR: root proyek Alpha tidak ditemukan di disk
 ### vibeasik_code_map_search
-ERR: proyek Alpha tidak punya direktori yang bisa dipindai (root/komponen tidak ditemukan di disk)
+ERR: gagal memperbarui code map proyek 1: proyek Alpha tidak punya direktori yang bisa dipindai (root/komponen tidak ditemukan di disk)

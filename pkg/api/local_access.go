@@ -3,7 +3,6 @@ package api
 import (
 	"html"
 	"net"
-	"os"
 	"strings"
 	"time"
 
@@ -17,18 +16,6 @@ import (
 //   - Setiap request API, MCP, dan halaman Studio wajib membawa token lokal (header, Bearer, atau cookie Studio).
 //     Pengecualian: /health, /api/traffic/ingest (berkunci sendiri per sumber), dan aset statis Studio.
 //   - Studio mendapat cookie lewat /auth?t=<token> (tautan dari `vibeasik serve` / `vibeasik open`).
-
-const envCORSOrigins = "VIBEASIK_CORS_ORIGINS"
-
-// defaultCORSOrigins hanya dev server Studio (nuxt dev); Studio produksi disajikan dari origin engine sendiri.
-const defaultCORSOrigins = "http://localhost:8760,http://127.0.0.1:8760"
-
-func corsOrigins() string {
-	if v := strings.TrimSpace(os.Getenv(envCORSOrigins)); v != "" {
-		return v
-	}
-	return defaultCORSOrigins
-}
 
 // SetLAN menandai engine dibuka ke jaringan lokal (bind bukan loopback): Host berupa IP LAN diterima.
 func (s *Server) SetLAN(on bool) { s.lan = on }
