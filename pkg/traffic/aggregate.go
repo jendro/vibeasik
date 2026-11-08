@@ -360,8 +360,7 @@ func Prune(db *gorm.DB) {
 	now := time.Now()
 	minCut := now.Add(-MinuteRetention).Unix()
 	hourCut := now.Add(-HourRetention).Unix()
-	for _, m := range []any{&models.TrafficRouteStat{}, &models.TrafficDimStat{}} {
-		db.Where("gran = ? AND bucket < ?", models.TrafficGranMinute, minCut).Delete(m)
-		db.Where("gran = ? AND bucket < ?", models.TrafficGranHour, hourCut).Delete(m)
-	}
+	predicate := "(gran = ? AND bucket < ?) OR (gran = ? AND bucket < ?)"
+	db.Where(predicate, models.TrafficGranMinute, minCut, models.TrafficGranHour, hourCut).Delete(&models.TrafficRouteStat{})
+	db.Where(predicate, models.TrafficGranMinute, minCut, models.TrafficGranHour, hourCut).Delete(&models.TrafficDimStat{})
 }

@@ -190,10 +190,29 @@ func (s *Server) deleteTrafficSource(c *fiber.Ctx) error {
 			warning = "Data lokal dihapus, tetapi sumber di vibeasik live gagal dihapus: " + err.Error()
 		}
 	}
-	for _, m := range []any{&models.TrafficRouteStat{}, &models.TrafficDimStat{}, &models.TrafficRecentEvent{}} {
-		s.db.Where("source_id = ?", src.ID).Delete(m)
+	tx := s.db.Begin()
+	if tx.Error != nil {
+		return tx.Error
 	}
-	s.db.Delete(src)
+	if err := tx.Where("source_id = ?", src.ID).Delete(&models.TrafficRouteStat{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := tx.Where("source_id = ?", src.ID).Delete(&models.TrafficDimStat{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := tx.Where("source_id = ?", src.ID).Delete(&models.TrafficRecentEvent{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := tx.Delete(src).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
 	return c.JSON(fiber.Map{"deleted": true, "warning": warning})
 }
 
