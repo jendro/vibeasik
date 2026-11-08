@@ -5,6 +5,19 @@
   --font-sans: 'Public Sans', sans-serif;
 }
 
+/* Skala z-index (satu sumber). Pakai di Tailwind: z-(--z-overlay), atau di CSS: z-index: var(--z-overlay).
+   Jangan memakai nilai di luar skala; overlay lokal dalam komponen cukup 10–20 karena
+   komponen yang membuat stacking context sendiri (mis. isolation: isolate) tidak bersaing dengan modal/toast global. */
+:root {
+  --z-base: 0;
+  --z-overlay: 10;
+  --z-sticky: 20;
+  --z-dropdown: 30;
+  --z-popover: 40;
+  --z-modal: 50;
+  --z-toast: 60;
+}
+
 /* Sembunyikan scrollbar tetapi area tetap bisa digulir (tab/strip horizontal) */
 @utility no-scrollbar {
   scrollbar-width: none;
