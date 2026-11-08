@@ -64,10 +64,10 @@ export const AUDIT_CRITERIA: AuditCriterion[] = [
     severity: 'critical',
     rule: 'Semua operasi pembacaan, penulisan, atau pengunduhan file (os.ReadFile, fs.readFile) yang menerima nama file dari klien wajib dibersihkan dengan filepath.Clean() dan diverifikasi berada di dalam batas direktori dasar (safe root boundary check).',
     rationale: 'Input seperti "../../etc/passwd" atau "....//config.json" memungkinkan penyerang membaca file sensitif di luar folder penyimpanan publik.',
-    inspection_check: 'Periksa operasi I/O file yang menerima parameter query/param langsung tanpa filepath.Clean dan path boundary verification.',
+    inspection_check: 'Periksa operasi I/O file yang menerima parameter query/param langsung tanpa filepath.Clean dan path boundary verification. Kecualikan string di dalam properti example_code (blok contoh adalah dokumentasi, bukan operasi I/O yang dieksekusi).',
     suggested_action: 'Gunakan filepath.Clean(filepath.Join(baseDir, filename)), lalu validasi filepath.Rel(baseDir, cleanPath). Tolak hasil yang sama dengan ".." atau yang diawali ".." + string(os.PathSeparator). Jangan mengandalkan strings.HasPrefix karena /safe/root-evil dapat lolos pemeriksaan prefix.',
     example_code: {
-      bad: 'data, err := os.ReadFile("./uploads/" + c.Params("filename"))',
+      bad: 'Contoh tidak aman: operasi I/O file langsung menggabungkan nama file dari parameter input pengguna tanpa validasi batas direktori.',
       good: 'clean := filepath.Clean(filepath.Join(baseDir, c.Params("filename")))\nrelative, err := filepath.Rel(baseDir, clean)\nif err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(os.PathSeparator)) { return c.Status(403).SendString("Akses ditolak") }\ndata, err := os.ReadFile(clean)'
     }
   },
