@@ -84,10 +84,14 @@ func isDir(p string) bool {
 	return err == nil && fi.IsDir()
 }
 
+// exists melaporkan apakah path dapat diakses.
+// Kontrak: os.IsNotExist adalah jalur normal (mengembalikan false tanpa noise);
+// error sistem lain (izin, I/O) dicatat sebagai [WARN] dan tetap mengembalikan false
+// agar pemanggil memperlakukan path sebagai tidak ada — perilaku aman-fail untuk
+// pengecekan proyek-marker, bukan silent failure.
 func exists(p string) bool {
 	_, err := os.Stat(p)
 	if err != nil && !os.IsNotExist(err) {
-		// Berkas tidak ada adalah jalur normal; error sistem (izin, I/O) dicatat agar terlihat.
 		log.Printf("[WARN] exists: os.Stat(%q): %v", p, err)
 	}
 	return err == nil
