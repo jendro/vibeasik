@@ -203,3 +203,14 @@ func TestAuditCriteriaNoFalsePositivePathTraversal(t *testing.T) {
 		}
 	}
 }
+
+func TestAuditCriteriaNoFalsePositiveSwallowedError(t *testing.T) {
+	fullPath := filepath.Join("..", "..", "studio", "app", "utils", "auditCriteria.ts")
+	findings := InspectFile(fullPath, "studio/app/utils/auditCriteria.ts", "typescript")
+	for _, f := range findings {
+		if f.RuleID == "SMELL-SWALLOWED-ERROR" {
+			t.Errorf("found false positive SMELL-SWALLOWED-ERROR in auditCriteria.ts at line %d: %s", f.Line, f.Snippet)
+		}
+	}
+}
+
