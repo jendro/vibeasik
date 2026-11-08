@@ -42,7 +42,7 @@ func knowledgeSyncView() fiber.Map {
 		"consent_text": knowledgesync.ConsentText,
 		"logged_in":    account.DeviceToken() != "",
 		"pack":         fiber.Map{"version": st.Version, "tier": st.Tier, "nodes": st.Nodes, "pulled_at": st.PulledAt, "license": st.License},
-		"limits":       fiber.Map{"max_per_day": knowledgesync.MaxPerDay, "min_helpful": knowledgesync.MinHelpful, "min_age_days": knowledgesync.MinAgeDays},
+		"limits":       fiber.Map{"max_per_day": knowledgesync.MaxPerDay, "min_helpful": knowledgesync.MinHelpful},
 		"ledger":       fiber.Map{"sent": sent, "skipped": skipped, "sent_today": l.SentOn(time.Now())},
 	}
 }

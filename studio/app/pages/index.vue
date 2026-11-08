@@ -232,7 +232,7 @@ async function copy(cmd: string) {
         </li>
       </ul>
       <div class="flex flex-wrap gap-2 pt-1">
-        <UButton to="/knowledge-sync" size="sm" color="neutral" variant="outline" icon="i-lucide-hand-heart">
+        <UButton to="/settings?tab=knowledge_sync" size="sm" color="neutral" variant="outline" icon="i-lucide-hand-heart">
           Berbagi Pengetahuan
         </UButton>
         <UButton to="https://vibeasik.com/terms" target="_blank" size="sm" color="neutral" variant="ghost" icon="i-lucide-file-text">

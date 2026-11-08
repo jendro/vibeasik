@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Berbagi pengetahuan: persetujuan S&K, mode kirim otomatis, pratinjau, riwayat, dan pencabutan.
+// Tab Setting "Berbagi Pengetahuan": persetujuan S&K, mode kirim otomatis, pratinjau, riwayat, dan pencabutan.
 // Logika ada di engine (pkg/knowledgesync); halaman ini hanya menampilkan dan memanggil API.
 const { apiBase } = useApi()
 const toast = useToast()
@@ -15,7 +15,7 @@ interface SyncView {
   consent_text: string
   logged_in: boolean
   pack: { version?: string, tier?: string, nodes?: number, pulled_at?: string, license?: { id?: string, name?: string, url?: string, notice?: string } }
-  limits: { max_per_day: number, min_helpful: number, min_age_days: number }
+  limits: { max_per_day: number, min_helpful: number }
   ledger: { sent: Sent[], skipped: Skip[], sent_today: number }
 }
 interface Candidate { id: number, kind: string, domain: string, title: string, content: string }
@@ -104,16 +104,15 @@ const statusColor = (s?: string): 'success' | 'warning' | 'error' | 'neutral' =>
 const statusLabel = (s?: string) => ({ screened: 'ditinjau', approved: 'terbit', rejected: 'ditolak', revoked: 'dicabut', duplicate: 'duplikat' } as Record<string, string>)[s || ''] || (s || '-')
 
 onMounted(load)
-useHead({ title: 'Berbagi Pengetahuan — vibeasik' })
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto py-10 px-4 space-y-6">
+  <div class="max-w-3xl space-y-6">
     <div>
-      <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">
+      <h3 class="text-base font-semibold text-neutral-900 dark:text-white">
         Berbagi Pengetahuan
-      </h1>
-      <p class="text-sm text-neutral-500 dark:text-neutral-400">
+      </h3>
+      <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
         Pusat Pengetahuan bekerja dua arah: Anda menerima paket, dan pokok ilmu Anda yang terbukti berguna ikut memperkaya paket.
         Kode dan data proyek Anda tidak pernah dikirim.
       </p>
@@ -196,8 +195,8 @@ useHead({ title: 'Berbagi Pengetahuan — vibeasik' })
               <NuxtLink to="/account" class="underline">Masuk</NuxtLink>
             </p>
             <p class="text-xs text-neutral-500">
-              Syarat kirim: helpful ≥ {{ view.limits.min_helpful }} dan ≥ 3× harmful, umur ≥ {{ view.limits.min_age_days }} hari,
-              lolos penyensor dan pemeriksaan privasi. Maksimal {{ view.limits.max_per_day }} per hari
+              Syarat kirim: sudah dinilai berguna (helpful ≥ {{ view.limits.min_helpful }} dan ≥ 3× harmful),
+              lolos penyensor dan pemeriksaan privasi. Dicek tiap jam, maksimal {{ view.limits.max_per_day }} per hari
               (hari ini: {{ view.ledger.sent_today }}).
             </p>
           </div>

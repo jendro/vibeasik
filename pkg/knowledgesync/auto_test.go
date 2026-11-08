@@ -72,7 +72,6 @@ func TestAutoEligibleFilters(t *testing.T) {
 	good := e.good(1)
 	e.add("Helpful kurang", "Isi aman tentang penggunaan indeks database.", models.KnowledgeSrcPromoted, 2, 0, 10)
 	e.add("Rasio buruk", "Isi aman tentang caching respons API.", models.KnowledgeSrcPromoted, 5, 3, 10)
-	e.add("Terlalu baru", "Isi aman tentang validasi input form.", models.KnowledgeSrcPromoted, 5, 0, 3)
 	e.add("Dari hub", "Isi aman dari paket publik.", models.KnowledgeSrcHub, 9, 0, 30)
 	own := e.add("Milik pegawai", "Isi aman tetapi pribadi.", models.KnowledgeSrcPromoted, 9, 0, 30)
 	owner := uint(1)

@@ -222,14 +222,6 @@ export const GLOBAL_NAV_ITEMS: NavItem[] = [
     exact: false
   },
   {
-    id: 'knowledge-sync',
-    to: '/knowledge-sync',
-    label: 'Berbagi Pengetahuan',
-    desc: 'Persetujuan, kirim otomatis & riwayat',
-    icon: 'i-lucide-share-2',
-    exact: false
-  },
-  {
     id: 'knowledge-graph',
     to: '/knowledge-graph',
     label: 'Jaring Pengetahuan',

@@ -21,7 +21,7 @@ const bannerType = ref<'success' | 'info' | 'error'>('success')
 
 // Active engine provider & tab
 const activeProvider = ref<'system_one' | 'standard_llm'>('system_one')
-const activeViewTab = ref<'system_one' | 'standard_llm' | 'censored_keys' | 'workspace_root'>('system_one')
+const activeViewTab = ref<'system_one' | 'standard_llm' | 'censored_keys' | 'workspace_root' | 'knowledge_sync'>('system_one')
 const defaultProjectsRoot = ref('')
 
 // All configs from BE
@@ -71,7 +71,7 @@ const loadData = async () => {
     ])
     if (settingsData?.active_provider) {
       activeProvider.value = settingsData.active_provider
-      if (route.query.tab !== 'censored_keys' && route.query.tab !== 'workspace_root') {
+      if (!['censored_keys', 'workspace_root', 'knowledge_sync'].includes(route.query.tab as string)) {
         activeViewTab.value = settingsData.active_provider
       }
     }
@@ -86,10 +86,8 @@ const loadData = async () => {
       defaultProjectsRoot.value = wsSettings.default_projects_root
     }
 
-    if (route.query.tab === 'censored_keys') {
-      activeViewTab.value = 'censored_keys'
-    } else if (route.query.tab === 'workspace_root') {
-      activeViewTab.value = 'workspace_root'
+    if (['censored_keys', 'workspace_root', 'knowledge_sync'].includes(route.query.tab as string)) {
+      activeViewTab.value = route.query.tab as typeof activeViewTab.value
     }
   } catch (err: any) {
     console.error('Failed to load LLM settings:', err)
@@ -100,22 +98,8 @@ const loadData = async () => {
 }
 
 watch(() => route.query.tab, (tab) => {
-  if (tab === 'censored_keys') {
-    activeViewTab.value = 'censored_keys'
-  } else if (tab === 'workspace_root') {
-    activeViewTab.value = 'workspace_root'
-  }
-})
-
-onMounted(() => {
-  loadData()
-})
-
-watch(() => route.query.tab, (tab) => {
-  if (tab === 'censored_keys') {
-    activeViewTab.value = 'censored_keys'
-  } else if (tab === 'workspace_root') {
-    activeViewTab.value = 'workspace_root'
+  if (['censored_keys', 'workspace_root', 'knowledge_sync'].includes(tab as string)) {
+    activeViewTab.value = tab as typeof activeViewTab.value
   }
 })
 
@@ -237,6 +221,9 @@ const {
         :saving="savingWorkspace"
         @save="handleSaveWorkspaceSettings"
       />
+
+      <!-- Berbagi Pengetahuan (persetujuan, kirim otomatis, riwayat) -->
+      <SettingsKnowledgeTab v-else-if="activeViewTab === 'knowledge_sync'" />
     </div>
 
     <!-- Modals -->

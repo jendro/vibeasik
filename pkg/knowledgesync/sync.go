@@ -438,6 +438,7 @@ func download(path string) ([]byte, error) {
 }
 
 // StartAutoPull menarik paket saat start (setelah jeda) lalu tiap 24 jam, dan mengirim sinyal bila sudah login.
+// Kirim otomatis usulan pengetahuan berjalan terpisah tiap jam (startAutoSend).
 // Dimatikan dengan env VIBEASIK_KNOWLEDGE_SYNC=off.
 func StartAutoPull(ctx context.Context, db *gorm.DB) {
 	if strings.EqualFold(os.Getenv("VIBEASIK_KNOWLEDGE_SYNC"), "off") {
@@ -460,6 +461,31 @@ func StartAutoPull(ctx context.Context, db *gorm.DB) {
 			if account.DeviceToken() != "" && LoadState().Version != "" {
 				_, _ = SendSignals(db)
 			}
+			select {
+			case <-ctx.Done():
+				return
+			case <-t.C:
+			}
+		}
+	}()
+	startAutoSend(ctx, db)
+}
+
+// autoSendEvery jeda antar percobaan kirim otomatis. Node yang baru terbukti berguna terkirim paling lambat sejam kemudian.
+const autoSendEvery = time.Hour
+
+// startAutoSend menjalankan kirim otomatis berkala: percobaan pertama 2 menit setelah start, lalu tiap jam.
+// Batas harian (MaxPerDay) dan syarat kelayakan dijaga SendAuto sehingga aman dipanggil sering.
+func startAutoSend(ctx context.Context, db *gorm.DB) {
+	go func() {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(2 * time.Minute):
+		}
+		t := time.NewTicker(autoSendEvery)
+		defer t.Stop()
+		for {
 			if _, err := SendAuto(ctx, db, time.Now()); err != nil && !errors.Is(err, ErrConsentRequired) {
 				log.Printf("[knowledge] kirim otomatis dilewati: %v", err)
 			}

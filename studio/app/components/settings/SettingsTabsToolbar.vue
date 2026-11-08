@@ -4,7 +4,7 @@ defineProps<{
   standardLlmCount: number
   keywordCount: number
 }>()
-const activeViewTab = defineModel<'system_one' | 'standard_llm' | 'censored_keys' | 'workspace_root'>('activeViewTab', { required: true })
+const activeViewTab = defineModel<'system_one' | 'standard_llm' | 'censored_keys' | 'workspace_root' | 'knowledge_sync'>('activeViewTab', { required: true })
 const emit = defineEmits<{
   addConfig: [provider: string]
   addKeyword: []
@@ -72,6 +72,18 @@ const openAddKeywordModal = () => emit('addKeyword')
       >
         <UIcon name="i-lucide-folder-tree" class="w-3.5 h-3.5 text-emerald-500" />
         <span>Folder Induk Proyek</span>
+      </button>
+
+      <button
+        type="button"
+        class="px-3 py-1.5 rounded-md text-xs font-medium transition-all inline-flex items-center gap-2 cursor-pointer"
+        :class="activeViewTab === 'knowledge_sync'
+          ? 'bg-white dark:bg-slate-900/40 text-violet-700 dark:text-violet-400 shadow-xs font-semibold'
+          : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'"
+        @click="activeViewTab = 'knowledge_sync'"
+      >
+        <UIcon name="i-lucide-share-2" class="w-3.5 h-3.5 text-violet-500" />
+        <span>Berbagi Pengetahuan</span>
       </button>
     </div>
 

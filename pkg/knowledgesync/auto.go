@@ -40,7 +40,6 @@ const ConsentVersion = "2026-11-draf-3"
 const (
 	MinHelpful    = 3 // helpful minimal
 	HelpfulRatio  = 3 // helpful >= HelpfulRatio * harmful
-	MinAgeDays    = 7
 	MaxPerDay     = 5 // per perangkat; server membatasi 50 per akun
 	maxContentLen = 8000
 	maxTitleLen   = 191
@@ -111,7 +110,7 @@ func AutoEligible(db *gorm.DB, now time.Time) Eligibility {
 	var nodes []models.KnowledgeNode
 	db.Where("owner_employee_id IS NULL AND status = ? AND source IN ?", models.KnowledgeNodeActive,
 		[]string{models.KnowledgeSrcPromoted, models.KnowledgeSrcReview, models.KnowledgeSrcGap}).
-		Where("helpful >= ? AND helpful >= ? * harmful AND created_at <= ?", MinHelpful, HelpfulRatio, now.AddDate(0, 0, -MinAgeDays)).
+		Where("helpful >= ? AND helpful >= ? * harmful", MinHelpful, HelpfulRatio).
 		Order("helpful DESC, id").Limit(200).Find(&nodes)
 
 	ledger := LoadLedger()
