@@ -144,6 +144,167 @@ func (s *Sanitizer) GetCustomKeywords() []CustomKeywordRule {
 	return res
 }
 
+const aliasedMarker = "[ALIASED_"
+
+var (
+	dbURIRegex = regexp.MustCompile(`(?i)((postgres|postgresql|mysql|mongodb|mongodb\+srv|redis|rediss|amqp|couchdb):\/\/)([^:\s\/]+):([^@\s\/]+)@`)
+	envRegex   = regexp.MustCompile(`(?i)\b([A-Za-z0-9_]*(KEY|SECRET|PASSWORD|PASSWD|TOKEN|AUTH|CREDENTIAL|PRIVATE))\b\s*([:=])\s*["']?([^"'\r\n\s]{6,})["']?`)
+)
+
+// sanitizeRun = keadaan satu kali Sanitize: teks hasil, peta alias, dan catatan audit.
+type sanitizeRun struct {
+	result        string
+	aliasMap      map[string]string
+	aliasCounter  map[string]int
+	records       []RedactedRecord
+	customMatches int
+}
+
+func maskPreview(raw string) string {
+	trimmed := strings.TrimSpace(raw)
+	if len(trimmed) <= 8 {
+		return "••••••••"
+	}
+	prefix := 4
+	suffix := 4
+	if len(trimmed) < 14 {
+		prefix = 2
+		suffix = 2
+	}
+	return fmt.Sprintf("%s••••••••%s", trimmed[:prefix], trimmed[len(trimmed)-suffix:])
+}
+
+func (r *sanitizeRun) getAlias(raw, prefix, cat string) string {
+	if alias, exists := r.aliasMap[raw]; exists {
+		return alias
+	}
+	r.aliasCounter[prefix]++
+	alias := fmt.Sprintf("[ALIASED_%s_%d]", prefix, r.aliasCounter[prefix])
+	r.aliasMap[raw] = alias
+
+	r.records = append(r.records, RedactedRecord{
+		Category:      cat,
+		Alias:         alias,
+		MaskedPreview: maskPreview(raw),
+	})
+	return alias
+}
+
+// customKeywordsPass: Custom Censored Keywords & User Rules (First Line of Defense).
+func (r *sanitizeRun) customKeywordsPass(keywords []CustomKeywordRule) {
+	for _, ck := range keywords {
+		if !ck.IsActive || ck.Compiled == nil {
+			continue
+		}
+		prefix := "CUSTOM_KEY"
+		if ck.Category != "" && ck.Category != "custom" {
+			prefix = strings.ToUpper(ck.Category)
+		}
+		cat := "custom_keyword"
+		if ck.Category != "" {
+			cat = ck.Category
+		}
+
+		r.result = ck.Compiled.ReplaceAllStringFunc(r.result, func(m string) string {
+			if strings.HasPrefix(m, aliasedMarker) {
+				return m
+			}
+			r.customMatches++
+			return r.getAlias(m, prefix, cat)
+		})
+	}
+}
+
+// dbURIPass: Database URIs first (special multi-group).
+func (r *sanitizeRun) dbURIPass() {
+	r.result = dbURIRegex.ReplaceAllStringFunc(r.result, func(m string) string {
+		sub := dbURIRegex.FindStringSubmatch(m)
+		if len(sub) != 5 {
+			return m
+		}
+		aliasedUser := r.getAlias(sub[3], "DB_USER", "db_credential")
+		aliasedPass := r.getAlias(sub[4], "DB_PASSWORD", "db_credential")
+		return fmt.Sprintf("%s%s:%s@", sub[1], aliasedUser, aliasedPass)
+	})
+}
+
+// envPass: Env & Config assignments.
+func (r *sanitizeRun) envPass() {
+	r.result = envRegex.ReplaceAllStringFunc(r.result, func(m string) string {
+		sub := envRegex.FindStringSubmatch(m)
+		if len(sub) < 5 {
+			return m
+		}
+		varKey, delim, val := sub[1], sub[3], sub[4]
+
+		// Don't mask already aliased keys or common false positives
+		if strings.HasPrefix(val, aliasedMarker) || val == "true" || val == "false" || val == "null" {
+			return m
+		}
+		alias := r.getAlias(val, "CONFIG_SECRET", "env_secret")
+		return fmt.Sprintf("%s%s \"%s\"", varKey, delim, alias)
+	})
+}
+
+func (r *sanitizeRun) bearerPass(p patternDef) {
+	r.result = p.regex.ReplaceAllStringFunc(r.result, func(m string) string {
+		parts := strings.SplitN(m, " ", 2)
+		if len(parts) != 2 {
+			return m
+		}
+		token := strings.TrimSpace(parts[1])
+		if strings.HasPrefix(token, aliasedMarker) {
+			return m
+		}
+		return fmt.Sprintf("%s %s", parts[0], r.getAlias(token, "BEARER_TOKEN", p.category))
+	})
+}
+
+// patternsPass: all direct pattern matches.
+func (r *sanitizeRun) patternsPass(patterns []patternDef) {
+	for _, p := range patterns {
+		switch p.aliasPrefix {
+		case "DATABASE_URI_CREDENTIAL", "CONFIG_SECRET":
+			continue // Already processed with submatches
+		case "BEARER_TOKEN":
+			r.bearerPass(p)
+			continue
+		}
+		r.result = p.regex.ReplaceAllStringFunc(r.result, func(m string) string {
+			if strings.HasPrefix(m, aliasedMarker) {
+				return m
+			}
+			return r.getAlias(m, p.aliasPrefix, p.category)
+		})
+	}
+}
+
+func (r *sanitizeRun) audit() *SanitizeAudit {
+	builtInMatches := len(r.records) - r.customMatches
+	if builtInMatches < 0 {
+		builtInMatches = 0
+	}
+	audit := &SanitizeAudit{
+		RedactedCount:       len(r.records),
+		CustomMatches:       r.customMatches,
+		BuiltInMatches:      builtInMatches,
+		Records:             r.records,
+		DoubleSecurityLevel: "ACTIVE_ENFORCED",
+		Message:             "Zero secrets detected. Payload is clean and double-security verified.",
+	}
+	if len(r.records) == 0 {
+		return audit
+	}
+	audit.Message = fmt.Sprintf("Double Security Enforced: Censored %d secret(s) (%d custom keyword match, %d built-in pattern match).",
+		len(r.records), r.customMatches, builtInMatches)
+	preview := r.result
+	if len(preview) > 350 {
+		preview = preview[:350] + "..."
+	}
+	audit.SafePreview = preview
+	return audit
+}
+
 // Sanitize scans a text, redacts sensitive keys into safe aliases, and returns sanitized text and audit
 func (s *Sanitizer) Sanitize(input string) (string, *SanitizeAudit) {
 	if strings.TrimSpace(input) == "" {
@@ -157,160 +318,17 @@ func (s *Sanitizer) Sanitize(input string) (string, *SanitizeAudit) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	result := input
-	aliasMap := make(map[string]string)
-	aliasCounter := make(map[string]int)
-	records := make([]RedactedRecord, 0)
-
-	maskPreview := func(raw string) string {
-		trimmed := strings.TrimSpace(raw)
-		if len(trimmed) <= 8 {
-			return "••••••••"
-		}
-		prefix := 4
-		suffix := 4
-		if len(trimmed) < 14 {
-			prefix = 2
-			suffix = 2
-		}
-		return fmt.Sprintf("%s••••••••%s", trimmed[:prefix], trimmed[len(trimmed)-suffix:])
+	run := &sanitizeRun{
+		result:       input,
+		aliasMap:     make(map[string]string),
+		aliasCounter: make(map[string]int),
+		records:      make([]RedactedRecord, 0),
 	}
-
-	getAlias := func(raw, prefix, cat string) string {
-		if alias, exists := aliasMap[raw]; exists {
-			return alias
-		}
-		aliasCounter[prefix]++
-		alias := fmt.Sprintf("[ALIASED_%s_%d]", prefix, aliasCounter[prefix])
-		aliasMap[raw] = alias
-
-		records = append(records, RedactedRecord{
-			Category:      cat,
-			Alias:         alias,
-			MaskedPreview: maskPreview(raw),
-		})
-		return alias
-	}
-
-	// PASS 1: Custom Censored Keywords & User Rules (First Line of Defense)
-	customMatchesCount := 0
-	for _, ck := range s.customKeywords {
-		if !ck.IsActive || ck.Compiled == nil {
-			continue
-		}
-		prefix := "CUSTOM_KEY"
-		if ck.Category != "" && ck.Category != "custom" {
-			prefix = strings.ToUpper(ck.Category)
-		}
-		cat := "custom_keyword"
-		if ck.Category != "" {
-			cat = ck.Category
-		}
-
-		result = ck.Compiled.ReplaceAllStringFunc(result, func(m string) string {
-			if strings.HasPrefix(m, "[ALIASED_") {
-				return m
-			}
-			customMatchesCount++
-			return getAlias(m, prefix, cat)
-		})
-	}
-
-	// PASS 2: Built-in Deep Threat Patterns
-	// 1. Process Database URIs first (special multi-group)
-	dbRegex := regexp.MustCompile(`(?i)((postgres|postgresql|mysql|mongodb|mongodb\+srv|redis|rediss|amqp|couchdb):\/\/)([^:\s\/]+):([^@\s\/]+)@`)
-	result = dbRegex.ReplaceAllStringFunc(result, func(m string) string {
-		sub := dbRegex.FindStringSubmatch(m)
-		if len(sub) == 5 {
-			scheme := sub[1]
-			user := sub[3]
-			pass := sub[4]
-			aliasedUser := getAlias(user, "DB_USER", "db_credential")
-			aliasedPass := getAlias(pass, "DB_PASSWORD", "db_credential")
-			return fmt.Sprintf("%s%s:%s@", scheme, aliasedUser, aliasedPass)
-		}
-		return m
-	})
-
-	// 2. Process Env & Config assignments
-	envRegex := regexp.MustCompile(`(?i)\b([A-Za-z0-9_]*(KEY|SECRET|PASSWORD|PASSWD|TOKEN|AUTH|CREDENTIAL|PRIVATE))\b\s*([:=])\s*["']?([^"'\r\n\s]{6,})["']?`)
-	result = envRegex.ReplaceAllStringFunc(result, func(m string) string {
-		sub := envRegex.FindStringSubmatch(m)
-		if len(sub) >= 5 {
-			varKey := sub[1]
-			delim := sub[3]
-			val := sub[4]
-
-			// Don't mask already aliased keys or common false positives
-			if strings.HasPrefix(val, "[ALIASED_") || val == "true" || val == "false" || val == "null" {
-				return m
-			}
-
-			alias := getAlias(val, "CONFIG_SECRET", "env_secret")
-			return fmt.Sprintf("%s%s \"%s\"", varKey, delim, alias)
-		}
-		return m
-	})
-
-	// 3. Process all direct pattern matches
-	for _, p := range s.patterns {
-		if p.aliasPrefix == "DATABASE_URI_CREDENTIAL" || p.aliasPrefix == "CONFIG_SECRET" {
-			continue // Already processed with submatches
-		}
-
-		if p.aliasPrefix == "BEARER_TOKEN" {
-			result = p.regex.ReplaceAllStringFunc(result, func(m string) string {
-				parts := strings.SplitN(m, " ", 2)
-				if len(parts) == 2 {
-					token := strings.TrimSpace(parts[1])
-					if strings.HasPrefix(token, "[ALIASED_") {
-						return m
-					}
-					alias := getAlias(token, "BEARER_TOKEN", p.category)
-					return fmt.Sprintf("%s %s", parts[0], alias)
-				}
-				return m
-			})
-			continue
-		}
-
-		result = p.regex.ReplaceAllStringFunc(result, func(m string) string {
-			if strings.HasPrefix(m, "[ALIASED_") {
-				return m
-			}
-			return getAlias(m, p.aliasPrefix, p.category)
-		})
-	}
-
-	builtInMatches := len(records) - customMatchesCount
-	if builtInMatches < 0 {
-		builtInMatches = 0
-	}
-
-	audit := &SanitizeAudit{
-		RedactedCount:       len(records),
-		CustomMatches:       customMatchesCount,
-		BuiltInMatches:      builtInMatches,
-		Records:             records,
-		DoubleSecurityLevel: "ACTIVE_ENFORCED",
-		Message: func() string {
-			if len(records) == 0 {
-				return "Zero secrets detected. Payload is clean and double-security verified."
-			}
-			return fmt.Sprintf("Double Security Enforced: Censored %d secret(s) (%d custom keyword match, %d built-in pattern match).",
-				len(records), customMatchesCount, builtInMatches)
-		}(),
-	}
-
-	if len(records) > 0 {
-		preview := result
-		if len(preview) > 350 {
-			preview = preview[:350] + "..."
-		}
-		audit.SafePreview = preview
-	}
-
-	return result, audit
+	run.customKeywordsPass(s.customKeywords)
+	run.dbURIPass()
+	run.envPass()
+	run.patternsPass(s.patterns)
+	return run.result, run.audit()
 }
 
 // SanitizeText returns only the sanitized text string

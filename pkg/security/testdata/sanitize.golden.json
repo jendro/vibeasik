@@ -1,0 +1,307 @@
+[
+ {
+  "Idx": 0,
+  "Out": "",
+  "Audit": {
+   "redacted_count": 0,
+   "custom_matches": 0,
+   "built_in_matches": 0,
+   "records": [],
+   "message": "No secrets detected",
+   "double_security_level": ""
+  }
+ },
+ {
+  "Idx": 1,
+  "Out": "   \n",
+  "Audit": {
+   "redacted_count": 0,
+   "custom_matches": 0,
+   "built_in_matches": 0,
+   "records": [],
+   "message": "No secrets detected",
+   "double_security_level": ""
+  }
+ },
+ {
+  "Idx": 2,
+  "Out": "nothing secret here",
+  "Audit": {
+   "redacted_count": 0,
+   "custom_matches": 0,
+   "built_in_matches": 0,
+   "records": [],
+   "message": "Zero secrets detected. Payload is clean and double-security verified.",
+   "double_security_level": "ACTIVE_ENFORCED"
+  }
+ },
+ {
+  "Idx": 3,
+  "Out": "use [ALIASED_OPENAI_KEY_1] and again [ALIASED_OPENAI_KEY_1]",
+  "Audit": {
+   "redacted_count": 1,
+   "custom_matches": 0,
+   "built_in_matches": 1,
+   "records": [
+    {
+     "category": "ai_key",
+     "alias": "[ALIASED_OPENAI_KEY_1]",
+     "masked_preview": "sk-p••••••••0123"
+    }
+   ],
+   "message": "Double Security Enforced: Censored 1 secret(s) (0 custom keyword match, 1 built-in pattern match).",
+   "safe_preview": "use [ALIASED_OPENAI_KEY_1] and again [ALIASED_OPENAI_KEY_1]",
+   "double_security_level": "ACTIVE_ENFORCED"
+  }
+ },
+ {
+  "Idx": 4,
+  "Out": "DATABASE_URL=postgres://[ALIASED_DB_USER_1]:[ALIASED_DB_PASSWORD_1]@db.local:5432/app and redis://[ALIASED_DB_USER_2]:[ALIASED_DB_PASSWORD_2]@h",
+  "Audit": {
+   "redacted_count": 4,
+   "custom_matches": 0,
+   "built_in_matches": 4,
+   "records": [
+    {
+     "category": "db_credential",
+     "alias": "[ALIASED_DB_USER_1]",
+     "masked_preview": "••••••••"
+    },
+    {
+     "category": "db_credential",
+     "alias": "[ALIASED_DB_PASSWORD_1]",
+     "masked_preview": "hu••••••••pw"
+    },
+    {
+     "category": "db_credential",
+     "alias": "[ALIASED_DB_USER_2]",
+     "masked_preview": "••••••••"
+    },
+    {
+     "category": "db_credential",
+     "alias": "[ALIASED_DB_PASSWORD_2]",
+     "masked_preview": "••••••••"
+    }
+   ],
+   "message": "Double Security Enforced: Censored 4 secret(s) (0 custom keyword match, 4 built-in pattern match).",
+   "safe_preview": "DATABASE_URL=postgres://[ALIASED_DB_USER_1]:[ALIASED_DB_PASSWORD_1]@db.local:5432/app and redis://[ALIASED_DB_USER_2]:[ALIASED_DB_PASSWORD_2]@h",
+   "double_security_level": "ACTIVE_ENFORCED"
+  }
+ },
+ {
+  "Idx": 5,
+  "Out": "API_KEY: \"[ALIASED_CONFIG_SECRET_1]\" TOKEN=true PASSWORD=null SECRET='short' MY_SECRET= \"[ALIASED_CONFIG_SECRET_2]\"",
+  "Audit": {
+   "redacted_count": 2,
+   "custom_matches": 0,
+   "built_in_matches": 2,
+   "records": [
+    {
+     "category": "env_secret",
+     "alias": "[ALIASED_CONFIG_SECRET_1]",
+     "masked_preview": "ab••••••••gh"
+    },
+    {
+     "category": "env_secret",
+     "alias": "[ALIASED_CONFIG_SECRET_2]",
+     "masked_preview": "long••••••••alue"
+    }
+   ],
+   "message": "Double Security Enforced: Censored 2 secret(s) (0 custom keyword match, 2 built-in pattern match).",
+   "safe_preview": "API_KEY: \"[ALIASED_CONFIG_SECRET_1]\" TOKEN=true PASSWORD=null SECRET='short' MY_SECRET= \"[ALIASED_CONFIG_SECRET_2]\"",
+   "double_security_level": "ACTIVE_ENFORCED"
+  }
+ },
+ {
+  "Idx": 6,
+  "Out": "Authorization: Bearer [ALIASED_BEARER_TOKEN_1] done",
+  "Audit": {
+   "redacted_count": 1,
+   "custom_matches": 0,
+   "built_in_matches": 1,
+   "records": [
+    {
+     "category": "token",
+     "alias": "[ALIASED_BEARER_TOKEN_1]",
+     "masked_preview": "abcd••••••••1234"
+    }
+   ],
+   "message": "Double Security Enforced: Censored 1 secret(s) (0 custom keyword match, 1 built-in pattern match).",
+   "safe_preview": "Authorization: Bearer [ALIASED_BEARER_TOKEN_1] done",
+   "double_security_level": "ACTIVE_ENFORCED"
+  }
+ },
+ {
+  "Idx": 7,
+  "Out": "jwt eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.[ALIASED_GENERIC_API_KEY_1]",
+  "Audit": {
+   "redacted_count": 1,
+   "custom_matches": 0,
+   "built_in_matches": 1,
+   "records": [
+    {
+     "category": "ai_key",
+     "alias": "[ALIASED_GENERIC_API_KEY_1]",
+     "masked_preview": "SflK••••••••sw5c"
+    }
+   ],
+   "message": "Double Security Enforced: Censored 1 secret(s) (0 custom keyword match, 1 built-in pattern match).",
+   "safe_preview": "jwt eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.[ALIASED_GENERIC_API_KEY_1]",
+   "double_security_level": "ACTIVE_ENFORCED"
+  }
+ },
+ {
+  "Idx": 8,
+  "Out": "[ALIASED_PRIVATE_KEY_BLOCK_1]",
+  "Audit": {
+   "redacted_count": 1,
+   "custom_matches": 0,
+   "built_in_matches": 1,
+   "records": [
+    {
+     "category": "private_key",
+     "alias": "[ALIASED_PRIVATE_KEY_BLOCK_1]",
+     "masked_preview": "----••••••••----"
+    }
+   ],
+   "message": "Double Security Enforced: Censored 1 secret(s) (0 custom keyword match, 1 built-in pattern match).",
+   "safe_preview": "[ALIASED_PRIVATE_KEY_BLOCK_1]",
+   "double_security_level": "ACTIVE_ENFORCED"
+  }
+ },
+ {
+  "Idx": 9,
+  "Out": "aws [ALIASED_AWS_ACCESS_KEY_1] gh [ALIASED_GENERIC_API_KEY_1] slack [ALIASED_SLACK_TOKEN_1]",
+  "Audit": {
+   "redacted_count": 3,
+   "custom_matches": 0,
+   "built_in_matches": 3,
+   "records": [
+    {
+     "category": "ai_key",
+     "alias": "[ALIASED_GENERIC_API_KEY_1]",
+     "masked_preview": "ghp_••••••••6789"
+    },
+    {
+     "category": "server_key",
+     "alias": "[ALIASED_AWS_ACCESS_KEY_1]",
+     "masked_preview": "AKIA••••••••MPLE"
+    },
+    {
+     "category": "server_key",
+     "alias": "[ALIASED_SLACK_TOKEN_1]",
+     "masked_preview": "xoxb••••••••cdef"
+    }
+   ],
+   "message": "Double Security Enforced: Censored 3 secret(s) (0 custom keyword match, 3 built-in pattern match).",
+   "safe_preview": "aws [ALIASED_AWS_ACCESS_KEY_1] gh [ALIASED_GENERIC_API_KEY_1] slack [ALIASED_SLACK_TOKEN_1]",
+   "double_security_level": "ACTIVE_ENFORCED"
+  }
+ },
+ {
+  "Idx": 10,
+  "Out": "[ALIASED_CUSTOM_KEY_1] meets [ALIASED_CLIENT_1] and [ALIASED_CLIENT_2]; [ALIASED_CUSTOM_KEY_2] [ALIASED_CUSTOM_KEY_3] [ALIASED_X_1]",
+  "Audit": {
+   "redacted_count": 5,
+   "custom_matches": 5,
+   "built_in_matches": 0,
+   "records": [
+    {
+     "category": "custom",
+     "alias": "[ALIASED_CUSTOM_KEY_1]",
+     "masked_preview": "Proj••••••••enix"
+    },
+    {
+     "category": "client",
+     "alias": "[ALIASED_CLIENT_1]",
+     "masked_preview": "••••••••"
+    },
+    {
+     "category": "client",
+     "alias": "[ALIASED_CLIENT_2]",
+     "masked_preview": "••••••••"
+    },
+    {
+     "category": "custom_keyword",
+     "alias": "[ALIASED_CUSTOM_KEY_2]",
+     "masked_preview": "se••••••••rd"
+    },
+    {
+     "category": "custom_keyword",
+     "alias": "[ALIASED_CUSTOM_KEY_3]",
+     "masked_preview": "SE••••••••RD"
+    }
+   ],
+   "message": "Double Security Enforced: Censored 5 secret(s) (5 custom keyword match, 0 built-in pattern match).",
+   "safe_preview": "[ALIASED_CUSTOM_KEY_1] meets [ALIASED_CLIENT_1] and [ALIASED_CLIENT_2]; [ALIASED_CUSTOM_KEY_2] [ALIASED_CUSTOM_KEY_3] [ALIASED_X_1]",
+   "double_security_level": "ACTIVE_ENFORCED"
+  }
+ },
+ {
+  "Idx": 11,
+  "Out": "stripe [ALIASED_GENERIC_API_KEY_1] hook [ALIASED_SLACK_WEBHOOK_1]",
+  "Audit": {
+   "redacted_count": 2,
+   "custom_matches": 0,
+   "built_in_matches": 2,
+   "records": [
+    {
+     "category": "ai_key",
+     "alias": "[ALIASED_GENERIC_API_KEY_1]",
+     "masked_preview": "sk_l••••••••uvwx"
+    },
+    {
+     "category": "server_key",
+     "alias": "[ALIASED_SLACK_WEBHOOK_1]",
+     "masked_preview": "http••••••••XXXX"
+    }
+   ],
+   "message": "Double Security Enforced: Censored 2 secret(s) (0 custom keyword match, 2 built-in pattern match).",
+   "safe_preview": "stripe [ALIASED_GENERIC_API_KEY_1] hook [ALIASED_SLACK_WEBHOOK_1]",
+   "double_security_level": "ACTIVE_ENFORCED"
+  }
+ },
+ {
+  "Idx": 12,
+  "Out": "hash [ALIASED_GENERIC_API_KEY_1] end",
+  "Audit": {
+   "redacted_count": 1,
+   "custom_matches": 0,
+   "built_in_matches": 1,
+   "records": [
+    {
+     "category": "ai_key",
+     "alias": "[ALIASED_GENERIC_API_KEY_1]",
+     "masked_preview": "abcd••••••••8901"
+    }
+   ],
+   "message": "Double Security Enforced: Censored 1 secret(s) (0 custom keyword match, 1 built-in pattern match).",
+   "safe_preview": "hash [ALIASED_GENERIC_API_KEY_1] end",
+   "double_security_level": "ACTIVE_ENFORCED"
+  }
+ },
+ {
+  "Idx": 13,
+  "Out": "long [ALIASED_ANTHROPIC_KEY_1] [ALIASED_CUSTOM_KEY_1] xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "Audit": {
+   "redacted_count": 2,
+   "custom_matches": 1,
+   "built_in_matches": 1,
+   "records": [
+    {
+     "category": "custom",
+     "alias": "[ALIASED_CUSTOM_KEY_1]",
+     "masked_preview": "Proj••••••••enix"
+    },
+    {
+     "category": "ai_key",
+     "alias": "[ALIASED_ANTHROPIC_KEY_1]",
+     "masked_preview": "sk-a••••••••aaaa"
+    }
+   ],
+   "message": "Double Security Enforced: Censored 2 secret(s) (1 custom keyword match, 1 built-in pattern match).",
+   "safe_preview": "long [ALIASED_ANTHROPIC_KEY_1] [ALIASED_CUSTOM_KEY_1] xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "double_security_level": "ACTIVE_ENFORCED"
+  }
+ }
+]
