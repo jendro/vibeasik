@@ -1,0 +1,4737 @@
+[
+ {
+  "Fixture": "ci4",
+  "Adapters": [
+   {
+    "Adapter": "Go (Fiber / Gin / Echo / Chi / Mux / net/http)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / CodeIgniter",
+    "Detect": true,
+    "Routes": [
+     {
+      "method": "GET",
+      "path": "/",
+      "handler": "Home::index",
+      "description": "Pengambilan data /",
+      "middleware": "Public"
+     },
+     {
+      "method": "ALL",
+      "path": "/legacy",
+      "handler": "Legacy::run",
+      "description": "Endpoint handler untuk /legacy",
+      "middleware": "Public"
+     },
+     {
+      "method": "GET",
+      "path": "/api/users",
+      "handler": "App\\Controllers\\Api\\Users::index",
+      "description": "Daftar pengguna terdaftar",
+      "middleware": "auth"
+     },
+     {
+      "method": "POST",
+      "path": "/api/users",
+      "handler": "App\\Controllers\\Api\\Users::create",
+      "description": "Pembuatan pengguna baru",
+      "middleware": "admin"
+     },
+     {
+      "method": "PUT",
+      "path": "/api/users/(:num)",
+      "handler": "App\\Controllers\\Api\\Users::update",
+      "description": "Pembaruan data pada /api/users/(:num)",
+      "middleware": "auth"
+     },
+     {
+      "method": "PATCH",
+      "path": "/api/users/(:num)",
+      "handler": "App\\Controllers\\Api\\Users::update",
+      "description": "Pembaruan data pada /api/users/(:num)",
+      "middleware": "auth"
+     },
+     {
+      "method": "GET",
+      "path": "/api/photos",
+      "handler": "App\\Controllers\\Api\\photos::index",
+      "description": "Pengambilan data /api/photos",
+      "middleware": "auth"
+     },
+     {
+      "method": "POST",
+      "path": "/api/photos",
+      "handler": "App\\Controllers\\Api\\photos::create",
+      "description": "Pembuatan sumber daya baru pada /api/photos",
+      "middleware": "auth"
+     },
+     {
+      "method": "GET",
+      "path": "/api/photos/(:segment)",
+      "handler": "App\\Controllers\\Api\\photos::show",
+      "description": "Pengambilan data /api/photos/(:segment)",
+      "middleware": "auth"
+     },
+     {
+      "method": "PUT",
+      "path": "/api/photos/(:segment)",
+      "handler": "App\\Controllers\\Api\\photos::update",
+      "description": "Pembaruan data pada /api/photos/(:segment)",
+      "middleware": "auth"
+     },
+     {
+      "method": "DELETE",
+      "path": "/api/photos/(:segment)",
+      "handler": "App\\Controllers\\Api\\photos::delete",
+      "description": "Penghapusan sumber daya pada /api/photos/(:segment)",
+      "middleware": "auth"
+     },
+     {
+      "method": "GET",
+      "path": "/api/items",
+      "handler": "App\\Controllers\\Api\\ItemsCtl::index",
+      "description": "Pengambilan data /api/items",
+      "middleware": "auth"
+     },
+     {
+      "method": "POST",
+      "path": "/api/items",
+      "handler": "App\\Controllers\\Api\\ItemsCtl::create",
+      "description": "Pembuatan sumber daya baru pada /api/items",
+      "middleware": "auth"
+     },
+     {
+      "method": "GET",
+      "path": "/api/items/(:segment)",
+      "handler": "App\\Controllers\\Api\\ItemsCtl::show",
+      "description": "Pengambilan data /api/items/(:segment)",
+      "middleware": "auth"
+     },
+     {
+      "method": "PUT",
+      "path": "/api/items/(:segment)",
+      "handler": "App\\Controllers\\Api\\ItemsCtl::update",
+      "description": "Pembaruan data pada /api/items/(:segment)",
+      "middleware": "auth"
+     },
+     {
+      "method": "DELETE",
+      "path": "/api/items/(:segment)",
+      "handler": "App\\Controllers\\Api\\ItemsCtl::delete",
+      "description": "Penghapusan sumber daya pada /api/items/(:segment)",
+      "middleware": "auth"
+     },
+     {
+      "method": "GET",
+      "path": "/api/v2/ping",
+      "handler": "Closure / Inline Action",
+      "description": "Health check status \u0026 liveness probe",
+      "middleware": "auth"
+     },
+     {
+      "method": "GET",
+      "path": "/api/v2/docs",
+      "handler": "App\\Controllers\\Api\\docs::index",
+      "description": "Pengambilan data /api/v2/docs",
+      "middleware": "auth"
+     },
+     {
+      "method": "POST",
+      "path": "/api/v2/docs",
+      "handler": "App\\Controllers\\Api\\docs::create",
+      "description": "Pembuatan sumber daya baru pada /api/v2/docs",
+      "middleware": "auth"
+     },
+     {
+      "method": "GET",
+      "path": "/api/v2/docs/(:segment)",
+      "handler": "App\\Controllers\\Api\\docs::show",
+      "description": "Pengambilan data /api/v2/docs/(:segment)",
+      "middleware": "auth"
+     },
+     {
+      "method": "PUT",
+      "path": "/api/v2/docs/(:segment)",
+      "handler": "App\\Controllers\\Api\\docs::update",
+      "description": "Pembaruan data pada /api/v2/docs/(:segment)",
+      "middleware": "auth"
+     },
+     {
+      "method": "DELETE",
+      "path": "/api/v2/docs/(:segment)",
+      "handler": "App\\Controllers\\Api\\docs::delete",
+      "description": "Penghapusan sumber daya pada /api/v2/docs/(:segment)",
+      "middleware": "auth"
+     },
+     {
+      "method": "GET",
+      "path": "/api/v2/docs/new",
+      "handler": "App\\Controllers\\Api\\docs::new",
+      "description": "Pengambilan data /api/v2/docs/new",
+      "middleware": "auth"
+     },
+     {
+      "method": "GET",
+      "path": "/api/v2/docs/(:segment)/edit",
+      "handler": "App\\Controllers\\Api\\docs::edit",
+      "description": "Pengambilan data /api/v2/docs/(:segment)/edit",
+      "middleware": "auth"
+     },
+     {
+      "method": "GET",
+      "path": "/after",
+      "handler": "After::index",
+      "description": "Pengambilan data /after",
+      "middleware": "Public"
+     },
+     {
+      "method": "DELETE",
+      "path": "/api/users",
+      "handler": "api/users/remove",
+      "description": "Penghapusan sumber daya pada /api/users",
+      "middleware": "Public"
+     },
+     {
+      "method": "GET",
+      "path": "/dup",
+      "handler": "a",
+      "description": "Pengambilan data /dup",
+      "middleware": "Public"
+     }
+    ],
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / Laravel",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Node.js (Express / NestJS / Fastify)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Python (FastAPI / Flask / Django)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Nuxt (Nuxt 3 / Nuxt 2)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Next.js (App Router / Pages Router)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "SvelteKit",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Vue (Vue Router / Vite SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "React (React Router / TanStack Router / SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Generic Frontend (SPA / MPA / Custom UI)",
+    "Detect": true,
+    "Routes": null,
+    "Err": ""
+   }
+  ],
+  "Summary": "Backend: PHP / CodeIgniter",
+  "BE": [
+   {
+    "method": "GET",
+    "path": "/",
+    "handler": "Home::index",
+    "description": "Pengambilan data /",
+    "middleware": "Public"
+   },
+   {
+    "method": "ALL",
+    "path": "/legacy",
+    "handler": "Legacy::run",
+    "description": "Endpoint handler untuk /legacy",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/users",
+    "handler": "App\\Controllers\\Api\\Users::index",
+    "description": "Daftar pengguna terdaftar",
+    "middleware": "auth"
+   },
+   {
+    "method": "POST",
+    "path": "/api/users",
+    "handler": "App\\Controllers\\Api\\Users::create",
+    "description": "Pembuatan pengguna baru",
+    "middleware": "admin"
+   },
+   {
+    "method": "PUT",
+    "path": "/api/users/(:num)",
+    "handler": "App\\Controllers\\Api\\Users::update",
+    "description": "Pembaruan data pada /api/users/(:num)",
+    "middleware": "auth"
+   },
+   {
+    "method": "PATCH",
+    "path": "/api/users/(:num)",
+    "handler": "App\\Controllers\\Api\\Users::update",
+    "description": "Pembaruan data pada /api/users/(:num)",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/photos",
+    "handler": "App\\Controllers\\Api\\photos::index",
+    "description": "Pengambilan data /api/photos",
+    "middleware": "auth"
+   },
+   {
+    "method": "POST",
+    "path": "/api/photos",
+    "handler": "App\\Controllers\\Api\\photos::create",
+    "description": "Pembuatan sumber daya baru pada /api/photos",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/photos/(:segment)",
+    "handler": "App\\Controllers\\Api\\photos::show",
+    "description": "Pengambilan data /api/photos/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "PUT",
+    "path": "/api/photos/(:segment)",
+    "handler": "App\\Controllers\\Api\\photos::update",
+    "description": "Pembaruan data pada /api/photos/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/photos/(:segment)",
+    "handler": "App\\Controllers\\Api\\photos::delete",
+    "description": "Penghapusan sumber daya pada /api/photos/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/items",
+    "handler": "App\\Controllers\\Api\\ItemsCtl::index",
+    "description": "Pengambilan data /api/items",
+    "middleware": "auth"
+   },
+   {
+    "method": "POST",
+    "path": "/api/items",
+    "handler": "App\\Controllers\\Api\\ItemsCtl::create",
+    "description": "Pembuatan sumber daya baru pada /api/items",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/items/(:segment)",
+    "handler": "App\\Controllers\\Api\\ItemsCtl::show",
+    "description": "Pengambilan data /api/items/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "PUT",
+    "path": "/api/items/(:segment)",
+    "handler": "App\\Controllers\\Api\\ItemsCtl::update",
+    "description": "Pembaruan data pada /api/items/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/items/(:segment)",
+    "handler": "App\\Controllers\\Api\\ItemsCtl::delete",
+    "description": "Penghapusan sumber daya pada /api/items/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v2/ping",
+    "handler": "Closure / Inline Action",
+    "description": "Health check status \u0026 liveness probe",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v2/docs",
+    "handler": "App\\Controllers\\Api\\docs::index",
+    "description": "Pengambilan data /api/v2/docs",
+    "middleware": "auth"
+   },
+   {
+    "method": "POST",
+    "path": "/api/v2/docs",
+    "handler": "App\\Controllers\\Api\\docs::create",
+    "description": "Pembuatan sumber daya baru pada /api/v2/docs",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v2/docs/(:segment)",
+    "handler": "App\\Controllers\\Api\\docs::show",
+    "description": "Pengambilan data /api/v2/docs/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "PUT",
+    "path": "/api/v2/docs/(:segment)",
+    "handler": "App\\Controllers\\Api\\docs::update",
+    "description": "Pembaruan data pada /api/v2/docs/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/v2/docs/(:segment)",
+    "handler": "App\\Controllers\\Api\\docs::delete",
+    "description": "Penghapusan sumber daya pada /api/v2/docs/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v2/docs/new",
+    "handler": "App\\Controllers\\Api\\docs::new",
+    "description": "Pengambilan data /api/v2/docs/new",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v2/docs/(:segment)/edit",
+    "handler": "App\\Controllers\\Api\\docs::edit",
+    "description": "Pengambilan data /api/v2/docs/(:segment)/edit",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/after",
+    "handler": "After::index",
+    "description": "Pengambilan data /after",
+    "middleware": "Public"
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/users",
+    "handler": "api/users/remove",
+    "description": "Penghapusan sumber daya pada /api/users",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/dup",
+    "handler": "a",
+    "description": "Pengambilan data /dup",
+    "middleware": "Public"
+   }
+  ],
+  "FE": null,
+  "Auto": [
+   {
+    "method": "GET",
+    "path": "/",
+    "handler": "Home::index",
+    "description": "Pengambilan data /",
+    "middleware": "Public"
+   },
+   {
+    "method": "ALL",
+    "path": "/legacy",
+    "handler": "Legacy::run",
+    "description": "Endpoint handler untuk /legacy",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/users",
+    "handler": "App\\Controllers\\Api\\Users::index",
+    "description": "Daftar pengguna terdaftar",
+    "middleware": "auth"
+   },
+   {
+    "method": "POST",
+    "path": "/api/users",
+    "handler": "App\\Controllers\\Api\\Users::create",
+    "description": "Pembuatan pengguna baru",
+    "middleware": "admin"
+   },
+   {
+    "method": "PUT",
+    "path": "/api/users/(:num)",
+    "handler": "App\\Controllers\\Api\\Users::update",
+    "description": "Pembaruan data pada /api/users/(:num)",
+    "middleware": "auth"
+   },
+   {
+    "method": "PATCH",
+    "path": "/api/users/(:num)",
+    "handler": "App\\Controllers\\Api\\Users::update",
+    "description": "Pembaruan data pada /api/users/(:num)",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/photos",
+    "handler": "App\\Controllers\\Api\\photos::index",
+    "description": "Pengambilan data /api/photos",
+    "middleware": "auth"
+   },
+   {
+    "method": "POST",
+    "path": "/api/photos",
+    "handler": "App\\Controllers\\Api\\photos::create",
+    "description": "Pembuatan sumber daya baru pada /api/photos",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/photos/(:segment)",
+    "handler": "App\\Controllers\\Api\\photos::show",
+    "description": "Pengambilan data /api/photos/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "PUT",
+    "path": "/api/photos/(:segment)",
+    "handler": "App\\Controllers\\Api\\photos::update",
+    "description": "Pembaruan data pada /api/photos/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/photos/(:segment)",
+    "handler": "App\\Controllers\\Api\\photos::delete",
+    "description": "Penghapusan sumber daya pada /api/photos/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/items",
+    "handler": "App\\Controllers\\Api\\ItemsCtl::index",
+    "description": "Pengambilan data /api/items",
+    "middleware": "auth"
+   },
+   {
+    "method": "POST",
+    "path": "/api/items",
+    "handler": "App\\Controllers\\Api\\ItemsCtl::create",
+    "description": "Pembuatan sumber daya baru pada /api/items",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/items/(:segment)",
+    "handler": "App\\Controllers\\Api\\ItemsCtl::show",
+    "description": "Pengambilan data /api/items/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "PUT",
+    "path": "/api/items/(:segment)",
+    "handler": "App\\Controllers\\Api\\ItemsCtl::update",
+    "description": "Pembaruan data pada /api/items/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/items/(:segment)",
+    "handler": "App\\Controllers\\Api\\ItemsCtl::delete",
+    "description": "Penghapusan sumber daya pada /api/items/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v2/ping",
+    "handler": "Closure / Inline Action",
+    "description": "Health check status \u0026 liveness probe",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v2/docs",
+    "handler": "App\\Controllers\\Api\\docs::index",
+    "description": "Pengambilan data /api/v2/docs",
+    "middleware": "auth"
+   },
+   {
+    "method": "POST",
+    "path": "/api/v2/docs",
+    "handler": "App\\Controllers\\Api\\docs::create",
+    "description": "Pembuatan sumber daya baru pada /api/v2/docs",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v2/docs/(:segment)",
+    "handler": "App\\Controllers\\Api\\docs::show",
+    "description": "Pengambilan data /api/v2/docs/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "PUT",
+    "path": "/api/v2/docs/(:segment)",
+    "handler": "App\\Controllers\\Api\\docs::update",
+    "description": "Pembaruan data pada /api/v2/docs/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/v2/docs/(:segment)",
+    "handler": "App\\Controllers\\Api\\docs::delete",
+    "description": "Penghapusan sumber daya pada /api/v2/docs/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v2/docs/new",
+    "handler": "App\\Controllers\\Api\\docs::new",
+    "description": "Pengambilan data /api/v2/docs/new",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v2/docs/(:segment)/edit",
+    "handler": "App\\Controllers\\Api\\docs::edit",
+    "description": "Pengambilan data /api/v2/docs/(:segment)/edit",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/after",
+    "handler": "After::index",
+    "description": "Pengambilan data /after",
+    "middleware": "Public"
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/users",
+    "handler": "api/users/remove",
+    "description": "Penghapusan sumber daya pada /api/users",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/dup",
+    "handler": "a",
+    "description": "Pengambilan data /dup",
+    "middleware": "Public"
+   }
+  ],
+  "API": [
+   {
+    "method": "GET",
+    "path": "/",
+    "handler": "Home::index",
+    "description": "Pengambilan data /",
+    "middleware": "Public"
+   },
+   {
+    "method": "ALL",
+    "path": "/legacy",
+    "handler": "Legacy::run",
+    "description": "Endpoint handler untuk /legacy",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/users",
+    "handler": "App\\Controllers\\Api\\Users::index",
+    "description": "Daftar pengguna terdaftar",
+    "middleware": "auth"
+   },
+   {
+    "method": "POST",
+    "path": "/api/users",
+    "handler": "App\\Controllers\\Api\\Users::create",
+    "description": "Pembuatan pengguna baru",
+    "middleware": "admin"
+   },
+   {
+    "method": "PUT",
+    "path": "/api/users/(:num)",
+    "handler": "App\\Controllers\\Api\\Users::update",
+    "description": "Pembaruan data pada /api/users/(:num)",
+    "middleware": "auth"
+   },
+   {
+    "method": "PATCH",
+    "path": "/api/users/(:num)",
+    "handler": "App\\Controllers\\Api\\Users::update",
+    "description": "Pembaruan data pada /api/users/(:num)",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/photos",
+    "handler": "App\\Controllers\\Api\\photos::index",
+    "description": "Pengambilan data /api/photos",
+    "middleware": "auth"
+   },
+   {
+    "method": "POST",
+    "path": "/api/photos",
+    "handler": "App\\Controllers\\Api\\photos::create",
+    "description": "Pembuatan sumber daya baru pada /api/photos",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/photos/(:segment)",
+    "handler": "App\\Controllers\\Api\\photos::show",
+    "description": "Pengambilan data /api/photos/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "PUT",
+    "path": "/api/photos/(:segment)",
+    "handler": "App\\Controllers\\Api\\photos::update",
+    "description": "Pembaruan data pada /api/photos/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/photos/(:segment)",
+    "handler": "App\\Controllers\\Api\\photos::delete",
+    "description": "Penghapusan sumber daya pada /api/photos/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/items",
+    "handler": "App\\Controllers\\Api\\ItemsCtl::index",
+    "description": "Pengambilan data /api/items",
+    "middleware": "auth"
+   },
+   {
+    "method": "POST",
+    "path": "/api/items",
+    "handler": "App\\Controllers\\Api\\ItemsCtl::create",
+    "description": "Pembuatan sumber daya baru pada /api/items",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/items/(:segment)",
+    "handler": "App\\Controllers\\Api\\ItemsCtl::show",
+    "description": "Pengambilan data /api/items/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "PUT",
+    "path": "/api/items/(:segment)",
+    "handler": "App\\Controllers\\Api\\ItemsCtl::update",
+    "description": "Pembaruan data pada /api/items/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/items/(:segment)",
+    "handler": "App\\Controllers\\Api\\ItemsCtl::delete",
+    "description": "Penghapusan sumber daya pada /api/items/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v2/ping",
+    "handler": "Closure / Inline Action",
+    "description": "Health check status \u0026 liveness probe",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v2/docs",
+    "handler": "App\\Controllers\\Api\\docs::index",
+    "description": "Pengambilan data /api/v2/docs",
+    "middleware": "auth"
+   },
+   {
+    "method": "POST",
+    "path": "/api/v2/docs",
+    "handler": "App\\Controllers\\Api\\docs::create",
+    "description": "Pembuatan sumber daya baru pada /api/v2/docs",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v2/docs/(:segment)",
+    "handler": "App\\Controllers\\Api\\docs::show",
+    "description": "Pengambilan data /api/v2/docs/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "PUT",
+    "path": "/api/v2/docs/(:segment)",
+    "handler": "App\\Controllers\\Api\\docs::update",
+    "description": "Pembaruan data pada /api/v2/docs/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/v2/docs/(:segment)",
+    "handler": "App\\Controllers\\Api\\docs::delete",
+    "description": "Penghapusan sumber daya pada /api/v2/docs/(:segment)",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v2/docs/new",
+    "handler": "App\\Controllers\\Api\\docs::new",
+    "description": "Pengambilan data /api/v2/docs/new",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v2/docs/(:segment)/edit",
+    "handler": "App\\Controllers\\Api\\docs::edit",
+    "description": "Pengambilan data /api/v2/docs/(:segment)/edit",
+    "middleware": "auth"
+   },
+   {
+    "method": "GET",
+    "path": "/after",
+    "handler": "After::index",
+    "description": "Pengambilan data /after",
+    "middleware": "Public"
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/users",
+    "handler": "api/users/remove",
+    "description": "Penghapusan sumber daya pada /api/users",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/dup",
+    "handler": "a",
+    "description": "Pengambilan data /dup",
+    "middleware": "Public"
+   }
+  ]
+ },
+ {
+  "Fixture": "generic",
+  "Adapters": [
+   {
+    "Adapter": "Go (Fiber / Gin / Echo / Chi / Mux / net/http)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / CodeIgniter",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / Laravel",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Node.js (Express / NestJS / Fastify)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Python (FastAPI / Flask / Django)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Nuxt (Nuxt 3 / Nuxt 2)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Next.js (App Router / Pages Router)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "SvelteKit",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Vue (Vue Router / Vite SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "React (React Router / TanStack Router / SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Generic Frontend (SPA / MPA / Custom UI)",
+    "Detect": true,
+    "Routes": [
+     {
+      "method": "PAGE (GET)",
+      "path": "/a",
+      "handler": "pages/a.svelte",
+      "description": "Halaman antarmuka interaktif pengguna (/a)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/b",
+      "handler": "pages/b.vue",
+      "description": "Halaman antarmuka interaktif pengguna (/b)",
+      "middleware": "Public",
+      "target_requests": [
+       "GET /api/b"
+      ]
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/",
+      "handler": "pages/index.html",
+      "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/sub",
+      "handler": "pages/sub/index.tsx",
+      "description": "Halaman antarmuka interaktif pengguna (/sub)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/v",
+      "handler": "src/views/v.vue",
+      "description": "Halaman antarmuka interaktif pengguna (/v)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/q",
+      "handler": "src/app/q.html",
+      "description": "Halaman antarmuka interaktif pengguna (/q)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/z",
+      "handler": "app/z.jsx",
+      "description": "Halaman antarmuka interaktif pengguna (/z)",
+      "middleware": "Public"
+     }
+    ],
+    "Err": ""
+   }
+  ],
+  "Summary": "Framework: Generic / Auto-detect",
+  "BE": null,
+  "FE": [
+   {
+    "method": "PAGE (GET)",
+    "path": "/a",
+    "handler": "pages/a.svelte",
+    "description": "Halaman antarmuka interaktif pengguna (/a)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/b",
+    "handler": "pages/b.vue",
+    "description": "Halaman antarmuka interaktif pengguna (/b)",
+    "middleware": "Public",
+    "target_requests": [
+     "GET /api/b"
+    ]
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/",
+    "handler": "pages/index.html",
+    "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/sub",
+    "handler": "pages/sub/index.tsx",
+    "description": "Halaman antarmuka interaktif pengguna (/sub)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/v",
+    "handler": "src/views/v.vue",
+    "description": "Halaman antarmuka interaktif pengguna (/v)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/q",
+    "handler": "src/app/q.html",
+    "description": "Halaman antarmuka interaktif pengguna (/q)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/z",
+    "handler": "app/z.jsx",
+    "description": "Halaman antarmuka interaktif pengguna (/z)",
+    "middleware": "Public"
+   }
+  ],
+  "Auto": [
+   {
+    "method": "PAGE (GET)",
+    "path": "/a",
+    "handler": "pages/a.svelte",
+    "description": "Halaman antarmuka interaktif pengguna (/a)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/b",
+    "handler": "pages/b.vue",
+    "description": "Halaman antarmuka interaktif pengguna (/b)",
+    "middleware": "Public",
+    "target_requests": [
+     "GET /api/b"
+    ]
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/",
+    "handler": "pages/index.html",
+    "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/sub",
+    "handler": "pages/sub/index.tsx",
+    "description": "Halaman antarmuka interaktif pengguna (/sub)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/v",
+    "handler": "src/views/v.vue",
+    "description": "Halaman antarmuka interaktif pengguna (/v)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/q",
+    "handler": "src/app/q.html",
+    "description": "Halaman antarmuka interaktif pengguna (/q)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/z",
+    "handler": "app/z.jsx",
+    "description": "Halaman antarmuka interaktif pengguna (/z)",
+    "middleware": "Public"
+   }
+  ],
+  "API": null
+ },
+ {
+  "Fixture": "go1",
+  "Adapters": [
+   {
+    "Adapter": "Go (Fiber / Gin / Echo / Chi / Mux / net/http)",
+    "Detect": true,
+    "Routes": [
+     {
+      "method": "GET",
+      "path": "/health",
+      "handler": "health",
+      "description": "Health check status \u0026 liveness probe",
+      "middleware": "Public"
+     },
+     {
+      "method": "GET",
+      "path": "/inline",
+      "handler": "Inline Handler",
+      "description": "Pengambilan data /inline",
+      "middleware": "Public"
+     },
+     {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "handler": "controllers.Login",
+      "description": "Autentikasi akun via email dan password, menghasilkan JWT access token \u0026 refresh token",
+      "middleware": "Protected (Auth Guard)"
+     },
+     {
+      "method": "GET",
+      "path": "/api/v1/users/:id",
+      "handler": "controllers.GetCurrentUser",
+      "description": "Mengambil data profil pengguna terotentikasi, keluarga aktif, dan undangan pending",
+      "middleware": "Protected (Auth Guard)"
+     },
+     {
+      "method": "GET",
+      "path": "/api/v1/v2/assets",
+      "handler": "getAssets",
+      "description": "Daftar portofolio aset \u0026 kekayaan",
+      "middleware": "Protected (Auth Guard)"
+     },
+     {
+      "method": "DELETE",
+      "path": "/api/v1/v2/assets/:id",
+      "handler": "Inline Handler",
+      "description": "Penghapusan sumber daya pada /api/v1/v2/assets/:id",
+      "middleware": "Public"
+     },
+     {
+      "method": "GET",
+      "path": "/mux/items",
+      "handler": "itemsHandler",
+      "description": "Pengambilan data /mux/items",
+      "middleware": "Public"
+     },
+     {
+      "method": "POST",
+      "path": "/mux/items",
+      "handler": "itemsHandler",
+      "description": "Pembuatan sumber daya baru pada /mux/items",
+      "middleware": "Public"
+     },
+     {
+      "method": "ALL",
+      "path": "/mux/any",
+      "handler": "anyHandler",
+      "description": "Endpoint handler untuk /mux/any",
+      "middleware": "Public"
+     },
+     {
+      "method": "GET",
+      "path": "/std/ping",
+      "handler": "PingHandler",
+      "description": "Health check status \u0026 liveness probe",
+      "middleware": "Public"
+     },
+     {
+      "method": "ALL",
+      "path": "/std/all",
+      "handler": "AllHandler",
+      "description": "Endpoint handler untuk /std/all",
+      "middleware": "Public"
+     },
+     {
+      "method": "POST",
+      "path": "/gin/projects",
+      "handler": "createProject",
+      "description": "Pendaftaran repositori proyek baru",
+      "middleware": "Public"
+     },
+     {
+      "method": "GET",
+      "path": "/srv/family",
+      "handler": "h",
+      "description": "Manajemen data keluarga \u0026 anggota",
+      "middleware": "Public"
+     },
+     {
+      "method": "OPTIONS",
+      "path": "/srv/opt",
+      "handler": "h",
+      "description": "Endpoint handler untuk /srv/opt",
+      "middleware": "Public"
+     },
+     {
+      "method": "PUT",
+      "path": "/extra/:id",
+      "handler": "Protect(h",
+      "description": "Pembaruan data pada /extra/:id",
+      "middleware": "Protected (Auth Guard)"
+     }
+    ],
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / CodeIgniter",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / Laravel",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Node.js (Express / NestJS / Fastify)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Python (FastAPI / Flask / Django)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Nuxt (Nuxt 3 / Nuxt 2)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Next.js (App Router / Pages Router)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "SvelteKit",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Vue (Vue Router / Vite SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "React (React Router / TanStack Router / SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Generic Frontend (SPA / MPA / Custom UI)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   }
+  ],
+  "Summary": "Backend: Go (Fiber / Gin / Echo / Chi / Mux / net/http)",
+  "BE": [
+   {
+    "method": "GET",
+    "path": "/health",
+    "handler": "health",
+    "description": "Health check status \u0026 liveness probe",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/inline",
+    "handler": "Inline Handler",
+    "description": "Pengambilan data /inline",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/api/v1/auth/login",
+    "handler": "controllers.Login",
+    "description": "Autentikasi akun via email dan password, menghasilkan JWT access token \u0026 refresh token",
+    "middleware": "Protected (Auth Guard)"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/users/:id",
+    "handler": "controllers.GetCurrentUser",
+    "description": "Mengambil data profil pengguna terotentikasi, keluarga aktif, dan undangan pending",
+    "middleware": "Protected (Auth Guard)"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/v2/assets",
+    "handler": "getAssets",
+    "description": "Daftar portofolio aset \u0026 kekayaan",
+    "middleware": "Protected (Auth Guard)"
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/v1/v2/assets/:id",
+    "handler": "Inline Handler",
+    "description": "Penghapusan sumber daya pada /api/v1/v2/assets/:id",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/mux/items",
+    "handler": "itemsHandler",
+    "description": "Pengambilan data /mux/items",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/mux/items",
+    "handler": "itemsHandler",
+    "description": "Pembuatan sumber daya baru pada /mux/items",
+    "middleware": "Public"
+   },
+   {
+    "method": "ALL",
+    "path": "/mux/any",
+    "handler": "anyHandler",
+    "description": "Endpoint handler untuk /mux/any",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/std/ping",
+    "handler": "PingHandler",
+    "description": "Health check status \u0026 liveness probe",
+    "middleware": "Public"
+   },
+   {
+    "method": "ALL",
+    "path": "/std/all",
+    "handler": "AllHandler",
+    "description": "Endpoint handler untuk /std/all",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/gin/projects",
+    "handler": "createProject",
+    "description": "Pendaftaran repositori proyek baru",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/srv/family",
+    "handler": "h",
+    "description": "Manajemen data keluarga \u0026 anggota",
+    "middleware": "Public"
+   },
+   {
+    "method": "OPTIONS",
+    "path": "/srv/opt",
+    "handler": "h",
+    "description": "Endpoint handler untuk /srv/opt",
+    "middleware": "Public"
+   },
+   {
+    "method": "PUT",
+    "path": "/extra/:id",
+    "handler": "Protect(h",
+    "description": "Pembaruan data pada /extra/:id",
+    "middleware": "Protected (Auth Guard)"
+   }
+  ],
+  "FE": null,
+  "Auto": [
+   {
+    "method": "GET",
+    "path": "/health",
+    "handler": "health",
+    "description": "Health check status \u0026 liveness probe",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/inline",
+    "handler": "Inline Handler",
+    "description": "Pengambilan data /inline",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/api/v1/auth/login",
+    "handler": "controllers.Login",
+    "description": "Autentikasi akun via email dan password, menghasilkan JWT access token \u0026 refresh token",
+    "middleware": "Protected (Auth Guard)"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/users/:id",
+    "handler": "controllers.GetCurrentUser",
+    "description": "Mengambil data profil pengguna terotentikasi, keluarga aktif, dan undangan pending",
+    "middleware": "Protected (Auth Guard)"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/v2/assets",
+    "handler": "getAssets",
+    "description": "Daftar portofolio aset \u0026 kekayaan",
+    "middleware": "Protected (Auth Guard)"
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/v1/v2/assets/:id",
+    "handler": "Inline Handler",
+    "description": "Penghapusan sumber daya pada /api/v1/v2/assets/:id",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/mux/items",
+    "handler": "itemsHandler",
+    "description": "Pengambilan data /mux/items",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/mux/items",
+    "handler": "itemsHandler",
+    "description": "Pembuatan sumber daya baru pada /mux/items",
+    "middleware": "Public"
+   },
+   {
+    "method": "ALL",
+    "path": "/mux/any",
+    "handler": "anyHandler",
+    "description": "Endpoint handler untuk /mux/any",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/std/ping",
+    "handler": "PingHandler",
+    "description": "Health check status \u0026 liveness probe",
+    "middleware": "Public"
+   },
+   {
+    "method": "ALL",
+    "path": "/std/all",
+    "handler": "AllHandler",
+    "description": "Endpoint handler untuk /std/all",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/gin/projects",
+    "handler": "createProject",
+    "description": "Pendaftaran repositori proyek baru",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/srv/family",
+    "handler": "h",
+    "description": "Manajemen data keluarga \u0026 anggota",
+    "middleware": "Public"
+   },
+   {
+    "method": "OPTIONS",
+    "path": "/srv/opt",
+    "handler": "h",
+    "description": "Endpoint handler untuk /srv/opt",
+    "middleware": "Public"
+   },
+   {
+    "method": "PUT",
+    "path": "/extra/:id",
+    "handler": "Protect(h",
+    "description": "Pembaruan data pada /extra/:id",
+    "middleware": "Protected (Auth Guard)"
+   }
+  ],
+  "API": [
+   {
+    "method": "GET",
+    "path": "/health",
+    "handler": "health",
+    "description": "Health check status \u0026 liveness probe",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/inline",
+    "handler": "Inline Handler",
+    "description": "Pengambilan data /inline",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/api/v1/auth/login",
+    "handler": "controllers.Login",
+    "description": "Autentikasi akun via email dan password, menghasilkan JWT access token \u0026 refresh token",
+    "middleware": "Protected (Auth Guard)"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/users/:id",
+    "handler": "controllers.GetCurrentUser",
+    "description": "Mengambil data profil pengguna terotentikasi, keluarga aktif, dan undangan pending",
+    "middleware": "Protected (Auth Guard)"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/v2/assets",
+    "handler": "getAssets",
+    "description": "Daftar portofolio aset \u0026 kekayaan",
+    "middleware": "Protected (Auth Guard)"
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/v1/v2/assets/:id",
+    "handler": "Inline Handler",
+    "description": "Penghapusan sumber daya pada /api/v1/v2/assets/:id",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/mux/items",
+    "handler": "itemsHandler",
+    "description": "Pengambilan data /mux/items",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/mux/items",
+    "handler": "itemsHandler",
+    "description": "Pembuatan sumber daya baru pada /mux/items",
+    "middleware": "Public"
+   },
+   {
+    "method": "ALL",
+    "path": "/mux/any",
+    "handler": "anyHandler",
+    "description": "Endpoint handler untuk /mux/any",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/std/ping",
+    "handler": "PingHandler",
+    "description": "Health check status \u0026 liveness probe",
+    "middleware": "Public"
+   },
+   {
+    "method": "ALL",
+    "path": "/std/all",
+    "handler": "AllHandler",
+    "description": "Endpoint handler untuk /std/all",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/gin/projects",
+    "handler": "createProject",
+    "description": "Pendaftaran repositori proyek baru",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/srv/family",
+    "handler": "h",
+    "description": "Manajemen data keluarga \u0026 anggota",
+    "middleware": "Public"
+   },
+   {
+    "method": "OPTIONS",
+    "path": "/srv/opt",
+    "handler": "h",
+    "description": "Endpoint handler untuk /srv/opt",
+    "middleware": "Public"
+   },
+   {
+    "method": "PUT",
+    "path": "/extra/:id",
+    "handler": "Protect(h",
+    "description": "Pembaruan data pada /extra/:id",
+    "middleware": "Protected (Auth Guard)"
+   }
+  ]
+ },
+ {
+  "Fixture": "go2",
+  "Adapters": [
+   {
+    "Adapter": "Go (Fiber / Gin / Echo / Chi / Mux / net/http)",
+    "Detect": true,
+    "Routes": [
+     {
+      "method": "GET",
+      "path": "/svc/a",
+      "handler": "ha",
+      "description": "Pengambilan data /svc/a",
+      "middleware": "Public"
+     },
+     {
+      "method": "POST",
+      "path": "/svc/b",
+      "handler": "hb",
+      "description": "Pembuatan sumber daya baru pada /svc/b",
+      "middleware": "Public"
+     }
+    ],
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / CodeIgniter",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / Laravel",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Node.js (Express / NestJS / Fastify)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Python (FastAPI / Flask / Django)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Nuxt (Nuxt 3 / Nuxt 2)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Next.js (App Router / Pages Router)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "SvelteKit",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Vue (Vue Router / Vite SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "React (React Router / TanStack Router / SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Generic Frontend (SPA / MPA / Custom UI)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   }
+  ],
+  "Summary": "Backend: Go (Fiber / Gin / Echo / Chi / Mux / net/http)",
+  "BE": [
+   {
+    "method": "GET",
+    "path": "/svc/a",
+    "handler": "ha",
+    "description": "Pengambilan data /svc/a",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/svc/b",
+    "handler": "hb",
+    "description": "Pembuatan sumber daya baru pada /svc/b",
+    "middleware": "Public"
+   }
+  ],
+  "FE": null,
+  "Auto": [
+   {
+    "method": "GET",
+    "path": "/svc/a",
+    "handler": "ha",
+    "description": "Pengambilan data /svc/a",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/svc/b",
+    "handler": "hb",
+    "description": "Pembuatan sumber daya baru pada /svc/b",
+    "middleware": "Public"
+   }
+  ],
+  "API": [
+   {
+    "method": "GET",
+    "path": "/svc/a",
+    "handler": "ha",
+    "description": "Pengambilan data /svc/a",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/svc/b",
+    "handler": "hb",
+    "description": "Pembuatan sumber daya baru pada /svc/b",
+    "middleware": "Public"
+   }
+  ]
+ },
+ {
+  "Fixture": "laravel",
+  "Adapters": [
+   {
+    "Adapter": "Go (Fiber / Gin / Echo / Chi / Mux / net/http)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / CodeIgniter",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / Laravel",
+    "Detect": true,
+    "Routes": [
+     {
+      "method": "POST",
+      "path": "/api/login",
+      "handler": "AuthController@login",
+      "description": "Otentikasi \u0026 pembuatan session token pengguna",
+      "middleware": "Public"
+     },
+     {
+      "method": "GET",
+      "path": "/api/v1/me",
+      "handler": "UserController@me",
+      "description": "Pengambilan data /api/v1/me",
+      "middleware": "Protected (Auth Guard)"
+     },
+     {
+      "method": "GET",
+      "path": "/api/v1/users",
+      "handler": "UserController@index",
+      "description": "Daftar sumber daya users (index)",
+      "middleware": "Public"
+     },
+     {
+      "method": "POST",
+      "path": "/api/v1/users",
+      "handler": "UserController@store",
+      "description": "Pembuatan sumber daya users baru (store)",
+      "middleware": "Public"
+     },
+     {
+      "method": "GET",
+      "path": "/api/v1/users/{id}",
+      "handler": "UserController@show",
+      "description": "Detail sumber daya users berdasarkan ID (show)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PUT",
+      "path": "/api/v1/users/{id}",
+      "handler": "UserController@update",
+      "description": "Pembaruan sumber daya users (update)",
+      "middleware": "Public"
+     },
+     {
+      "method": "DELETE",
+      "path": "/api/v1/users/{id}",
+      "handler": "UserController@destroy",
+      "description": "Penghapusan sumber daya users (destroy)",
+      "middleware": "Public"
+     },
+     {
+      "method": "ALL",
+      "path": "/api/v1/all",
+      "handler": "Closure / Inline Action",
+      "description": "Endpoint handler untuk /api/v1/all",
+      "middleware": "Public"
+     },
+     {
+      "method": "GET",
+      "path": "/api/v1/posts",
+      "handler": "PostController@index",
+      "description": "Daftar sumber daya posts (index)",
+      "middleware": "Public"
+     },
+     {
+      "method": "POST",
+      "path": "/api/v1/posts",
+      "handler": "PostController@store",
+      "description": "Pembuatan sumber daya posts baru (store)",
+      "middleware": "Public"
+     },
+     {
+      "method": "GET",
+      "path": "/api/v1/posts/{id}",
+      "handler": "PostController@show",
+      "description": "Detail sumber daya posts berdasarkan ID (show)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PUT",
+      "path": "/api/v1/posts/{id}",
+      "handler": "PostController@update",
+      "description": "Pembaruan sumber daya posts (update)",
+      "middleware": "Public"
+     },
+     {
+      "method": "DELETE",
+      "path": "/api/v1/posts/{id}",
+      "handler": "PostController@destroy",
+      "description": "Penghapusan sumber daya posts (destroy)",
+      "middleware": "Public"
+     },
+     {
+      "method": "GET",
+      "path": "/api/v1/posts/create",
+      "handler": "PostController@create",
+      "description": "Form pembuatan posts (create)",
+      "middleware": "Public"
+     },
+     {
+      "method": "GET",
+      "path": "/api/v1/posts/{id}/edit",
+      "handler": "PostController@edit",
+      "description": "Form pengeditan posts (edit)",
+      "middleware": "Public"
+     },
+     {
+      "method": "GET",
+      "path": "/",
+      "handler": "HomeController@index",
+      "description": "Pengambilan data /",
+      "middleware": "Public"
+     }
+    ],
+    "Err": ""
+   },
+   {
+    "Adapter": "Node.js (Express / NestJS / Fastify)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Python (FastAPI / Flask / Django)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Nuxt (Nuxt 3 / Nuxt 2)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Next.js (App Router / Pages Router)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "SvelteKit",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Vue (Vue Router / Vite SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "React (React Router / TanStack Router / SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Generic Frontend (SPA / MPA / Custom UI)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   }
+  ],
+  "Summary": "Backend: PHP / Laravel",
+  "BE": [
+   {
+    "method": "POST",
+    "path": "/api/login",
+    "handler": "AuthController@login",
+    "description": "Otentikasi \u0026 pembuatan session token pengguna",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/me",
+    "handler": "UserController@me",
+    "description": "Pengambilan data /api/v1/me",
+    "middleware": "Protected (Auth Guard)"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/users",
+    "handler": "UserController@index",
+    "description": "Daftar sumber daya users (index)",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/api/v1/users",
+    "handler": "UserController@store",
+    "description": "Pembuatan sumber daya users baru (store)",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/users/{id}",
+    "handler": "UserController@show",
+    "description": "Detail sumber daya users berdasarkan ID (show)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PUT",
+    "path": "/api/v1/users/{id}",
+    "handler": "UserController@update",
+    "description": "Pembaruan sumber daya users (update)",
+    "middleware": "Public"
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/v1/users/{id}",
+    "handler": "UserController@destroy",
+    "description": "Penghapusan sumber daya users (destroy)",
+    "middleware": "Public"
+   },
+   {
+    "method": "ALL",
+    "path": "/api/v1/all",
+    "handler": "Closure / Inline Action",
+    "description": "Endpoint handler untuk /api/v1/all",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/posts",
+    "handler": "PostController@index",
+    "description": "Daftar sumber daya posts (index)",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/api/v1/posts",
+    "handler": "PostController@store",
+    "description": "Pembuatan sumber daya posts baru (store)",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/posts/{id}",
+    "handler": "PostController@show",
+    "description": "Detail sumber daya posts berdasarkan ID (show)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PUT",
+    "path": "/api/v1/posts/{id}",
+    "handler": "PostController@update",
+    "description": "Pembaruan sumber daya posts (update)",
+    "middleware": "Public"
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/v1/posts/{id}",
+    "handler": "PostController@destroy",
+    "description": "Penghapusan sumber daya posts (destroy)",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/posts/create",
+    "handler": "PostController@create",
+    "description": "Form pembuatan posts (create)",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/posts/{id}/edit",
+    "handler": "PostController@edit",
+    "description": "Form pengeditan posts (edit)",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/",
+    "handler": "HomeController@index",
+    "description": "Pengambilan data /",
+    "middleware": "Public"
+   }
+  ],
+  "FE": null,
+  "Auto": [
+   {
+    "method": "POST",
+    "path": "/api/login",
+    "handler": "AuthController@login",
+    "description": "Otentikasi \u0026 pembuatan session token pengguna",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/me",
+    "handler": "UserController@me",
+    "description": "Pengambilan data /api/v1/me",
+    "middleware": "Protected (Auth Guard)"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/users",
+    "handler": "UserController@index",
+    "description": "Daftar sumber daya users (index)",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/api/v1/users",
+    "handler": "UserController@store",
+    "description": "Pembuatan sumber daya users baru (store)",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/users/{id}",
+    "handler": "UserController@show",
+    "description": "Detail sumber daya users berdasarkan ID (show)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PUT",
+    "path": "/api/v1/users/{id}",
+    "handler": "UserController@update",
+    "description": "Pembaruan sumber daya users (update)",
+    "middleware": "Public"
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/v1/users/{id}",
+    "handler": "UserController@destroy",
+    "description": "Penghapusan sumber daya users (destroy)",
+    "middleware": "Public"
+   },
+   {
+    "method": "ALL",
+    "path": "/api/v1/all",
+    "handler": "Closure / Inline Action",
+    "description": "Endpoint handler untuk /api/v1/all",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/posts",
+    "handler": "PostController@index",
+    "description": "Daftar sumber daya posts (index)",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/api/v1/posts",
+    "handler": "PostController@store",
+    "description": "Pembuatan sumber daya posts baru (store)",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/posts/{id}",
+    "handler": "PostController@show",
+    "description": "Detail sumber daya posts berdasarkan ID (show)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PUT",
+    "path": "/api/v1/posts/{id}",
+    "handler": "PostController@update",
+    "description": "Pembaruan sumber daya posts (update)",
+    "middleware": "Public"
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/v1/posts/{id}",
+    "handler": "PostController@destroy",
+    "description": "Penghapusan sumber daya posts (destroy)",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/posts/create",
+    "handler": "PostController@create",
+    "description": "Form pembuatan posts (create)",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/posts/{id}/edit",
+    "handler": "PostController@edit",
+    "description": "Form pengeditan posts (edit)",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/",
+    "handler": "HomeController@index",
+    "description": "Pengambilan data /",
+    "middleware": "Public"
+   }
+  ],
+  "API": [
+   {
+    "method": "POST",
+    "path": "/api/login",
+    "handler": "AuthController@login",
+    "description": "Otentikasi \u0026 pembuatan session token pengguna",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/me",
+    "handler": "UserController@me",
+    "description": "Pengambilan data /api/v1/me",
+    "middleware": "Protected (Auth Guard)"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/users",
+    "handler": "UserController@index",
+    "description": "Daftar sumber daya users (index)",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/api/v1/users",
+    "handler": "UserController@store",
+    "description": "Pembuatan sumber daya users baru (store)",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/users/{id}",
+    "handler": "UserController@show",
+    "description": "Detail sumber daya users berdasarkan ID (show)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PUT",
+    "path": "/api/v1/users/{id}",
+    "handler": "UserController@update",
+    "description": "Pembaruan sumber daya users (update)",
+    "middleware": "Public"
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/v1/users/{id}",
+    "handler": "UserController@destroy",
+    "description": "Penghapusan sumber daya users (destroy)",
+    "middleware": "Public"
+   },
+   {
+    "method": "ALL",
+    "path": "/api/v1/all",
+    "handler": "Closure / Inline Action",
+    "description": "Endpoint handler untuk /api/v1/all",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/posts",
+    "handler": "PostController@index",
+    "description": "Daftar sumber daya posts (index)",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/api/v1/posts",
+    "handler": "PostController@store",
+    "description": "Pembuatan sumber daya posts baru (store)",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/posts/{id}",
+    "handler": "PostController@show",
+    "description": "Detail sumber daya posts berdasarkan ID (show)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PUT",
+    "path": "/api/v1/posts/{id}",
+    "handler": "PostController@update",
+    "description": "Pembaruan sumber daya posts (update)",
+    "middleware": "Public"
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/v1/posts/{id}",
+    "handler": "PostController@destroy",
+    "description": "Penghapusan sumber daya posts (destroy)",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/posts/create",
+    "handler": "PostController@create",
+    "description": "Form pembuatan posts (create)",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/v1/posts/{id}/edit",
+    "handler": "PostController@edit",
+    "description": "Form pengeditan posts (edit)",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/",
+    "handler": "HomeController@index",
+    "description": "Pengambilan data /",
+    "middleware": "Public"
+   }
+  ]
+ },
+ {
+  "Fixture": "nest",
+  "Adapters": [
+   {
+    "Adapter": "Go (Fiber / Gin / Echo / Chi / Mux / net/http)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / CodeIgniter",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / Laravel",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Node.js (Express / NestJS / Fastify)",
+    "Detect": true,
+    "Routes": [
+     {
+      "method": "GET",
+      "path": "/cats",
+      "handler": "findAll",
+      "description": "Pengambilan data /cats",
+      "middleware": "Protected (Nest Guard)"
+     },
+     {
+      "method": "GET",
+      "path": "/cats/:id",
+      "handler": "findOne",
+      "description": "Pengambilan data /cats/:id",
+      "middleware": "Protected (Nest Guard)"
+     },
+     {
+      "method": "POST",
+      "path": "/cats/new",
+      "handler": "create",
+      "description": "Pembuatan sumber daya baru pada /cats/new",
+      "middleware": "Protected (Nest Guard)"
+     },
+     {
+      "method": "DELETE",
+      "path": "/x",
+      "handler": "rm",
+      "description": "Penghapusan sumber daya pada /x",
+      "middleware": "Public"
+     },
+     {
+      "method": "GET",
+      "path": "/express/a",
+      "handler": "handler",
+      "description": "Pengambilan data /express/a",
+      "middleware": "Public"
+     },
+     {
+      "method": "POST",
+      "path": "/b",
+      "handler": "verifyToken, handler",
+      "description": "Pembuatan sumber daya baru pada /b",
+      "middleware": "Protected (Auth Middleware)"
+     },
+     {
+      "method": "PUT",
+      "path": "/c",
+      "handler": "protectX",
+      "description": "Pembaruan data pada /c",
+      "middleware": "Protected (Auth Middleware)"
+     },
+     {
+      "method": "DELETE",
+      "path": "/users/:id",
+      "handler": "authMw, rm",
+      "description": "Penghapusan sumber daya pada /users/:id",
+      "middleware": "Protected (Auth Middleware)"
+     },
+     {
+      "method": "PATCH",
+      "path": "/p",
+      "handler": "h",
+      "description": "Pembaruan data pada /p",
+      "middleware": "Public"
+     }
+    ],
+    "Err": ""
+   },
+   {
+    "Adapter": "Python (FastAPI / Flask / Django)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Nuxt (Nuxt 3 / Nuxt 2)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Next.js (App Router / Pages Router)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "SvelteKit",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Vue (Vue Router / Vite SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "React (React Router / TanStack Router / SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Generic Frontend (SPA / MPA / Custom UI)",
+    "Detect": true,
+    "Routes": null,
+    "Err": ""
+   }
+  ],
+  "Summary": "Backend: Node.js (Express / NestJS / Fastify)",
+  "BE": [
+   {
+    "method": "GET",
+    "path": "/cats",
+    "handler": "findAll",
+    "description": "Pengambilan data /cats",
+    "middleware": "Protected (Nest Guard)"
+   },
+   {
+    "method": "GET",
+    "path": "/cats/:id",
+    "handler": "findOne",
+    "description": "Pengambilan data /cats/:id",
+    "middleware": "Protected (Nest Guard)"
+   },
+   {
+    "method": "POST",
+    "path": "/cats/new",
+    "handler": "create",
+    "description": "Pembuatan sumber daya baru pada /cats/new",
+    "middleware": "Protected (Nest Guard)"
+   },
+   {
+    "method": "DELETE",
+    "path": "/x",
+    "handler": "rm",
+    "description": "Penghapusan sumber daya pada /x",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/express/a",
+    "handler": "handler",
+    "description": "Pengambilan data /express/a",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/b",
+    "handler": "verifyToken, handler",
+    "description": "Pembuatan sumber daya baru pada /b",
+    "middleware": "Protected (Auth Middleware)"
+   },
+   {
+    "method": "PUT",
+    "path": "/c",
+    "handler": "protectX",
+    "description": "Pembaruan data pada /c",
+    "middleware": "Protected (Auth Middleware)"
+   },
+   {
+    "method": "DELETE",
+    "path": "/users/:id",
+    "handler": "authMw, rm",
+    "description": "Penghapusan sumber daya pada /users/:id",
+    "middleware": "Protected (Auth Middleware)"
+   },
+   {
+    "method": "PATCH",
+    "path": "/p",
+    "handler": "h",
+    "description": "Pembaruan data pada /p",
+    "middleware": "Public"
+   }
+  ],
+  "FE": null,
+  "Auto": [
+   {
+    "method": "GET",
+    "path": "/cats",
+    "handler": "findAll",
+    "description": "Pengambilan data /cats",
+    "middleware": "Protected (Nest Guard)"
+   },
+   {
+    "method": "GET",
+    "path": "/cats/:id",
+    "handler": "findOne",
+    "description": "Pengambilan data /cats/:id",
+    "middleware": "Protected (Nest Guard)"
+   },
+   {
+    "method": "POST",
+    "path": "/cats/new",
+    "handler": "create",
+    "description": "Pembuatan sumber daya baru pada /cats/new",
+    "middleware": "Protected (Nest Guard)"
+   },
+   {
+    "method": "DELETE",
+    "path": "/x",
+    "handler": "rm",
+    "description": "Penghapusan sumber daya pada /x",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/express/a",
+    "handler": "handler",
+    "description": "Pengambilan data /express/a",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/b",
+    "handler": "verifyToken, handler",
+    "description": "Pembuatan sumber daya baru pada /b",
+    "middleware": "Protected (Auth Middleware)"
+   },
+   {
+    "method": "PUT",
+    "path": "/c",
+    "handler": "protectX",
+    "description": "Pembaruan data pada /c",
+    "middleware": "Protected (Auth Middleware)"
+   },
+   {
+    "method": "DELETE",
+    "path": "/users/:id",
+    "handler": "authMw, rm",
+    "description": "Penghapusan sumber daya pada /users/:id",
+    "middleware": "Protected (Auth Middleware)"
+   },
+   {
+    "method": "PATCH",
+    "path": "/p",
+    "handler": "h",
+    "description": "Pembaruan data pada /p",
+    "middleware": "Public"
+   }
+  ],
+  "API": [
+   {
+    "method": "GET",
+    "path": "/cats",
+    "handler": "findAll",
+    "description": "Pengambilan data /cats",
+    "middleware": "Protected (Nest Guard)"
+   },
+   {
+    "method": "GET",
+    "path": "/cats/:id",
+    "handler": "findOne",
+    "description": "Pengambilan data /cats/:id",
+    "middleware": "Protected (Nest Guard)"
+   },
+   {
+    "method": "POST",
+    "path": "/cats/new",
+    "handler": "create",
+    "description": "Pembuatan sumber daya baru pada /cats/new",
+    "middleware": "Protected (Nest Guard)"
+   },
+   {
+    "method": "DELETE",
+    "path": "/x",
+    "handler": "rm",
+    "description": "Penghapusan sumber daya pada /x",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/express/a",
+    "handler": "handler",
+    "description": "Pengambilan data /express/a",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/b",
+    "handler": "verifyToken, handler",
+    "description": "Pembuatan sumber daya baru pada /b",
+    "middleware": "Protected (Auth Middleware)"
+   },
+   {
+    "method": "PUT",
+    "path": "/c",
+    "handler": "protectX",
+    "description": "Pembaruan data pada /c",
+    "middleware": "Protected (Auth Middleware)"
+   },
+   {
+    "method": "DELETE",
+    "path": "/users/:id",
+    "handler": "authMw, rm",
+    "description": "Penghapusan sumber daya pada /users/:id",
+    "middleware": "Protected (Auth Middleware)"
+   },
+   {
+    "method": "PATCH",
+    "path": "/p",
+    "handler": "h",
+    "description": "Pembaruan data pada /p",
+    "middleware": "Public"
+   }
+  ]
+ },
+ {
+  "Fixture": "next",
+  "Adapters": [
+   {
+    "Adapter": "Go (Fiber / Gin / Echo / Chi / Mux / net/http)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / CodeIgniter",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / Laravel",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Node.js (Express / NestJS / Fastify)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Python (FastAPI / Flask / Django)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Nuxt (Nuxt 3 / Nuxt 2)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Next.js (App Router / Pages Router)",
+    "Detect": true,
+    "Routes": [
+     {
+      "method": "PAGE (GET)",
+      "path": "/about",
+      "handler": "app/(marketing)/about/page.jsx",
+      "description": "Halaman antarmuka interaktif pengguna (/about)",
+      "middleware": "Public"
+     },
+     {
+      "method": "GET",
+      "path": "/api/items",
+      "handler": "app/api/items/route.ts",
+      "description": "Pengambilan data /api/items",
+      "middleware": "Route Handler"
+     },
+     {
+      "method": "POST",
+      "path": "/api/items",
+      "handler": "app/api/items/route.ts",
+      "description": "Pembuatan sumber daya baru pada /api/items",
+      "middleware": "Route Handler"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/dash/:id",
+      "handler": "app/dash/[id]/page.tsx",
+      "description": "Halaman antarmuka interaktif pengguna (/dash/:id)",
+      "middleware": "Protected (NextAuth)"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/docs/*slug",
+      "handler": "app/docs/[...slug]/page.js",
+      "description": "Halaman antarmuka interaktif pengguna (/docs/*slug)",
+      "middleware": "Protected (NextAuth)"
+     },
+     {
+      "method": "DELETE",
+      "path": "/other",
+      "handler": "app/other/route.js",
+      "description": "Penghapusan sumber daya pada /other",
+      "middleware": "Route Handler"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/",
+      "handler": "app/page.tsx",
+      "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+      "middleware": "Public",
+      "target_requests": [
+       "GET /api/home"
+      ]
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/shop/*opt",
+      "handler": "app/shop/[[...opt]]/page.tsx",
+      "description": "Halaman antarmuka interaktif pengguna (/shop/*opt)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/*rest",
+      "handler": "pages/[...rest].tsx",
+      "description": "Halaman antarmuka interaktif pengguna (/*rest)",
+      "middleware": "Public"
+     },
+     {
+      "method": "ALL",
+      "path": "/api/hello",
+      "handler": "pages/api/hello.js",
+      "description": "Endpoint handler untuk /api/hello",
+      "middleware": "API Handler"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/blog/:slug",
+      "handler": "pages/blog/[slug].js",
+      "description": "Halaman antarmuka interaktif pengguna (/blog/:slug)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/nested",
+      "handler": "pages/nested/index.tsx",
+      "description": "Halaman antarmuka interaktif pengguna (/nested)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/s",
+      "handler": "src/pages/s.tsx",
+      "description": "Halaman antarmuka interaktif pengguna (/s)",
+      "middleware": "Public"
+     }
+    ],
+    "Err": ""
+   },
+   {
+    "Adapter": "SvelteKit",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Vue (Vue Router / Vite SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "React (React Router / TanStack Router / SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Generic Frontend (SPA / MPA / Custom UI)",
+    "Detect": true,
+    "Routes": [
+     {
+      "method": "PAGE (GET)",
+      "path": "/s",
+      "handler": "src/pages/s.tsx",
+      "description": "Halaman antarmuka interaktif pengguna (/s)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/[...rest]",
+      "handler": "pages/[...rest].tsx",
+      "description": "Halaman antarmuka interaktif pengguna (/[...rest])",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/_app",
+      "handler": "pages/_app.tsx",
+      "description": "Halaman antarmuka interaktif pengguna (/_app)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/about",
+      "handler": "pages/about.jsx",
+      "description": "Halaman antarmuka interaktif pengguna (/about)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/",
+      "handler": "pages/index.tsx",
+      "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+      "middleware": "Public",
+      "target_requests": [
+       "GET /api/pi"
+      ]
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/nested",
+      "handler": "pages/nested/index.tsx",
+      "description": "Halaman antarmuka interaktif pengguna (/nested)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/page",
+      "handler": "src/app/page.tsx",
+      "description": "Halaman antarmuka interaktif pengguna (/page)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/(marketing)/about/page",
+      "handler": "app/(marketing)/about/page.jsx",
+      "description": "Halaman antarmuka interaktif pengguna (/(marketing)/about/page)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/dash/[id]/page",
+      "handler": "app/dash/[id]/page.tsx",
+      "description": "Halaman antarmuka interaktif pengguna (/dash/[id]/page)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/shop/[[...opt]]/page",
+      "handler": "app/shop/[[...opt]]/page.tsx",
+      "description": "Halaman antarmuka interaktif pengguna (/shop/[[...opt]]/page)",
+      "middleware": "Public"
+     }
+    ],
+    "Err": ""
+   }
+  ],
+  "Summary": "Frontend: Next.js (App Router / Pages Router)",
+  "BE": null,
+  "FE": [
+   {
+    "method": "PAGE (GET)",
+    "path": "/about",
+    "handler": "app/(marketing)/about/page.jsx",
+    "description": "Halaman antarmuka interaktif pengguna (/about)",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/items",
+    "handler": "app/api/items/route.ts",
+    "description": "Pengambilan data /api/items",
+    "middleware": "Route Handler"
+   },
+   {
+    "method": "POST",
+    "path": "/api/items",
+    "handler": "app/api/items/route.ts",
+    "description": "Pembuatan sumber daya baru pada /api/items",
+    "middleware": "Route Handler"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/dash/:id",
+    "handler": "app/dash/[id]/page.tsx",
+    "description": "Halaman antarmuka interaktif pengguna (/dash/:id)",
+    "middleware": "Protected (NextAuth)"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/docs/*slug",
+    "handler": "app/docs/[...slug]/page.js",
+    "description": "Halaman antarmuka interaktif pengguna (/docs/*slug)",
+    "middleware": "Protected (NextAuth)"
+   },
+   {
+    "method": "DELETE",
+    "path": "/other",
+    "handler": "app/other/route.js",
+    "description": "Penghapusan sumber daya pada /other",
+    "middleware": "Route Handler"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/",
+    "handler": "app/page.tsx",
+    "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+    "middleware": "Public",
+    "target_requests": [
+     "GET /api/home"
+    ]
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/shop/*opt",
+    "handler": "app/shop/[[...opt]]/page.tsx",
+    "description": "Halaman antarmuka interaktif pengguna (/shop/*opt)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/*rest",
+    "handler": "pages/[...rest].tsx",
+    "description": "Halaman antarmuka interaktif pengguna (/*rest)",
+    "middleware": "Public"
+   },
+   {
+    "method": "ALL",
+    "path": "/api/hello",
+    "handler": "pages/api/hello.js",
+    "description": "Endpoint handler untuk /api/hello",
+    "middleware": "API Handler"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/blog/:slug",
+    "handler": "pages/blog/[slug].js",
+    "description": "Halaman antarmuka interaktif pengguna (/blog/:slug)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/nested",
+    "handler": "pages/nested/index.tsx",
+    "description": "Halaman antarmuka interaktif pengguna (/nested)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/s",
+    "handler": "src/pages/s.tsx",
+    "description": "Halaman antarmuka interaktif pengguna (/s)",
+    "middleware": "Public"
+   }
+  ],
+  "Auto": [
+   {
+    "method": "PAGE (GET)",
+    "path": "/about",
+    "handler": "app/(marketing)/about/page.jsx",
+    "description": "Halaman antarmuka interaktif pengguna (/about)",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/items",
+    "handler": "app/api/items/route.ts",
+    "description": "Pengambilan data /api/items",
+    "middleware": "Route Handler"
+   },
+   {
+    "method": "POST",
+    "path": "/api/items",
+    "handler": "app/api/items/route.ts",
+    "description": "Pembuatan sumber daya baru pada /api/items",
+    "middleware": "Route Handler"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/dash/:id",
+    "handler": "app/dash/[id]/page.tsx",
+    "description": "Halaman antarmuka interaktif pengguna (/dash/:id)",
+    "middleware": "Protected (NextAuth)"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/docs/*slug",
+    "handler": "app/docs/[...slug]/page.js",
+    "description": "Halaman antarmuka interaktif pengguna (/docs/*slug)",
+    "middleware": "Protected (NextAuth)"
+   },
+   {
+    "method": "DELETE",
+    "path": "/other",
+    "handler": "app/other/route.js",
+    "description": "Penghapusan sumber daya pada /other",
+    "middleware": "Route Handler"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/",
+    "handler": "app/page.tsx",
+    "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+    "middleware": "Public",
+    "target_requests": [
+     "GET /api/home"
+    ]
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/shop/*opt",
+    "handler": "app/shop/[[...opt]]/page.tsx",
+    "description": "Halaman antarmuka interaktif pengguna (/shop/*opt)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/*rest",
+    "handler": "pages/[...rest].tsx",
+    "description": "Halaman antarmuka interaktif pengguna (/*rest)",
+    "middleware": "Public"
+   },
+   {
+    "method": "ALL",
+    "path": "/api/hello",
+    "handler": "pages/api/hello.js",
+    "description": "Endpoint handler untuk /api/hello",
+    "middleware": "API Handler"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/blog/:slug",
+    "handler": "pages/blog/[slug].js",
+    "description": "Halaman antarmuka interaktif pengguna (/blog/:slug)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/nested",
+    "handler": "pages/nested/index.tsx",
+    "description": "Halaman antarmuka interaktif pengguna (/nested)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/s",
+    "handler": "src/pages/s.tsx",
+    "description": "Halaman antarmuka interaktif pengguna (/s)",
+    "middleware": "Public"
+   }
+  ],
+  "API": null
+ },
+ {
+  "Fixture": "nuxt",
+  "Adapters": [
+   {
+    "Adapter": "Go (Fiber / Gin / Echo / Chi / Mux / net/http)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / CodeIgniter",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / Laravel",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Node.js (Express / NestJS / Fastify)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Python (FastAPI / Flask / Django)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Nuxt (Nuxt 3 / Nuxt 2)",
+    "Detect": true,
+    "Routes": [
+     {
+      "method": "PAGE (GET)",
+      "path": "/:legacy",
+      "handler": "app/pages/_legacy.vue",
+      "description": "Halaman antarmuka interaktif pengguna (/:legacy)",
+      "middleware": "Protected (Auth Guard)"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/blog/*slug",
+      "handler": "app/pages/blog/[...slug].vue",
+      "description": "Halaman antarmuka interaktif pengguna (/blog/*slug)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/",
+      "handler": "app/pages/index.vue",
+      "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+      "middleware": "Public",
+      "target_requests": [
+       "GET /api/dashboard",
+       "GET /api/rel",
+       "POST /api/card"
+      ]
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/login",
+      "handler": "app/pages/login.vue",
+      "description": "Halaman login dan autentikasi pengguna aplikasi",
+      "middleware": "Protected (Auth Guard)"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/projects/:id",
+      "handler": "app/pages/projects/[id].vue",
+      "description": "Detail proyek, topologi arsitektur, diagnostik \u0026 AI Fast Scan",
+      "middleware": "Public",
+      "target_requests": [
+       "DELETE /api/thing",
+       "GET /api/projects/:id"
+      ]
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/projects",
+      "handler": "app/pages/projects/index.vue",
+      "description": "Daftar repositori proyek dan ringkasan arsitektur service",
+      "middleware": "Protected (Auth Guard)"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/settings",
+      "handler": "app/pages/settings/page.vue",
+      "description": "Pengaturan sistem, konfigurasi LLM multi-provider \u0026 Sensored Keys Security Vault",
+      "middleware": "Public"
+     },
+     {
+      "method": "ALL",
+      "path": "/api/health",
+      "handler": "server/api/health.ts",
+      "description": "Endpoint API Nitro server internal",
+      "middleware": "Nitro Server"
+     },
+     {
+      "method": "DELETE",
+      "path": "/api/users/[id]",
+      "handler": "server/api/users/[id].delete.ts",
+      "description": "Endpoint API Nitro server internal",
+      "middleware": "Nitro Server"
+     },
+     {
+      "method": "PUT",
+      "path": "/api/users/[id]",
+      "handler": "server/api/users/[id].put.ts",
+      "description": "Endpoint API Nitro server internal",
+      "middleware": "Nitro Server"
+     },
+     {
+      "method": "GET",
+      "path": "/api/users",
+      "handler": "server/api/users.get.ts",
+      "description": "Endpoint API Nitro server internal",
+      "middleware": "Nitro Server"
+     },
+     {
+      "method": "POST",
+      "path": "/api/users",
+      "handler": "server/api/users.post.ts",
+      "description": "Endpoint API Nitro server internal",
+      "middleware": "Nitro Server"
+     }
+    ],
+    "Err": ""
+   },
+   {
+    "Adapter": "Next.js (App Router / Pages Router)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "SvelteKit",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Vue (Vue Router / Vite SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "React (React Router / TanStack Router / SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Generic Frontend (SPA / MPA / Custom UI)",
+    "Detect": true,
+    "Routes": [
+     {
+      "method": "PAGE (GET)",
+      "path": "/_legacy",
+      "handler": "app/pages/_legacy.vue",
+      "description": "Halaman antarmuka interaktif pengguna (/_legacy)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/blog/[...slug]",
+      "handler": "app/pages/blog/[...slug].vue",
+      "description": "Halaman antarmuka interaktif pengguna (/blog/[...slug])",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/",
+      "handler": "app/pages/index.vue",
+      "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+      "middleware": "Public",
+      "target_requests": [
+       "GET /api/dashboard",
+       "GET /api/rel",
+       "POST /api/card"
+      ]
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/login",
+      "handler": "app/pages/login.vue",
+      "description": "Halaman login dan autentikasi pengguna aplikasi",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/projects/[id]",
+      "handler": "app/pages/projects/[id].vue",
+      "description": "Detail proyek, topologi arsitektur, diagnostik \u0026 AI Fast Scan",
+      "middleware": "Public",
+      "target_requests": [
+       "DELETE /api/thing",
+       "GET /api/projects/:id"
+      ]
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/projects",
+      "handler": "app/pages/projects/index.vue",
+      "description": "Daftar repositori proyek dan ringkasan arsitektur service",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/settings/page",
+      "handler": "app/pages/settings/page.vue",
+      "description": "Pengaturan sistem, konfigurasi LLM multi-provider \u0026 Sensored Keys Security Vault",
+      "middleware": "Public"
+     }
+    ],
+    "Err": ""
+   }
+  ],
+  "Summary": "Frontend: Nuxt (Nuxt 3 / Nuxt 2)",
+  "BE": null,
+  "FE": [
+   {
+    "method": "PAGE (GET)",
+    "path": "/:legacy",
+    "handler": "app/pages/_legacy.vue",
+    "description": "Halaman antarmuka interaktif pengguna (/:legacy)",
+    "middleware": "Protected (Auth Guard)"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/blog/*slug",
+    "handler": "app/pages/blog/[...slug].vue",
+    "description": "Halaman antarmuka interaktif pengguna (/blog/*slug)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/",
+    "handler": "app/pages/index.vue",
+    "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+    "middleware": "Public",
+    "target_requests": [
+     "GET /api/dashboard",
+     "GET /api/rel",
+     "POST /api/card"
+    ]
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/login",
+    "handler": "app/pages/login.vue",
+    "description": "Halaman login dan autentikasi pengguna aplikasi",
+    "middleware": "Protected (Auth Guard)"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/projects/:id",
+    "handler": "app/pages/projects/[id].vue",
+    "description": "Detail proyek, topologi arsitektur, diagnostik \u0026 AI Fast Scan",
+    "middleware": "Public",
+    "target_requests": [
+     "DELETE /api/thing",
+     "GET /api/projects/:id"
+    ]
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/projects",
+    "handler": "app/pages/projects/index.vue",
+    "description": "Daftar repositori proyek dan ringkasan arsitektur service",
+    "middleware": "Protected (Auth Guard)"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/settings",
+    "handler": "app/pages/settings/page.vue",
+    "description": "Pengaturan sistem, konfigurasi LLM multi-provider \u0026 Sensored Keys Security Vault",
+    "middleware": "Public"
+   },
+   {
+    "method": "ALL",
+    "path": "/api/health",
+    "handler": "server/api/health.ts",
+    "description": "Endpoint API Nitro server internal",
+    "middleware": "Nitro Server"
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/users/[id]",
+    "handler": "server/api/users/[id].delete.ts",
+    "description": "Endpoint API Nitro server internal",
+    "middleware": "Nitro Server"
+   },
+   {
+    "method": "PUT",
+    "path": "/api/users/[id]",
+    "handler": "server/api/users/[id].put.ts",
+    "description": "Endpoint API Nitro server internal",
+    "middleware": "Nitro Server"
+   },
+   {
+    "method": "GET",
+    "path": "/api/users",
+    "handler": "server/api/users.get.ts",
+    "description": "Endpoint API Nitro server internal",
+    "middleware": "Nitro Server"
+   },
+   {
+    "method": "POST",
+    "path": "/api/users",
+    "handler": "server/api/users.post.ts",
+    "description": "Endpoint API Nitro server internal",
+    "middleware": "Nitro Server"
+   }
+  ],
+  "Auto": [
+   {
+    "method": "PAGE (GET)",
+    "path": "/:legacy",
+    "handler": "app/pages/_legacy.vue",
+    "description": "Halaman antarmuka interaktif pengguna (/:legacy)",
+    "middleware": "Protected (Auth Guard)"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/blog/*slug",
+    "handler": "app/pages/blog/[...slug].vue",
+    "description": "Halaman antarmuka interaktif pengguna (/blog/*slug)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/",
+    "handler": "app/pages/index.vue",
+    "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+    "middleware": "Public",
+    "target_requests": [
+     "GET /api/dashboard",
+     "GET /api/rel",
+     "POST /api/card"
+    ]
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/login",
+    "handler": "app/pages/login.vue",
+    "description": "Halaman login dan autentikasi pengguna aplikasi",
+    "middleware": "Protected (Auth Guard)"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/projects/:id",
+    "handler": "app/pages/projects/[id].vue",
+    "description": "Detail proyek, topologi arsitektur, diagnostik \u0026 AI Fast Scan",
+    "middleware": "Public",
+    "target_requests": [
+     "DELETE /api/thing",
+     "GET /api/projects/:id"
+    ]
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/projects",
+    "handler": "app/pages/projects/index.vue",
+    "description": "Daftar repositori proyek dan ringkasan arsitektur service",
+    "middleware": "Protected (Auth Guard)"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/settings",
+    "handler": "app/pages/settings/page.vue",
+    "description": "Pengaturan sistem, konfigurasi LLM multi-provider \u0026 Sensored Keys Security Vault",
+    "middleware": "Public"
+   },
+   {
+    "method": "ALL",
+    "path": "/api/health",
+    "handler": "server/api/health.ts",
+    "description": "Endpoint API Nitro server internal",
+    "middleware": "Nitro Server"
+   },
+   {
+    "method": "DELETE",
+    "path": "/api/users/[id]",
+    "handler": "server/api/users/[id].delete.ts",
+    "description": "Endpoint API Nitro server internal",
+    "middleware": "Nitro Server"
+   },
+   {
+    "method": "PUT",
+    "path": "/api/users/[id]",
+    "handler": "server/api/users/[id].put.ts",
+    "description": "Endpoint API Nitro server internal",
+    "middleware": "Nitro Server"
+   },
+   {
+    "method": "GET",
+    "path": "/api/users",
+    "handler": "server/api/users.get.ts",
+    "description": "Endpoint API Nitro server internal",
+    "middleware": "Nitro Server"
+   },
+   {
+    "method": "POST",
+    "path": "/api/users",
+    "handler": "server/api/users.post.ts",
+    "description": "Endpoint API Nitro server internal",
+    "middleware": "Nitro Server"
+   }
+  ],
+  "API": null
+ },
+ {
+  "Fixture": "nuxt2",
+  "Adapters": [
+   {
+    "Adapter": "Go (Fiber / Gin / Echo / Chi / Mux / net/http)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / CodeIgniter",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / Laravel",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Node.js (Express / NestJS / Fastify)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Python (FastAPI / Flask / Django)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Nuxt (Nuxt 3 / Nuxt 2)",
+    "Detect": true,
+    "Routes": [
+     {
+      "method": "PAGE (GET)",
+      "path": "/",
+      "handler": "app.vue",
+      "description": "Halaman tunggal utama aplikasi (Single Page)",
+      "middleware": "Public",
+      "target_requests": [
+       "GET /api/app"
+      ]
+     }
+    ],
+    "Err": ""
+   },
+   {
+    "Adapter": "Next.js (App Router / Pages Router)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "SvelteKit",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Vue (Vue Router / Vite SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "React (React Router / TanStack Router / SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Generic Frontend (SPA / MPA / Custom UI)",
+    "Detect": true,
+    "Routes": null,
+    "Err": ""
+   }
+  ],
+  "Summary": "Frontend: Nuxt (Nuxt 3 / Nuxt 2)",
+  "BE": null,
+  "FE": [
+   {
+    "method": "PAGE (GET)",
+    "path": "/",
+    "handler": "app.vue",
+    "description": "Halaman tunggal utama aplikasi (Single Page)",
+    "middleware": "Public",
+    "target_requests": [
+     "GET /api/app"
+    ]
+   }
+  ],
+  "Auto": [
+   {
+    "method": "PAGE (GET)",
+    "path": "/",
+    "handler": "app.vue",
+    "description": "Halaman tunggal utama aplikasi (Single Page)",
+    "middleware": "Public",
+    "target_requests": [
+     "GET /api/app"
+    ]
+   }
+  ],
+  "API": null
+ },
+ {
+  "Fixture": "py",
+  "Adapters": [
+   {
+    "Adapter": "Go (Fiber / Gin / Echo / Chi / Mux / net/http)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / CodeIgniter",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / Laravel",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Node.js (Express / NestJS / Fastify)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Python (FastAPI / Flask / Django)",
+    "Detect": true,
+    "Routes": [
+     {
+      "method": "GET",
+      "path": "/items",
+      "handler": "list_items",
+      "description": "Pengambilan data /items",
+      "middleware": "Public"
+     },
+     {
+      "method": "POST",
+      "path": "/items/new",
+      "handler": "create",
+      "description": "Pembuatan sumber daya baru pada /items/new",
+      "middleware": "Protected (FastAPI Depends)"
+     },
+     {
+      "method": "GET",
+      "path": "/flask",
+      "handler": "view_func",
+      "description": "Pengambilan data /flask",
+      "middleware": "Public"
+     },
+     {
+      "method": "POST",
+      "path": "/flask",
+      "handler": "view_func",
+      "description": "Pembuatan sumber daya baru pada /flask",
+      "middleware": "Public"
+     },
+     {
+      "method": "GET",
+      "path": "/nodef",
+      "handler": "f",
+      "description": "Pengambilan data /nodef",
+      "middleware": "Public"
+     },
+     {
+      "method": "GET",
+      "path": "/flask2",
+      "handler": "view_func",
+      "description": "Pengambilan data /flask2",
+      "middleware": "Public"
+     },
+     {
+      "method": "GET",
+      "path": "/flask3",
+      "handler": "view_func",
+      "description": "Pengambilan data /flask3",
+      "middleware": "Public"
+     },
+     {
+      "method": "ALL",
+      "path": "/users",
+      "handler": "views.user_list",
+      "description": "Endpoint handler untuk /users",
+      "middleware": "Public"
+     },
+     {
+      "method": "GET",
+      "path": "/t",
+      "handler": "v",
+      "description": "Pengambilan data /t",
+      "middleware": "Public"
+     }
+    ],
+    "Err": ""
+   },
+   {
+    "Adapter": "Nuxt (Nuxt 3 / Nuxt 2)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Next.js (App Router / Pages Router)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "SvelteKit",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Vue (Vue Router / Vite SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "React (React Router / TanStack Router / SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Generic Frontend (SPA / MPA / Custom UI)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   }
+  ],
+  "Summary": "Backend: Python (FastAPI / Flask / Django)",
+  "BE": [
+   {
+    "method": "GET",
+    "path": "/items",
+    "handler": "list_items",
+    "description": "Pengambilan data /items",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/items/new",
+    "handler": "create",
+    "description": "Pembuatan sumber daya baru pada /items/new",
+    "middleware": "Protected (FastAPI Depends)"
+   },
+   {
+    "method": "GET",
+    "path": "/flask",
+    "handler": "view_func",
+    "description": "Pengambilan data /flask",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/flask",
+    "handler": "view_func",
+    "description": "Pembuatan sumber daya baru pada /flask",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/nodef",
+    "handler": "f",
+    "description": "Pengambilan data /nodef",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/flask2",
+    "handler": "view_func",
+    "description": "Pengambilan data /flask2",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/flask3",
+    "handler": "view_func",
+    "description": "Pengambilan data /flask3",
+    "middleware": "Public"
+   },
+   {
+    "method": "ALL",
+    "path": "/users",
+    "handler": "views.user_list",
+    "description": "Endpoint handler untuk /users",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/t",
+    "handler": "v",
+    "description": "Pengambilan data /t",
+    "middleware": "Public"
+   }
+  ],
+  "FE": null,
+  "Auto": [
+   {
+    "method": "GET",
+    "path": "/items",
+    "handler": "list_items",
+    "description": "Pengambilan data /items",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/items/new",
+    "handler": "create",
+    "description": "Pembuatan sumber daya baru pada /items/new",
+    "middleware": "Protected (FastAPI Depends)"
+   },
+   {
+    "method": "GET",
+    "path": "/flask",
+    "handler": "view_func",
+    "description": "Pengambilan data /flask",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/flask",
+    "handler": "view_func",
+    "description": "Pembuatan sumber daya baru pada /flask",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/nodef",
+    "handler": "f",
+    "description": "Pengambilan data /nodef",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/flask2",
+    "handler": "view_func",
+    "description": "Pengambilan data /flask2",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/flask3",
+    "handler": "view_func",
+    "description": "Pengambilan data /flask3",
+    "middleware": "Public"
+   },
+   {
+    "method": "ALL",
+    "path": "/users",
+    "handler": "views.user_list",
+    "description": "Endpoint handler untuk /users",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/t",
+    "handler": "v",
+    "description": "Pengambilan data /t",
+    "middleware": "Public"
+   }
+  ],
+  "API": [
+   {
+    "method": "GET",
+    "path": "/items",
+    "handler": "list_items",
+    "description": "Pengambilan data /items",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/items/new",
+    "handler": "create",
+    "description": "Pembuatan sumber daya baru pada /items/new",
+    "middleware": "Protected (FastAPI Depends)"
+   },
+   {
+    "method": "GET",
+    "path": "/flask",
+    "handler": "view_func",
+    "description": "Pengambilan data /flask",
+    "middleware": "Public"
+   },
+   {
+    "method": "POST",
+    "path": "/flask",
+    "handler": "view_func",
+    "description": "Pembuatan sumber daya baru pada /flask",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/nodef",
+    "handler": "f",
+    "description": "Pengambilan data /nodef",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/flask2",
+    "handler": "view_func",
+    "description": "Pengambilan data /flask2",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/flask3",
+    "handler": "view_func",
+    "description": "Pengambilan data /flask3",
+    "middleware": "Public"
+   },
+   {
+    "method": "ALL",
+    "path": "/users",
+    "handler": "views.user_list",
+    "description": "Endpoint handler untuk /users",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/t",
+    "handler": "v",
+    "description": "Pengambilan data /t",
+    "middleware": "Public"
+   }
+  ]
+ },
+ {
+  "Fixture": "react",
+  "Adapters": [
+   {
+    "Adapter": "Go (Fiber / Gin / Echo / Chi / Mux / net/http)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / CodeIgniter",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / Laravel",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Node.js (Express / NestJS / Fastify)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Python (FastAPI / Flask / Django)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Nuxt (Nuxt 3 / Nuxt 2)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Next.js (App Router / Pages Router)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "SvelteKit",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Vue (Vue Router / Vite SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "React (React Router / TanStack Router / SPA)",
+    "Detect": true,
+    "Routes": [
+     {
+      "method": "PAGE (GET)",
+      "path": "/",
+      "handler": "Home (src/App.tsx)",
+      "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+      "middleware": "Public",
+      "target_requests": [
+       "GET /api/app"
+      ]
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/about",
+      "handler": "About (src/App.tsx)",
+      "description": "Halaman antarmuka interaktif pengguna (/about)",
+      "middleware": "Public",
+      "target_requests": [
+       "GET /api/app"
+      ]
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/dash",
+      "handler": "Dash (src/App.tsx)",
+      "description": "Halaman antarmuka interaktif pengguna (/dash)",
+      "middleware": "Public",
+      "target_requests": [
+       "GET /api/app"
+      ]
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/Home",
+      "handler": "src/pages/Home.tsx",
+      "description": "Halaman antarmuka interaktif pengguna (/Home)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/deep",
+      "handler": "src/pages/deep/index.js",
+      "description": "Halaman antarmuka interaktif pengguna (/deep)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/Scr",
+      "handler": "src/screens/Scr.tsx",
+      "description": "Halaman antarmuka interaktif pengguna (/Scr)",
+      "middleware": "Public"
+     }
+    ],
+    "Err": ""
+   },
+   {
+    "Adapter": "Generic Frontend (SPA / MPA / Custom UI)",
+    "Detect": true,
+    "Routes": [
+     {
+      "method": "PAGE (GET)",
+      "path": "/Home",
+      "handler": "src/pages/Home.tsx",
+      "description": "Halaman antarmuka interaktif pengguna (/Home)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/",
+      "handler": "src/pages/index.jsx",
+      "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/Scr",
+      "handler": "src/screens/Scr.tsx",
+      "description": "Halaman antarmuka interaktif pengguna (/Scr)",
+      "middleware": "Public"
+     }
+    ],
+    "Err": ""
+   }
+  ],
+  "Summary": "Frontend: React (React Router / TanStack Router / SPA)",
+  "BE": null,
+  "FE": [
+   {
+    "method": "PAGE (GET)",
+    "path": "/",
+    "handler": "Home (src/App.tsx)",
+    "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+    "middleware": "Public",
+    "target_requests": [
+     "GET /api/app"
+    ]
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/about",
+    "handler": "About (src/App.tsx)",
+    "description": "Halaman antarmuka interaktif pengguna (/about)",
+    "middleware": "Public",
+    "target_requests": [
+     "GET /api/app"
+    ]
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/dash",
+    "handler": "Dash (src/App.tsx)",
+    "description": "Halaman antarmuka interaktif pengguna (/dash)",
+    "middleware": "Public",
+    "target_requests": [
+     "GET /api/app"
+    ]
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/Home",
+    "handler": "src/pages/Home.tsx",
+    "description": "Halaman antarmuka interaktif pengguna (/Home)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/deep",
+    "handler": "src/pages/deep/index.js",
+    "description": "Halaman antarmuka interaktif pengguna (/deep)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/Scr",
+    "handler": "src/screens/Scr.tsx",
+    "description": "Halaman antarmuka interaktif pengguna (/Scr)",
+    "middleware": "Public"
+   }
+  ],
+  "Auto": [
+   {
+    "method": "PAGE (GET)",
+    "path": "/",
+    "handler": "Home (src/App.tsx)",
+    "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+    "middleware": "Public",
+    "target_requests": [
+     "GET /api/app"
+    ]
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/about",
+    "handler": "About (src/App.tsx)",
+    "description": "Halaman antarmuka interaktif pengguna (/about)",
+    "middleware": "Public",
+    "target_requests": [
+     "GET /api/app"
+    ]
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/dash",
+    "handler": "Dash (src/App.tsx)",
+    "description": "Halaman antarmuka interaktif pengguna (/dash)",
+    "middleware": "Public",
+    "target_requests": [
+     "GET /api/app"
+    ]
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/Home",
+    "handler": "src/pages/Home.tsx",
+    "description": "Halaman antarmuka interaktif pengguna (/Home)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/deep",
+    "handler": "src/pages/deep/index.js",
+    "description": "Halaman antarmuka interaktif pengguna (/deep)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/Scr",
+    "handler": "src/screens/Scr.tsx",
+    "description": "Halaman antarmuka interaktif pengguna (/Scr)",
+    "middleware": "Public"
+   }
+  ],
+  "API": null
+ },
+ {
+  "Fixture": "svelte",
+  "Adapters": [
+   {
+    "Adapter": "Go (Fiber / Gin / Echo / Chi / Mux / net/http)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / CodeIgniter",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / Laravel",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Node.js (Express / NestJS / Fastify)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Python (FastAPI / Flask / Django)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Nuxt (Nuxt 3 / Nuxt 2)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Next.js (App Router / Pages Router)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "SvelteKit",
+    "Detect": true,
+    "Routes": [
+     {
+      "method": "PAGE (GET)",
+      "path": "/",
+      "handler": "src/routes/+page.svelte",
+      "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+      "middleware": "Public",
+      "target_requests": [
+       "GET /api/s"
+      ]
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/about",
+      "handler": "src/routes/about/+page.svelte",
+      "description": "Halaman antarmuka interaktif pengguna (/about)",
+      "middleware": "Public"
+     },
+     {
+      "method": "GET",
+      "path": "/api/x",
+      "handler": "src/routes/api/x/+server.ts",
+      "description": "Pengambilan data /api/x",
+      "middleware": "SvelteKit Endpoint"
+     },
+     {
+      "method": "POST",
+      "path": "/api/x",
+      "handler": "src/routes/api/x/+server.ts",
+      "description": "Pembuatan sumber daya baru pada /api/x",
+      "middleware": "SvelteKit Endpoint"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/items/:id",
+      "handler": "src/routes/items/[id]/+page.svelte",
+      "description": "Halaman antarmuka interaktif pengguna (/items/:id)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PATCH",
+      "path": "/other",
+      "handler": "src/routes/other/+server.js",
+      "description": "Pembaruan data pada /other",
+      "middleware": "SvelteKit Endpoint"
+     }
+    ],
+    "Err": ""
+   },
+   {
+    "Adapter": "Vue (Vue Router / Vite SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "React (React Router / TanStack Router / SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Generic Frontend (SPA / MPA / Custom UI)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   }
+  ],
+  "Summary": "Frontend: SvelteKit",
+  "BE": null,
+  "FE": [
+   {
+    "method": "PAGE (GET)",
+    "path": "/",
+    "handler": "src/routes/+page.svelte",
+    "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+    "middleware": "Public",
+    "target_requests": [
+     "GET /api/s"
+    ]
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/about",
+    "handler": "src/routes/about/+page.svelte",
+    "description": "Halaman antarmuka interaktif pengguna (/about)",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/x",
+    "handler": "src/routes/api/x/+server.ts",
+    "description": "Pengambilan data /api/x",
+    "middleware": "SvelteKit Endpoint"
+   },
+   {
+    "method": "POST",
+    "path": "/api/x",
+    "handler": "src/routes/api/x/+server.ts",
+    "description": "Pembuatan sumber daya baru pada /api/x",
+    "middleware": "SvelteKit Endpoint"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/items/:id",
+    "handler": "src/routes/items/[id]/+page.svelte",
+    "description": "Halaman antarmuka interaktif pengguna (/items/:id)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PATCH",
+    "path": "/other",
+    "handler": "src/routes/other/+server.js",
+    "description": "Pembaruan data pada /other",
+    "middleware": "SvelteKit Endpoint"
+   }
+  ],
+  "Auto": [
+   {
+    "method": "PAGE (GET)",
+    "path": "/",
+    "handler": "src/routes/+page.svelte",
+    "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+    "middleware": "Public",
+    "target_requests": [
+     "GET /api/s"
+    ]
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/about",
+    "handler": "src/routes/about/+page.svelte",
+    "description": "Halaman antarmuka interaktif pengguna (/about)",
+    "middleware": "Public"
+   },
+   {
+    "method": "GET",
+    "path": "/api/x",
+    "handler": "src/routes/api/x/+server.ts",
+    "description": "Pengambilan data /api/x",
+    "middleware": "SvelteKit Endpoint"
+   },
+   {
+    "method": "POST",
+    "path": "/api/x",
+    "handler": "src/routes/api/x/+server.ts",
+    "description": "Pembuatan sumber daya baru pada /api/x",
+    "middleware": "SvelteKit Endpoint"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/items/:id",
+    "handler": "src/routes/items/[id]/+page.svelte",
+    "description": "Halaman antarmuka interaktif pengguna (/items/:id)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PATCH",
+    "path": "/other",
+    "handler": "src/routes/other/+server.js",
+    "description": "Pembaruan data pada /other",
+    "middleware": "SvelteKit Endpoint"
+   }
+  ],
+  "API": null
+ },
+ {
+  "Fixture": "svelte2",
+  "Adapters": [
+   {
+    "Adapter": "Go (Fiber / Gin / Echo / Chi / Mux / net/http)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / CodeIgniter",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / Laravel",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Node.js (Express / NestJS / Fastify)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Python (FastAPI / Flask / Django)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Nuxt (Nuxt 3 / Nuxt 2)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Next.js (App Router / Pages Router)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "SvelteKit",
+    "Detect": true,
+    "Routes": [
+     {
+      "method": "PAGE (GET)",
+      "path": "/",
+      "handler": "routes/+page.svelte",
+      "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+      "middleware": "Public"
+     }
+    ],
+    "Err": ""
+   },
+   {
+    "Adapter": "Vue (Vue Router / Vite SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "React (React Router / TanStack Router / SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Generic Frontend (SPA / MPA / Custom UI)",
+    "Detect": true,
+    "Routes": null,
+    "Err": ""
+   }
+  ],
+  "Summary": "Frontend: SvelteKit",
+  "BE": null,
+  "FE": [
+   {
+    "method": "PAGE (GET)",
+    "path": "/",
+    "handler": "routes/+page.svelte",
+    "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+    "middleware": "Public"
+   }
+  ],
+  "Auto": [
+   {
+    "method": "PAGE (GET)",
+    "path": "/",
+    "handler": "routes/+page.svelte",
+    "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+    "middleware": "Public"
+   }
+  ],
+  "API": null
+ },
+ {
+  "Fixture": "vue",
+  "Adapters": [
+   {
+    "Adapter": "Go (Fiber / Gin / Echo / Chi / Mux / net/http)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / CodeIgniter",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "PHP / Laravel",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Node.js (Express / NestJS / Fastify)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Python (FastAPI / Flask / Django)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Nuxt (Nuxt 3 / Nuxt 2)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Next.js (App Router / Pages Router)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "SvelteKit",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Vue (Vue Router / Vite SPA)",
+    "Detect": true,
+    "Routes": [
+     {
+      "method": "PAGE (GET)",
+      "path": "/",
+      "handler": "home (src/router/index.ts)",
+      "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+      "middleware": "Public",
+      "target_requests": [
+       "GET /api/vi"
+      ]
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/about",
+      "handler": "About (src/router/index.ts)",
+      "description": "Halaman antarmuka interaktif pengguna (/about)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/x",
+      "handler": "x (src/router/index.ts)",
+      "description": "Halaman antarmuka interaktif pengguna (/x)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/y",
+      "handler": "VueComponent (src/router/index.ts)",
+      "description": "Halaman antarmuka interaktif pengguna (/y)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/About",
+      "handler": "src/views/About.vue",
+      "description": "Halaman antarmuka interaktif pengguna (/About)",
+      "middleware": "Public",
+      "target_requests": [
+       "GET /api/about"
+      ]
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/Home",
+      "handler": "src/views/Home.vue",
+      "description": "Halaman antarmuka interaktif pengguna (/Home)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/deep",
+      "handler": "src/views/deep/index.vue",
+      "description": "Halaman antarmuka interaktif pengguna (/deep)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/p",
+      "handler": "src/pages/p.vue",
+      "description": "Halaman antarmuka interaktif pengguna (/p)",
+      "middleware": "Public"
+     }
+    ],
+    "Err": ""
+   },
+   {
+    "Adapter": "React (React Router / TanStack Router / SPA)",
+    "Detect": false,
+    "Routes": null,
+    "Err": ""
+   },
+   {
+    "Adapter": "Generic Frontend (SPA / MPA / Custom UI)",
+    "Detect": true,
+    "Routes": [
+     {
+      "method": "PAGE (GET)",
+      "path": "/p",
+      "handler": "src/pages/p.vue",
+      "description": "Halaman antarmuka interaktif pengguna (/p)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/About",
+      "handler": "src/views/About.vue",
+      "description": "Halaman antarmuka interaktif pengguna (/About)",
+      "middleware": "Public",
+      "target_requests": [
+       "GET /api/about"
+      ]
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/Home",
+      "handler": "src/views/Home.vue",
+      "description": "Halaman antarmuka interaktif pengguna (/Home)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/deep",
+      "handler": "src/views/deep/index.vue",
+      "description": "Halaman antarmuka interaktif pengguna (/deep)",
+      "middleware": "Public"
+     },
+     {
+      "method": "PAGE (GET)",
+      "path": "/",
+      "handler": "src/views/index.vue",
+      "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+      "middleware": "Public",
+      "target_requests": [
+       "GET /api/vi"
+      ]
+     }
+    ],
+    "Err": ""
+   }
+  ],
+  "Summary": "Frontend: Vue (Vue Router / Vite SPA)",
+  "BE": null,
+  "FE": [
+   {
+    "method": "PAGE (GET)",
+    "path": "/",
+    "handler": "home (src/router/index.ts)",
+    "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+    "middleware": "Public",
+    "target_requests": [
+     "GET /api/vi"
+    ]
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/about",
+    "handler": "About (src/router/index.ts)",
+    "description": "Halaman antarmuka interaktif pengguna (/about)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/x",
+    "handler": "x (src/router/index.ts)",
+    "description": "Halaman antarmuka interaktif pengguna (/x)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/y",
+    "handler": "VueComponent (src/router/index.ts)",
+    "description": "Halaman antarmuka interaktif pengguna (/y)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/About",
+    "handler": "src/views/About.vue",
+    "description": "Halaman antarmuka interaktif pengguna (/About)",
+    "middleware": "Public",
+    "target_requests": [
+     "GET /api/about"
+    ]
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/Home",
+    "handler": "src/views/Home.vue",
+    "description": "Halaman antarmuka interaktif pengguna (/Home)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/deep",
+    "handler": "src/views/deep/index.vue",
+    "description": "Halaman antarmuka interaktif pengguna (/deep)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/p",
+    "handler": "src/pages/p.vue",
+    "description": "Halaman antarmuka interaktif pengguna (/p)",
+    "middleware": "Public"
+   }
+  ],
+  "Auto": [
+   {
+    "method": "PAGE (GET)",
+    "path": "/",
+    "handler": "home (src/router/index.ts)",
+    "description": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+    "middleware": "Public",
+    "target_requests": [
+     "GET /api/vi"
+    ]
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/about",
+    "handler": "About (src/router/index.ts)",
+    "description": "Halaman antarmuka interaktif pengguna (/about)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/x",
+    "handler": "x (src/router/index.ts)",
+    "description": "Halaman antarmuka interaktif pengguna (/x)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/y",
+    "handler": "VueComponent (src/router/index.ts)",
+    "description": "Halaman antarmuka interaktif pengguna (/y)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/About",
+    "handler": "src/views/About.vue",
+    "description": "Halaman antarmuka interaktif pengguna (/About)",
+    "middleware": "Public",
+    "target_requests": [
+     "GET /api/about"
+    ]
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/Home",
+    "handler": "src/views/Home.vue",
+    "description": "Halaman antarmuka interaktif pengguna (/Home)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/deep",
+    "handler": "src/views/deep/index.vue",
+    "description": "Halaman antarmuka interaktif pengguna (/deep)",
+    "middleware": "Public"
+   },
+   {
+    "method": "PAGE (GET)",
+    "path": "/p",
+    "handler": "src/pages/p.vue",
+    "description": "Halaman antarmuka interaktif pengguna (/p)",
+    "middleware": "Public"
+   }
+  ],
+  "API": null
+ }
+]

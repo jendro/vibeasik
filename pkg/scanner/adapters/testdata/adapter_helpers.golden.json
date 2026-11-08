@@ -1,0 +1,1144 @@
+{
+ "clean": {
+  "": "/",
+  "${apiUrl}/q?x=1": "/q",
+  "'/api/x'": "/api/x",
+  "/": "/",
+  "/a/${id}/b/${a.b}": "/a/:id/b/:param",
+  "`${base}/y//z/`": "/y/z",
+  "http://h/x": "/http:/h/x"
+ },
+ "descs": [
+  {
+   "M": "GET",
+   "P": "/",
+   "Ep": "Pengambilan data /"
+  },
+  {
+   "M": "GET",
+   "P": "/health",
+   "Ep": "Health check status \u0026 liveness probe"
+  },
+  {
+   "M": "GET",
+   "P": "/api/ping",
+   "Ep": "Health check status \u0026 liveness probe"
+  },
+  {
+   "M": "GET",
+   "P": "/x/login",
+   "Ep": "Otentikasi \u0026 pembuatan session token pengguna"
+  },
+  {
+   "M": "GET",
+   "P": "/auth/login",
+   "Ep": "Otentikasi \u0026 pembuatan session token pengguna"
+  },
+  {
+   "M": "GET",
+   "P": "/register",
+   "Ep": "Pendaftaran akun pengguna baru"
+  },
+  {
+   "M": "GET",
+   "P": "/auth/register",
+   "Ep": "Pendaftaran akun pengguna baru"
+  },
+  {
+   "M": "GET",
+   "P": "/auth/refresh",
+   "Ep": "Refresh access token kadaluarsa"
+  },
+  {
+   "M": "GET",
+   "P": "/auth/logout",
+   "Ep": "Revokasi token \u0026 logout pengguna"
+  },
+  {
+   "M": "GET",
+   "P": "/users",
+   "Ep": "Daftar pengguna terdaftar"
+  },
+  {
+   "M": "GET",
+   "P": "/assets",
+   "Ep": "Daftar portofolio aset \u0026 kekayaan"
+  },
+  {
+   "M": "GET",
+   "P": "/family/x",
+   "Ep": "Manajemen data keluarga \u0026 anggota"
+  },
+  {
+   "M": "GET",
+   "P": "/projects",
+   "Ep": "Daftar repositori proyek tersimpan"
+  },
+  {
+   "M": "GET",
+   "P": "/other",
+   "Ep": "Pengambilan data /other"
+  },
+  {
+   "M": "GET",
+   "P": "/projects/:id",
+   "Ep": "Daftar repositori proyek tersimpan"
+  },
+  {
+   "M": "GET",
+   "P": "/projects/[id]",
+   "Ep": "Daftar repositori proyek tersimpan"
+  },
+  {
+   "M": "GET",
+   "P": "/ports",
+   "Ep": "Pengambilan data /ports"
+  },
+  {
+   "M": "GET",
+   "P": "/settings",
+   "Ep": "Pengambilan data /settings"
+  },
+  {
+   "M": "GET",
+   "P": "/scan",
+   "Ep": "Pengambilan data /scan"
+  },
+  {
+   "M": "GET",
+   "P": "/mcp",
+   "Ep": "Pengambilan data /mcp"
+  },
+  {
+   "M": "GET",
+   "P": "/auth",
+   "Ep": "Pengambilan data /auth"
+  },
+  {
+   "M": "GET",
+   "P": "/profile",
+   "Ep": "Pengambilan data /profile"
+  },
+  {
+   "M": "GET",
+   "P": "/user/1",
+   "Ep": "Pengambilan data /user/1"
+  },
+  {
+   "M": "GET",
+   "P": "/asset",
+   "Ep": "Pengambilan data /asset"
+  },
+  {
+   "M": "GET",
+   "P": "/aset",
+   "Ep": "Pengambilan data /aset"
+  },
+  {
+   "M": "GET",
+   "P": "/finance",
+   "Ep": "Pengambilan data /finance"
+  },
+  {
+   "M": "GET",
+   "P": "/keuangan",
+   "Ep": "Pengambilan data /keuangan"
+  },
+  {
+   "M": "GET",
+   "P": "/sync",
+   "Ep": "Pengambilan data /sync"
+  },
+  {
+   "M": "GET",
+   "P": "/categories",
+   "Ep": "Pengambilan data /categories"
+  },
+  {
+   "M": "GET",
+   "P": "/zzz",
+   "Ep": "Pengambilan data /zzz"
+  },
+  {
+   "M": "POST",
+   "P": "/",
+   "Ep": "Pembuatan sumber daya baru pada /"
+  },
+  {
+   "M": "POST",
+   "P": "/health",
+   "Ep": "Health check status \u0026 liveness probe"
+  },
+  {
+   "M": "POST",
+   "P": "/api/ping",
+   "Ep": "Health check status \u0026 liveness probe"
+  },
+  {
+   "M": "POST",
+   "P": "/x/login",
+   "Ep": "Otentikasi \u0026 pembuatan session token pengguna"
+  },
+  {
+   "M": "POST",
+   "P": "/auth/login",
+   "Ep": "Otentikasi \u0026 pembuatan session token pengguna"
+  },
+  {
+   "M": "POST",
+   "P": "/register",
+   "Ep": "Pendaftaran akun pengguna baru"
+  },
+  {
+   "M": "POST",
+   "P": "/auth/register",
+   "Ep": "Pendaftaran akun pengguna baru"
+  },
+  {
+   "M": "POST",
+   "P": "/auth/refresh",
+   "Ep": "Refresh access token kadaluarsa"
+  },
+  {
+   "M": "POST",
+   "P": "/auth/logout",
+   "Ep": "Revokasi token \u0026 logout pengguna"
+  },
+  {
+   "M": "POST",
+   "P": "/users",
+   "Ep": "Pembuatan pengguna baru"
+  },
+  {
+   "M": "POST",
+   "P": "/assets",
+   "Ep": "Pencatatan aset baru ke dalam database"
+  },
+  {
+   "M": "POST",
+   "P": "/family/x",
+   "Ep": "Manajemen data keluarga \u0026 anggota"
+  },
+  {
+   "M": "POST",
+   "P": "/projects",
+   "Ep": "Pendaftaran repositori proyek baru"
+  },
+  {
+   "M": "POST",
+   "P": "/other",
+   "Ep": "Pembuatan sumber daya baru pada /other"
+  },
+  {
+   "M": "POST",
+   "P": "/projects/:id",
+   "Ep": "Pendaftaran repositori proyek baru"
+  },
+  {
+   "M": "POST",
+   "P": "/projects/[id]",
+   "Ep": "Pendaftaran repositori proyek baru"
+  },
+  {
+   "M": "POST",
+   "P": "/ports",
+   "Ep": "Pembuatan sumber daya baru pada /ports"
+  },
+  {
+   "M": "POST",
+   "P": "/settings",
+   "Ep": "Pembuatan sumber daya baru pada /settings"
+  },
+  {
+   "M": "POST",
+   "P": "/scan",
+   "Ep": "Pembuatan sumber daya baru pada /scan"
+  },
+  {
+   "M": "POST",
+   "P": "/mcp",
+   "Ep": "Pembuatan sumber daya baru pada /mcp"
+  },
+  {
+   "M": "POST",
+   "P": "/auth",
+   "Ep": "Pembuatan sumber daya baru pada /auth"
+  },
+  {
+   "M": "POST",
+   "P": "/profile",
+   "Ep": "Pembuatan sumber daya baru pada /profile"
+  },
+  {
+   "M": "POST",
+   "P": "/user/1",
+   "Ep": "Pembuatan sumber daya baru pada /user/1"
+  },
+  {
+   "M": "POST",
+   "P": "/asset",
+   "Ep": "Pembuatan sumber daya baru pada /asset"
+  },
+  {
+   "M": "POST",
+   "P": "/aset",
+   "Ep": "Pembuatan sumber daya baru pada /aset"
+  },
+  {
+   "M": "POST",
+   "P": "/finance",
+   "Ep": "Pembuatan sumber daya baru pada /finance"
+  },
+  {
+   "M": "POST",
+   "P": "/keuangan",
+   "Ep": "Pembuatan sumber daya baru pada /keuangan"
+  },
+  {
+   "M": "POST",
+   "P": "/sync",
+   "Ep": "Pembuatan sumber daya baru pada /sync"
+  },
+  {
+   "M": "POST",
+   "P": "/categories",
+   "Ep": "Pembuatan sumber daya baru pada /categories"
+  },
+  {
+   "M": "POST",
+   "P": "/zzz",
+   "Ep": "Pembuatan sumber daya baru pada /zzz"
+  },
+  {
+   "M": "PUT",
+   "P": "/",
+   "Ep": "Pembaruan data pada /"
+  },
+  {
+   "M": "PUT",
+   "P": "/health",
+   "Ep": "Health check status \u0026 liveness probe"
+  },
+  {
+   "M": "PUT",
+   "P": "/api/ping",
+   "Ep": "Health check status \u0026 liveness probe"
+  },
+  {
+   "M": "PUT",
+   "P": "/x/login",
+   "Ep": "Otentikasi \u0026 pembuatan session token pengguna"
+  },
+  {
+   "M": "PUT",
+   "P": "/auth/login",
+   "Ep": "Otentikasi \u0026 pembuatan session token pengguna"
+  },
+  {
+   "M": "PUT",
+   "P": "/register",
+   "Ep": "Pendaftaran akun pengguna baru"
+  },
+  {
+   "M": "PUT",
+   "P": "/auth/register",
+   "Ep": "Pendaftaran akun pengguna baru"
+  },
+  {
+   "M": "PUT",
+   "P": "/auth/refresh",
+   "Ep": "Refresh access token kadaluarsa"
+  },
+  {
+   "M": "PUT",
+   "P": "/auth/logout",
+   "Ep": "Revokasi token \u0026 logout pengguna"
+  },
+  {
+   "M": "PUT",
+   "P": "/users",
+   "Ep": "Pembaruan data pada /users"
+  },
+  {
+   "M": "PUT",
+   "P": "/assets",
+   "Ep": "Pembaruan data pada /assets"
+  },
+  {
+   "M": "PUT",
+   "P": "/family/x",
+   "Ep": "Manajemen data keluarga \u0026 anggota"
+  },
+  {
+   "M": "PUT",
+   "P": "/projects",
+   "Ep": "Pembaruan data pada /projects"
+  },
+  {
+   "M": "PUT",
+   "P": "/other",
+   "Ep": "Pembaruan data pada /other"
+  },
+  {
+   "M": "PUT",
+   "P": "/projects/:id",
+   "Ep": "Pembaruan data pada /projects/:id"
+  },
+  {
+   "M": "PUT",
+   "P": "/projects/[id]",
+   "Ep": "Pembaruan data pada /projects/[id]"
+  },
+  {
+   "M": "PUT",
+   "P": "/ports",
+   "Ep": "Pembaruan data pada /ports"
+  },
+  {
+   "M": "PUT",
+   "P": "/settings",
+   "Ep": "Pembaruan data pada /settings"
+  },
+  {
+   "M": "PUT",
+   "P": "/scan",
+   "Ep": "Pembaruan data pada /scan"
+  },
+  {
+   "M": "PUT",
+   "P": "/mcp",
+   "Ep": "Pembaruan data pada /mcp"
+  },
+  {
+   "M": "PUT",
+   "P": "/auth",
+   "Ep": "Pembaruan data pada /auth"
+  },
+  {
+   "M": "PUT",
+   "P": "/profile",
+   "Ep": "Pembaruan data pada /profile"
+  },
+  {
+   "M": "PUT",
+   "P": "/user/1",
+   "Ep": "Pembaruan data pada /user/1"
+  },
+  {
+   "M": "PUT",
+   "P": "/asset",
+   "Ep": "Pembaruan data pada /asset"
+  },
+  {
+   "M": "PUT",
+   "P": "/aset",
+   "Ep": "Pembaruan data pada /aset"
+  },
+  {
+   "M": "PUT",
+   "P": "/finance",
+   "Ep": "Pembaruan data pada /finance"
+  },
+  {
+   "M": "PUT",
+   "P": "/keuangan",
+   "Ep": "Pembaruan data pada /keuangan"
+  },
+  {
+   "M": "PUT",
+   "P": "/sync",
+   "Ep": "Pembaruan data pada /sync"
+  },
+  {
+   "M": "PUT",
+   "P": "/categories",
+   "Ep": "Pembaruan data pada /categories"
+  },
+  {
+   "M": "PUT",
+   "P": "/zzz",
+   "Ep": "Pembaruan data pada /zzz"
+  },
+  {
+   "M": "PATCH",
+   "P": "/",
+   "Ep": "Pembaruan data pada /"
+  },
+  {
+   "M": "PATCH",
+   "P": "/health",
+   "Ep": "Health check status \u0026 liveness probe"
+  },
+  {
+   "M": "PATCH",
+   "P": "/api/ping",
+   "Ep": "Health check status \u0026 liveness probe"
+  },
+  {
+   "M": "PATCH",
+   "P": "/x/login",
+   "Ep": "Otentikasi \u0026 pembuatan session token pengguna"
+  },
+  {
+   "M": "PATCH",
+   "P": "/auth/login",
+   "Ep": "Otentikasi \u0026 pembuatan session token pengguna"
+  },
+  {
+   "M": "PATCH",
+   "P": "/register",
+   "Ep": "Pendaftaran akun pengguna baru"
+  },
+  {
+   "M": "PATCH",
+   "P": "/auth/register",
+   "Ep": "Pendaftaran akun pengguna baru"
+  },
+  {
+   "M": "PATCH",
+   "P": "/auth/refresh",
+   "Ep": "Refresh access token kadaluarsa"
+  },
+  {
+   "M": "PATCH",
+   "P": "/auth/logout",
+   "Ep": "Revokasi token \u0026 logout pengguna"
+  },
+  {
+   "M": "PATCH",
+   "P": "/users",
+   "Ep": "Pembaruan data pada /users"
+  },
+  {
+   "M": "PATCH",
+   "P": "/assets",
+   "Ep": "Pembaruan data pada /assets"
+  },
+  {
+   "M": "PATCH",
+   "P": "/family/x",
+   "Ep": "Manajemen data keluarga \u0026 anggota"
+  },
+  {
+   "M": "PATCH",
+   "P": "/projects",
+   "Ep": "Pembaruan data pada /projects"
+  },
+  {
+   "M": "PATCH",
+   "P": "/other",
+   "Ep": "Pembaruan data pada /other"
+  },
+  {
+   "M": "PATCH",
+   "P": "/projects/:id",
+   "Ep": "Pembaruan data pada /projects/:id"
+  },
+  {
+   "M": "PATCH",
+   "P": "/projects/[id]",
+   "Ep": "Pembaruan data pada /projects/[id]"
+  },
+  {
+   "M": "PATCH",
+   "P": "/ports",
+   "Ep": "Pembaruan data pada /ports"
+  },
+  {
+   "M": "PATCH",
+   "P": "/settings",
+   "Ep": "Pembaruan data pada /settings"
+  },
+  {
+   "M": "PATCH",
+   "P": "/scan",
+   "Ep": "Pembaruan data pada /scan"
+  },
+  {
+   "M": "PATCH",
+   "P": "/mcp",
+   "Ep": "Pembaruan data pada /mcp"
+  },
+  {
+   "M": "PATCH",
+   "P": "/auth",
+   "Ep": "Pembaruan data pada /auth"
+  },
+  {
+   "M": "PATCH",
+   "P": "/profile",
+   "Ep": "Pembaruan data pada /profile"
+  },
+  {
+   "M": "PATCH",
+   "P": "/user/1",
+   "Ep": "Pembaruan data pada /user/1"
+  },
+  {
+   "M": "PATCH",
+   "P": "/asset",
+   "Ep": "Pembaruan data pada /asset"
+  },
+  {
+   "M": "PATCH",
+   "P": "/aset",
+   "Ep": "Pembaruan data pada /aset"
+  },
+  {
+   "M": "PATCH",
+   "P": "/finance",
+   "Ep": "Pembaruan data pada /finance"
+  },
+  {
+   "M": "PATCH",
+   "P": "/keuangan",
+   "Ep": "Pembaruan data pada /keuangan"
+  },
+  {
+   "M": "PATCH",
+   "P": "/sync",
+   "Ep": "Pembaruan data pada /sync"
+  },
+  {
+   "M": "PATCH",
+   "P": "/categories",
+   "Ep": "Pembaruan data pada /categories"
+  },
+  {
+   "M": "PATCH",
+   "P": "/zzz",
+   "Ep": "Pembaruan data pada /zzz"
+  },
+  {
+   "M": "DELETE",
+   "P": "/",
+   "Ep": "Penghapusan sumber daya pada /"
+  },
+  {
+   "M": "DELETE",
+   "P": "/health",
+   "Ep": "Health check status \u0026 liveness probe"
+  },
+  {
+   "M": "DELETE",
+   "P": "/api/ping",
+   "Ep": "Health check status \u0026 liveness probe"
+  },
+  {
+   "M": "DELETE",
+   "P": "/x/login",
+   "Ep": "Otentikasi \u0026 pembuatan session token pengguna"
+  },
+  {
+   "M": "DELETE",
+   "P": "/auth/login",
+   "Ep": "Otentikasi \u0026 pembuatan session token pengguna"
+  },
+  {
+   "M": "DELETE",
+   "P": "/register",
+   "Ep": "Pendaftaran akun pengguna baru"
+  },
+  {
+   "M": "DELETE",
+   "P": "/auth/register",
+   "Ep": "Pendaftaran akun pengguna baru"
+  },
+  {
+   "M": "DELETE",
+   "P": "/auth/refresh",
+   "Ep": "Refresh access token kadaluarsa"
+  },
+  {
+   "M": "DELETE",
+   "P": "/auth/logout",
+   "Ep": "Revokasi token \u0026 logout pengguna"
+  },
+  {
+   "M": "DELETE",
+   "P": "/users",
+   "Ep": "Penghapusan sumber daya pada /users"
+  },
+  {
+   "M": "DELETE",
+   "P": "/assets",
+   "Ep": "Penghapusan sumber daya pada /assets"
+  },
+  {
+   "M": "DELETE",
+   "P": "/family/x",
+   "Ep": "Manajemen data keluarga \u0026 anggota"
+  },
+  {
+   "M": "DELETE",
+   "P": "/projects",
+   "Ep": "Penghapusan sumber daya pada /projects"
+  },
+  {
+   "M": "DELETE",
+   "P": "/other",
+   "Ep": "Penghapusan sumber daya pada /other"
+  },
+  {
+   "M": "DELETE",
+   "P": "/projects/:id",
+   "Ep": "Penghapusan sumber daya pada /projects/:id"
+  },
+  {
+   "M": "DELETE",
+   "P": "/projects/[id]",
+   "Ep": "Penghapusan sumber daya pada /projects/[id]"
+  },
+  {
+   "M": "DELETE",
+   "P": "/ports",
+   "Ep": "Penghapusan sumber daya pada /ports"
+  },
+  {
+   "M": "DELETE",
+   "P": "/settings",
+   "Ep": "Penghapusan sumber daya pada /settings"
+  },
+  {
+   "M": "DELETE",
+   "P": "/scan",
+   "Ep": "Penghapusan sumber daya pada /scan"
+  },
+  {
+   "M": "DELETE",
+   "P": "/mcp",
+   "Ep": "Penghapusan sumber daya pada /mcp"
+  },
+  {
+   "M": "DELETE",
+   "P": "/auth",
+   "Ep": "Penghapusan sumber daya pada /auth"
+  },
+  {
+   "M": "DELETE",
+   "P": "/profile",
+   "Ep": "Penghapusan sumber daya pada /profile"
+  },
+  {
+   "M": "DELETE",
+   "P": "/user/1",
+   "Ep": "Penghapusan sumber daya pada /user/1"
+  },
+  {
+   "M": "DELETE",
+   "P": "/asset",
+   "Ep": "Penghapusan sumber daya pada /asset"
+  },
+  {
+   "M": "DELETE",
+   "P": "/aset",
+   "Ep": "Penghapusan sumber daya pada /aset"
+  },
+  {
+   "M": "DELETE",
+   "P": "/finance",
+   "Ep": "Penghapusan sumber daya pada /finance"
+  },
+  {
+   "M": "DELETE",
+   "P": "/keuangan",
+   "Ep": "Penghapusan sumber daya pada /keuangan"
+  },
+  {
+   "M": "DELETE",
+   "P": "/sync",
+   "Ep": "Penghapusan sumber daya pada /sync"
+  },
+  {
+   "M": "DELETE",
+   "P": "/categories",
+   "Ep": "Penghapusan sumber daya pada /categories"
+  },
+  {
+   "M": "DELETE",
+   "P": "/zzz",
+   "Ep": "Penghapusan sumber daya pada /zzz"
+  },
+  {
+   "M": "ALL",
+   "P": "/",
+   "Ep": "Endpoint handler untuk /"
+  },
+  {
+   "M": "ALL",
+   "P": "/health",
+   "Ep": "Health check status \u0026 liveness probe"
+  },
+  {
+   "M": "ALL",
+   "P": "/api/ping",
+   "Ep": "Health check status \u0026 liveness probe"
+  },
+  {
+   "M": "ALL",
+   "P": "/x/login",
+   "Ep": "Otentikasi \u0026 pembuatan session token pengguna"
+  },
+  {
+   "M": "ALL",
+   "P": "/auth/login",
+   "Ep": "Otentikasi \u0026 pembuatan session token pengguna"
+  },
+  {
+   "M": "ALL",
+   "P": "/register",
+   "Ep": "Pendaftaran akun pengguna baru"
+  },
+  {
+   "M": "ALL",
+   "P": "/auth/register",
+   "Ep": "Pendaftaran akun pengguna baru"
+  },
+  {
+   "M": "ALL",
+   "P": "/auth/refresh",
+   "Ep": "Refresh access token kadaluarsa"
+  },
+  {
+   "M": "ALL",
+   "P": "/auth/logout",
+   "Ep": "Revokasi token \u0026 logout pengguna"
+  },
+  {
+   "M": "ALL",
+   "P": "/users",
+   "Ep": "Endpoint handler untuk /users"
+  },
+  {
+   "M": "ALL",
+   "P": "/assets",
+   "Ep": "Endpoint handler untuk /assets"
+  },
+  {
+   "M": "ALL",
+   "P": "/family/x",
+   "Ep": "Manajemen data keluarga \u0026 anggota"
+  },
+  {
+   "M": "ALL",
+   "P": "/projects",
+   "Ep": "Endpoint handler untuk /projects"
+  },
+  {
+   "M": "ALL",
+   "P": "/other",
+   "Ep": "Endpoint handler untuk /other"
+  },
+  {
+   "M": "ALL",
+   "P": "/projects/:id",
+   "Ep": "Endpoint handler untuk /projects/:id"
+  },
+  {
+   "M": "ALL",
+   "P": "/projects/[id]",
+   "Ep": "Endpoint handler untuk /projects/[id]"
+  },
+  {
+   "M": "ALL",
+   "P": "/ports",
+   "Ep": "Endpoint handler untuk /ports"
+  },
+  {
+   "M": "ALL",
+   "P": "/settings",
+   "Ep": "Endpoint handler untuk /settings"
+  },
+  {
+   "M": "ALL",
+   "P": "/scan",
+   "Ep": "Endpoint handler untuk /scan"
+  },
+  {
+   "M": "ALL",
+   "P": "/mcp",
+   "Ep": "Endpoint handler untuk /mcp"
+  },
+  {
+   "M": "ALL",
+   "P": "/auth",
+   "Ep": "Endpoint handler untuk /auth"
+  },
+  {
+   "M": "ALL",
+   "P": "/profile",
+   "Ep": "Endpoint handler untuk /profile"
+  },
+  {
+   "M": "ALL",
+   "P": "/user/1",
+   "Ep": "Endpoint handler untuk /user/1"
+  },
+  {
+   "M": "ALL",
+   "P": "/asset",
+   "Ep": "Endpoint handler untuk /asset"
+  },
+  {
+   "M": "ALL",
+   "P": "/aset",
+   "Ep": "Endpoint handler untuk /aset"
+  },
+  {
+   "M": "ALL",
+   "P": "/finance",
+   "Ep": "Endpoint handler untuk /finance"
+  },
+  {
+   "M": "ALL",
+   "P": "/keuangan",
+   "Ep": "Endpoint handler untuk /keuangan"
+  },
+  {
+   "M": "ALL",
+   "P": "/sync",
+   "Ep": "Endpoint handler untuk /sync"
+  },
+  {
+   "M": "ALL",
+   "P": "/categories",
+   "Ep": "Endpoint handler untuk /categories"
+  },
+  {
+   "M": "ALL",
+   "P": "/zzz",
+   "Ep": "Endpoint handler untuk /zzz"
+  },
+  {
+   "M": "HEAD",
+   "P": "/",
+   "Ep": "Endpoint handler untuk /"
+  },
+  {
+   "M": "HEAD",
+   "P": "/health",
+   "Ep": "Health check status \u0026 liveness probe"
+  },
+  {
+   "M": "HEAD",
+   "P": "/api/ping",
+   "Ep": "Health check status \u0026 liveness probe"
+  },
+  {
+   "M": "HEAD",
+   "P": "/x/login",
+   "Ep": "Otentikasi \u0026 pembuatan session token pengguna"
+  },
+  {
+   "M": "HEAD",
+   "P": "/auth/login",
+   "Ep": "Otentikasi \u0026 pembuatan session token pengguna"
+  },
+  {
+   "M": "HEAD",
+   "P": "/register",
+   "Ep": "Pendaftaran akun pengguna baru"
+  },
+  {
+   "M": "HEAD",
+   "P": "/auth/register",
+   "Ep": "Pendaftaran akun pengguna baru"
+  },
+  {
+   "M": "HEAD",
+   "P": "/auth/refresh",
+   "Ep": "Refresh access token kadaluarsa"
+  },
+  {
+   "M": "HEAD",
+   "P": "/auth/logout",
+   "Ep": "Revokasi token \u0026 logout pengguna"
+  },
+  {
+   "M": "HEAD",
+   "P": "/users",
+   "Ep": "Endpoint handler untuk /users"
+  },
+  {
+   "M": "HEAD",
+   "P": "/assets",
+   "Ep": "Endpoint handler untuk /assets"
+  },
+  {
+   "M": "HEAD",
+   "P": "/family/x",
+   "Ep": "Manajemen data keluarga \u0026 anggota"
+  },
+  {
+   "M": "HEAD",
+   "P": "/projects",
+   "Ep": "Endpoint handler untuk /projects"
+  },
+  {
+   "M": "HEAD",
+   "P": "/other",
+   "Ep": "Endpoint handler untuk /other"
+  },
+  {
+   "M": "HEAD",
+   "P": "/projects/:id",
+   "Ep": "Endpoint handler untuk /projects/:id"
+  },
+  {
+   "M": "HEAD",
+   "P": "/projects/[id]",
+   "Ep": "Endpoint handler untuk /projects/[id]"
+  },
+  {
+   "M": "HEAD",
+   "P": "/ports",
+   "Ep": "Endpoint handler untuk /ports"
+  },
+  {
+   "M": "HEAD",
+   "P": "/settings",
+   "Ep": "Endpoint handler untuk /settings"
+  },
+  {
+   "M": "HEAD",
+   "P": "/scan",
+   "Ep": "Endpoint handler untuk /scan"
+  },
+  {
+   "M": "HEAD",
+   "P": "/mcp",
+   "Ep": "Endpoint handler untuk /mcp"
+  },
+  {
+   "M": "HEAD",
+   "P": "/auth",
+   "Ep": "Endpoint handler untuk /auth"
+  },
+  {
+   "M": "HEAD",
+   "P": "/profile",
+   "Ep": "Endpoint handler untuk /profile"
+  },
+  {
+   "M": "HEAD",
+   "P": "/user/1",
+   "Ep": "Endpoint handler untuk /user/1"
+  },
+  {
+   "M": "HEAD",
+   "P": "/asset",
+   "Ep": "Endpoint handler untuk /asset"
+  },
+  {
+   "M": "HEAD",
+   "P": "/aset",
+   "Ep": "Endpoint handler untuk /aset"
+  },
+  {
+   "M": "HEAD",
+   "P": "/finance",
+   "Ep": "Endpoint handler untuk /finance"
+  },
+  {
+   "M": "HEAD",
+   "P": "/keuangan",
+   "Ep": "Endpoint handler untuk /keuangan"
+  },
+  {
+   "M": "HEAD",
+   "P": "/sync",
+   "Ep": "Endpoint handler untuk /sync"
+  },
+  {
+   "M": "HEAD",
+   "P": "/categories",
+   "Ep": "Endpoint handler untuk /categories"
+  },
+  {
+   "M": "HEAD",
+   "P": "/zzz",
+   "Ep": "Endpoint handler untuk /zzz"
+  }
+ ],
+ "fnmap": {
+  "createUser": "POST /api/users/:id",
+  "getUsers": "GET /api/users",
+  "plain": "PUT /api/https:/h.example.com/api/p",
+  "removeUser": "DELETE /api/users"
+ },
+ "handlers": {
+  "controllers.GetAsset": "Mengambil detail satu data aset keluarga beserta daftar gambar lampirannya",
+  "controllers.Login": "Autentikasi akun via email dan password, menghasilkan JWT access token \u0026 refresh token",
+  "controllers.Nope": "Pengambilan data /zzz",
+  "inline": "Pengambilan data /zzz"
+ },
+ "pages": {
+  "/": "Dashboard utama katalog proyek, filter pencarian \u0026 pemantauan bundle",
+  "/api/ping": "Halaman antarmuka interaktif pengguna (/api/ping)",
+  "/aset": "Halaman manajemen portofolio aset dan kekayaan",
+  "/asset": "Halaman manajemen portofolio aset dan kekayaan",
+  "/assets": "Halaman manajemen portofolio aset dan kekayaan",
+  "/auth": "Halaman login dan autentikasi pengguna aplikasi",
+  "/auth/login": "Halaman login dan autentikasi pengguna aplikasi",
+  "/auth/logout": "Halaman login dan autentikasi pengguna aplikasi",
+  "/auth/refresh": "Halaman login dan autentikasi pengguna aplikasi",
+  "/auth/register": "Halaman login dan autentikasi pengguna aplikasi",
+  "/categories": "Halaman pengelolaan kategori aset",
+  "/family/x": "Halaman manajemen anggota keluarga \u0026 undangan",
+  "/finance": "Halaman pembukuan kas, catatan transaksi \u0026 keuangan keluarga",
+  "/health": "Halaman antarmuka interaktif pengguna (/health)",
+  "/keuangan": "Halaman pembukuan kas, catatan transaksi \u0026 keuangan keluarga",
+  "/mcp": "Katalog server Model Context Protocol (MCP) untuk AI Agent Antigravity",
+  "/other": "Halaman antarmuka interaktif pengguna (/other)",
+  "/ports": "Cockpit monitoring status port listening dan pendeteksi tabrakan port",
+  "/profile": "Halaman profil dan pengaturan akun pengguna",
+  "/projects": "Daftar repositori proyek dan ringkasan arsitektur service",
+  "/projects/:id": "Detail proyek, topologi arsitektur, diagnostik \u0026 AI Fast Scan",
+  "/projects/[id]": "Detail proyek, topologi arsitektur, diagnostik \u0026 AI Fast Scan",
+  "/register": "Halaman pendaftaran pengguna baru",
+  "/scan": "Scanner direktori lokal untuk registrasi repositori baru",
+  "/settings": "Pengaturan sistem, konfigurasi LLM multi-provider \u0026 Sensored Keys Security Vault",
+  "/sync": "Halaman monitor integritas brankas \u0026 delta sync real-time",
+  "/user/1": "Halaman profil dan pengaturan akun pengguna",
+  "/users": "Halaman profil dan pengaturan akun pengguna",
+  "/x/login": "Halaman login dan autentikasi pengguna aplikasi",
+  "/zzz": "Halaman antarmuka interaktif pengguna (/zzz)"
+ },
+ "spark": [
+  {
+   "method": "GET",
+   "path": "/",
+   "handler": "App\\Controllers\\Home::index",
+   "description": "Pengambilan data /",
+   "middleware": "Public"
+  },
+  {
+   "method": "POST",
+   "path": "/users/(:num)",
+   "handler": "Closure / Inline Action",
+   "description": "Pembuatan pengguna baru",
+   "middleware": "auth"
+  },
+  {
+   "method": "GET",
+   "path": "/files/(:any)",
+   "handler": "x",
+   "description": "Pengambilan data /files/(:any)",
+   "middleware": "Public"
+  },
+  {
+   "method": "GET",
+   "path": "/dup",
+   "handler": "a",
+   "description": "Pengambilan data /dup",
+   "middleware": "Public"
+  }
+ ],
+ "urls": {
+  "": "/",
+  " /x / y ": "/x/y",
+  "/": "/",
+  "/a//b/": "/a/b",
+  "a/b": "/a/b"
+ }
+}
