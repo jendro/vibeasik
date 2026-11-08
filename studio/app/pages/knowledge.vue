@@ -252,7 +252,7 @@ const pct = (v: number) => `${Math.round(v * 100)}%`
       />
     </section>
 
-    <USlideover v-model:open="detailOpen" :title="detailId ? `Node K${detailId}` : 'Node'" :ui="{ content: 'max-w-xl' }">
+    <USlideover v-model:open="detailOpen" title="Detail node" :ui="{ content: 'max-w-xl' }">
       <template #body>
         <KnowledgeNodeDetail v-if="detailId" :id="detailId" @open="openNode" />
       </template>

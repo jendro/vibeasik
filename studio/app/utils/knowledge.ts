@@ -22,7 +22,8 @@ export const SOURCE_LABEL: Record<KnowledgeSource, string> = {
   design_theory: 'Teori Desain & Warna',
   design_lesson: 'Pelajaran Desain',
   manual: 'Diajarkan manusia',
-  agent: 'Agent MCP'
+  agent: 'Agent MCP',
+  hub: 'Paket komunitas'
 }
 
 export const GAP_STATUS: Record<KnowledgeGapStatus, { label: string, color: BadgeColor }> = {

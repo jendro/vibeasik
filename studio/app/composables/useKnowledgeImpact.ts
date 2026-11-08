@@ -1,9 +1,9 @@
 // Dampak pengetahuan di seluruh pengguna (angka teragregasi dari server): dipakai di berapa pekerjaan besar dan nilainya.
-// Server hanya menampilkan angka yang berasal dari cukup banyak perangkat; nama pekerjaan tidak pernah ada di sini.
+// Ringan: ringkasan kecil diambil sekali (di-cache di Studio, engine, dan server); data per node hanya saat node dibuka.
+// Nama pekerjaan/proyek pengguna tidak pernah ada di sini.
 export interface ImpactStat { uses: number, helpful: number, harmful: number }
 export interface ImpactKind extends ImpactStat { kind: string, label: string, score: number }
 export interface ImpactDomain extends ImpactStat { domain: string, score: number }
-export interface ImpactNode extends ImpactStat { key: string, score: number, by_kind: ImpactKind[] }
 export interface KnowledgeImpact {
   devices: number
   min_devices: number
@@ -11,7 +11,11 @@ export interface KnowledgeImpact {
   score: number
   by_kind: ImpactKind[]
   by_domain: ImpactDomain[]
-  nodes: ImpactNode[]
+}
+export interface NodeImpact {
+  available: boolean
+  min_devices: number
+  node?: ImpactStat & { key: string, score: number, by_kind: ImpactKind[] }
 }
 
 export function useKnowledgeImpact() {
@@ -19,6 +23,7 @@ export function useKnowledgeImpact() {
   const impact = useState<KnowledgeImpact | null>('knowledge-impact', () => null)
   const loading = useState('knowledge-impact-loading', () => false)
   const error = useState('knowledge-impact-error', () => '')
+  const nodes = useState<Record<string, NodeImpact>>('knowledge-impact-nodes', () => ({}))
 
   const load = async (force = false) => {
     if (impact.value && !force) return
@@ -34,10 +39,16 @@ export function useKnowledgeImpact() {
   }
 
   // Kunci node lokal "hub:guideline:SEC-001" ↔ kunci server "guideline:SEC-001".
-  const forNode = (key?: string) => {
-    const k = (key || '').replace(/^hub:/, '')
-    return impact.value?.nodes.find(n => n.key === k) || null
+  const serverKey = (key?: string) => (key || '').replace(/^hub:/, '')
+
+  const loadNode = async (key?: string): Promise<NodeImpact | null> => {
+    const k = serverKey(key)
+    if (!k) return null
+    if (nodes.value[k]) return nodes.value[k]
+    const n = await $fetch<NodeImpact>(`${apiBase}/api/knowledge-sync/impact`, { query: { key: k } })
+    nodes.value = { ...nodes.value, [k]: n }
+    return n
   }
 
-  return { impact, loading, error, load, forNode }
+  return { impact, loading, error, load, loadNode, serverKey }
 }

@@ -1,7 +1,7 @@
 /** Pusat Pengetahuan: satu pintu patokan & pengetahuan umum pekerja AI vibeasik (GET /api/knowledge). */
 
 export type KnowledgeKind = 'rule' | 'procedure' | 'lesson' | 'concept'
-export type KnowledgeSource = 'guideline' | 'audit_checklist' | 'audit_verdict' | 'employee' | 'promoted' | 'gap_research' | 'qa_review' | 'design_library' | 'design_theory' | 'design_lesson' | 'manual' | 'agent'
+export type KnowledgeSource = 'guideline' | 'audit_checklist' | 'audit_verdict' | 'employee' | 'promoted' | 'gap_research' | 'qa_review' | 'design_library' | 'design_theory' | 'design_lesson' | 'manual' | 'agent' | 'hub'
 export type KnowledgeGapStatus = 'open' | 'learning' | 'learned' | 'dismissed'
 
 export interface KnowledgeNode {

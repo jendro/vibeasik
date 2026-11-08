@@ -1,7 +1,11 @@
 package knowledgesync
 
 import (
+	"errors"
+	"net/url"
 	"strings"
+	"sync"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -63,41 +67,98 @@ func workByNode(db *gorm.DB, nodes []models.KnowledgeNode) map[uint]map[string]W
 	return out
 }
 
-// Impact dampak teragregasi dari server (lihat vibeasik-cloud/internal/knowledgehub/impact.go).
+// KindImpact dampak pada satu jenis pekerjaan besar.
+type KindImpact struct {
+	Kind  string `json:"kind"`
+	Label string `json:"label"`
+	WorkStat
+	Score int `json:"score"` // 0-100 persen berguna; -1 = belum dinilai
+}
+
+// Impact ringkasan dampak teragregasi dari server (lihat vibeasik-cloud/internal/knowledgehub/impact.go).
 type Impact struct {
-	Devices   int      `json:"devices"`
-	Total     WorkStat `json:"total"`
-	Score     int      `json:"score"`
-	MinDevice int      `json:"min_devices"`
-	ByKind    []struct {
-		Kind  string `json:"kind"`
-		Label string `json:"label"`
-		WorkStat
-		Score int `json:"score"`
-	} `json:"by_kind"`
-	ByDomain []struct {
+	Devices   int          `json:"devices"`
+	Total     WorkStat     `json:"total"`
+	Score     int          `json:"score"`
+	MinDevice int          `json:"min_devices"`
+	ByKind    []KindImpact `json:"by_kind"`
+	ByDomain  []struct {
 		Domain string `json:"domain"`
 		WorkStat
 		Score int `json:"score"`
 	} `json:"by_domain"`
-	Nodes []struct {
-		Key string `json:"key"`
-		WorkStat
-		Score  int `json:"score"`
-		ByKind []struct {
-			Kind  string `json:"kind"`
-			Label string `json:"label"`
-			WorkStat
-			Score int `json:"score"`
-		} `json:"by_kind"`
-	} `json:"nodes"`
 }
 
-// FetchImpact mengambil dampak pengetahuan seluruh pengguna dari server.
+// NodeImpact dampak satu node; Available=false bila belum cukup perangkat untuk ditampilkan.
+type NodeImpact struct {
+	Available  bool `json:"available"`
+	MinDevices int  `json:"min_devices"`
+	Node       *struct {
+		Key string `json:"key"`
+		WorkStat
+		Score  int          `json:"score"`
+		ByKind []KindImpact `json:"by_kind"`
+	} `json:"node,omitempty"`
+}
+
+// Cache di sisi engine: Studio boleh membuka halaman berkali-kali, server cukup ditanya sesekali.
+const (
+	impactTTL      = 10 * time.Minute
+	impactMaxNodes = 500
+)
+
+type cacheEntry[T any] struct {
+	at  time.Time
+	val T
+}
+
+var impactCache struct {
+	mu      sync.Mutex
+	summary *cacheEntry[*Impact]
+	nodes   map[string]cacheEntry[*NodeImpact]
+}
+
+// FetchImpact mengambil ringkasan dampak seluruh pengguna (di-cache 10 menit; bila server gagal, data lama dipakai).
 func FetchImpact() (*Impact, error) {
+	c := &impactCache
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.summary != nil && time.Since(c.summary.at) < impactTTL {
+		return c.summary.val, nil
+	}
 	var imp Impact
 	if err := get("/api/v1/knowledge/impact", &imp); err != nil {
+		if c.summary != nil {
+			return c.summary.val, nil
+		}
 		return nil, err
 	}
+	c.summary = &cacheEntry[*Impact]{at: time.Now(), val: &imp}
 	return &imp, nil
+}
+
+// FetchNodeImpact mengambil dampak satu node (kunci server, tanpa awalan "hub:"), di-cache per node.
+func FetchNodeImpact(key string) (*NodeImpact, error) {
+	key = strings.TrimPrefix(strings.TrimSpace(key), "hub:")
+	if key == "" || len(key) > 191 {
+		return nil, errors.New("kunci node tidak valid")
+	}
+	c := &impactCache
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if e, ok := c.nodes[key]; ok && time.Since(e.at) < impactTTL {
+		return e.val, nil
+	}
+	var n NodeImpact
+	if err := get("/api/v1/knowledge/impact?key="+url.QueryEscape(key), &n); err != nil {
+		if e, ok := c.nodes[key]; ok {
+			return e.val, nil
+		}
+		return nil, err
+	}
+	if c.nodes == nil || len(c.nodes) >= impactMaxNodes {
+		c.nodes = map[string]cacheEntry[*NodeImpact]{}
+	}
+	c.nodes[key] = cacheEntry[*NodeImpact]{at: time.Now(), val: &n}
+	return &n, nil
 }
