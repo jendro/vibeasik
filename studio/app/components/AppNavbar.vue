@@ -253,18 +253,6 @@ const pageTitle = computed(() => {
           vibeasik.com
         </UButton>
 
-        <!-- Quick Import Action -->
-        <UButton
-          to="/scan"
-          icon="i-lucide-plus"
-          color="primary"
-          variant="solid"
-          size="sm"
-          class="hidden sm:inline-flex"
-        >
-          Import
-        </UButton>
-
         <!-- User Profile & Logout -->
         <div v-if="isAuthenticated" class="flex items-center gap-2 pl-2 border-l border-neutral-200 dark:border-neutral-800">
           <div class="hidden xl:flex flex-col text-right">

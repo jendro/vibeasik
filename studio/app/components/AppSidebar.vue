@@ -31,7 +31,13 @@ const {
 
 // Gembok untuk menu fitur berbayar yang belum terbuka (lihat utils/proFeatures.ts).
 const { load: loadEdition, isLocked } = useEdition()
-onMounted(() => loadEdition())
+// Lencana paket di header sidebar: "Pro" bila akun berpaket berbayar, selain itu "Free".
+const { account, load: loadAccount } = useAuth()
+const planLabel = computed(() => (account.value?.logged_in && account.value.plan !== 'free' ? 'Pro' : 'Free'))
+onMounted(() => {
+  loadEdition()
+  loadAccount()
+})
 const lockedItem = (item: { to: string }) => isLocked(proFeatureForPath(item.to))
 
 const projectNavItems = computed<NavItem[]>(() => buildProjectNavItems(activeProjectId.value, activeProject.value))
@@ -79,7 +85,7 @@ onUnmounted(() => {
         <div v-if="!collapsed" class="flex flex-col min-w-0 transition-opacity duration-200">
           <div class="flex items-center gap-1.5">
             <span class="font-bold text-sm tracking-tight text-neutral-900 dark:text-white truncate">vibeasik.com</span>
-            <UBadge size="xs" color="primary" variant="subtle">Vibecoder</UBadge>
+            <UBadge size="xs" :color="planLabel === 'Pro' ? 'warning' : 'neutral'" variant="subtle">{{ planLabel }}</UBadge>
           </div>
           <span class="text-xs text-neutral-500 dark:text-slate-400 font-mono truncate">Delivery & AI Agent Hub</span>
         </div>
@@ -252,7 +258,7 @@ onUnmounted(() => {
             <div class="flex flex-col">
               <div class="flex items-center gap-1.5">
                 <span class="font-bold text-sm tracking-tight text-neutral-900 dark:text-white">vibeasik.com</span>
-                <UBadge size="xs" color="primary" variant="subtle">Vibecoder</UBadge>
+                <UBadge size="xs" :color="planLabel === 'Pro' ? 'warning' : 'neutral'" variant="subtle">{{ planLabel }}</UBadge>
               </div>
               <span class="text-xs text-neutral-500 dark:text-slate-400 font-mono">Delivery & AI Platform</span>
             </div>

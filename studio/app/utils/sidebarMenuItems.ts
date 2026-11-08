@@ -263,6 +263,14 @@ export const GLOBAL_NAV_ITEMS: NavItem[] = [
     exact: false
   },
   {
+    id: 'plans',
+    to: '/plans',
+    label: 'Free vs Pro',
+    desc: 'Perbandingan paket & akun',
+    icon: 'i-lucide-scale',
+    exact: false
+  },
+  {
     id: 'settings',
     to: '/settings',
     label: 'Pengaturan LLM',
