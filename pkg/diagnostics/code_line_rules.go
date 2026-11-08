@@ -232,7 +232,7 @@ func ruleCommandInjection(s *fileScan) (models.Finding, bool) {
 		fmt.Sprintf("Pemanggilan eksekusi shell / proses sistem terdeteksi dengan penggabungan parameter dinamis pada baris %d. Penyerang dapat menyusupkan perintah arbitrary untuk merusak sistem host.", s.lineNum),
 		"Gunakan whitelist argumen tetap, pisahkan executable dari daftar argumen (tanpa shell invocation 'sh -c'), atau gunakan library API native.",
 		"CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection') & OWASP Top 10 A03:2021.",
-		"// Lewatkan argumen sebagai array slice terpisah tanpa pemanggilan shell:\n// SEBELUM: exec.Command(\"sh\", \"-c\", \"ping \" + host)\n// SESUDAH: exec.Command(\"ping\", \"-c\", \"1\", validatedHost)"), true
+		"Gunakan exec.Command(executable, args...) tanpa shell interpreter (sh/bash); validasi nilai dinamis dengan allowlist sebelum memasukkannya sebagai argumen slice terpisah. Contoh: exec.Command(\"ping\", \"-c\", \"1\", validatedHost)"), true
 }
 
 func rulePathTraversal(s *fileScan) (models.Finding, bool) {
