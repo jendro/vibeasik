@@ -87,6 +87,7 @@ onUnmounted(() => {
             <span class="font-bold text-sm tracking-tight text-neutral-900 dark:text-white truncate">vibeasik.com</span>
             <UBadge size="xs" :color="planLabel === 'Pro' ? 'warning' : 'neutral'" variant="subtle">{{ planLabel }}</UBadge>
           </div>
+          <AppVersionBadge />
           <span class="text-xs text-neutral-500 dark:text-slate-400 font-mono truncate">Delivery & AI Agent Hub</span>
         </div>
       </NuxtLink>
@@ -260,6 +261,7 @@ onUnmounted(() => {
                 <span class="font-bold text-sm tracking-tight text-neutral-900 dark:text-white">vibeasik.com</span>
                 <UBadge size="xs" :color="planLabel === 'Pro' ? 'warning' : 'neutral'" variant="subtle">{{ planLabel }}</UBadge>
               </div>
+              <AppVersionBadge />
               <span class="text-xs text-neutral-500 dark:text-slate-400 font-mono">Delivery & AI Platform</span>
             </div>
           </NuxtLink>
