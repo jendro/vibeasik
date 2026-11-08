@@ -179,7 +179,7 @@ const getCategoryColor = (cat: string) => {
           <!-- Rule ID Tag -->
           <span
             v-if="finding.rule_id"
-            class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700"
+            class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700"
           >
             {{ finding.rule_id }}
           </span>
@@ -204,7 +204,7 @@ const getCategoryColor = (cat: string) => {
             color="primary"
             variant="solid"
             icon="i-lucide-layers"
-            class="font-mono text-[10px] font-bold tracking-wider uppercase px-1.5 py-0 shadow-2xs"
+            class="font-mono text-xs font-bold tracking-wider uppercase px-1.5 py-0 shadow-2xs"
             title="Temuan ini dideteksi khusus melalui Deep Check"
           >
             DEEP
@@ -217,7 +217,7 @@ const getCategoryColor = (cat: string) => {
             color="secondary"
             variant="soft"
             icon="i-lucide-sparkles"
-            class="font-mono text-[10px] font-bold tracking-wider uppercase px-1.5 py-0"
+            class="font-mono text-xs font-bold tracking-wider uppercase px-1.5 py-0"
             :title="`Temuan dari review audit LLM${finding.model_used ? ` (${finding.model_used})` : ''} — verifikasi sebelum diterapkan`"
           >
             LLM
@@ -253,7 +253,7 @@ const getCategoryColor = (cat: string) => {
           <!-- Todo ID Pill -->
           <span
             v-if="finding.todo_id"
-            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border border-sky-300 dark:border-sky-800 cursor-pointer hover:bg-sky-200 transition-colors"
+            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-mono font-bold bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border border-sky-300 dark:border-sky-800 cursor-pointer hover:bg-sky-200 transition-colors"
             title="Klik untuk membuka daftar Todo"
             @click.stop="goToTodos"
           >
@@ -273,7 +273,7 @@ const getCategoryColor = (cat: string) => {
         </p>
 
         <!-- Target File & Line Pill -->
-        <div v-if="finding.target_file" class="flex items-center gap-2 text-[11px] text-neutral-500 font-mono">
+        <div v-if="finding.target_file" class="flex items-center gap-2 text-xs text-neutral-500 font-mono">
           <UIcon name="i-lucide-file-code" class="w-3.5 h-3.5 text-neutral-400" />
           <span class="truncate">{{ finding.target_file }}</span>
           <span v-if="finding.line" class="px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-bold">
@@ -371,7 +371,7 @@ const getCategoryColor = (cat: string) => {
             <span class="font-bold text-sm text-neutral-900 dark:text-white">
               {{ finding.resolution_title || finding.title }}
             </span>
-            <span v-if="finding.model_used" class="flex items-center gap-1 text-[11px] text-neutral-500 font-mono">
+            <span v-if="finding.model_used" class="flex items-center gap-1 text-xs text-neutral-500 font-mono">
               <UIcon name="i-lucide-cpu" class="w-3.5 h-3.5" />
               {{ finding.model_used }}
             </span>
@@ -382,7 +382,7 @@ const getCategoryColor = (cat: string) => {
           </p>
 
           <!-- Theory Basis -->
-          <div v-if="finding.theory_basis" class="flex items-start gap-1.5 pt-1 text-[11px] text-violet-700 dark:text-violet-300 font-medium">
+          <div v-if="finding.theory_basis" class="flex items-start gap-1.5 pt-1 text-xs text-violet-700 dark:text-violet-300 font-medium">
             <UIcon name="i-lucide-book-open" class="w-4 h-4 shrink-0 mt-0.5" />
             <span>Landasan Teori: {{ finding.theory_basis }}</span>
           </div>
@@ -399,7 +399,7 @@ const getCategoryColor = (cat: string) => {
               <span class="font-bold text-sky-900 dark:text-sky-300">
                 Tersimpan di Modul Perencanaan (TODO #{{ finding.todo_id }})
               </span>
-              <p class="text-[11px] text-sky-700 dark:text-sky-400 mt-0.5">
+              <p class="text-xs text-sky-700 dark:text-sky-400 mt-0.5">
                 AI Agent dapat langsung mengambil agenda ini dan mengeksekusi langkah-langkah di bawah.
               </p>
             </div>
@@ -411,7 +411,7 @@ const getCategoryColor = (cat: string) => {
 
         <!-- Action Steps for Agent / Dev -->
         <div v-if="finding.action_steps && finding.action_steps.length > 0" class="space-y-2">
-          <div class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
+          <div class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
             <UIcon name="i-lucide-list-ordered" class="w-3.5 h-3.5 text-primary-500" />
             <span>Langkah-langkah Penyelesaian (Action Steps untuk AI Agent):</span>
           </div>
@@ -421,7 +421,7 @@ const getCategoryColor = (cat: string) => {
               :key="idx"
               class="flex items-start gap-2.5 p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/30 border border-neutral-200/80 dark:border-neutral-800 text-xs text-neutral-800 dark:text-neutral-200 leading-relaxed"
             >
-              <span class="w-5 h-5 rounded-full bg-primary-100 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5 border border-primary-200 dark:border-primary-800">
+              <span class="w-5 h-5 rounded-full bg-primary-100 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5 border border-primary-200 dark:border-primary-800">
                 {{ idx + 1 }}
               </span>
               <span class="flex-1">{{ step }}</span>
@@ -434,7 +434,7 @@ const getCategoryColor = (cat: string) => {
         <!-- Code Replacement (Before vs After) -->
         <div v-if="finding.code_after" class="space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
+            <span class="text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
               <UIcon name="i-lucide-code-2" class="w-3.5 h-3.5 text-sky-400" />
               Kode Rekomendasi Solusi (Drop-in Replacement):
             </span>
@@ -468,7 +468,7 @@ const getCategoryColor = (cat: string) => {
 
         <!-- Code Snippet -->
         <div v-if="finding.snippet" class="space-y-1">
-          <span class="text-[11px] font-semibold uppercase text-neutral-500 dark:text-neutral-400">
+          <span class="text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
             Kode Terindikasi (Baris {{ finding.line || '1' }}):
           </span>
           <pre class="p-2.5 rounded-lg bg-neutral-900 text-rose-300 font-mono text-xs overflow-x-auto border border-neutral-800"><code>{{ finding.snippet }}</code></pre>
@@ -476,7 +476,7 @@ const getCategoryColor = (cat: string) => {
 
         <!-- Suggested Fix / Action -->
         <div class="space-y-1">
-          <span class="text-[11px] font-semibold uppercase text-neutral-500 dark:text-neutral-400">
+          <span class="text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
             Saran Perbaikan:
           </span>
           <div class="p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200 dark:border-neutral-800 text-xs text-neutral-700 dark:text-neutral-300 font-mono leading-relaxed">

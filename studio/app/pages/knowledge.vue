@@ -108,7 +108,7 @@ const pct = (v: number) => `${Math.round(v * 100)}%`
 
     <div v-if="overview" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
       <div class="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
-        <p class="text-[11px] uppercase font-semibold text-neutral-500">
+        <p class="text-xs uppercase font-semibold text-neutral-500">
           Node aktif
         </p>
         <p class="text-2xl font-bold text-neutral-900 dark:text-white">
@@ -116,7 +116,7 @@ const pct = (v: number) => `${Math.round(v * 100)}%`
         </p>
       </div>
       <div class="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
-        <p class="text-[11px] uppercase font-semibold text-neutral-500">
+        <p class="text-xs uppercase font-semibold text-neutral-500">
           Pustaka bersama
         </p>
         <p class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
@@ -124,7 +124,7 @@ const pct = (v: number) => `${Math.round(v * 100)}%`
         </p>
       </div>
       <div class="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
-        <p class="text-[11px] uppercase font-semibold text-neutral-500">
+        <p class="text-xs uppercase font-semibold text-neutral-500">
           Keahlian pribadi
         </p>
         <p class="text-2xl font-bold text-sky-600 dark:text-sky-400">
@@ -132,7 +132,7 @@ const pct = (v: number) => `${Math.round(v * 100)}%`
         </p>
       </div>
       <div class="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
-        <p class="text-[11px] uppercase font-semibold text-neutral-500">
+        <p class="text-xs uppercase font-semibold text-neutral-500">
           Teruji · utilitas
         </p>
         <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
@@ -140,7 +140,7 @@ const pct = (v: number) => `${Math.round(v * 100)}%`
         </p>
       </div>
       <div class="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
-        <p class="text-[11px] uppercase font-semibold text-neutral-500">
+        <p class="text-xs uppercase font-semibold text-neutral-500">
           Tautan
         </p>
         <p class="text-2xl font-bold text-neutral-900 dark:text-white">
@@ -148,7 +148,7 @@ const pct = (v: number) => `${Math.round(v * 100)}%`
         </p>
       </div>
       <div class="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
-        <p class="text-[11px] uppercase font-semibold text-neutral-500">
+        <p class="text-xs uppercase font-semibold text-neutral-500">
           Menunggu nilai
         </p>
         <p class="text-2xl font-bold text-amber-600 dark:text-amber-400">

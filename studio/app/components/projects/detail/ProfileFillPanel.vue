@@ -172,7 +172,7 @@ const savePasted = async () => {
     <div v-if="showGuide" class="grid grid-cols-1 xl:grid-cols-2 gap-3 px-4 pb-4">
       <section class="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/70 p-3.5 space-y-2.5">
         <div class="flex items-center gap-2 font-bold text-neutral-900 dark:text-white">
-          <span class="w-5 h-5 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-400 flex items-center justify-center text-[10px]">1</span>
+          <span class="w-5 h-5 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-400 flex items-center justify-center text-xs">1</span>
           LLM bawaan vibeasik
         </div>
         <p class="text-neutral-600 dark:text-neutral-300 leading-relaxed">
@@ -185,7 +185,7 @@ const savePasted = async () => {
 
       <section class="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/70 p-3.5 space-y-2.5">
         <div class="flex items-center gap-2 font-bold text-neutral-900 dark:text-white">
-          <span class="w-5 h-5 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-400 flex items-center justify-center text-[10px]">2</span>
+          <span class="w-5 h-5 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-400 flex items-center justify-center text-xs">2</span>
           AI agent Anda via MCP
         </div>
         <p class="text-neutral-600 dark:text-neutral-300 leading-relaxed">
@@ -204,7 +204,7 @@ const savePasted = async () => {
           </UButton>
         </div>
         <div class="pt-1 space-y-1">
-          <div class="text-[10px] uppercase font-semibold text-neutral-400">
+          <div class="text-xs uppercase font-semibold text-neutral-400">
             Perbarui sebagian (salin perintah singkat)
           </div>
           <div class="flex flex-wrap gap-1.5">
@@ -219,7 +219,7 @@ const savePasted = async () => {
               <UIcon :name="q.icon" class="w-3 h-3 text-neutral-400" />{{ q.label }}
             </button>
           </div>
-          <p class="text-[11px] text-neutral-400">
+          <p class="text-xs text-neutral-400">
             MCP belum terpasang di agent? Jalankan <code class="font-mono">vibeasik mcp install</code>.
           </p>
         </div>

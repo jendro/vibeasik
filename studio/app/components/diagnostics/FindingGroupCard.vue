@@ -50,7 +50,7 @@ const toggleSub = (f: Finding) => {
           <UIcon name="i-lucide-layers-2" class="w-4 h-4 shrink-0 text-primary-500" />
           <span
             v-if="first?.rule_id"
-            class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700"
+            class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700"
           >
             {{ first.rule_id }}
           </span>
@@ -69,7 +69,7 @@ const toggleSub = (f: Finding) => {
           <span
             v-for="id in todoIds.slice(0, 3)"
             :key="id"
-            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border border-sky-300 dark:border-sky-800"
+            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-mono font-bold bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border border-sky-300 dark:border-sky-800"
           >
             <UIcon name="i-lucide-clipboard-check" class="w-3 h-3" />
             TODO #{{ id }}
@@ -119,7 +119,7 @@ const toggleSub = (f: Finding) => {
           <span v-if="findingGroupRemainder(group, f)" class="font-medium text-neutral-800 dark:text-neutral-200 truncate">
             {{ findingGroupRemainder(group, f) }}
           </span>
-          <span class="font-mono text-[11px] text-neutral-500 truncate">
+          <span class="font-mono text-xs text-neutral-500 truncate">
             {{ f.target_file || 'global' }}<template v-if="f.line">:{{ f.target_lines || f.line }}</template>
           </span>
           <UBadge v-if="f.todo_id" size="xs" color="info" variant="subtle" class="ml-auto font-mono shrink-0">

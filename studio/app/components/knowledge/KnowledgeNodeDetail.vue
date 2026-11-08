@@ -86,10 +86,10 @@ const when = (iso?: string) => iso ? new Date(iso).toLocaleString('id-ID', { day
           class="w-full text-left flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800"
           @click="emit('open', n.id)"
         >
-          <span class="text-[11px] font-mono text-neutral-400 w-10">K{{ n.id }}</span>
+          <span class="text-xs font-mono text-neutral-400 w-10">K{{ n.id }}</span>
           <span class="text-sm flex-1 truncate">{{ n.title }}</span>
-          <span class="text-[11px] text-neutral-500">{{ n.domain }}</span>
-          <span class="text-[11px] font-mono text-neutral-400">{{ n.strength.toFixed(2) }}</span>
+          <span class="text-xs text-neutral-500">{{ n.domain }}</span>
+          <span class="text-xs font-mono text-neutral-400">{{ n.strength.toFixed(2) }}</span>
         </button>
       </div>
 

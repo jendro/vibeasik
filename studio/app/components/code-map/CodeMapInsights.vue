@@ -22,7 +22,7 @@ const cards = computed(() => [
         <h3 class="text-sm font-semibold text-neutral-800 dark:text-neutral-100">
           {{ c.title }}
         </h3>
-        <span class="text-[11px] text-neutral-400 truncate">{{ c.hint }}</span>
+        <span class="text-xs text-neutral-400 truncate">{{ c.hint }}</span>
       </div>
       <p v-if="!c.items.length" class="text-xs text-neutral-400 py-3 text-center">
         Tidak ada.
@@ -30,10 +30,10 @@ const cards = computed(() => [
       <ul v-else class="divide-y divide-neutral-100 dark:divide-neutral-800/80">
         <li v-for="r in c.items.slice(0, 8)" :key="r.path" class="py-2 flex items-start gap-2.5 text-xs hover:bg-neutral-50/60 dark:hover:bg-neutral-800/30 px-2 -mx-2 rounded-lg transition-colors">
           <UIcon :name="kindMeta(r.kind).icon" class="size-3.5 mt-0.5 text-neutral-400 shrink-0" />
-          <button type="button" class="font-mono text-[11px] text-sky-700 dark:text-sky-300 hover:underline text-left break-all cursor-pointer" @click="emit('open', r.path)">
+          <button type="button" class="font-mono text-xs text-sky-700 dark:text-sky-300 hover:underline text-left break-all cursor-pointer" @click="emit('open', r.path)">
             {{ r.path }}
           </button>
-          <span class="ml-auto pl-2 text-[10px] text-neutral-500 dark:text-neutral-400 text-right line-clamp-2 max-w-[45%]">{{ c.note(r) }}</span>
+          <span class="ml-auto pl-2 text-xs text-neutral-500 dark:text-neutral-400 text-right line-clamp-2 max-w-[45%]">{{ c.note(r) }}</span>
         </li>
       </ul>
     </section>

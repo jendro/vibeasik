@@ -92,7 +92,7 @@ const submit = async () => {
                 Gabung ke #{{ g.parent_id }}
               </UBadge>
             </div>
-            <p class="text-[11px] text-violet-700 dark:text-violet-300">
+            <p class="text-xs text-violet-700 dark:text-violet-300">
               Dilebur karena {{ g.reason }}
             </p>
             <ul class="space-y-0.5 text-neutral-600 dark:text-neutral-300">

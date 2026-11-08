@@ -24,15 +24,15 @@ defineProps<{ synergyMap: ProjectSynergyMap | null }>()
         >
           <div class="flex items-center justify-between">
             <span class="font-bold text-xs text-neutral-900 dark:text-white">{{ be.component_name }}</span>
-            <UBadge size="xs" color="primary" variant="subtle" class="font-mono text-[10px]">
+            <UBadge size="xs" color="primary" variant="subtle" class="font-mono text-xs">
               Port {{ be.port }}
             </UBadge>
           </div>
-          <div class="text-[11px] text-neutral-500 flex items-center justify-between">
+          <div class="text-xs text-neutral-500 flex items-center justify-between">
             <span>Framework:</span>
             <span class="font-semibold text-neutral-800 dark:text-neutral-200 font-mono">{{ be.framework || 'Go / Fiber' }}</span>
           </div>
-          <div class="text-[11px] text-neutral-500 flex items-center justify-between">
+          <div class="text-xs text-neutral-500 flex items-center justify-between">
             <span>Total Endpoint:</span>
             <span class="font-bold text-sky-600 dark:text-sky-400 font-mono">{{ be.routes_count }} rute</span>
           </div>
@@ -60,17 +60,17 @@ defineProps<{ synergyMap: ProjectSynergyMap | null }>()
             <span class="font-mono font-bold text-xs text-amber-700 dark:text-amber-400">
               {{ tbl.table_name }}
             </span>
-            <span class="text-[10px] text-neutral-400 font-mono">
+            <span class="text-xs text-neutral-400 font-mono">
               {{ tbl.fields?.length || 0 }} field
             </span>
           </div>
           <div class="space-y-1">
-            <span class="text-[10px] uppercase font-semibold text-neutral-400">Field Tersimpan:</span>
+            <span class="text-xs uppercase font-semibold text-neutral-400">Field Tersimpan:</span>
             <div class="flex flex-wrap gap-1">
               <span
                 v-for="f in tbl.fields"
                 :key="f"
-                class="px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 border border-neutral-200/80 dark:border-neutral-700 font-mono text-[10px] text-neutral-700 dark:text-neutral-300"
+                class="px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 border border-neutral-200/80 dark:border-neutral-700 font-mono text-xs text-neutral-700 dark:text-neutral-300"
               >
                 {{ f }}
               </span>

@@ -81,7 +81,7 @@ onUnmounted(() => {
             <span class="font-bold text-sm tracking-tight text-neutral-900 dark:text-white truncate">vibeasik.com</span>
             <UBadge size="xs" color="primary" variant="subtle">Vibecoder</UBadge>
           </div>
-          <span class="text-[10px] text-neutral-500 dark:text-slate-400 font-mono truncate">Delivery & AI Agent Hub</span>
+          <span class="text-xs text-neutral-500 dark:text-slate-400 font-mono truncate">Delivery & AI Agent Hub</span>
         </div>
       </NuxtLink>
     </div>
@@ -123,12 +123,12 @@ onUnmounted(() => {
               size="xs"
               color="primary"
               variant="subtle"
-              class="text-[9px] px-1 py-0 font-mono shrink-0"
+              class="text-xs px-1 py-0 font-mono shrink-0"
             >
               {{ item.badge }}
             </UBadge>
           </div>
-          <span class="text-[11px] text-neutral-500 dark:text-neutral-400 leading-tight truncate font-sans">{{ item.desc }}</span>
+          <span class="text-xs text-neutral-500 dark:text-neutral-400 leading-tight truncate font-sans">{{ item.desc }}</span>
         </div>
       </NuxtLink>
 
@@ -166,7 +166,7 @@ onUnmounted(() => {
             {{ item.label }}
             <UIcon v-if="lockedItem(item)" name="i-lucide-lock" class="w-3 h-3 shrink-0 text-amber-500" />
           </span>
-          <span class="text-[11px] text-neutral-500 dark:text-neutral-400 leading-tight truncate font-sans">{{ item.desc }}</span>
+          <span class="text-xs text-neutral-500 dark:text-neutral-400 leading-tight truncate font-sans">{{ item.desc }}</span>
         </div>
       </NuxtLink>
     </div>
@@ -174,16 +174,16 @@ onUnmounted(() => {
     <!-- Environment & Status info card (expanded only) -->
     <div v-if="!collapsed" class="p-3 mx-2 mb-3 rounded-lg bg-neutral-50 dark:bg-slate-900/50 border border-neutral-200/80 dark:border-white/10 text-xs text-neutral-600 dark:text-neutral-400 space-y-2">
       <div class="flex items-center justify-between">
-        <span class="font-medium text-neutral-700 dark:text-neutral-300 text-[11px]">System Status</span>
+        <span class="font-medium text-neutral-700 dark:text-neutral-300 text-xs">System Status</span>
         <span
-          class="inline-flex items-center gap-1 text-[11px] font-mono"
+          class="inline-flex items-center gap-1 text-xs font-mono"
           :class="apiConnected ? 'text-sky-600 dark:text-sky-400' : 'text-rose-600 dark:text-rose-400'"
         >
           <span class="w-1.5 h-1.5 rounded-full" :class="apiConnected ? 'bg-sky-500' : 'bg-rose-500'" />
           {{ apiConnected ? 'Online' : 'Offline' }}
         </span>
       </div>
-      <div class="text-[10px] space-y-0.5 font-mono text-neutral-500 dark:text-slate-400">
+      <div class="text-xs space-y-0.5 font-mono text-neutral-500 dark:text-slate-400">
         <div>Backend: Go Fiber :8765</div>
         <div>Protocol: MCP 2024-11-05</div>
       </div>
@@ -254,7 +254,7 @@ onUnmounted(() => {
                 <span class="font-bold text-sm tracking-tight text-neutral-900 dark:text-white">vibeasik.com</span>
                 <UBadge size="xs" color="primary" variant="subtle">Vibecoder</UBadge>
               </div>
-              <span class="text-[10px] text-neutral-500 dark:text-slate-400 font-mono">Delivery & AI Platform</span>
+              <span class="text-xs text-neutral-500 dark:text-slate-400 font-mono">Delivery & AI Platform</span>
             </div>
           </NuxtLink>
 
@@ -296,7 +296,7 @@ onUnmounted(() => {
                   size="xs"
                   color="primary"
                   variant="subtle"
-                  class="text-[9px] px-1 py-0 font-mono shrink-0"
+                  class="text-xs px-1 py-0 font-mono shrink-0"
                 >
                   {{ item.badge }}
                 </UBadge>
@@ -345,7 +345,7 @@ onUnmounted(() => {
               {{ apiConnected ? ':8765 Active' : 'Offline' }}
             </span>
           </div>
-          <div class="text-[11px] text-neutral-500 dark:text-slate-400 font-mono">
+          <div class="text-xs text-neutral-500 dark:text-slate-400 font-mono">
             MCP Protocol 2024-11-05
           </div>
         </div>

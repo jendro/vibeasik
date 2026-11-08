@@ -99,7 +99,7 @@ const handleRunComponentAiReview = () => emit('run')
                 {{ plan.priority }}
               </UBadge>
             </div>
-            <p class="text-neutral-600 dark:text-neutral-400 text-[11px] leading-relaxed">
+            <p class="text-neutral-600 dark:text-neutral-400 text-xs leading-relaxed">
               {{ plan.description }}
             </p>
           </div>
@@ -109,7 +109,7 @@ const handleRunComponentAiReview = () => emit('run')
       <!-- AI Agent Ready Prompt -->
       <div v-if="componentAiReview.ai_agent_prompt" class="p-4 rounded-xl bg-neutral-950 text-neutral-200 space-y-2 text-xs shadow-xs">
         <div class="flex items-center justify-between">
-          <span class="font-mono text-sky-400 font-semibold text-[11px]">Prompt AI Agent (Antigravity / Claude Code)</span>
+          <span class="font-mono text-sky-400 font-semibold text-xs">Prompt AI Agent (Antigravity / Claude Code)</span>
           <UButton
             icon="i-lucide-copy"
             color="neutral"
@@ -120,7 +120,7 @@ const handleRunComponentAiReview = () => emit('run')
             Salin Prompt
           </UButton>
         </div>
-        <pre class="p-3 rounded-lg bg-black/40 font-mono text-[11px] text-neutral-300 overflow-x-auto whitespace-pre-wrap max-h-48 overflow-y-auto">{{ componentAiReview.ai_agent_prompt }}</pre>
+        <pre class="p-3 rounded-lg bg-black/40 font-mono text-xs text-neutral-300 overflow-x-auto whitespace-pre-wrap max-h-48 overflow-y-auto">{{ componentAiReview.ai_agent_prompt }}</pre>
       </div>
     </div>
   </div>

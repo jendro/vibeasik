@@ -140,7 +140,7 @@ const handleSubmit = () => {
               <div class="font-bold">
                 Backend (BE)
               </div>
-              <div class="text-[10px] text-neutral-400">
+              <div class="text-xs text-neutral-400">
                 Go Fiber/Gin :8080
               </div>
             </button>
@@ -153,7 +153,7 @@ const handleSubmit = () => {
               <div class="font-bold">
                 Web Client
               </div>
-              <div class="text-[10px] text-neutral-400">
+              <div class="text-xs text-neutral-400">
                 Nuxt 4 / Bun :3000
               </div>
             </button>
@@ -166,7 +166,7 @@ const handleSubmit = () => {
               <div class="font-bold">
                 Admin Dashboard
               </div>
-              <div class="text-[10px] text-neutral-400">
+              <div class="text-xs text-neutral-400">
                 Nuxt Admin :3001
               </div>
             </button>
@@ -179,7 +179,7 @@ const handleSubmit = () => {
               <div class="font-bold">
                 Mobile App
               </div>
-              <div class="text-[10px] text-neutral-400">
+              <div class="text-xs text-neutral-400">
                 Flutter / Mobile
               </div>
             </button>
@@ -251,7 +251,7 @@ const handleSubmit = () => {
             placeholder="/home/username/path/to/folder"
             class="font-mono text-xs"
           />
-          <p class="text-[11px] text-neutral-400 mt-1">
+          <p class="text-xs text-neutral-400 mt-1">
             Otomatis mengikuti root path project, atau sesuaikan jika folder berada di lokasi terpisah.
           </p>
         </div>
@@ -270,7 +270,7 @@ const handleSubmit = () => {
 
         <!-- Technical Details -->
         <div class="pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-3">
-          <div class="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
+          <div class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
             Detail Teknis (Opsional)
           </div>
 

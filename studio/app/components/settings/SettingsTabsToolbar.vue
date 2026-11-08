@@ -27,7 +27,7 @@ const openAddKeywordModal = () => emit('addKeyword')
       >
         <UIcon name="i-lucide-cpu" class="w-3.5 h-3.5 text-blue-500" />
         <span>Grid System One</span>
-        <span class="px-1.5 py-0.5 rounded-full text-[10px] bg-neutral-200 dark:bg-neutral-700 font-mono">
+        <span class="px-1.5 py-0.5 rounded-full text-xs bg-neutral-200 dark:bg-neutral-700 font-mono">
           {{ systemOneCount }}
         </span>
       </button>
@@ -42,7 +42,7 @@ const openAddKeywordModal = () => emit('addKeyword')
       >
         <UIcon name="i-lucide-bot" class="w-3.5 h-3.5 text-sky-500" />
         <span>Grid LLM Biasa</span>
-        <span class="px-1.5 py-0.5 rounded-full text-[10px] bg-neutral-200 dark:bg-neutral-700 font-mono">
+        <span class="px-1.5 py-0.5 rounded-full text-xs bg-neutral-200 dark:bg-neutral-700 font-mono">
           {{ standardLlmCount }}
         </span>
       </button>
@@ -57,7 +57,7 @@ const openAddKeywordModal = () => emit('addKeyword')
       >
         <UIcon name="i-lucide-shield-alert" class="w-3.5 h-3.5 text-amber-500" />
         <span>Sensored Keys Vault</span>
-        <span class="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-mono">
+        <span class="px-1.5 py-0.5 rounded-full text-xs bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-mono">
           {{ keywordCount }}
         </span>
       </button>

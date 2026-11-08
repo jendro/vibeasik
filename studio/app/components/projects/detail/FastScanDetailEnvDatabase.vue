@@ -83,7 +83,7 @@ const removeDynamicMeta = (key: string) => {
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono">
         <div class="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200 dark:border-neutral-700/60">
-          <div class="text-[10px] uppercase font-bold text-neutral-400">
+          <div class="text-xs uppercase font-bold text-neutral-400">
             Database Engine
           </div>
           <div class="mt-1 flex items-center gap-1.5 font-semibold text-neutral-800 dark:text-neutral-100">
@@ -92,7 +92,7 @@ const removeDynamicMeta = (key: string) => {
         </div>
 
         <div class="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200 dark:border-neutral-700/60">
-          <div class="text-[10px] uppercase font-bold text-neutral-400">
+          <div class="text-xs uppercase font-bold text-neutral-400">
             ORM / Driver / Client
           </div>
           <div class="mt-1 flex items-center gap-1.5 font-semibold text-neutral-800 dark:text-neutral-100">
@@ -101,7 +101,7 @@ const removeDynamicMeta = (key: string) => {
         </div>
 
         <div class="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200 dark:border-neutral-700/60">
-          <div class="text-[10px] uppercase font-bold text-neutral-400">
+          <div class="text-xs uppercase font-bold text-neutral-400">
             Nama DB / Target Koneksi
           </div>
           <div class="mt-1 font-semibold text-neutral-800 dark:text-neutral-100 truncate" :title="scanResult.extracted_env?.database_name">
@@ -119,7 +119,7 @@ const removeDynamicMeta = (key: string) => {
       </div>
 
       <div class="space-y-1.5">
-        <label class="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">Metode Login yang Tersedia:</label>
+        <label class="block text-xs font-semibold text-neutral-500 uppercase tracking-wider">Metode Login yang Tersedia:</label>
         <div v-if="scanResult.extracted_env?.auth_methods && scanResult.extracted_env.auth_methods.length > 0" class="flex flex-wrap gap-2">
           <TechBadge
             v-for="(auth, aIdx) in scanResult.extracted_env.auth_methods"
@@ -134,7 +134,7 @@ const removeDynamicMeta = (key: string) => {
       </div>
 
       <div v-if="scanResult.extracted_env?.login_endpoints && scanResult.extracted_env.login_endpoints.length > 0" class="space-y-1.5">
-        <label class="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">Endpoint Login / Auth:</label>
+        <label class="block text-xs font-semibold text-neutral-500 uppercase tracking-wider">Endpoint Login / Auth:</label>
         <div class="flex flex-wrap gap-2 font-mono text-xs">
           <span
             v-for="(ep, epIdx) in scanResult.extracted_env.login_endpoints"
@@ -148,7 +148,7 @@ const removeDynamicMeta = (key: string) => {
       </div>
 
       <div v-if="scanResult.extracted_env?.login_and_access_guide" class="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800 space-y-1.5 text-xs">
-        <div class="flex items-center gap-1 text-[11px] font-bold text-neutral-600 dark:text-neutral-300">
+        <div class="flex items-center gap-1 text-xs font-bold text-neutral-600 dark:text-neutral-300">
           <UIcon name="i-lucide-info" class="w-3.5 h-3.5 text-primary-500" />
           <span>Petunjuk Akses / Kredensial Default / Cara Login:</span>
         </div>
@@ -165,7 +165,7 @@ const removeDynamicMeta = (key: string) => {
           <UIcon name="i-lucide-tag" class="w-4 h-4 text-purple-600 dark:text-purple-400" />
           <span class="text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">Metadata & Atribut Dinamis Komponen</span>
         </div>
-        <span class="text-[10px] text-neutral-400">Dapat ditambah & disimpan fleksibel</span>
+        <span class="text-xs text-neutral-400">Dapat ditambah & disimpan fleksibel</span>
       </div>
 
       <div
@@ -181,7 +181,7 @@ const removeDynamicMeta = (key: string) => {
             <div class="font-bold text-neutral-800 dark:text-neutral-200 truncate">
               {{ key }}
             </div>
-            <div class="text-[11px] text-neutral-600 dark:text-neutral-400 truncate">
+            <div class="text-xs text-neutral-600 dark:text-neutral-400 truncate">
               {{ val }}
             </div>
           </div>

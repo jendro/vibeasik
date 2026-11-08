@@ -159,7 +159,7 @@ const quickRoutes = ['/', '/dashboard', '/login', '/admin', '/products', '/setti
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
         <!-- Component Dropdown -->
         <div>
-          <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Target Komponen</label>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Target Komponen</label>
           <select
             v-model="selectedCompId"
             class="w-full text-xs rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -172,7 +172,7 @@ const quickRoutes = ['/', '/dashboard', '/login', '/admin', '/products', '/setti
 
         <!-- Target Route Input -->
         <div>
-          <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Rute Halaman</label>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Rute Halaman</label>
           <UInput
             v-model="selectedRoute"
             placeholder="/dashboard"
@@ -183,7 +183,7 @@ const quickRoutes = ['/', '/dashboard', '/login', '/admin', '/products', '/setti
 
         <!-- Optional Prompt Focus -->
         <div>
-          <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Fokus Audit AI (Opsional)</label>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Fokus Audit AI (Opsional)</label>
           <UInput
             v-model="customPrompt"
             placeholder="Cek apakah ada nilai NaN/undefined..."
@@ -221,11 +221,11 @@ const quickRoutes = ['/', '/dashboard', '/login', '/admin', '/products', '/setti
 
       <!-- Quick Route Pills -->
       <div class="flex items-center gap-1.5 overflow-x-auto pt-1">
-        <span class="text-[10px] text-slate-400 font-medium">Quick Route:</span>
+        <span class="text-xs text-slate-400 font-medium">Quick Route:</span>
         <button
           v-for="r in quickRoutes"
           :key="r"
-          class="text-[10px] px-2 py-0.5 rounded font-mono transition-colors"
+          class="text-xs px-2 py-0.5 rounded font-mono transition-colors"
           :class="selectedRoute === r ? 'bg-blue-600 text-white font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'"
           @click="selectedRoute = r"
         >
@@ -245,7 +245,7 @@ const quickRoutes = ['/', '/dashboard', '/login', '/admin', '/products', '/setti
               <span class="size-2.5 rounded-full bg-yellow-500/80 inline-block" />
               <span class="size-2.5 rounded-full bg-green-500/80 inline-block" />
             </div>
-            <span class="font-mono text-[11px] text-slate-300 ml-2">
+            <span class="font-mono text-xs text-slate-300 ml-2">
               {{ latestCapture?.target_url || latestAudit?.target_url }}
             </span>
           </div>

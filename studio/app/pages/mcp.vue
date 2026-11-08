@@ -335,7 +335,7 @@ const sseConfigSnippet = computed(() => {
           </UButton>
         </div>
         <pre class="p-3.5 rounded-xl bg-[#010810] border border-white/10 text-sky-300 font-mono text-xs overflow-x-auto">{{ antigravitySnippet }}</pre>
-        <p class="text-[11px] text-neutral-400">
+        <p class="text-xs text-neutral-400">
           Atau gunakan berkas <code class="text-xs">~/.gemini/antigravity/mcp_config.json</code> dengan format stdio standar.
         </p>
       </div>
@@ -440,7 +440,7 @@ const sseConfigSnippet = computed(() => {
           <span class="text-xs font-semibold uppercase tracking-wider text-neutral-500">
             Pilih Tool MCP ({{ availableTools.length }})
           </span>
-          <span class="text-[11px] text-neutral-400 font-mono">
+          <span class="text-xs text-neutral-400 font-mono">
             Aktif: <strong class="text-sky-600 dark:text-sky-400">{{ selectedTool }}</strong>
           </span>
         </div>
@@ -463,7 +463,7 @@ const sseConfigSnippet = computed(() => {
                 class="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 shrink-0"
               />
             </div>
-            <div class="text-[11px] text-neutral-500 dark:text-neutral-400 line-clamp-2 leading-relaxed">
+            <div class="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-2 leading-relaxed">
               {{ t.description }}
             </div>
           </button>
@@ -474,7 +474,7 @@ const sseConfigSnippet = computed(() => {
       <div class="space-y-2">
         <div class="flex items-center justify-between text-xs">
           <label class="font-semibold uppercase text-neutral-500">Argumen Tool (JSON Payload)</label>
-          <span class="font-mono text-neutral-400 text-[11px]">params.arguments</span>
+          <span class="font-mono text-neutral-400 text-xs">params.arguments</span>
         </div>
         <textarea
           v-model="toolArgs"

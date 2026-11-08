@@ -202,7 +202,7 @@ const { handleApprove, handleReject, handleSplit, handleUpdateStatus, handleDele
           <span class="font-bold text-amber-900 dark:text-amber-200">
             Ada {{ pendingAISuggestionsCount }} Rekomendasi Agenda dari AI Agent
           </span>
-          <p class="text-amber-800 dark:text-amber-300 text-[11px] mt-0.5">
+          <p class="text-amber-800 dark:text-amber-300 text-xs mt-0.5">
             Dihasilkan otomatis berdasarkan evaluasi rubrik khusus proyek {{ activeProject?.name || '' }}. Silakan setujui untuk dieksekusi atau tolak.
           </p>
         </div>

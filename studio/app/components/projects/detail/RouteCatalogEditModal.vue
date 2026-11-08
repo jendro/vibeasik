@@ -109,7 +109,7 @@ const handleSaveEdit = async () => {
             <label class="block font-medium text-neutral-700 dark:text-neutral-300">
               Request API yang Dipanggil (1 baris per request)
             </label>
-            <span class="text-[10px] text-neutral-400">Contoh: GET /api/v1/projects</span>
+            <span class="text-xs text-neutral-400">Contoh: GET /api/v1/projects</span>
           </div>
           <UTextarea
             v-model="editForm.target_requests"
@@ -117,7 +117,7 @@ const handleSaveEdit = async () => {
             placeholder="GET /api/v1/projects&#10;POST /api/v1/projects&#10;GET /api/v1/auth/me"
             class="font-mono text-xs"
           />
-          <p class="text-[10.5px] text-neutral-400 mt-1">
+          <p class="text-xs text-neutral-400 mt-1">
             Daftar endpoint backend yang dipanggil oleh halaman ini.
           </p>
         </div>

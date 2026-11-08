@@ -221,7 +221,7 @@ const downloadScript = () => {
               Terapkan
             </UButton>
           </div>
-          <p class="text-[11px] text-neutral-400">
+          <p class="text-xs text-neutral-400">
             Semua komponen proyek (Backend, Frontend, Mobile) akan dikelompokkan ke dalam subfolder produk di folder ini.
           </p>
         </div>
@@ -246,7 +246,7 @@ const downloadScript = () => {
           <span class="w-2 h-2 rounded-full bg-rose-500" />
           <span>Struktur Saat Ini (Terpencar Berdasarkan Bahasa):</span>
         </div>
-        <div class="text-[11px] text-neutral-500 space-y-1 pl-3.5 border-l border-neutral-300 dark:border-neutral-700">
+        <div class="text-xs text-neutral-500 space-y-1 pl-3.5 border-l border-neutral-300 dark:border-neutral-700">
           <div>Documents/go/bejamBE</div>
           <div>Documents/Nuxt/bejamERP2</div>
           <div>Documents/Flutter/bejamMobile</div>
@@ -260,7 +260,7 @@ const downloadScript = () => {
           <span class="w-2 h-2 rounded-full bg-emerald-500" />
           <span>Target Reorganisasi (Product-Centric Rapi):</span>
         </div>
-        <div class="text-[11px] text-neutral-600 dark:text-neutral-300 space-y-1 pl-3.5 border-l border-sky-400">
+        <div class="text-xs text-neutral-600 dark:text-neutral-300 space-y-1 pl-3.5 border-l border-sky-400">
           <div>Projects/bejam/backend/</div>
           <div>Projects/bejam/frontend/</div>
           <div>Projects/bejam/mobile/</div>
@@ -378,7 +378,7 @@ const downloadScript = () => {
                 <UBadge v-if="item.role" size="xs" color="info" variant="subtle">
                   {{ item.role }}
                 </UBadge>
-                <span class="text-[11px] font-mono text-neutral-400">({{ formatBytes(item.size_bytes) }})</span>
+                <span class="text-xs font-mono text-neutral-400">({{ formatBytes(item.size_bytes) }})</span>
                 <UBadge v-if="item.is_git_repo" size="xs" color="neutral" variant="outline">
                   Git Repo
                 </UBadge>
@@ -394,7 +394,7 @@ const downloadScript = () => {
               </div>
 
               <!-- From / To display -->
-              <div class="grid grid-cols-1 lg:grid-cols-2 gap-2 text-[11px] font-mono">
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-2 text-xs font-mono">
                 <div class="p-1.5 rounded bg-neutral-100/70 dark:bg-neutral-800/70 text-neutral-600 dark:text-neutral-400 truncate" :title="item.current_path">
                   <span class="text-neutral-400 font-sans mr-1">Dari:</span>{{ item.current_path }}
                 </div>
@@ -404,11 +404,11 @@ const downloadScript = () => {
               </div>
 
               <!-- Warning or Error -->
-              <div v-if="item.warning" class="text-[11px] text-amber-600 dark:text-amber-400 flex items-center gap-1 font-sans">
+              <div v-if="item.warning" class="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1 font-sans">
                 <UIcon name="i-lucide-alert-triangle" class="w-3.5 h-3.5 shrink-0" />
                 <span>{{ item.warning }}</span>
               </div>
-              <div v-if="item.error" class="text-[11px] text-rose-600 dark:text-rose-400 flex items-center gap-1 font-sans">
+              <div v-if="item.error" class="text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1 font-sans">
                 <UIcon name="i-lucide-x-circle" class="w-3.5 h-3.5 shrink-0" />
                 <span>{{ item.error }}</span>
               </div>

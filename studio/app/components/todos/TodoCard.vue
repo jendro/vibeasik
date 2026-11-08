@@ -64,7 +64,7 @@ const categoryMeta = computed(() => todoCategoryMeta(props.todo))
         <div v-if="isLongDescription" class="mt-1.5 pt-1 border-t border-neutral-200/50 dark:border-neutral-700/50 flex justify-end">
           <button
             type="button"
-            class="text-[10px] font-medium text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1 cursor-pointer"
+            class="text-xs font-medium text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1 cursor-pointer"
             @click="isExpanded = !isExpanded"
           >
             <UIcon :name="isExpanded ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="w-3 h-3" />
@@ -80,7 +80,7 @@ const categoryMeta = computed(() => todoCategoryMeta(props.todo))
     <div v-if="todo.rationale" class="text-xs pt-1">
       <button
         type="button"
-        class="inline-flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-400 hover:underline font-medium"
+        class="inline-flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400 hover:underline font-medium"
         @click="showRationale = !showRationale"
       >
         <UIcon :name="showRationale ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'" class="w-3.5 h-3.5" />
@@ -91,12 +91,12 @@ const categoryMeta = computed(() => todoCategoryMeta(props.todo))
         v-if="showRationale"
         class="mt-2 p-3 rounded-lg bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 text-neutral-700 dark:text-neutral-300 text-xs space-y-1.5"
       >
-        <div class="font-medium text-amber-800 dark:text-amber-300 flex items-center justify-between gap-1.5 text-[11px]">
+        <div class="font-medium text-amber-800 dark:text-amber-300 flex items-center justify-between gap-1.5 text-xs">
           <div class="flex items-center gap-1.5">
             <UIcon name="i-lucide-compass" class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
             <span>Dasar Patokan (Rubrik): <strong>{{ todo.guideline_ref || 'STANDAR' }}</strong></span>
           </div>
-          <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-200/70 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200">
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-200/70 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200">
             {{ categoryMeta.label }}
           </span>
         </div>

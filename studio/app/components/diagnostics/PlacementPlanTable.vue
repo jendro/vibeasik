@@ -16,7 +16,7 @@ const actionLabel: Record<string, string> = {
 
 <template>
   <div class="space-y-2">
-    <div class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
+    <div class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
       <UIcon name="i-lucide-map" class="w-3.5 h-3.5 text-emerald-500" />
       <span>Peta Penempatan Logika (sesuai Peta Layer Proyek):</span>
     </div>
@@ -55,7 +55,7 @@ const actionLabel: Record<string, string> = {
             </td>
             <td class="px-2.5 py-1.5 font-mono break-all">
               {{ step.target || '-' }}
-              <span v-if="step.warning" class="block mt-0.5 font-sans text-[11px] text-amber-600 dark:text-amber-400">
+              <span v-if="step.warning" class="block mt-0.5 font-sans text-xs text-amber-600 dark:text-amber-400">
                 ⚠️ {{ step.warning }}
               </span>
             </td>

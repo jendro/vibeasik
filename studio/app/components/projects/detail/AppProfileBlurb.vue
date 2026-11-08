@@ -15,13 +15,13 @@ defineProps<{
       <li
         v-for="r in app.responsibilities.slice(0, 4)"
         :key="r"
-        class="flex items-start gap-1.5 text-[11px] text-neutral-600 dark:text-neutral-400"
+        class="flex items-start gap-1.5 text-xs text-neutral-600 dark:text-neutral-400"
       >
         <UIcon name="i-lucide-check" class="w-3 h-3 mt-0.5 text-sky-500 shrink-0" />
         <span class="line-clamp-1">{{ r }}</span>
       </li>
     </ul>
-    <div v-if="app.talks_to.length" class="flex flex-wrap items-center gap-1 text-[10px]">
+    <div v-if="app.talks_to.length" class="flex flex-wrap items-center gap-1 text-xs">
       <span class="text-neutral-400">Terhubung ke</span>
       <span
         v-for="t in app.talks_to"

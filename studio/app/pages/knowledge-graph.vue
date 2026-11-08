@@ -270,7 +270,7 @@ const info = computed(() => {
               </span>
               <span class="text-xs font-semibold text-neutral-900 dark:text-white">{{ i + 1 }}. {{ f.title }}</span>
             </div>
-            <p class="mt-1.5 text-[11px] text-neutral-500 leading-relaxed">
+            <p class="mt-1.5 text-xs text-neutral-500 leading-relaxed">
               {{ f.desc }}
             </p>
           </div>
@@ -294,7 +294,7 @@ const info = computed(() => {
           >
             <span class="size-2 rounded-full shrink-0" :style="{ background: colorOf(n) }" />
             <span class="truncate">{{ n.title }}</span>
-            <span class="ml-auto text-[11px] text-neutral-500">K{{ n.id }}</span>
+            <span class="ml-auto text-xs text-neutral-500">K{{ n.id }}</span>
           </button>
         </div>
       </div>
@@ -337,7 +337,7 @@ const info = computed(() => {
           <UButton size="xs" color="neutral" variant="subtle" icon="i-lucide-wind" title="Guncang ulang tata letak" @click="canvasRef?.reheat()" />
         </div>
 
-        <div v-if="legend.length" class="absolute bottom-3 left-3 max-w-[70%] flex flex-wrap gap-x-3 gap-y-1 px-3 py-2 rounded-lg bg-white/80 dark:bg-neutral-900/80 backdrop-blur text-[11px] text-neutral-700 dark:text-neutral-300">
+        <div v-if="legend.length" class="absolute bottom-3 left-3 max-w-[70%] flex flex-wrap gap-x-3 gap-y-1 px-3 py-2 rounded-lg bg-white/80 dark:bg-neutral-900/80 backdrop-blur text-xs text-neutral-700 dark:text-neutral-300">
           <span v-for="l in legend" :key="l.label" class="flex items-center gap-1.5">
             <span class="size-2.5 rounded-full" :style="{ background: l.color }" />{{ l.label }}
           </span>
@@ -395,11 +395,11 @@ const info = computed(() => {
               <span class="block mt-1 h-1 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
                 <span class="block h-full rounded-full" :style="{ width: pct(influence.rank.get(n.id) || 0), background: colorOf(n) }" />
               </span>
-              <span class="block mt-1 text-[11px] text-neutral-500">{{ influence.degree.get(n.id) || 0 }} tautan · {{ n.domain || 'umum' }}</span>
+              <span class="block mt-1 text-xs text-neutral-500">{{ influence.degree.get(n.id) || 0 }} tautan · {{ n.domain || 'umum' }}</span>
             </span>
           </button>
         </template>
-        <p class="text-[11px] text-neutral-500 leading-relaxed pt-1 border-t border-neutral-100 dark:border-neutral-800">
+        <p class="text-xs text-neutral-500 leading-relaxed pt-1 border-t border-neutral-100 dark:border-neutral-800">
           Arahkan kursor untuk menyorot tetangga, klik untuk detail, seret node untuk memindah, gulir untuk zoom.
         </p>
       </aside>

@@ -323,7 +323,7 @@ const getLanguageLabel = (lang: string) => {
         </span>
         <button
           type="button"
-          class="px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors"
+          class="px-2.5 py-1 rounded-full text-xs font-medium border transition-colors"
           :class="selectedLanguage === 'all' ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 border-neutral-900 dark:border-white' : 'bg-transparent text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600'"
           @click="selectedLanguage = 'all'"
         >
@@ -333,7 +333,7 @@ const getLanguageLabel = (lang: string) => {
           v-for="lang in availableLanguages"
           :key="lang"
           type="button"
-          class="px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors flex items-center gap-1"
+          class="px-2.5 py-1 rounded-full text-xs font-medium border transition-colors flex items-center gap-1"
           :class="selectedLanguage === lang ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 border-neutral-900 dark:border-white' : 'bg-transparent text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600'"
           @click="selectedLanguage = lang"
         >
@@ -393,11 +393,11 @@ const getLanguageLabel = (lang: string) => {
                   {{ adapter.name }}
                 </h3>
                 <div class="flex items-center gap-1.5 mt-0.5">
-                  <span class="text-[11px] text-neutral-500 dark:text-neutral-400 font-mono">
+                  <span class="text-xs text-neutral-500 dark:text-neutral-400 font-mono">
                     {{ adapter.id }}
                   </span>
                   <span class="text-neutral-300 dark:text-neutral-700">•</span>
-                  <span class="text-[11px] text-neutral-500 dark:text-neutral-400 capitalize">
+                  <span class="text-xs text-neutral-500 dark:text-neutral-400 capitalize">
                     {{ getLanguageLabel(adapter.language) }}
                   </span>
                 </div>
@@ -407,7 +407,7 @@ const getLanguageLabel = (lang: string) => {
             <!-- Badges: Type & Active Status -->
             <div class="flex items-center gap-1.5">
               <span
-                class="px-2 py-0.5 text-[11px] font-semibold rounded-md border"
+                class="px-2 py-0.5 text-xs font-semibold rounded-md border"
                 :class="adapter.type === 'backend'
                   ? 'bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800/60'
                   : 'bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800/60'"
@@ -416,7 +416,7 @@ const getLanguageLabel = (lang: string) => {
               </span>
 
               <span
-                class="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20"
+                class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20"
                 title="Adapter aktif & siap digunakan"
               >
                 <span class="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
@@ -432,7 +432,7 @@ const getLanguageLabel = (lang: string) => {
 
           <!-- Latest Version Info -->
           <div class="flex flex-wrap items-center gap-2 pt-0.5">
-            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-mono font-medium bg-neutral-100 dark:bg-slate-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200/80 dark:border-neutral-700/80">
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-mono font-medium bg-neutral-100 dark:bg-slate-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200/80 dark:border-neutral-700/80">
               <UIcon name="i-lucide-tag" class="w-3.5 h-3.5 text-sky-500" />
               <span>Versi Terbaru: <strong class="text-neutral-900 dark:text-white">{{ getAdapterVersion(adapter) }}</strong></span>
             </span>
@@ -440,19 +440,19 @@ const getLanguageLabel = (lang: string) => {
               size="xs"
               color="primary"
               variant="subtle"
-              class="text-[10px]"
+              class="text-xs"
             >
               {{ getAdapterBadge(adapter) }}
             </UBadge>
           </div>
 
           <!-- Example File Tag -->
-          <div class="flex items-center gap-2 pt-1 text-[11px] text-neutral-500 dark:text-neutral-400">
+          <div class="flex items-center gap-2 pt-1 text-xs text-neutral-500 dark:text-neutral-400">
             <span class="font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1">
               <UIcon name="i-lucide-file-code-2" class="w-3.5 h-3.5 text-neutral-400" />
               File Contoh:
             </span>
-            <code class="px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-slate-800/40 font-mono text-[11px] text-neutral-800 dark:text-neutral-200 border border-neutral-200/60 dark:border-neutral-700/60">
+            <code class="px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-slate-800/40 font-mono text-xs text-neutral-800 dark:text-neutral-200 border border-neutral-200/60 dark:border-neutral-700/60">
               {{ adapter.example_file }}
             </code>
           </div>
@@ -471,7 +471,7 @@ const getLanguageLabel = (lang: string) => {
               />
             </button>
 
-            <span class="text-[11px] text-neutral-400">
+            <span class="text-xs text-neutral-400">
               {{ adapter.features.length }} Fitur Terintegrasi
             </span>
           </div>
@@ -480,11 +480,11 @@ const getLanguageLabel = (lang: string) => {
           <div v-show="expandedCards[adapter.id]" class="space-y-3 pt-2 text-xs">
             <!-- Detection Rules -->
             <div class="p-3 rounded-lg bg-neutral-50 dark:bg-slate-800/50 border border-neutral-100 dark:border-white/10">
-              <div class="font-semibold text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5 mb-1.5 text-[11px]">
+              <div class="font-semibold text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5 mb-1.5 text-xs">
                 <UIcon name="i-lucide-scan-search" class="w-3.5 h-3.5 text-amber-500" />
                 Aturan Deteksi Otomatis (Trigger):
               </div>
-              <ul class="space-y-1 pl-4 list-disc text-neutral-600 dark:text-neutral-400 text-[11px]">
+              <ul class="space-y-1 pl-4 list-disc text-neutral-600 dark:text-neutral-400 text-xs">
                 <li v-for="(rule, idx) in adapter.detect_rules" :key="idx">
                   {{ rule }}
                 </li>
@@ -493,11 +493,11 @@ const getLanguageLabel = (lang: string) => {
 
             <!-- Scan Methods -->
             <div class="p-3 rounded-lg bg-neutral-50 dark:bg-slate-800/50 border border-neutral-100 dark:border-white/10">
-              <div class="font-semibold text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5 mb-1.5 text-[11px]">
+              <div class="font-semibold text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5 mb-1.5 text-xs">
                 <UIcon name="i-lucide-cpu" class="w-3.5 h-3.5 text-sky-500" />
                 Metode Ekstraksi Rute:
               </div>
-              <ul class="space-y-1 pl-4 list-disc text-neutral-600 dark:text-neutral-400 text-[11px]">
+              <ul class="space-y-1 pl-4 list-disc text-neutral-600 dark:text-neutral-400 text-xs">
                 <li v-for="(method, idx) in adapter.scan_methods" :key="idx">
                   {{ method }}
                 </li>
@@ -506,11 +506,11 @@ const getLanguageLabel = (lang: string) => {
 
             <!-- Features Checklist -->
             <div class="p-3 rounded-lg bg-neutral-50 dark:bg-slate-800/50 border border-neutral-100 dark:border-white/10">
-              <div class="font-semibold text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5 mb-2 text-[11px]">
+              <div class="font-semibold text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5 mb-2 text-xs">
                 <UIcon name="i-lucide-badge-check" class="w-3.5 h-3.5 text-sky-400" />
                 Kapabilitas & Dukungan Sintaks:
               </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
                 <div
                   v-for="(feature, idx) in adapter.features"
                   :key="idx"
@@ -526,7 +526,7 @@ const getLanguageLabel = (lang: string) => {
 
         <!-- Card Footer Actions -->
         <div class="px-5 py-3 border-t border-neutral-100 dark:border-white/10 bg-neutral-50/50 dark:bg-slate-800/20 rounded-b-xl flex items-center justify-between gap-2">
-          <div class="text-[11px] text-neutral-400 flex items-center gap-1 font-mono">
+          <div class="text-xs text-neutral-400 flex items-center gap-1 font-mono">
             <span class="w-2 h-2 rounded-full bg-sky-500/60 inline-block" />
             Default Registry: OK
           </div>

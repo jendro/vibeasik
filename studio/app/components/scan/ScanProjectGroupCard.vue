@@ -81,7 +81,7 @@ const handleMoveChange = (compIndex: number, event: Event) => {
       <!-- If New Project: Name + Type -->
       <template v-if="!group.is_existing">
         <div class="md:col-span-8 space-y-1">
-          <label class="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
+          <label class="block text-xs font-semibold text-neutral-500 uppercase tracking-wider">
             Nama Project Baru <span class="text-rose-500">*</span>
           </label>
           <UInput
@@ -94,7 +94,7 @@ const handleMoveChange = (compIndex: number, event: Event) => {
         </div>
 
         <div class="md:col-span-4 space-y-1">
-          <label class="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
+          <label class="block text-xs font-semibold text-neutral-500 uppercase tracking-wider">
             Tipe Arsitektur
           </label>
           <select
@@ -123,7 +123,7 @@ const handleMoveChange = (compIndex: number, event: Event) => {
       <!-- If Existing Project: Dropdown -->
       <template v-else>
         <div class="md:col-span-12 space-y-1">
-          <label class="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
+          <label class="block text-xs font-semibold text-neutral-500 uppercase tracking-wider">
             Pilih Project Tujuan <span class="text-rose-500">*</span>
           </label>
           <select
@@ -139,14 +139,14 @@ const handleMoveChange = (compIndex: number, event: Event) => {
     </div>
 
     <!-- AI Reasoning pill -->
-    <div v-if="group.reason" class="text-[11px] text-neutral-500 dark:text-neutral-400 italic flex items-center gap-1.5 pt-0.5">
+    <div v-if="group.reason" class="text-xs text-neutral-500 dark:text-neutral-400 italic flex items-center gap-1.5 pt-0.5">
       <UIcon name="i-lucide-sparkles" class="w-3.5 h-3.5 text-sky-500 shrink-0" />
       <span>Saran AI: {{ group.reason }}</span>
     </div>
 
     <!-- Components Table / Cards -->
     <div class="space-y-2 pt-1">
-      <div class="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
+      <div class="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
         Komponen yang Dimasukkan ke Project Ini ({{ group.components.length }})
       </div>
 
@@ -188,7 +188,7 @@ const handleMoveChange = (compIndex: number, event: Event) => {
           <div class="flex items-center gap-2 shrink-0">
             <select
               v-model="comp.role"
-              class="px-2 py-1 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-[11px] text-neutral-800 dark:text-neutral-200 focus:outline-none focus:border-primary-500"
+              class="px-2 py-1 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs text-neutral-800 dark:text-neutral-200 focus:outline-none focus:border-primary-500"
             >
               <option value="backend">
                 Backend (BE)
@@ -218,7 +218,7 @@ const handleMoveChange = (compIndex: number, event: Event) => {
 
             <!-- Move to other project -->
             <select
-              class="px-2 py-1 rounded-md border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-[11px] text-neutral-600 dark:text-neutral-300 focus:outline-none focus:border-primary-500 cursor-pointer"
+              class="px-2 py-1 rounded-md border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-xs text-neutral-600 dark:text-neutral-300 focus:outline-none focus:border-primary-500 cursor-pointer"
               title="Pindahkan komponen ini ke project lain"
               @change="handleMoveChange(cIdx, $event)"
             >
@@ -241,7 +241,7 @@ const handleMoveChange = (compIndex: number, event: Event) => {
         </div>
 
         <!-- Tech badges & directory path -->
-        <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-neutral-500 font-mono">
+        <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-500 font-mono">
           <div class="flex flex-wrap items-center gap-1.5">
             <span class="text-neutral-400">📁 {{ comp.relative_path || comp.absolute_path }}</span>
             <span class="text-neutral-300 dark:text-neutral-700">•</span>
@@ -254,10 +254,10 @@ const handleMoveChange = (compIndex: number, event: Event) => {
           </div>
 
           <div class="flex items-center gap-2">
-            <span v-if="comp.dev_command" class="px-2 py-0.5 rounded bg-neutral-200 dark:bg-neutral-700 text-[10px] font-bold">
+            <span v-if="comp.dev_command" class="px-2 py-0.5 rounded bg-neutral-200 dark:bg-neutral-700 text-xs font-bold">
               {{ comp.dev_command }}
             </span>
-            <span v-if="comp.port > 0" class="px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 text-[10px] font-bold">
+            <span v-if="comp.port > 0" class="px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 text-xs font-bold">
               :{{ comp.port }}
             </span>
           </div>

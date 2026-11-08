@@ -47,7 +47,7 @@ const filteredRoutes = computed(() => {
 
     <div v-if="filteredRoutes.length > 0" class="overflow-x-auto rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 shadow-2xs">
       <table class="w-full text-left text-xs">
-        <thead class="bg-neutral-50 dark:bg-neutral-800 text-neutral-500 uppercase text-[10px] tracking-wider border-b border-neutral-200 dark:border-neutral-800">
+        <thead class="bg-neutral-50 dark:bg-neutral-800 text-neutral-500 uppercase text-xs tracking-wider border-b border-neutral-200 dark:border-neutral-800">
           <tr>
             <th class="p-3 w-20">
               Method
@@ -106,7 +106,7 @@ const filteredRoutes = computed(() => {
 
             <td class="p-3 whitespace-nowrap">
               <span
-                class="text-[11px] px-2 py-0.5 rounded font-sans inline-flex items-center gap-1"
+                class="text-xs px-2 py-0.5 rounded font-sans inline-flex items-center gap-1"
                 :class="r.middleware && r.middleware.includes('Protected') ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-900/50' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'"
               >
                 <UIcon

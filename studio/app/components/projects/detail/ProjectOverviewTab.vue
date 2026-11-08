@@ -81,13 +81,13 @@ const stats = computed(() => {
         @click="s.tab && emit('switchTab', s.tab)"
       >
         <div class="flex items-center justify-between text-neutral-400">
-          <span class="text-[10px] uppercase font-semibold tracking-wider">{{ s.label }}</span>
+          <span class="text-xs uppercase font-semibold tracking-wider">{{ s.label }}</span>
           <UIcon :name="s.icon" class="w-3.5 h-3.5" />
         </div>
         <div class="text-2xl font-bold text-neutral-900 dark:text-white mt-1 font-mono">
           {{ s.value }}
         </div>
-        <div class="text-[11px] text-neutral-500">
+        <div class="text-xs text-neutral-500">
           {{ s.sub }}
         </div>
       </component>
@@ -105,7 +105,7 @@ const stats = computed(() => {
         </p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div class="rounded-lg bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200/70 dark:border-neutral-800 p-3">
-            <div class="text-[10px] uppercase font-bold text-rose-500 mb-1">
+            <div class="text-xs uppercase font-bold text-rose-500 mb-1">
               Masalah
             </div>
             <p class="text-neutral-700 dark:text-neutral-300 leading-relaxed">
@@ -113,7 +113,7 @@ const stats = computed(() => {
             </p>
           </div>
           <div class="rounded-lg bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200/70 dark:border-neutral-800 p-3">
-            <div class="text-[10px] uppercase font-bold text-emerald-500 mb-1">
+            <div class="text-xs uppercase font-bold text-emerald-500 mb-1">
               Solusi
             </div>
             <p class="text-neutral-700 dark:text-neutral-300 leading-relaxed">
@@ -122,11 +122,11 @@ const stats = computed(() => {
           </div>
         </div>
         <div v-if="profile.purpose.target_users?.length" class="space-y-1.5">
-          <div class="text-[10px] uppercase font-bold text-neutral-400">
+          <div class="text-xs uppercase font-bold text-neutral-400">
             Target Pengguna
           </div>
           <div class="flex flex-wrap gap-1.5">
-            <span v-for="u in profile.purpose.target_users" :key="u" class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200">
+            <span v-for="u in profile.purpose.target_users" :key="u" class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200">
               <UIcon name="i-lucide-user" class="w-3 h-3 text-neutral-400" />{{ u }}
             </span>
           </div>
@@ -146,7 +146,7 @@ const stats = computed(() => {
             :class="i <= stageIndex ? 'bg-sky-500' : 'bg-neutral-200 dark:bg-neutral-800'"
           />
         </div>
-        <div class="flex justify-between text-[10px] text-neutral-400">
+        <div class="flex justify-between text-xs text-neutral-400">
           <span v-for="(st, i) in stages" :key="st.key" :class="i === stageIndex ? 'text-sky-600 dark:text-sky-400 font-bold' : ''">{{ st.label }}</span>
         </div>
         <p class="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed">

@@ -43,7 +43,7 @@ const handleDelete = (route: ComponentRoute) => emit('delete', route)
       <!-- Table within Group -->
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs">
-          <thead class="bg-neutral-50/40 dark:bg-neutral-800/30 text-neutral-400 uppercase text-[10px] tracking-wider border-b border-neutral-100 dark:border-neutral-800/80">
+          <thead class="bg-neutral-50/40 dark:bg-neutral-800/30 text-neutral-400 uppercase text-xs tracking-wider border-b border-neutral-100 dark:border-neutral-800/80">
             <tr v-if="isFrontend">
               <th class="py-2.5 px-4 w-20">
                 Tipe
@@ -126,12 +126,12 @@ const handleDelete = (route: ComponentRoute) => emit('delete', route)
                   </button>
                   <span
                     v-if="r.middleware"
-                    class="text-[10px] px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 font-mono text-neutral-500 shrink-0"
+                    class="text-xs px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 font-mono text-neutral-500 shrink-0"
                   >
                     {{ r.middleware }}
                   </span>
                 </div>
-                <div v-if="r.tags" class="text-[10px] text-neutral-400 mt-0.5">
+                <div v-if="r.tags" class="text-xs text-neutral-400 mt-0.5">
                   Tags: {{ r.tags }}
                 </div>
               </td>
@@ -143,7 +143,7 @@ const handleDelete = (route: ComponentRoute) => emit('delete', route)
                     <span
                       v-for="(req, idx) in (expandedRequests[r.id] ? parseTargetRequests(r.target_requests) : parseTargetRequests(r.target_requests).slice(0, 3))"
                       :key="idx"
-                      class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono border"
+                      class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-mono border"
                       :class="[getRequestMethodColor(req).bg, getRequestMethodColor(req).text, getRequestMethodColor(req).border]"
                     >
                       <span class="font-bold shrink-0">{{ req.split(' ')[0] }}</span>
@@ -153,36 +153,36 @@ const handleDelete = (route: ComponentRoute) => emit('delete', route)
                   <button
                     v-if="parseTargetRequests(r.target_requests).length > 3"
                     type="button"
-                    class="text-[10px] font-semibold text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer block mt-1"
+                    class="text-xs font-semibold text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer block mt-1"
                     @click="toggleExpandRequests(r.id)"
                   >
                     {{ expandedRequests[r.id] ? 'Tutup' : `+${parseTargetRequests(r.target_requests).length - 3} request lainnya` }}
                   </button>
                 </div>
-                <span v-else class="text-neutral-400 italic text-[11px]">
+                <span v-else class="text-neutral-400 italic text-xs">
                   -
                 </span>
               </td>
 
               <!-- Kelompok Fungsi / Sub-Fitur -->
               <td class="py-3 px-4 align-top">
-                <UBadge size="xs" color="neutral" variant="outline" class="font-medium text-[11px]">
+                <UBadge size="xs" color="neutral" variant="outline" class="font-medium text-xs">
                   {{ r.function_group || (isFrontend ? 'Halaman' : 'Umum') }}
                 </UBadge>
               </td>
 
               <!-- Keterangan / Deskripsi -->
-              <td class="py-3 px-4 align-top text-neutral-700 dark:text-neutral-300 leading-relaxed text-[11.5px]">
+              <td class="py-3 px-4 align-top text-neutral-700 dark:text-neutral-300 leading-relaxed text-xs">
                 <p v-if="r.description">
                   {{ r.description }}
                 </p>
-                <p v-else class="text-neutral-400 italic text-[11px]">
+                <p v-else class="text-neutral-400 italic text-xs">
                   {{ isFrontend ? 'Belum ada keterangan. Klik "Kirim ke LLM" untuk membuat keterangan halaman otomatis.' : 'Belum ada keterangan. Klik "Kirim ke LLM" untuk membuat keterangan otomatis.' }}
                 </p>
               </td>
 
               <!-- Handler / File Sumber -->
-              <td class="py-3 px-4 text-right align-top font-mono text-[11px] text-neutral-500 truncate max-w-xs">
+              <td class="py-3 px-4 text-right align-top font-mono text-xs text-neutral-500 truncate max-w-xs">
                 <span :title="r.handler">{{ r.handler || '-' }}</span>
               </td>
 

@@ -64,7 +64,7 @@ const { formatDateTime } = useFormatters()
             <button
               v-if="hasLastDeepCheck"
               type="button"
-              class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-medium bg-neutral-100 dark:bg-neutral-800/80 hover:bg-neutral-200/80 dark:hover:bg-neutral-700/80 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 transition-colors cursor-pointer"
+              class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-neutral-100 dark:bg-neutral-800/80 hover:bg-neutral-200/80 dark:hover:bg-neutral-700/80 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 transition-colors cursor-pointer"
               :title="`Klik untuk melihat simulasi rute API & latensi (Last Deep Check: ${formatDateTime(lastDeepCheckAt)})`"
               @click="emit('openSimulations')"
             >
@@ -76,7 +76,7 @@ const { formatDateTime } = useFormatters()
               </span>
               <span
                 v-if="deepPendingCount && deepPendingCount > 0"
-                class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
+                class="ml-1 px-1.5 py-0.5 rounded text-xs font-mono font-bold bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
                 title="Jumlah temuan Deep Check yang belum diselesaikan"
               >
                 {{ deepPendingCount }} isu
@@ -86,7 +86,7 @@ const { formatDateTime } = useFormatters()
 
             <span
               v-else
-              class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
+              class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
             >
               <UIcon name="i-lucide-info" class="w-3.5 h-3.5 text-amber-500" />
               <span>Belum pernah Deep Check</span>
@@ -105,7 +105,7 @@ const { formatDateTime } = useFormatters()
           {{ score }}
         </div>
         <div class="mt-1 text-right space-y-0.5">
-          <div class="text-[10px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+          <div class="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
             Health Score
           </div>
           <div class="text-xs font-semibold" :class="getScoreTextColor(score)">
@@ -238,7 +238,7 @@ const { formatDateTime } = useFormatters()
           size="xs"
           color="neutral"
           variant="subtle"
-          class="ml-1 px-1.5 py-0 font-mono text-[10px]"
+          class="ml-1 px-1.5 py-0 font-mono text-xs"
         >
           {{ pendingCount }}
         </UBadge>

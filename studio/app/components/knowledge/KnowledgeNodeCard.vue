@@ -21,7 +21,7 @@ const barColor = computed(() => utilityPct.value >= 70 ? 'bg-emerald-500' : util
     <div class="flex items-start justify-between gap-3">
       <button type="button" class="min-w-0 text-left" @click="emit('open', node)">
         <div class="flex items-center gap-1.5 flex-wrap">
-          <span class="text-[11px] font-mono text-neutral-400">K{{ node.id }}</span>
+          <span class="text-xs font-mono text-neutral-400">K{{ node.id }}</span>
           <UBadge size="xs" :color="kind.color" variant="subtle" :icon="kind.icon">
             {{ kind.label }}
           </UBadge>
@@ -57,7 +57,7 @@ const barColor = computed(() => utilityPct.value >= 70 ? 'bg-emerald-500' : util
         <UButton v-if="node.status === 'active'" size="xs" color="neutral" variant="ghost" icon="i-lucide-archive" aria-label="Pensiunkan" @click="emit('retire', node)" />
       </div>
     </div>
-    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-neutral-500">
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500">
       <div class="flex items-center gap-1.5 w-32" :title="tested ? 'Utilitas dari bukti ✓/✗' : 'Belum teruji (utilitas awal 50%)'">
         <div class="h-1.5 flex-1 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
           <div class="h-full rounded-full" :class="tested ? barColor : 'bg-neutral-300 dark:bg-neutral-600'" :style="{ width: `${utilityPct}%` }" />

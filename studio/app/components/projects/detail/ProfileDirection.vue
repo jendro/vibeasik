@@ -52,12 +52,12 @@ const severityClass: Record<ProfileRisk['severity'], string> = {
             <span class="w-2 h-2 rounded-full" :class="h.dot" />
             <span class="text-xs font-bold text-neutral-800 dark:text-neutral-100">{{ h.label }}</span>
           </div>
-          <span class="text-[10px] font-mono text-neutral-400">{{ byHorizon[h.key].length }}</span>
+          <span class="text-xs font-mono text-neutral-400">{{ byHorizon[h.key].length }}</span>
         </div>
-        <p class="text-[10px] text-neutral-400">
+        <p class="text-xs text-neutral-400">
           {{ h.hint }}
         </p>
-        <div v-if="byHorizon[h.key].length === 0" class="text-[11px] text-neutral-400 italic py-2">
+        <div v-if="byHorizon[h.key].length === 0" class="text-xs text-neutral-400 italic py-2">
           Belum ada.
         </div>
         <div
@@ -68,11 +68,11 @@ const severityClass: Record<ProfileRisk['severity'], string> = {
           <div class="text-xs font-semibold text-neutral-900 dark:text-white leading-snug">
             {{ r.title }}
           </div>
-          <p v-if="r.rationale" class="text-[11px] text-neutral-500 leading-relaxed">
+          <p v-if="r.rationale" class="text-xs text-neutral-500 leading-relaxed">
             {{ r.rationale }}
           </p>
           <div v-if="r.related_features.length" class="flex flex-wrap gap-1 pt-0.5">
-            <span v-for="f in r.related_features" :key="f" class="px-1.5 py-0.5 rounded text-[10px] bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">{{ f }}</span>
+            <span v-for="f in r.related_features" :key="f" class="px-1.5 py-0.5 rounded text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">{{ f }}</span>
           </div>
         </div>
       </div>
@@ -87,7 +87,7 @@ const severityClass: Record<ProfileRisk['severity'], string> = {
           <UIcon name="i-lucide-triangle-alert" class="w-3.5 h-3.5 text-amber-500" />
           Risiko ({{ risks.length }})
         </h3>
-        <p v-if="!risks.length" class="text-[11px] text-neutral-400">
+        <p v-if="!risks.length" class="text-xs text-neutral-400">
           Tidak ada risiko yang tercatat.
         </p>
         <div
@@ -98,9 +98,9 @@ const severityClass: Record<ProfileRisk['severity'], string> = {
         >
           <div class="flex items-center justify-between gap-2">
             <span class="font-semibold">{{ r.title }}</span>
-            <span class="text-[10px] uppercase font-bold tracking-wider shrink-0">{{ r.severity }}</span>
+            <span class="text-xs uppercase font-bold tracking-wider shrink-0">{{ r.severity }}</span>
           </div>
-          <p v-if="r.detail" class="text-[11px] mt-0.5 opacity-90 leading-relaxed">
+          <p v-if="r.detail" class="text-xs mt-0.5 opacity-90 leading-relaxed">
             {{ r.detail }}
           </p>
         </div>
@@ -111,7 +111,7 @@ const severityClass: Record<ProfileRisk['severity'], string> = {
           <UIcon name="i-lucide-circle-help" class="w-3.5 h-3.5 text-sky-500" />
           Pertanyaan Terbuka ({{ openQuestions.length }})
         </h3>
-        <p v-if="!openQuestions.length" class="text-[11px] text-neutral-400">
+        <p v-if="!openQuestions.length" class="text-xs text-neutral-400">
           Tidak ada pertanyaan terbuka.
         </p>
         <ul v-else class="space-y-1.5">

@@ -121,7 +121,7 @@ onUnmounted(() => {
               <h2 class="text-base font-bold text-neutral-900 dark:text-white truncate">
                 Daftar Cek & Standar Audit Diagnostik
               </h2>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold font-mono bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800">
+              <span class="px-2 py-0.5 rounded-full text-xs font-bold font-mono bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800">
                 {{ defaultCriteria.length }} Aturan Diperiksa
               </span>
             </div>
@@ -164,7 +164,7 @@ onUnmounted(() => {
 
         <!-- Severity Filter Dropdown (hidden on mechanism tab) -->
         <div v-if="activeTab !== 'mechanism'" class="flex items-center gap-1.5 shrink-0 text-xs">
-          <span class="text-neutral-500 dark:text-neutral-400 text-[11px] font-medium hidden sm:inline">Keparahan:</span>
+          <span class="text-neutral-500 dark:text-neutral-400 text-xs font-medium hidden sm:inline">Keparahan:</span>
           <select
             v-model="activeSeverity"
             class="px-2.5 py-1.5 text-xs rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 cursor-pointer focus:outline-none focus:ring-1 focus:ring-violet-500"
@@ -187,7 +187,7 @@ onUnmounted(() => {
           </select>
         </div>
         <div v-else class="flex items-center gap-2 shrink-0">
-          <span class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 flex items-center gap-1.5">
+          <span class="px-2.5 py-1 rounded-md text-xs font-medium bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 flex items-center gap-1.5">
             <UIcon name="i-lucide-gauge" class="w-3.5 h-3.5" />
             <span>High-Precision Engine</span>
           </span>
@@ -208,7 +208,7 @@ onUnmounted(() => {
         >
           <span>{{ cat.name }}</span>
           <span
-            class="text-[10px] font-mono px-1.5 py-0.5 rounded-full"
+            class="text-xs font-mono px-1.5 py-0.5 rounded-full"
             :class="activeTab === cat.id
               ? 'bg-neutral-700 text-white dark:bg-neutral-200 dark:text-neutral-900'
               : 'bg-neutral-200/80 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300'"
@@ -275,7 +275,7 @@ onUnmounted(() => {
       <!-- Drawer Footer -->
       <div class="p-4 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-900/80 flex items-center justify-between text-xs shrink-0">
         <span class="text-neutral-500 dark:text-neutral-400">
-          Standar disinkronkan dengan <code class="font-mono bg-neutral-200/60 dark:bg-neutral-800 px-1 py-0.5 rounded text-[11px]">vibeasik/guidelines/*.json</code>
+          Standar disinkronkan dengan <code class="font-mono bg-neutral-200/60 dark:bg-neutral-800 px-1 py-0.5 rounded text-xs">vibeasik/guidelines/*.json</code>
         </span>
         <UButton
           size="xs"

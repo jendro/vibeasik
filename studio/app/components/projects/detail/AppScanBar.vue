@@ -121,7 +121,7 @@ const sections = computed(() => [
             {{ item }}
           </li>
         </ul>
-        <p class="text-[11px] text-neutral-400">
+        <p class="text-xs text-neutral-400">
           {{ s.note }}
         </p>
       </div>

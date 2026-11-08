@@ -35,7 +35,7 @@ const copySummaryMarkdown = () => emit('copy')
                 size="xs"
                 color="primary"
                 variant="subtle"
-                class="font-mono text-[10px] flex items-center gap-1"
+                class="font-mono text-xs flex items-center gap-1"
               >
                 <UIcon name="i-lucide-sparkles" class="w-3 h-3" />
                 <span>AI Enriched</span>
@@ -109,25 +109,25 @@ const copySummaryMarkdown = () => emit('copy')
     <!-- Quick Metrics Grid -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-neutral-100 dark:border-neutral-800/80 text-xs">
       <div class="p-3 rounded-xl bg-neutral-50/70 dark:bg-neutral-800/40 border border-neutral-100 dark:border-neutral-800/60">
-        <span class="text-[10px] text-neutral-400 uppercase font-semibold">Halaman Frontend</span>
+        <span class="text-xs text-neutral-400 uppercase font-semibold">Halaman Frontend</span>
         <div class="font-bold text-neutral-800 dark:text-neutral-200 font-mono text-base mt-0.5 tabular-nums">
           {{ synergyMap?.total_pages || 0 }} halaman
         </div>
       </div>
       <div class="p-3 rounded-xl bg-neutral-50/70 dark:bg-neutral-800/40 border border-neutral-100 dark:border-neutral-800/60">
-        <span class="text-[10px] text-neutral-400 uppercase font-semibold">Alur Request API</span>
+        <span class="text-xs text-neutral-400 uppercase font-semibold">Alur Request API</span>
         <div class="font-bold font-mono text-base mt-0.5 text-sky-600 dark:text-sky-400 tabular-nums">
           {{ synergyMap?.total_flows || 0 }} alur terhubung
         </div>
       </div>
       <div class="p-3 rounded-xl bg-neutral-50/70 dark:bg-neutral-800/40 border border-neutral-100 dark:border-neutral-800/60">
-        <span class="text-[10px] text-neutral-400 uppercase font-semibold">Node Backend</span>
+        <span class="text-xs text-neutral-400 uppercase font-semibold">Node Backend</span>
         <div class="font-bold text-neutral-800 dark:text-neutral-200 font-mono text-base mt-0.5 tabular-nums">
           {{ synergyMap?.backend_nodes?.length || 0 }} servis API
         </div>
       </div>
       <div class="p-3 rounded-xl bg-neutral-50/70 dark:bg-neutral-800/40 border border-neutral-100 dark:border-neutral-800/60">
-        <span class="text-[10px] text-neutral-400 uppercase font-semibold">Tabel Database</span>
+        <span class="text-xs text-neutral-400 uppercase font-semibold">Tabel Database</span>
         <div class="font-bold text-neutral-800 dark:text-neutral-200 font-mono text-base mt-0.5 tabular-nums">
           {{ synergyMap?.total_tables || 0 }} tabel
         </div>

@@ -184,10 +184,10 @@ const handleCardRefreshSummary = () => {
       >
         <UIcon name="i-lucide-alert-circle" class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
         <div class="space-y-0.5">
-          <div class="font-semibold text-[11px] text-amber-800 dark:text-amber-300">
+          <div class="font-semibold text-xs text-amber-800 dark:text-amber-300">
             Status Deprecated
           </div>
-          <p class="text-[11px] leading-relaxed text-neutral-600 dark:text-neutral-400">
+          <p class="text-xs leading-relaxed text-neutral-600 dark:text-neutral-400">
             {{ project.deprecated_reason || 'Proyek ditandai sebagai tidak aktif/deprecated.' }}
           </p>
         </div>
@@ -200,10 +200,10 @@ const handleCardRefreshSummary = () => {
       >
         <UIcon name="i-lucide-pause-circle" class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
         <div class="space-y-0.5">
-          <div class="font-semibold text-[11px] text-amber-800 dark:text-amber-300">
+          <div class="font-semibold text-xs text-amber-800 dark:text-amber-300">
             Status On Hold
           </div>
-          <p class="text-[11px] leading-relaxed text-neutral-600 dark:text-neutral-400">
+          <p class="text-xs leading-relaxed text-neutral-600 dark:text-neutral-400">
             Proyek sedang ditangguhkan sementara dan disembunyikan dari daftar proyek aktif.
           </p>
         </div>
@@ -216,10 +216,10 @@ const handleCardRefreshSummary = () => {
       >
         <UIcon name="i-lucide-check-circle-2" class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
         <div class="space-y-0.5">
-          <div class="font-semibold text-[11px] text-emerald-800 dark:text-emerald-300">
+          <div class="font-semibold text-xs text-emerald-800 dark:text-emerald-300">
             Status Selesai (Maintenance)
           </div>
-          <p class="text-[11px] leading-relaxed text-neutral-600 dark:text-neutral-400">
+          <p class="text-xs leading-relaxed text-neutral-600 dark:text-neutral-400">
             Proyek telah rampung dan dalam mode pemeliharaan (maintenance).
           </p>
         </div>
@@ -227,7 +227,7 @@ const handleCardRefreshSummary = () => {
 
       <!-- Keterangan Singkat (AI Generated / Formatted in Markdown) -->
       <div class="mt-3 pt-2.5 border-t border-neutral-100/80 dark:border-neutral-800/60">
-        <div class="flex items-center justify-between text-[11px] font-medium text-neutral-500 mb-1.5">
+        <div class="flex items-center justify-between text-xs font-medium text-neutral-500 mb-1.5">
           <span class="flex items-center gap-1.5">
             <UIcon name="i-lucide-file-text" class="w-3.5 h-3.5 text-sky-500" />
             <span class="font-semibold text-neutral-700 dark:text-neutral-300">Keterangan Singkat</span>
@@ -235,7 +235,7 @@ const handleCardRefreshSummary = () => {
           <div class="flex items-center gap-1.5">
             <span
               v-if="project.short_description"
-              class="inline-flex items-center gap-1 text-[10px] font-mono text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40 px-1.5 py-0.5 rounded border border-sky-500/20"
+              class="inline-flex items-center gap-1 text-xs font-mono text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40 px-1.5 py-0.5 rounded border border-sky-500/20"
               title="Keterangan singkat dibuat oleh AI"
             >
               <UIcon name="i-lucide-sparkles" class="w-2.5 h-2.5" />
@@ -269,9 +269,9 @@ const handleCardRefreshSummary = () => {
 
       <!-- Component Architecture Breakdown -->
       <div class="mt-4 pt-3 border-t border-neutral-100 dark:border-neutral-800/80">
-        <div class="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-2 flex items-center justify-between">
+        <div class="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2 flex items-center justify-between">
           <span>Bundle Topology ({{ project.components?.length || 0 }} Services)</span>
-          <span class="text-[10px] lowercase font-normal text-neutral-400">ports & roles</span>
+          <span class="text-xs lowercase font-normal text-neutral-400">ports & roles</span>
         </div>
 
         <div class="space-y-1.5">
@@ -290,14 +290,14 @@ const handleCardRefreshSummary = () => {
               <span class="font-medium text-neutral-800 dark:text-neutral-200 truncate">{{ comp.name }}</span>
               <span
                 v-if="currentlyCheckingCompId === comp.id"
-                class="inline-flex items-center gap-1 text-[10px] text-sky-600 dark:text-sky-400 font-sans font-medium animate-pulse"
+                class="inline-flex items-center gap-1 text-xs text-sky-600 dark:text-sky-400 font-sans font-medium animate-pulse"
               >
                 <UIcon name="i-lucide-loader-2" class="w-3 h-3 animate-spin" />
                 Mengecek...
               </span>
               <span
                 v-else-if="comp.relative_path || comp.absolute_path"
-                class="text-[10px] text-neutral-400 dark:text-neutral-500 truncate max-w-[140px]"
+                class="text-xs text-neutral-400 dark:text-neutral-500 truncate max-w-[140px]"
                 :title="comp.absolute_path || comp.relative_path"
               >
                 📁 {{ comp.relative_path || (comp.absolute_path ? comp.absolute_path.split('/').filter(Boolean).pop() : '') }}
@@ -307,7 +307,7 @@ const handleCardRefreshSummary = () => {
             <div class="flex items-center gap-1.5 shrink-0">
               <span
                 v-if="comp.health_score !== undefined && comp.health_score !== null"
-                class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold border"
+                class="px-1.5 py-0.5 rounded text-xs font-mono font-bold border"
                 :class="getScoreColor(comp.health_score)"
                 :title="`Skor Kesehatan ${comp.name}: ${comp.health_score}/100`"
               >
@@ -321,7 +321,7 @@ const handleCardRefreshSummary = () => {
               />
               <span
                 v-if="comp.port > 0"
-                class="px-1.5 py-0.5 rounded text-[11px] font-mono font-bold bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200"
+                class="px-1.5 py-0.5 rounded text-xs font-mono font-bold bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200"
               >
                 :{{ comp.port }}
               </span>

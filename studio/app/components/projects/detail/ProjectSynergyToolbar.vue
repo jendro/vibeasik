@@ -41,7 +41,7 @@ const resetFilters = () => emit('reset')
       >
         <UIcon name="i-lucide-table-properties" class="w-4 h-4" />
         <span>Matriks Audit Tabular</span>
-        <UBadge size="xs" color="neutral" variant="subtle" class="font-mono text-[9px] px-1 py-0">
+        <UBadge size="xs" color="neutral" variant="subtle" class="font-mono text-xs px-1 py-0">
           {{ matrixCount }}
         </UBadge>
       </button>

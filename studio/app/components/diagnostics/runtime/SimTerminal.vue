@@ -61,7 +61,7 @@ watch(
       </span>
       <button
         type="button"
-        class="px-2.5 py-1 rounded-t-md text-[11px] font-mono whitespace-nowrap cursor-pointer"
+        class="px-2.5 py-1 rounded-t-md text-xs font-mono whitespace-nowrap cursor-pointer"
         :class="activeTab === 'activity' ? 'bg-neutral-950 text-white' : 'text-neutral-400 hover:text-neutral-200'"
         @click="activeTab = 'activity'"
       >
@@ -71,7 +71,7 @@ watch(
         v-for="c in logTabs"
         :key="c.component_id"
         type="button"
-        class="px-2.5 py-1 rounded-t-md text-[11px] font-mono whitespace-nowrap cursor-pointer"
+        class="px-2.5 py-1 rounded-t-md text-xs font-mono whitespace-nowrap cursor-pointer"
         :class="activeTab === c.component_id ? 'bg-neutral-950 text-white' : 'text-neutral-400 hover:text-neutral-200'"
         @click="activeTab = c.component_id"
       >
@@ -80,7 +80,7 @@ watch(
       </button>
     </div>
 
-    <div ref="scroller" class="flex-1 overflow-y-auto p-3 font-mono text-[11px] leading-relaxed" @scroll="onScroll">
+    <div ref="scroller" class="flex-1 overflow-y-auto p-3 font-mono text-xs leading-relaxed" @scroll="onScroll">
       <template v-if="activeTab === 'activity'">
         <div v-if="events.length === 0" class="text-neutral-500">
           Menunggu simulasi dimulai...

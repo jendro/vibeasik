@@ -237,7 +237,7 @@ const conflictPorts = computed(() => displayPortTable.value.filter(entry => entr
         <span class="text-xs font-semibold uppercase tracking-wider text-neutral-500">
           Local Port Mapping Matrix ({{ displayPortTable.length }} Assigned Ports)
         </span>
-        <span class="text-[11px] font-mono text-neutral-400">127.0.0.1 TCP</span>
+        <span class="text-xs font-mono text-neutral-400">127.0.0.1 TCP</span>
       </div>
 
       <div class="overflow-x-auto">
@@ -304,7 +304,7 @@ const conflictPorts = computed(() => displayPortTable.value.filter(entry => entr
                     >
                       {{ svc.projectName }}
                     </NuxtLink>
-                    <span class="text-neutral-400 font-mono text-[11px]">→ {{ svc.componentName }}</span>
+                    <span class="text-neutral-400 font-mono text-xs">→ {{ svc.componentName }}</span>
                     <TechBadge v-if="svc.language" :tech="svc.language" size="xs" />
                     <TechBadge
                       v-if="svc.framework && svc.framework.toLowerCase() !== svc.language?.toLowerCase()"

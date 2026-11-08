@@ -136,7 +136,7 @@ const mcpTools = ['vibeasik_code_map_search', 'vibeasik_code_map_file', 'vibeasi
     <template v-if="overview && activeProjectId">
       <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
         <div v-for="s in stats" :key="s.label" class="p-3.5 sm:p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-xs hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
-          <div class="flex items-center gap-1.5 text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
+          <div class="flex items-center gap-1.5 text-xs font-medium text-neutral-500 dark:text-neutral-400">
             <UIcon :name="s.icon" class="size-3.5 text-neutral-400 dark:text-neutral-500" />
             {{ s.label }}
           </div>
@@ -158,10 +158,10 @@ const mcpTools = ['vibeasik_code_map_search', 'vibeasik_code_map_file', 'vibeasi
           {{ overview.guide }}
         </p>
         <div class="flex flex-wrap gap-1.5 py-1">
-          <code v-for="t in mcpTools" :key="t" class="px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800/80 text-neutral-800 dark:text-neutral-200 font-mono text-[11px] border border-neutral-200/60 dark:border-neutral-700/60">{{ t }}</code>
+          <code v-for="t in mcpTools" :key="t" class="px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800/80 text-neutral-800 dark:text-neutral-200 font-mono text-xs border border-neutral-200/60 dark:border-neutral-700/60">{{ t }}</code>
         </div>
         <p class="text-neutral-500 dark:text-neutral-400">
-          Tanpa MCP: agent membaca <code class="px-1 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 font-mono text-[11px]">.vibeasik/CODEMAP.md</code> atau grep <code class="px-1 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 font-mono text-[11px]">.vibeasik/codemap.jsonl</code> (dibuat oleh Init vibeasik).
+          Tanpa MCP: agent membaca <code class="px-1 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 font-mono text-xs">.vibeasik/CODEMAP.md</code> atau grep <code class="px-1 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 font-mono text-xs">.vibeasik/codemap.jsonl</code> (dibuat oleh Init vibeasik).
         </p>
         <p v-if="overview.exported_at" class="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-medium">
           <UIcon name="i-lucide-refresh-cw" class="size-3.5 shrink-0" />

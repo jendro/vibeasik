@@ -120,7 +120,7 @@ const handleEnrichWithLLM = () => emit('enrich')
       <div class="flex flex-wrap items-center gap-2">
         <!-- Method Filter Dropdown / Select -->
         <div class="flex items-center gap-1 text-xs text-neutral-500">
-          <span class="hidden md:inline text-[11px]">Method:</span>
+          <span class="hidden md:inline text-xs">Method:</span>
           <select
             v-model="selectedMethod"
             class="px-2 py-1 rounded-md border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 text-xs font-mono font-bold text-neutral-700 dark:text-neutral-300"
@@ -138,7 +138,7 @@ const handleEnrichWithLLM = () => emit('enrich')
         <div class="flex items-center p-0.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-100/80 dark:bg-neutral-800/60 text-xs">
           <button
             type="button"
-            class="px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-colors cursor-pointer text-[11px]"
+            class="px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-colors cursor-pointer text-xs"
             :class="viewMode === 'grouped' ? 'bg-white dark:bg-neutral-900 font-bold text-neutral-900 dark:text-white shadow-2xs' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'"
             @click="viewMode = 'grouped'"
           >
@@ -147,7 +147,7 @@ const handleEnrichWithLLM = () => emit('enrich')
           </button>
           <button
             type="button"
-            class="px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-colors cursor-pointer text-[11px]"
+            class="px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-colors cursor-pointer text-xs"
             :class="viewMode === 'table' ? 'bg-white dark:bg-neutral-900 font-bold text-neutral-900 dark:text-white shadow-2xs' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'"
             @click="viewMode = 'table'"
           >
@@ -160,10 +160,10 @@ const handleEnrichWithLLM = () => emit('enrich')
 
     <!-- Domain Selector Horizontal Pills -->
     <div v-if="domainList.length > 0" class="flex flex-wrap items-center gap-1.5 pt-1 text-xs">
-      <span class="text-[11px] font-semibold text-neutral-400 mr-1">{{ isFrontend ? 'Modul:' : 'Domain:' }}</span>
+      <span class="text-xs font-semibold text-neutral-400 mr-1">{{ isFrontend ? 'Modul:' : 'Domain:' }}</span>
       <button
         type="button"
-        class="px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors cursor-pointer"
+        class="px-2.5 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer"
         :class="selectedDomain === 'ALL' ? 'bg-primary-500 text-white font-bold' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700'"
         @click="selectedDomain = 'ALL'"
       >
@@ -174,12 +174,12 @@ const handleEnrichWithLLM = () => emit('enrich')
         v-for="d in domainList"
         :key="d.domain"
         type="button"
-        class="px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors cursor-pointer flex items-center gap-1"
+        class="px-2.5 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer flex items-center gap-1"
         :class="selectedDomain === d.domain ? 'bg-primary-500 text-white font-bold' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700'"
         @click="selectedDomain = d.domain"
       >
         <span>{{ d.domain }}</span>
-        <span class="opacity-70 text-[10px]">({{ d.count }})</span>
+        <span class="opacity-70 text-xs">({{ d.count }})</span>
       </button>
     </div>
   </div>

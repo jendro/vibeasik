@@ -29,7 +29,7 @@ const emit = defineEmits<{
         <UIcon name="i-lucide-alert-triangle" class="w-3.5 h-3.5 shrink-0" />
         <span>{{ validationError }}</span>
       </div>
-      <div v-else class="text-[11px] text-neutral-500 dark:text-neutral-400">
+      <div v-else class="text-xs text-neutral-500 dark:text-neutral-400">
         Siap didaftarkan ke dashboard pemantauan & manajemen port lokal.
       </div>
     </div>

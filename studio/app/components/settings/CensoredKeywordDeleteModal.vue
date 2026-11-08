@@ -29,14 +29,14 @@ defineEmits<{
           <div class="font-mono font-bold text-neutral-900 dark:text-white">
             {{ keyword.keyword }}
           </div>
-          <div class="text-[11px] text-neutral-500">
+          <div class="text-xs text-neutral-500">
             Kategori: {{ keyword.category }}
           </div>
-          <div v-if="keyword.description" class="text-[11px] text-neutral-400">
+          <div v-if="keyword.description" class="text-xs text-neutral-400">
             {{ keyword.description }}
           </div>
         </div>
-        <p class="text-amber-600 dark:text-amber-400 text-[11px]">
+        <p class="text-amber-600 dark:text-amber-400 text-xs">
           Setelah dihapus, keyword ini tidak lagi disensor secara khusus oleh Pass 1 (namun pola bawaan sistem Pass 2 tetap melindungi token standar).
         </p>
       </div>

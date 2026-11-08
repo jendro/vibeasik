@@ -106,7 +106,7 @@ const copyIconTag = async (icon: string) => {
           >
             <UIcon :name="cat.icon" class="w-3.5 h-3.5" />
             <span>{{ cat.label }}</span>
-            <span class="text-[10px] opacity-75 font-mono">({{ cat.items.length }})</span>
+            <span class="text-xs opacity-75 font-mono">({{ cat.items.length }})</span>
           </button>
         </div>
 
@@ -132,7 +132,7 @@ const copyIconTag = async (icon: string) => {
                   <div class="font-bold text-sm text-neutral-900 dark:text-white truncate">
                     {{ item.name }}
                   </div>
-                  <div class="text-[10px] font-mono text-neutral-400 truncate">
+                  <div class="text-xs font-mono text-neutral-400 truncate">
                     {{ item.category }}
                   </div>
                 </div>
@@ -154,13 +154,13 @@ const copyIconTag = async (icon: string) => {
 
             <!-- Bottom Action: Icon Tag & Copy Button -->
             <div class="mt-3 pt-2 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-xs">
-              <code class="text-[10px] text-neutral-500 font-mono truncate max-w-[170px]" :title="item.icon">
+              <code class="text-xs text-neutral-500 font-mono truncate max-w-[170px]" :title="item.icon">
                 {{ item.icon }}
               </code>
 
               <button
                 type="button"
-                class="text-[11px] font-sans font-medium px-2 py-0.5 rounded cursor-pointer transition-colors"
+                class="text-xs font-sans font-medium px-2 py-0.5 rounded cursor-pointer transition-colors"
                 :class="copiedIcon === item.icon
                   ? 'bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 font-bold'
                   : 'text-neutral-500 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'"

@@ -107,13 +107,13 @@ const handleSubmit = () => {
       <div class="space-y-4 text-xs">
         <!-- Presets (when creating) -->
         <div v-if="!isEditing" class="space-y-1.5">
-          <span class="text-[11px] font-medium text-neutral-500 dark:text-neutral-400">Pilih dari Contoh Preset:</span>
+          <span class="text-xs font-medium text-neutral-500 dark:text-neutral-400">Pilih dari Contoh Preset:</span>
           <div class="flex flex-wrap gap-1.5">
             <button
               v-for="p in keywordPresets"
               :key="p.label"
               type="button"
-              class="px-2 py-0.5 text-[11px] font-mono rounded bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 transition-colors cursor-pointer"
+              class="px-2 py-0.5 text-xs font-mono rounded bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 transition-colors cursor-pointer"
               @click="applyPreset(p)"
             >
               {{ p.label }}
@@ -132,7 +132,7 @@ const handleSubmit = () => {
             placeholder="Contoh: DB_PASSWORD, sk_live_secret, TOKEN_RAHASIA"
             class="w-full px-3 py-2 text-xs font-mono rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
           >
-          <p class="text-[10px] text-neutral-400">
+          <p class="text-xs text-neutral-400">
             String ini akan otomatis dicocokkan pada setiap payload/prompt dan diganti dengan alias anonim.
           </p>
         </div>

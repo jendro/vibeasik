@@ -41,7 +41,7 @@ const severityClass = (s: string) => {
             Rubrik & Patokan Saran AI
           </h2>
           <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-            Folder: <code class="font-mono text-[11px] bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded">vibeasik/guidelines/*.json</code>
+            Folder: <code class="font-mono text-xs bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded">vibeasik/guidelines/*.json</code>
           </p>
         </div>
 
@@ -67,7 +67,7 @@ const severityClass = (s: string) => {
           @click="activeCategoryIndex = idx"
         >
           <span>{{ cat.name }}</span>
-          <span class="text-[10px] font-mono px-1 rounded bg-neutral-200/60 dark:bg-neutral-700">
+          <span class="text-xs font-mono px-1 rounded bg-neutral-200/60 dark:bg-neutral-700">
             {{ cat.guidelines?.length || 0 }}
           </span>
         </button>
@@ -83,7 +83,7 @@ const severityClass = (s: string) => {
             <p class="text-neutral-600 dark:text-neutral-300 text-xs mt-1 leading-relaxed">
               {{ activeCategory.description }}
             </p>
-            <div class="mt-2 text-[10px] font-mono text-violet-700 dark:text-violet-400">
+            <div class="mt-2 text-xs font-mono text-violet-700 dark:text-violet-400">
               Berkas: {{ activeCategory.file_path }}
             </div>
           </div>
@@ -97,7 +97,7 @@ const severityClass = (s: string) => {
             >
               <div class="flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2">
-                  <span class="px-2 py-0.5 rounded font-mono font-bold text-[11px] bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700">
+                  <span class="px-2 py-0.5 rounded font-mono font-bold text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700">
                     {{ item.id }}
                   </span>
                   <span class="font-bold text-neutral-900 dark:text-white text-xs">
@@ -106,7 +106,7 @@ const severityClass = (s: string) => {
                 </div>
 
                 <span
-                  class="px-2 py-0.5 rounded text-[10px] font-medium border uppercase"
+                  class="px-2 py-0.5 rounded text-xs font-medium border uppercase"
                   :class="severityClass(item.severity)"
                 >
                   {{ item.severity }}
@@ -115,7 +115,7 @@ const severityClass = (s: string) => {
 
               <!-- Rule -->
               <div class="space-y-1">
-                <div class="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
+                <div class="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
                   Aturan (Rule):
                 </div>
                 <p class="text-neutral-700 dark:text-neutral-300 leading-relaxed font-sans">
@@ -125,32 +125,32 @@ const severityClass = (s: string) => {
 
               <!-- Rationale -->
               <div class="space-y-1">
-                <div class="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
+                <div class="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
                   Rasional / Alasan:
                 </div>
-                <p class="text-neutral-600 dark:text-neutral-400 leading-relaxed font-sans text-[11px]">
+                <p class="text-neutral-600 dark:text-neutral-400 leading-relaxed font-sans text-xs">
                   {{ item.rationale }}
                 </p>
               </div>
 
               <!-- Inspection Check -->
               <div class="p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200/60 dark:border-neutral-700/60 space-y-1">
-                <div class="flex items-center gap-1 font-semibold text-[11px] text-neutral-600 dark:text-neutral-300">
+                <div class="flex items-center gap-1 font-semibold text-xs text-neutral-600 dark:text-neutral-300">
                   <UIcon name="i-lucide-search" class="w-3.5 h-3.5 text-neutral-500" />
                   <span>Metode Pemeriksaan Otomatis:</span>
                 </div>
-                <p class="text-[11px] font-mono text-neutral-600 dark:text-neutral-300">
+                <p class="text-xs font-mono text-neutral-600 dark:text-neutral-300">
                   {{ item.inspection_check }}
                 </p>
               </div>
 
               <!-- Suggested Action -->
               <div class="p-2.5 rounded-lg bg-sky-50/50 dark:bg-sky-950/20 border border-sky-200/60 dark:border-sky-900/40 space-y-1">
-                <div class="flex items-center gap-1 font-semibold text-[11px] text-sky-800 dark:text-sky-300">
+                <div class="flex items-center gap-1 font-semibold text-xs text-sky-800 dark:text-sky-300">
                   <UIcon name="i-lucide-wrench" class="w-3.5 h-3.5 text-sky-500" />
                   <span>Saran Tindakan Solusi:</span>
                 </div>
-                <p class="text-[11px] text-sky-900 dark:text-sky-200 font-sans">
+                <p class="text-xs text-sky-900 dark:text-sky-200 font-sans">
                   {{ item.suggested_action }}
                 </p>
               </div>

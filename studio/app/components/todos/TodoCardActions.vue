@@ -23,7 +23,7 @@ const { formatDateTime } = useFormatters()
 
 <template>
   <div class="pt-2 border-t border-neutral-100 dark:border-white/10 flex flex-wrap items-center justify-between gap-2">
-    <div class="text-[10px] text-neutral-400 font-mono">
+    <div class="text-xs text-neutral-400 font-mono">
       ID #{{ todo.id }} • {{ formatDateTime(todo.created_at) }}
     </div>
 
@@ -153,7 +153,7 @@ const { formatDateTime } = useFormatters()
                 <p class="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
                   Hapus Agenda?
                 </p>
-                <p class="text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug">
+                <p class="text-xs text-neutral-500 dark:text-neutral-400 leading-snug">
                   {{ isGroup ? 'Todo gabungan dihapus; sub todo yang belum selesai kembali menjadi todo biasa.' : 'Agenda ini akan dihapus permanen dari daftar tugas.' }}
                 </p>
               </div>

@@ -180,7 +180,7 @@ const getRoleLabel = (role: string) => roleLabel(role, { mobile: 'Mobile App', o
               class="w-full"
               @keyup.enter="handleCreateProjectSubmit"
             />
-            <div class="flex items-center gap-1.5 pt-1 text-[11px] text-sky-600 dark:text-sky-400">
+            <div class="flex items-center gap-1.5 pt-1 text-xs text-sky-600 dark:text-sky-400">
               <UIcon name="i-lucide-sparkles" class="w-3.5 h-3.5 shrink-0" />
               <span>Deskripsi proyek akan dibuat dan diisi otomatis oleh LLM setelah proses scan awal.</span>
             </div>
@@ -195,7 +195,7 @@ const getRoleLabel = (role: string) => roleLabel(role, { mobile: 'Mobile App', o
                 <UIcon name="i-lucide-folder-git-2" class="w-4 h-4 text-sky-500 dark:text-sky-400" />
                 Folder Aplikasi
               </h3>
-              <p class="text-[11px] text-neutral-500 dark:text-neutral-400">
+              <p class="text-xs text-neutral-500 dark:text-neutral-400">
                 Pilih folder aplikasi (Backend, Frontend, Mobile). Framework, port, dan command akan dideteksi oleh LLM scan.
               </p>
             </div>
@@ -316,7 +316,7 @@ const getRoleLabel = (role: string) => roleLabel(role, { mobile: 'Mobile App', o
                   <label class="font-semibold text-neutral-700 dark:text-neutral-200">
                     Pilih Lokasi Folder di Laptop <span class="text-rose-500">*</span>
                   </label>
-                  <span v-if="comp.absolute_path" class="text-sky-600 dark:text-sky-400 font-mono text-[11px] flex items-center gap-1">
+                  <span v-if="comp.absolute_path" class="text-sky-600 dark:text-sky-400 font-mono text-xs flex items-center gap-1">
                     <UIcon name="i-lucide-check-circle" class="w-3.5 h-3.5" />
                     Folder terpilih
                   </span>
@@ -351,7 +351,7 @@ const getRoleLabel = (role: string) => roleLabel(role, { mobile: 'Mobile App', o
                   @select="selectFolderForComp"
                 />
 
-                <p class="text-[11px] text-neutral-400 dark:text-neutral-500 italic">
+                <p class="text-xs text-neutral-400 dark:text-neutral-500 italic">
                   Framework (Go, Nuxt, Flutter, dll.), port dev, dan command akan diidentifikasi secara otomatis saat project di-scan.
                 </p>
               </div>

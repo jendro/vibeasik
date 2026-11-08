@@ -231,10 +231,10 @@ const goToOrganizer = () => {
                     {{ match.project_a.project_type }}
                   </UBadge>
                 </div>
-                <div class="text-[11px] font-mono text-neutral-500 truncate" :title="match.project_a.root_path">
+                <div class="text-xs font-mono text-neutral-500 truncate" :title="match.project_a.root_path">
                   📁 {{ match.project_a.root_path || '-' }}
                 </div>
-                <div class="text-[11px] text-neutral-600 dark:text-neutral-400">
+                <div class="text-xs text-neutral-600 dark:text-neutral-400">
                   Komponen: {{ match.project_a.components.join(', ') || 'Standalone' }}
                 </div>
               </div>
@@ -247,10 +247,10 @@ const goToOrganizer = () => {
                     {{ match.project_b.project_type }}
                   </UBadge>
                 </div>
-                <div class="text-[11px] font-mono text-neutral-500 truncate" :title="match.project_b.root_path">
+                <div class="text-xs font-mono text-neutral-500 truncate" :title="match.project_b.root_path">
                   📁 {{ match.project_b.root_path || '-' }}
                 </div>
-                <div class="text-[11px] text-neutral-600 dark:text-neutral-400">
+                <div class="text-xs text-neutral-600 dark:text-neutral-400">
                   Komponen: {{ match.project_b.components.join(', ') || 'Standalone' }}
                 </div>
               </div>
@@ -258,11 +258,11 @@ const goToOrganizer = () => {
 
             <!-- Analysis Reasons -->
             <div class="p-2.5 rounded-lg bg-sky-50/50 dark:bg-sky-950/20 border border-sky-500/20 text-xs text-neutral-700 dark:text-neutral-300 space-y-1">
-              <div class="font-semibold text-sky-800 dark:text-sky-300 text-[11px] flex items-center gap-1.5">
+              <div class="font-semibold text-sky-800 dark:text-sky-300 text-xs flex items-center gap-1.5">
                 <UIcon name="i-lucide-sparkles" class="w-3.5 h-3.5 text-sky-500" />
                 <span>Analisis Temuan:</span>
               </div>
-              <ul class="list-disc list-inside space-y-0.5 text-[11px]">
+              <ul class="list-disc list-inside space-y-0.5 text-xs">
                 <li v-for="(reason, rIdx) in match.reasons" :key="rIdx">
                   {{ reason }}
                 </li>
@@ -316,7 +316,7 @@ const goToOrganizer = () => {
                 <div class="font-semibold text-neutral-900 dark:text-white truncate">
                   {{ p.name }}
                 </div>
-                <div class="text-[10px] text-neutral-400 truncate mt-0.5">
+                <div class="text-xs text-neutral-400 truncate mt-0.5">
                   {{ p.root_path }}
                 </div>
               </div>

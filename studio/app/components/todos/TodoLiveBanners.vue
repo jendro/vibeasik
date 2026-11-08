@@ -36,14 +36,14 @@ const dismissAiNotice = () => emit('dismissAiNotice')
             <span class="font-bold text-emerald-950 dark:text-emerald-100 text-sm">
               Pengerjaan Otomatis Sedang Berjalan (Autopilot)
             </span>
-            <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 text-[10px] font-semibold border border-emerald-300 dark:border-emerald-800">
+            <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 text-xs font-semibold border border-emerald-300 dark:border-emerald-800">
               1 Per 1 Berurutan
             </span>
-            <span class="px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 text-[10px] font-mono border border-neutral-300 dark:border-neutral-700">
+            <span class="px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 text-xs font-mono border border-neutral-300 dark:border-neutral-700">
               CLI: {{ autopilotAgent === 'opencode' ? 'OpenCode (Provider Kustom)' : autopilotAgent === 'agy' ? 'Antigravity (7 Akun)' : 'Router Otomatis' }}
             </span>
           </div>
-          <p class="text-emerald-800 dark:text-emerald-300 text-[11px] mt-0.5">
+          <p class="text-emerald-800 dark:text-emerald-300 text-xs mt-0.5">
             <span v-if="activeRunningTodo">
               Sedang mengeksekusi: <strong>#{{ activeRunningTodo.id }} - {{ activeRunningTodo.title }}</strong>
               <span v-if="agentRunsByTodo[activeRunningTodo.id]?.profile_name" class="font-mono ml-1 opacity-90">

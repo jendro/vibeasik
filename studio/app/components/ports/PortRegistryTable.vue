@@ -60,7 +60,7 @@ defineExpose({ load })
         <span class="text-xs font-semibold uppercase tracking-wider text-neutral-500">
           Port Registry vibeasik ({{ entries.length }} komponen)
         </span>
-        <p class="text-[11px] text-neutral-400 mt-0.5">
+        <p class="text-xs text-neutral-400 mt-0.5">
           Port bawaan proyek dipakai bila unik; bila bentrok, vibeasik memberi port tetap dari rentang
           <span class="font-mono">{{ range?.start }}–{{ range?.end }}</span> dan menyuntikkannya sebagai env <span class="font-mono">PORT</span> saat Run.
         </p>
@@ -97,18 +97,18 @@ defineExpose({ load })
               <NuxtLink :to="`/projects/${e.project_id}`" class="font-medium text-neutral-700 dark:text-neutral-300 hover:text-sky-600">
                 {{ e.project_name }}
               </NuxtLink>
-              <span class="text-neutral-400 font-mono text-[11px]"> → {{ e.component_name }}</span>
+              <span class="text-neutral-400 font-mono text-xs"> → {{ e.component_name }}</span>
             </td>
             <td class="py-3 px-4 font-mono text-neutral-500">
               {{ e.declared_port ? `:${e.declared_port}` : '—' }}
             </td>
             <td class="py-3 px-4 font-mono font-bold text-neutral-900 dark:text-white">
               {{ e.run_port ? `:${e.run_port}` : '—' }}
-              <span v-if="e.run_port && e.declared_port && e.run_port !== e.declared_port" class="ml-1 font-sans font-normal text-[10px] text-amber-600">
+              <span v-if="e.run_port && e.declared_port && e.run_port !== e.declared_port" class="ml-1 font-sans font-normal text-xs text-amber-600">
                 dipindah
               </span>
             </td>
-            <td class="py-3 px-4 font-mono text-[10px] font-semibold" :class="stateClass(e)">
+            <td class="py-3 px-4 font-mono text-xs font-semibold" :class="stateClass(e)">
               {{ stateLabel(e) }}
             </td>
             <td class="py-3 px-4 text-right">

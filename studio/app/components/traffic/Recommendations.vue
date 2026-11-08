@@ -70,7 +70,7 @@ const makeTodo = async (r: TrafficRecommendation) => {
     <div class="space-y-2">
       <div v-for="r in visible" :key="r.id" class="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
         <button type="button" class="w-full text-left p-3 flex items-start gap-3 cursor-pointer" @click="toggle(r.id)">
-          <span class="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border text-[10px] font-semibold" :class="sevMeta[r.severity].cls">
+          <span class="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border text-xs font-semibold" :class="sevMeta[r.severity].cls">
             <UIcon :name="sevMeta[r.severity].icon" class="w-3 h-3" />{{ sevMeta[r.severity].label }}
           </span>
           <div class="min-w-0 flex-1">
@@ -90,7 +90,7 @@ const makeTodo = async (r: TrafficRecommendation) => {
           </div>
           <ul class="space-y-0.5 text-neutral-600 dark:text-neutral-300">
             <li v-for="e in r.evidence" :key="e" class="flex gap-1.5">
-              <UIcon name="i-lucide-chart-no-axes-column" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-neutral-400" /><span class="font-mono text-[11px] break-all">{{ e }}</span>
+              <UIcon name="i-lucide-chart-no-axes-column" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-neutral-400" /><span class="font-mono text-xs break-all">{{ e }}</span>
             </li>
           </ul>
           <div v-if="r.routes?.length" class="flex flex-wrap gap-1">
@@ -99,7 +99,7 @@ const makeTodo = async (r: TrafficRecommendation) => {
             </UBadge>
           </div>
           <div class="flex items-center justify-between gap-2 pt-1">
-            <span class="text-[10px] font-mono text-neutral-400">{{ r.rule }}</span>
+            <span class="text-xs font-mono text-neutral-400">{{ r.rule }}</span>
             <UButton
               v-if="r.category !== 'info'"
               size="xs"

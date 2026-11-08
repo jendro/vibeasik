@@ -84,7 +84,7 @@ const handleConvertToTodo = async () => {
       <div class="flex items-center gap-3 shrink-0">
         <!-- Visual Score -->
         <div class="flex flex-col items-center px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 min-w-20">
-          <span class="text-[10px] uppercase font-semibold text-slate-500">Kualitas UI</span>
+          <span class="text-xs uppercase font-semibold text-slate-500">Kualitas UI</span>
           <span class="text-lg font-black tracking-tight" :class="audit.visual_score >= 80 ? 'text-emerald-500' : 'text-amber-500'">
             {{ audit.visual_score }}<span class="text-xs font-normal text-slate-400">/100</span>
           </span>
@@ -92,7 +92,7 @@ const handleConvertToTodo = async () => {
 
         <!-- Data Hygiene Score -->
         <div class="flex flex-col items-center px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 min-w-20">
-          <span class="text-[10px] uppercase font-semibold text-slate-500">Integritas Data</span>
+          <span class="text-xs uppercase font-semibold text-slate-500">Integritas Data</span>
           <span class="text-lg font-black tracking-tight" :class="audit.data_hygiene_score >= 80 ? 'text-blue-500' : 'text-rose-500'">
             {{ audit.data_hygiene_score }}<span class="text-xs font-normal text-slate-400">/100</span>
           </span>
@@ -122,11 +122,11 @@ const handleConvertToTodo = async () => {
           >
             <div class="flex items-center justify-between gap-1 mb-1">
               <span class="font-semibold">{{ item.title }}</span>
-              <span v-if="item.target_area" class="text-[10px] px-1.5 py-0.5 rounded font-mono bg-slate-100 dark:bg-slate-800">
+              <span v-if="item.target_area" class="text-xs px-1.5 py-0.5 rounded font-mono bg-slate-100 dark:bg-slate-800">
                 {{ item.target_area }}
               </span>
             </div>
-            <p class="text-[11px] opacity-90 leading-relaxed">
+            <p class="text-xs opacity-90 leading-relaxed">
               {{ item.description }}
             </p>
           </div>
@@ -153,11 +153,11 @@ const handleConvertToTodo = async () => {
           >
             <div class="flex items-center justify-between gap-1 mb-1">
               <span class="font-semibold">{{ item.title }}</span>
-              <span v-if="item.target_area" class="text-[10px] px-1.5 py-0.5 rounded font-mono bg-slate-100 dark:bg-slate-800">
+              <span v-if="item.target_area" class="text-xs px-1.5 py-0.5 rounded font-mono bg-slate-100 dark:bg-slate-800">
                 {{ item.target_area }}
               </span>
             </div>
-            <p class="text-[11px] opacity-90 leading-relaxed">
+            <p class="text-xs opacity-90 leading-relaxed">
               {{ item.description }}
             </p>
           </div>

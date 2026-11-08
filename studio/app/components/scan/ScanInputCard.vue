@@ -54,7 +54,7 @@ const handleEnter = () => {
         v-for="qp in quickPaths"
         :key="qp.path"
         type="button"
-        class="px-2.5 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 font-mono text-[11px] cursor-pointer transition-colors"
+        class="px-2.5 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 font-mono text-xs cursor-pointer transition-colors"
         @click="emit('selectQuickPath', qp.path)"
       >
         {{ qp.label }}

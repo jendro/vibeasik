@@ -321,13 +321,13 @@ const getPriorityBadgeClass = (priority: string) => {
             </h3>
             <span
               v-if="baseKnowledgeStats"
-              class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+              class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-mono bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
             >
               <span class="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Base Knowledge: {{ baseKnowledgeStats.apps }} Apps, {{ baseKnowledgeStats.routes }} Rute
             </span>
           </div>
-          <p class="text-[11px] text-slate-500 dark:text-slate-400">
+          <p class="text-xs text-slate-500 dark:text-slate-400">
             Kaji ide/request user menggunakan Base Knowledge proyek, hasilkan TODO berbobot untuk agent pekerja.
           </p>
         </div>
@@ -372,7 +372,7 @@ const getPriorityBadgeClass = (priority: string) => {
 
         <!-- Quick Idea Prompts -->
         <div class="w-full pt-2 space-y-2">
-          <span class="text-[11px] font-semibold uppercase text-slate-400">Contoh Ide Permintaan:</span>
+          <span class="text-xs font-semibold uppercase text-slate-400">Contoh Ide Permintaan:</span>
           <div class="flex flex-wrap justify-center gap-1.5">
             <button
               v-for="chip in quickIdeaChips"
@@ -401,7 +401,7 @@ const getPriorityBadgeClass = (priority: string) => {
           <p class="whitespace-pre-wrap">
             {{ msg.content }}
           </p>
-          <div class="text-[10px] text-indigo-200 mt-1.5 text-right">
+          <div class="text-xs text-indigo-200 mt-1.5 text-right">
             {{ new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
           </div>
         </div>
@@ -418,7 +418,7 @@ const getPriorityBadgeClass = (priority: string) => {
                 <UIcon name="i-lucide-cpu" class="size-4" />
                 Kajian & Analisis Dampak Arsitektur
               </span>
-              <span v-if="msg.model_name" class="text-[10px] font-mono text-slate-400">
+              <span v-if="msg.model_name" class="text-xs font-mono text-slate-400">
                 model: {{ msg.model_name }}
               </span>
             </div>
@@ -467,18 +467,18 @@ const getPriorityBadgeClass = (priority: string) => {
                   <div class="space-y-1">
                     <div class="flex flex-wrap items-center gap-1.5">
                       <span
-                        class="px-2 py-0.5 rounded text-[10px] font-bold border uppercase"
+                        class="px-2 py-0.5 rounded text-xs font-bold border uppercase"
                         :class="getPriorityBadgeClass(todo.priority)"
                       >
                         {{ todo.priority }}
                       </span>
-                      <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                      <span class="px-2 py-0.5 rounded text-xs font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                         {{ todo.category }}
                       </span>
-                      <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900">
+                      <span class="px-2 py-0.5 rounded text-xs font-mono bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900">
                         {{ todo.target_apps }}
                       </span>
-                      <span v-if="todo.guideline_ref" class="text-[10px] font-mono text-slate-400">
+                      <span v-if="todo.guideline_ref" class="text-xs font-mono text-slate-400">
                         #{{ todo.guideline_ref }}
                       </span>
                     </div>
@@ -528,7 +528,7 @@ const getPriorityBadgeClass = (priority: string) => {
                   {{ todo.description }}
                 </div>
 
-                <div v-if="todo.rationale" class="text-[11px] text-slate-500 dark:text-slate-400 italic">
+                <div v-if="todo.rationale" class="text-xs text-slate-500 dark:text-slate-400 italic">
                   💡 <strong>Alasan Teknis:</strong> {{ todo.rationale }}
                 </div>
               </div>
@@ -548,11 +548,11 @@ const getPriorityBadgeClass = (priority: string) => {
     <div class="p-3 sm:p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/60 space-y-2">
       <!-- Quick Chips if messages exist -->
       <div v-if="messages.length > 0" class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-        <span class="text-[10px] uppercase font-semibold text-slate-400 shrink-0">Ide Cepat:</span>
+        <span class="text-xs uppercase font-semibold text-slate-400 shrink-0">Ide Cepat:</span>
         <button
           v-for="chip in quickIdeaChips"
           :key="chip"
-          class="px-2 py-0.5 rounded text-[11px] whitespace-nowrap bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+          class="px-2 py-0.5 rounded text-xs whitespace-nowrap bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
           @click="handleSendMessage(chip)"
         >
           {{ chip }}

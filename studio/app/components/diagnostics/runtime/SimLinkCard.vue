@@ -26,8 +26,8 @@ const scoreColor = (score: number) => score >= 90 ? 'text-emerald-600 dark:text-
       <div class="min-w-0 space-y-0.5">
         <div class="flex items-center gap-2 flex-wrap text-sm font-bold text-neutral-900 dark:text-white">
           Uji Runtime di Laptop
-          <span v-if="running" class="inline-flex items-center gap-1 text-[10px] font-bold text-primary-600 dark:text-primary-400"><UIcon name="i-lucide-loader-2" class="w-3 h-3 animate-spin" />sedang berjalan</span>
-          <span v-else-if="session" class="text-[11px] font-normal text-neutral-500">skor <strong class="font-mono" :class="scoreColor(session.score)">{{ session.score }}/100</strong> · {{ new Date(session.started_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) }}</span>
+          <span v-if="running" class="inline-flex items-center gap-1 text-xs font-bold text-primary-600 dark:text-primary-400"><UIcon name="i-lucide-loader-2" class="w-3 h-3 animate-spin" />sedang berjalan</span>
+          <span v-else-if="session" class="text-xs font-normal text-neutral-500">skor <strong class="font-mono" :class="scoreColor(session.score)">{{ session.score }}/100</strong> · {{ new Date(session.started_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) }}</span>
         </div>
         <p class="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
           {{ session?.summary || 'Jalankan aplikasi sungguhan: uji semua endpoint API (tanpa & dengan login), ukur kecepatan halaman, dan screenshot di mobile/tablet/desktop.' }}

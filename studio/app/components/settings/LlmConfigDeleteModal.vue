@@ -29,11 +29,11 @@ defineEmits<{
           <div class="font-bold text-neutral-900 dark:text-white">
             {{ config.name }}
           </div>
-          <div class="font-mono text-[11px] text-neutral-500 truncate">
+          <div class="font-mono text-xs text-neutral-500 truncate">
             {{ config.url }}
           </div>
         </div>
-        <p v-if="config.is_active" class="text-amber-600 dark:text-amber-400 text-[11px]">
+        <p v-if="config.is_active" class="text-amber-600 dark:text-amber-400 text-xs">
           Catatan: Konfigurasi ini sedang berstatus aktif. Jika dihapus, konfigurasi lain yang tersedia akan otomatis diaktifkan.
         </p>
       </div>

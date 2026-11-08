@@ -24,7 +24,7 @@ const copyToClipboard = (text: string, label = 'Copied!') => copyText(text, labe
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
       <div class="p-3 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-800/40 space-y-1.5">
-        <div class="flex items-center justify-between text-neutral-500 text-[10px] uppercase font-bold">
+        <div class="flex items-center justify-between text-neutral-500 text-xs uppercase font-bold">
           <span class="flex items-center gap-1 text-sky-600 dark:text-sky-400">
             <UIcon name="i-lucide-terminal" class="w-3.5 h-3.5" />
             Dev Command
@@ -42,7 +42,7 @@ const copyToClipboard = (text: string, label = 'Copied!') => copyText(text, labe
       </div>
 
       <div class="p-3 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-800/40 space-y-1.5">
-        <div class="flex items-center justify-between text-neutral-500 text-[10px] uppercase font-bold">
+        <div class="flex items-center justify-between text-neutral-500 text-xs uppercase font-bold">
           <span class="flex items-center gap-1 text-blue-600 dark:text-blue-400">
             <UIcon name="i-lucide-download" class="w-3.5 h-3.5" />
             Install Dependencies
@@ -60,7 +60,7 @@ const copyToClipboard = (text: string, label = 'Copied!') => copyText(text, labe
       </div>
 
       <div class="p-3 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-800/40 space-y-1.5">
-        <div class="flex items-center justify-between text-neutral-500 text-[10px] uppercase font-bold">
+        <div class="flex items-center justify-between text-neutral-500 text-xs uppercase font-bold">
           <span class="flex items-center gap-1 text-amber-600 dark:text-amber-400">
             <UIcon name="i-lucide-hammer" class="w-3.5 h-3.5" />
             Build Command
@@ -78,7 +78,7 @@ const copyToClipboard = (text: string, label = 'Copied!') => copyText(text, labe
       </div>
 
       <div class="p-3 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-800/40 space-y-1.5">
-        <div class="flex items-center justify-between text-neutral-500 text-[10px] uppercase font-bold">
+        <div class="flex items-center justify-between text-neutral-500 text-xs uppercase font-bold">
           <span class="flex items-center gap-1 text-purple-600 dark:text-purple-400">
             <UIcon name="i-lucide-check-circle-2" class="w-3.5 h-3.5" />
             Test Command

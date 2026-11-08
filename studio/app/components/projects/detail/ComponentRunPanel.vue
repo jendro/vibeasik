@@ -122,7 +122,7 @@ onBeforeUnmount(() => {
     <!-- flex-wrap: di kartu sempit tombol turun ke baris baru, bukan menimpa label status -->
     <div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5">
       <div class="flex items-center gap-2 whitespace-nowrap">
-        <span class="text-[10px] uppercase text-neutral-400">Run</span>
+        <span class="text-xs uppercase text-neutral-400">Run</span>
         <span
           v-if="port"
           class="px-1.5 py-0.5 rounded font-mono font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200"
@@ -130,7 +130,7 @@ onBeforeUnmount(() => {
         >
           :{{ port }}
         </span>
-        <span class="flex items-center gap-1 font-mono text-[10px] font-semibold" :class="stateConfig.text">
+        <span class="flex items-center gap-1 font-mono text-xs font-semibold" :class="stateConfig.text">
           <span class="w-2 h-2 rounded-full" :class="stateConfig.dot" />
           {{ stateConfig.label }}
         </span>
@@ -182,18 +182,18 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <p v-if="status?.warning" class="text-[11px] text-amber-700 dark:text-amber-400 flex gap-1.5">
+    <p v-if="status?.warning" class="text-xs text-amber-700 dark:text-amber-400 flex gap-1.5">
       <UIcon name="i-lucide-triangle-alert" class="w-3.5 h-3.5 shrink-0 mt-px" />
       <span>{{ status.warning }}</span>
     </p>
 
     <div v-if="showLogs" class="space-y-1">
-      <div v-if="status?.command" class="font-mono text-[10px] text-neutral-400 truncate" :title="status.command">
+      <div v-if="status?.command" class="font-mono text-xs text-neutral-400 truncate" :title="status.command">
         $ {{ status.command }}
       </div>
       <pre
         ref="logBox"
-        class="max-h-56 overflow-auto rounded bg-neutral-950 text-neutral-200 p-2 font-mono text-[10.5px] leading-relaxed whitespace-pre-wrap break-all"
+        class="max-h-56 overflow-auto rounded bg-neutral-950 text-neutral-200 p-2 font-mono text-xs leading-relaxed whitespace-pre-wrap break-all"
       >{{ status?.logs?.length ? status.logs.join('\n') : 'Belum ada log. Tekan Run untuk menjalankan.' }}</pre>
     </div>
   </div>

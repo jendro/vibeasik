@@ -243,7 +243,7 @@ const { getMethodColorClass } = useFormatters()
                 </th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 font-mono text-[11px]">
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 font-mono text-xs">
               <tr
                 v-for="(r, idx) in filteredRoutes.slice(0, 30)"
                 :key="idx"
@@ -251,7 +251,7 @@ const { getMethodColorClass } = useFormatters()
               >
                 <td class="py-2 px-3 whitespace-nowrap">
                   <span
-                    class="px-2 py-0.5 rounded text-[10px] font-bold border"
+                    class="px-2 py-0.5 rounded text-xs font-bold border"
                     :class="getMethodColorClass(r.method)"
                   >
                     {{ r.method }}
@@ -264,7 +264,7 @@ const { getMethodColorClass } = useFormatters()
                   {{ r.component_name }}
                 </td>
                 <td class="py-2 px-3 whitespace-nowrap font-sans">
-                  <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] text-slate-600 dark:text-slate-300">
+                  <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-xs text-slate-600 dark:text-slate-300">
                     {{ r.domain || 'Umum' }}
                   </span>
                 </td>
@@ -309,14 +309,14 @@ const { getMethodColorClass } = useFormatters()
 
         <!-- Key Config Files Chips -->
         <div v-if="baseKnowledge.files_scope?.config_files?.length" class="space-y-1.5">
-          <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+          <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">
             File Konfigurasi Utama yang Terdeteksi:
           </span>
           <div class="flex flex-wrap gap-1.5">
             <span
               v-for="cfg in baseKnowledge.files_scope.config_files"
               :key="cfg"
-              class="px-2 py-0.5 rounded text-[11px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700"
+              class="px-2 py-0.5 rounded text-xs font-mono bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700"
             >
               {{ cfg }}
             </span>
@@ -352,19 +352,19 @@ const { getMethodColorClass } = useFormatters()
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
           <div class="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
-            <span class="text-[10px] uppercase font-semibold text-slate-400">Database Engine</span>
+            <span class="text-xs uppercase font-semibold text-slate-400">Database Engine</span>
             <p class="font-bold text-slate-800 dark:text-slate-200 mt-0.5">
               {{ baseKnowledge.environment_scope?.database_type || 'SQLite' }}
             </p>
           </div>
           <div class="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
-            <span class="text-[10px] uppercase font-semibold text-slate-400">Metode Autentikasi</span>
+            <span class="text-xs uppercase font-semibold text-slate-400">Metode Autentikasi</span>
             <p class="font-bold text-slate-800 dark:text-slate-200 mt-0.5">
               {{ baseKnowledge.environment_scope?.auth_methods?.join(', ') || 'Session / API Key' }}
             </p>
           </div>
           <div class="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
-            <span class="text-[10px] uppercase font-semibold text-slate-400">Layanan Pihak Ke-3</span>
+            <span class="text-xs uppercase font-semibold text-slate-400">Layanan Pihak Ke-3</span>
             <p class="font-bold text-slate-800 dark:text-slate-200 mt-0.5 truncate">
               {{ baseKnowledge.environment_scope?.third_party_services?.join(', ') || 'None' }}
             </p>
@@ -381,11 +381,11 @@ const { getMethodColorClass } = useFormatters()
             >
               <div class="flex items-center justify-between gap-1">
                 <span class="font-mono font-bold text-slate-800 dark:text-slate-200">{{ k.key }}</span>
-                <span v-if="k.is_secret" class="text-[9px] px-1 py-0.5 rounded font-mono bg-rose-50 text-rose-600 dark:bg-rose-950 dark:text-rose-400">
+                <span v-if="k.is_secret" class="text-xs px-1 py-0.5 rounded font-mono bg-rose-50 text-rose-600 dark:bg-rose-950 dark:text-rose-400">
                   Secret
                 </span>
               </div>
-              <p class="text-[11px] text-slate-500 mt-1">
+              <p class="text-xs text-slate-500 mt-1">
                 {{ k.purpose || 'Variabel lingkungan aplikasi' }}
               </p>
             </div>

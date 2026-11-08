@@ -59,9 +59,9 @@ const maturityLabel: Record<string, string> = {
       <div class="flex items-center gap-3">
         <div class="px-3 py-2 rounded-xl text-center border font-mono shrink-0" :class="healthTone.cls">
           <div class="text-xl font-bold leading-none">
-            {{ project.health_score }}<span class="text-[10px] font-normal">/100</span>
+            {{ project.health_score }}<span class="text-xs font-normal">/100</span>
           </div>
-          <div class="text-[9px] uppercase font-semibold mt-0.5">
+          <div class="text-xs uppercase font-semibold mt-0.5">
             Health
           </div>
         </div>
@@ -69,11 +69,11 @@ const maturityLabel: Record<string, string> = {
           <div class="font-bold text-neutral-900 dark:text-white truncate">
             {{ healthTone.label }}
           </div>
-          <div v-if="profile" class="text-[11px] text-neutral-500 truncate">
+          <div v-if="profile" class="text-xs text-neutral-500 truncate">
             Tahap: <span class="font-semibold text-neutral-700 dark:text-neutral-300">{{ maturityLabel[profile.maturity.stage] || profile.maturity.stage }}</span>
             <span v-if="profile.source === 'heuristic'" class="text-amber-500"> (perkiraan)</span>
           </div>
-          <div class="text-[10px] font-mono text-neutral-400">
+          <div class="text-xs font-mono text-neutral-400">
             ID #{{ project.id }}
           </div>
         </div>
@@ -83,7 +83,7 @@ const maturityLabel: Record<string, string> = {
     <!-- Navigation -->
     <nav class="space-y-4 w-full" aria-label="Navigasi Tampilan Proyek">
       <div v-for="group in navGroups" :key="group.label" class="space-y-1.5">
-        <div class="px-1 text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
+        <div class="px-1 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
           {{ group.label }}
         </div>
         <button
@@ -110,7 +110,7 @@ const maturityLabel: Record<string, string> = {
               <div class="text-xs font-bold leading-tight truncate" :class="activeTab === t.id ? 'text-sky-900 dark:text-sky-200' : 'text-neutral-800 dark:text-neutral-200'">
                 {{ t.title }}
               </div>
-              <div class="text-[10px] leading-tight truncate mt-0.5" :class="activeTab === t.id ? 'text-sky-700/90 dark:text-sky-300/80' : 'text-neutral-500 dark:text-neutral-400'">
+              <div class="text-xs leading-tight truncate mt-0.5" :class="activeTab === t.id ? 'text-sky-700/90 dark:text-sky-300/80' : 'text-neutral-500 dark:text-neutral-400'">
                 {{ t.desc }}
               </div>
             </div>
@@ -120,7 +120,7 @@ const maturityLabel: Record<string, string> = {
             size="xs"
             :color="activeTab === t.id ? 'primary' : 'neutral'"
             variant="subtle"
-            class="font-mono text-[10px] shrink-0"
+            class="font-mono text-xs shrink-0"
           >
             {{ t.badge }}
           </UBadge>

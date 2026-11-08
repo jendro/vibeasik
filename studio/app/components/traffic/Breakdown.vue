@@ -24,7 +24,7 @@ const lists = computed(() => [
         <span class="font-normal text-neutral-500">· {{ fmtNum(report.totals.unique_ips) }} IP unik</span>
       </div>
       <table class="w-full text-xs">
-        <thead class="text-neutral-500 text-[10px] uppercase tracking-wide">
+        <thead class="text-neutral-500 text-xs uppercase tracking-wide">
           <tr>
             <th class="text-left font-semibold px-3 py-1.5">
               IP
@@ -68,7 +68,7 @@ const lists = computed(() => [
           </tr>
         </tbody>
       </table>
-      <p v-if="report.gran !== 'm'" class="px-3 py-2 text-[11px] text-neutral-500 border-t border-neutral-100 dark:border-neutral-800">
+      <p v-if="report.gran !== 'm'" class="px-3 py-2 text-xs text-neutral-500 border-t border-neutral-100 dark:border-neutral-800">
         Puncak per menit hanya tersedia untuk jendela ≤ 24 jam (rangkuman per menit disimpan 48 jam).
       </p>
     </div>
@@ -79,7 +79,7 @@ const lists = computed(() => [
           <UIcon :name="l.icon" class="w-4 h-4 text-neutral-400" /> {{ l.title }}
         </div>
         <div v-if="l.items.length" class="space-y-1.5">
-          <div v-for="it in l.items.slice(0, 8)" :key="it.value" class="text-[11px]">
+          <div v-for="it in l.items.slice(0, 8)" :key="it.value" class="text-xs">
             <div class="flex justify-between gap-2">
               <span class="truncate font-mono text-neutral-700 dark:text-neutral-200" :title="it.value">{{ it.value || '(kosong)' }}</span>
               <span class="tabular-nums text-neutral-500 shrink-0">{{ fmtNum(it.count) }} · {{ fmtPct(it.share) }}</span>
@@ -89,7 +89,7 @@ const lists = computed(() => [
             </div>
           </div>
         </div>
-        <p v-else class="text-[11px] text-neutral-500">
+        <p v-else class="text-xs text-neutral-500">
           {{ l.empty }}
         </p>
       </div>

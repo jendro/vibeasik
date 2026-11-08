@@ -265,7 +265,7 @@ const { getSeverityBadgeColor } = useFormatters()
                 :key="opt.value"
                 type="button"
                 :disabled="isExecuting"
-                class="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all border"
+                class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all border"
                 :class="[
                   batchSize === opt.value
                     ? 'bg-primary-600 text-white border-primary-600 shadow-xs'
@@ -283,7 +283,7 @@ const { getSeverityBadgeColor } = useFormatters()
         <div class="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 space-y-3">
           <div class="flex items-center justify-between">
             <div class="space-y-0.5">
-              <div class="text-[11px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+              <div class="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
                 Progress Penyelesaian Temuan
               </div>
               <div class="text-sm font-bold text-neutral-900 dark:text-white">
@@ -292,7 +292,7 @@ const { getSeverityBadgeColor } = useFormatters()
             </div>
 
             <!-- Mini State Badges -->
-            <div class="flex items-center gap-2 font-mono text-[11px] flex-wrap">
+            <div class="flex items-center gap-2 font-mono text-xs flex-wrap">
               <span class="px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                 Berhasil: {{ successCount }}
               </span>
@@ -395,7 +395,7 @@ const { getSeverityBadgeColor } = useFormatters()
 
         <!-- Findings Queue List -->
         <div class="space-y-2">
-          <div class="flex items-center justify-between text-neutral-500 font-semibold text-[11px] uppercase tracking-wider">
+          <div class="flex items-center justify-between text-neutral-500 font-semibold text-xs uppercase tracking-wider">
             <span>Daftar Antrean Temuan ({{ totalCount }})</span>
             <span>Status Eksekusi</span>
           </div>
@@ -423,13 +423,13 @@ const { getSeverityBadgeColor } = useFormatters()
                   </UBadge>
                   <span
                     v-if="finding.rule_id"
-                    class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
+                    class="px-1.5 py-0.5 rounded text-xs font-mono font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
                   >
                     {{ finding.rule_id }}
                   </span>
                   <span
                     v-if="finding.is_deep || finding.rule_id?.startsWith('DEEP-') || finding.title?.startsWith('[DEEP]')"
-                    class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 shrink-0 uppercase"
+                    class="px-1.5 py-0.5 rounded text-xs font-bold bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 shrink-0 uppercase"
                   >
                     Deep Check
                   </span>
@@ -438,11 +438,11 @@ const { getSeverityBadgeColor } = useFormatters()
                   </span>
                 </div>
 
-                <div v-if="groupOf.get(getFindingKey(finding))" class="flex items-center gap-1.5 text-[10px] text-primary-600 dark:text-primary-400 font-semibold">
+                <div v-if="groupOf.get(getFindingKey(finding))" class="flex items-center gap-1.5 text-xs text-primary-600 dark:text-primary-400 font-semibold">
                   <UIcon name="i-lucide-list-tree" class="w-3 h-3" />
                   <span>{{ groupOf.get(getFindingKey(finding))?.findings.length }} temuan serupa · {{ groupOf.get(getFindingKey(finding))?.fileCount }} berkas — satu panggilan LLM, satu todo</span>
                 </div>
-                <div v-else-if="finding.target_file" class="flex items-center gap-1.5 text-[10px] text-neutral-500 font-mono">
+                <div v-else-if="finding.target_file" class="flex items-center gap-1.5 text-xs text-neutral-500 font-mono">
                   <UIcon name="i-lucide-file-code" class="w-3 h-3 text-neutral-400" />
                   <span class="truncate">{{ finding.target_file }}</span>
                   <span v-if="finding.line">L{{ finding.line }}</span>
@@ -453,7 +453,7 @@ const { getSeverityBadgeColor } = useFormatters()
               <div class="shrink-0 flex items-center gap-2">
                 <!-- Status: Success -->
                 <template v-if="itemStates[getFindingKey(finding)]?.status === 'success'">
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
                     <UIcon name="i-lucide-check" class="w-3 h-3" />
                     {{ outcomeLabel(itemStates[getFindingKey(finding)]?.outcome) }}
                     <span v-if="itemStates[getFindingKey(finding)]?.todoId" class="font-mono">
@@ -472,7 +472,7 @@ const { getSeverityBadgeColor } = useFormatters()
 
                 <!-- Status: Processing -->
                 <template v-else-if="itemStates[getFindingKey(finding)]?.status === 'processing'">
-                  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-primary-50 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-800">
+                  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-semibold bg-primary-50 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-800">
                     <UIcon name="i-lucide-loader-2" class="w-3 h-3 animate-spin" />
                     Memproses...
                   </span>
@@ -481,7 +481,7 @@ const { getSeverityBadgeColor } = useFormatters()
                 <!-- Status: Error -->
                 <template v-else-if="itemStates[getFindingKey(finding)]?.status === 'error'">
                   <span
-                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800"
                     :title="itemStates[getFindingKey(finding)]?.error"
                   >
                     <UIcon name="i-lucide-alert-circle" class="w-3 h-3" />
@@ -500,7 +500,7 @@ const { getSeverityBadgeColor } = useFormatters()
 
                 <!-- Status: Pending -->
                 <template v-else>
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700">
                     <UIcon name="i-lucide-clock" class="w-3 h-3" />
                     Menunggu
                   </span>

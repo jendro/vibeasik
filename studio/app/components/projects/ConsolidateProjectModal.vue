@@ -126,7 +126,7 @@ const handleConsolidate = async () => {
               <UIcon name="i-lucide-folder" class="w-3.5 h-3.5 text-primary-500" />
               <span>Lokasi Folder Induk Proyek</span>
             </span>
-            <span class="text-[11px] text-neutral-400 font-mono">
+            <span class="text-xs text-neutral-400 font-mono">
               Total: {{ formatBytes(preview.total_size_bytes) }}
             </span>
           </label>
@@ -149,7 +149,7 @@ const handleConsolidate = async () => {
               Cek Ulang
             </UButton>
           </div>
-          <div class="text-[11px] font-mono text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
+          <div class="text-xs font-mono text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
             <span>Hasil Akhir:</span>
             <span class="text-primary-600 dark:text-primary-400 font-bold break-all">{{ preview.project_target_dir }}</span>
           </div>
@@ -164,7 +164,7 @@ const handleConsolidate = async () => {
             <UIcon name="i-lucide-alert-triangle" class="w-4 h-4 text-rose-500 shrink-0" />
             <span>Konflik Folder Terdeteksi</span>
           </div>
-          <p class="text-[11px]">
+          <p class="text-xs">
             Target folder tujuan sudah ada di komputer Anda (dan bukan sisa penyatuan proyek ini) atau folder sumber tidak ditemukan. Silakan ganti direktori induk proyek atau periksa path di filesystem.
           </p>
         </div>
@@ -198,33 +198,33 @@ const handleConsolidate = async () => {
                     Git History Aman
                   </UBadge>
                 </div>
-                <span class="font-mono text-[11px] text-neutral-400">
+                <span class="font-mono text-xs text-neutral-400">
                   {{ formatBytes(item.size_bytes) }}
                 </span>
               </div>
 
               <!-- Path Flow -->
-              <div class="font-mono text-[11px] space-y-0.5">
+              <div class="font-mono text-xs space-y-0.5">
                 <div class="text-neutral-400 truncate flex items-center gap-1.5">
-                  <span class="text-[10px] uppercase font-bold text-neutral-500">Asal:</span>
+                  <span class="text-xs uppercase font-bold text-neutral-500">Asal:</span>
                   <span class="truncate">{{ item.current_path }}</span>
                 </div>
                 <div class="text-primary-600 dark:text-primary-400 font-semibold truncate flex items-center gap-1.5">
-                  <span class="text-[10px] uppercase font-bold text-neutral-500">Tujuan:</span>
+                  <span class="text-xs uppercase font-bold text-neutral-500">Tujuan:</span>
                   <span class="truncate">{{ item.target_path }}</span>
                 </div>
               </div>
 
               <!-- Status or Warning Note -->
-              <div v-if="item.status === 'already_in_place'" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+              <div v-if="item.status === 'already_in_place'" class="text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
                 <UIcon name="i-lucide-check" class="w-3 h-3" />
                 <span>{{ item.warning || 'Sudah berada di folder tujuan.' }}</span>
               </div>
-              <div v-else-if="item.warning" class="text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1">
+              <div v-else-if="item.warning" class="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
                 <UIcon name="i-lucide-info" class="w-3 h-3" />
                 <span>{{ item.warning }}</span>
               </div>
-              <div v-else-if="item.error" class="text-[10px] text-rose-600 dark:text-rose-400 font-bold flex items-center gap-1">
+              <div v-else-if="item.error" class="text-xs text-rose-600 dark:text-rose-400 font-bold flex items-center gap-1">
                 <UIcon name="i-lucide-x" class="w-3 h-3" />
                 <span>{{ item.error }}</span>
               </div>
@@ -238,7 +238,7 @@ const handleConsolidate = async () => {
             <UIcon name="i-lucide-sparkles" class="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
             <span>Otomasi Ekosistem & Tautan AI</span>
           </div>
-          <p class="text-[11px] leading-relaxed text-neutral-600 dark:text-neutral-400">
+          <p class="text-xs leading-relaxed text-neutral-600 dark:text-neutral-400">
             Setelah disatukan, Vibeasik memperbarui database, memindahkan <code class="text-sky-600 dark:text-sky-400 font-mono">.vibeasik/</code> (peta kode & base knowledge) dari komponen ke folder induk, lalu menjalankan ulang Init vibeasik di sana: tautan AI (<code class="text-sky-600 dark:text-sky-400 font-mono">.vibeasik.json</code>) dan <code class="text-sky-600 dark:text-sky-400 font-mono">.vibeasik/CODEMAP.md</code> berada di root folder induk. AI coding agent (Antigravity/Cursor) akan memiliki visibilitas penuh atas seluruh komponen proyek.
           </p>
         </div>

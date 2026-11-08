@@ -27,7 +27,7 @@ const perEffort = computed(() => impactPerEffort(props.todo).toFixed(0))
 
 <template>
   <UPopover v-if="todo.impact_level" mode="hover" :content="{ side: 'top', align: 'start' }">
-    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-medium text-[11px] border cursor-default" :class="meta.class">
+    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-medium text-xs border cursor-default" :class="meta.class">
       <UIcon :name="meta.icon" class="w-3.5 h-3.5" />
       {{ meta.label }} · {{ todo.impact_score }}
     </span>
@@ -37,19 +37,19 @@ const perEffort = computed(() => impactPerEffort(props.todo).toFixed(0))
           <span>{{ meta.label }}</span>
           <span class="font-mono">{{ todo.impact_score }} / 100</span>
         </div>
-        <p v-if="todo.impact_summary" class="text-[11px] text-neutral-700 dark:text-neutral-200 leading-snug">
+        <p v-if="todo.impact_summary" class="text-xs text-neutral-700 dark:text-neutral-200 leading-snug">
           {{ todo.impact_summary }}
         </p>
 
         <div v-for="g in groups" :key="g.audience" class="space-y-1">
-          <div class="text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
+          <div class="text-xs font-semibold uppercase tracking-wide text-neutral-400">
             {{ impactAudienceLabel[g.audience] || g.audience }}
           </div>
           <div v-for="d in g.items" :key="d.key" :title="d.hint" class="space-y-0.5">
-            <div class="flex justify-between text-[11px] text-neutral-600 dark:text-neutral-300">
+            <div class="flex justify-between text-xs text-neutral-600 dark:text-neutral-300">
               <span :class="{ 'text-neutral-400 dark:text-neutral-500': d.value === 0 }">
                 {{ d.label }}
-                <span v-if="d.weight >= 0.99" class="ml-0.5 text-[9px] text-violet-500" title="Bobot terbesar untuk kategori todo ini">★</span>
+                <span v-if="d.weight >= 0.99" class="ml-0.5 text-xs text-violet-500" title="Bobot terbesar untuk kategori todo ini">★</span>
               </span>
               <span class="font-mono">{{ d.value }}</span>
             </div>
@@ -59,7 +59,7 @@ const perEffort = computed(() => impactPerEffort(props.todo).toFixed(0))
           </div>
         </div>
 
-        <div class="pt-1.5 border-t border-neutral-100 dark:border-neutral-800 text-[11px] text-neutral-500 space-y-0.5">
+        <div class="pt-1.5 border-t border-neutral-100 dark:border-neutral-800 text-xs text-neutral-500 space-y-0.5">
           <div v-if="todo.complexity_score > 0" class="flex justify-between">
             <span title="Skor dampak dibagi skor kerumitan: makin tinggi makin layak dikerjakan dulu">Dampak per usaha</span>
             <span class="font-mono">{{ perEffort }}</span>

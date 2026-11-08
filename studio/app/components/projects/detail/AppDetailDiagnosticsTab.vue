@@ -65,7 +65,7 @@ const handleRunComponentDiagnostics = () => emit('run')
           :class="getScoreColor(componentDiagnostic.score)"
         >
           <span class="text-xl">{{ componentDiagnostic.score }}</span>
-          <span class="text-[8px] uppercase font-normal">Score</span>
+          <span class="text-xs uppercase font-normal">Score</span>
         </div>
         <div class="space-y-0.5 min-w-0">
           <div class="font-bold text-sm text-neutral-900 dark:text-white">
@@ -105,7 +105,7 @@ const handleRunComponentDiagnostics = () => emit('run')
                 :class="f.severity === 'CRITICAL' ? 'text-rose-500' : f.severity === 'WARNING' ? 'text-amber-500' : 'text-blue-500'"
               />
               <span class="font-bold text-neutral-900 dark:text-neutral-100">{{ f.title }}</span>
-              <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-500">
+              <span class="text-xs uppercase font-mono px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-500">
                 {{ f.category }}
               </span>
             </div>

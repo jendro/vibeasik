@@ -30,7 +30,7 @@ const fileOf = (s: Todo) => {
   <div class="mt-2 rounded-lg border border-violet-200/70 dark:border-violet-900/50 bg-violet-50/50 dark:bg-violet-950/20">
     <button
       type="button"
-      class="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 text-[11px] font-semibold text-violet-800 dark:text-violet-300 cursor-pointer"
+      class="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 text-xs font-semibold text-violet-800 dark:text-violet-300 cursor-pointer"
       @click="open = !open"
     >
       <span class="flex items-center gap-1.5">
@@ -41,12 +41,12 @@ const fileOf = (s: Todo) => {
       <UIcon :name="open ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="w-3.5 h-3.5" />
     </button>
     <ul v-if="open" class="px-2.5 pb-2 space-y-1">
-      <li v-for="s in subTodos" :key="s.id" class="flex items-start gap-1.5 text-[11px] text-neutral-700 dark:text-neutral-300">
+      <li v-for="s in subTodos" :key="s.id" class="flex items-start gap-1.5 text-xs text-neutral-700 dark:text-neutral-300">
         <UIcon :name="statusIcon(s).icon" :class="statusIcon(s).class" class="w-3.5 h-3.5 mt-px shrink-0" :title="statusIcon(s).title" />
         <span class="min-w-0">
           <span class="font-mono text-neutral-400">#{{ s.id }}</span>
           {{ s.title }}
-          <code v-if="fileOf(s)" class="ml-1 text-[10px] text-sky-700 dark:text-sky-400">{{ fileOf(s) }}</code>
+          <code v-if="fileOf(s)" class="ml-1 text-xs text-sky-700 dark:text-sky-400">{{ fileOf(s) }}</code>
         </span>
       </li>
     </ul>

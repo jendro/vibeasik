@@ -156,39 +156,39 @@ const handleRunLiveCensorTest = async () => {
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
         <div class="p-3 rounded-xl bg-white/90 dark:bg-neutral-800 border border-amber-200/60 dark:border-white/10 space-y-1">
           <div class="flex items-center justify-between text-neutral-500 dark:text-neutral-400">
-            <span class="text-[10px] uppercase font-bold tracking-wider">Custom Keywords (Pass 1)</span>
+            <span class="text-xs uppercase font-bold tracking-wider">Custom Keywords (Pass 1)</span>
             <UIcon name="i-lucide-file-key" class="w-3.5 h-3.5 text-purple-500" />
           </div>
           <div class="text-xl font-bold font-mono text-purple-600 dark:text-purple-400">
             {{ keywords.length }} <span class="text-xs font-normal text-neutral-400">({{ activeKeywordCount }} aktif)</span>
           </div>
-          <div class="text-[11px] text-neutral-500">
+          <div class="text-xs text-neutral-500">
             Pola kata kunci & regex terdaftar pengguna
           </div>
         </div>
 
         <div class="p-3 rounded-xl bg-white/90 dark:bg-neutral-800 border border-amber-200/60 dark:border-white/10 space-y-1">
           <div class="flex items-center justify-between text-neutral-500 dark:text-neutral-400">
-            <span class="text-[10px] uppercase font-bold tracking-wider">Pola Sistem (Pass 2)</span>
+            <span class="text-xs uppercase font-bold tracking-wider">Pola Sistem (Pass 2)</span>
             <UIcon name="i-lucide-shield-alert" class="w-3.5 h-3.5 text-sky-500" />
           </div>
           <div class="text-xl font-bold font-mono text-sky-600 dark:text-sky-400">
             {{ builtInPatterns.length || 13 }} <span class="text-xs font-normal text-neutral-400">detektor aktif</span>
           </div>
-          <div class="text-[11px] text-neutral-500">
+          <div class="text-xs text-neutral-500">
             Otomatis deteksi AI keys, JWT, AWS, Private Key
           </div>
         </div>
 
         <div class="p-3 rounded-xl bg-white/90 dark:bg-neutral-800 border border-amber-200/60 dark:border-white/10 space-y-1">
           <div class="flex items-center justify-between text-neutral-500 dark:text-neutral-400">
-            <span class="text-[10px] uppercase font-bold tracking-wider">Status Pencegahan Kebocoran</span>
+            <span class="text-xs uppercase font-bold tracking-wider">Status Pencegahan Kebocoran</span>
             <UIcon name="i-lucide-lock" class="w-3.5 h-3.5 text-amber-500" />
           </div>
           <div class="text-xl font-bold font-mono text-amber-600 dark:text-amber-400">
             100% Aman
           </div>
-          <div class="text-[11px] text-neutral-500">
+          <div class="text-xs text-neutral-500">
             Aliasing aman format [ALIASED_...] sebelum kirim
           </div>
         </div>
@@ -206,7 +206,7 @@ const handleRunLiveCensorTest = async () => {
           v-for="p in keywordPresets"
           :key="p.label"
           type="button"
-          class="px-2.5 py-1 rounded-md text-[11px] font-mono bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:border-amber-400 dark:hover:border-amber-600 text-neutral-700 dark:text-neutral-300 transition-colors cursor-pointer"
+          class="px-2.5 py-1 rounded-md text-xs font-mono bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:border-amber-400 dark:hover:border-amber-600 text-neutral-700 dark:text-neutral-300 transition-colors cursor-pointer"
           @click="$emit('applyPreset', p)"
         >
           + {{ p.label }}
@@ -227,7 +227,7 @@ const handleRunLiveCensorTest = async () => {
 
         <div class="flex flex-wrap items-center gap-2">
           <!-- Category Filter Pills -->
-          <div class="flex items-center gap-1 p-0.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-[11px]">
+          <div class="flex items-center gap-1 p-0.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-xs">
             <button
               type="button"
               class="px-2 py-0.5 rounded cursor-pointer transition-colors"
@@ -263,7 +263,7 @@ const handleRunLiveCensorTest = async () => {
       <!-- Table of Keywords -->
       <div v-if="filteredKeywords.length > 0" class="overflow-x-auto rounded-xl border border-neutral-200 dark:border-white/10">
         <table class="w-full text-left text-xs font-sans">
-          <thead class="bg-neutral-50 dark:bg-neutral-800 text-neutral-500 uppercase text-[10px] tracking-wider border-b border-neutral-200 dark:border-white/10">
+          <thead class="bg-neutral-50 dark:bg-neutral-800 text-neutral-500 uppercase text-xs tracking-wider border-b border-neutral-200 dark:border-white/10">
             <tr>
               <th class="p-3">
                 Keyword / Pola Rahasia
@@ -312,7 +312,7 @@ const handleRunLiveCensorTest = async () => {
                   </button>
                   <span
                     v-if="kw.is_regex"
-                    class="px-1.5 py-0.5 rounded text-[10px] bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 font-mono font-bold"
+                    class="px-1.5 py-0.5 rounded text-xs bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 font-mono font-bold"
                   >
                     Regex
                   </span>
@@ -322,7 +322,7 @@ const handleRunLiveCensorTest = async () => {
               <!-- Category -->
               <td class="p-3">
                 <span
-                  class="px-2 py-0.5 rounded text-[11px] font-mono font-semibold"
+                  class="px-2 py-0.5 rounded text-xs font-mono font-semibold"
                   :class="{
                     'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800': kw.category === 'API_KEY',
                     'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800': kw.category === 'AUTH_TOKEN',
@@ -344,7 +344,7 @@ const handleRunLiveCensorTest = async () => {
               <td class="p-3 text-center">
                 <button
                   type="button"
-                  class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold transition-colors cursor-pointer inline-flex items-center gap-1"
+                  class="px-2.5 py-0.5 rounded-full text-xs font-semibold transition-colors cursor-pointer inline-flex items-center gap-1"
                   :class="kw.is_active
                     ? 'bg-sky-100 text-sky-800 dark:bg-sky-950/80 dark:text-sky-300 border border-sky-200 dark:border-sky-800'
                     : 'bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700'"
@@ -429,7 +429,7 @@ const handleRunLiveCensorTest = async () => {
           class="p-2.5 rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-50/60 dark:bg-neutral-800/60 flex items-center gap-2 text-neutral-700 dark:text-neutral-300"
         >
           <UIcon name="i-lucide-check-circle-2" class="w-3.5 h-3.5 text-sky-500 shrink-0" />
-          <span class="truncate text-[11px]">{{ pattern }}</span>
+          <span class="truncate text-xs">{{ pattern }}</span>
         </div>
       </div>
     </div>
@@ -451,24 +451,24 @@ const handleRunLiveCensorTest = async () => {
 
         <!-- Preset buttons -->
         <div class="flex items-center gap-1.5">
-          <span class="text-[11px] text-neutral-400">Sampel Uji:</span>
+          <span class="text-xs text-neutral-400">Sampel Uji:</span>
           <button
             type="button"
-            class="px-2 py-1 rounded bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 text-[11px] font-mono cursor-pointer transition-colors"
+            class="px-2 py-1 rounded bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 text-xs font-mono cursor-pointer transition-colors"
             @click="fillSimulatorPreset('all')"
           >
             .env Campuran
           </button>
           <button
             type="button"
-            class="px-2 py-1 rounded bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 text-[11px] font-mono cursor-pointer transition-colors"
+            class="px-2 py-1 rounded bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 text-xs font-mono cursor-pointer transition-colors"
             @click="fillSimulatorPreset('tokens')"
           >
             API Tokens
           </button>
           <button
             type="button"
-            class="px-2 py-1 rounded bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 text-[11px] font-mono cursor-pointer transition-colors"
+            class="px-2 py-1 rounded bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 text-xs font-mono cursor-pointer transition-colors"
             @click="fillSimulatorPreset('db')"
           >
             Database URI
@@ -493,7 +493,7 @@ const handleRunLiveCensorTest = async () => {
           >
             Bersihkan input
           </button>
-          <span v-else class="text-[11px] text-neutral-400">Ketik prompt untuk memulai simulasi sensor</span>
+          <span v-else class="text-xs text-neutral-400">Ketik prompt untuk memulai simulasi sensor</span>
 
           <UButton
             icon="i-lucide-play"
@@ -515,7 +515,7 @@ const handleRunLiveCensorTest = async () => {
             <UIcon name="i-lucide-check-circle" class="w-4 h-4 text-purple-600 dark:text-purple-400" />
             <span>{{ testSimulatorResult.audit?.message || 'Uji sensor selesai.' }}</span>
           </div>
-          <div class="flex items-center gap-2 font-mono text-[11px]">
+          <div class="flex items-center gap-2 font-mono text-xs">
             <span class="px-2 py-0.5 rounded bg-purple-200/80 dark:bg-purple-900 text-purple-800 dark:text-purple-200 font-bold">
               {{ testSimulatorResult.audit?.redacted_count || 0 }} Kunci Redacted
             </span>
@@ -529,7 +529,7 @@ const handleRunLiveCensorTest = async () => {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
           <!-- Raw / Original -->
           <div class="p-3.5 rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50/30 dark:bg-rose-950/20 space-y-2">
-            <div class="flex items-center justify-between text-rose-800 dark:text-rose-300 font-bold text-[11px]">
+            <div class="flex items-center justify-between text-rose-800 dark:text-rose-300 font-bold text-xs">
               <span>TEKS ASLI (SEBELUM DISENSOR)</span>
               <span class="text-rose-500 font-normal">Kunci mentah terpapar</span>
             </div>
@@ -538,7 +538,7 @@ const handleRunLiveCensorTest = async () => {
 
           <!-- Sanitized & Aliased (Clean) -->
           <div class="p-3.5 rounded-xl border border-sky-200 dark:border-sky-900/40 bg-sky-50/30 dark:bg-sky-950/20 space-y-2">
-            <div class="flex items-center justify-between text-sky-800 dark:text-sky-300 font-bold text-[11px]">
+            <div class="flex items-center justify-between text-sky-800 dark:text-sky-300 font-bold text-xs">
               <span>PAYLOAD AMAN (HASIL SENSOR TERKIRIM KE AI)</span>
               <button
                 type="button"
@@ -555,12 +555,12 @@ const handleRunLiveCensorTest = async () => {
 
         <!-- Replaced Secrets Table -->
         <div v-if="testSimulatorResult.audit?.records && testSimulatorResult.audit.records.length > 0" class="space-y-1.5 pt-1">
-          <div class="text-[11px] font-bold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider">
+          <div class="text-xs font-bold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider">
             Rincian Kredensial yang Dialias:
           </div>
           <div class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-white/10">
             <table class="w-full text-left text-xs font-mono">
-              <thead class="bg-neutral-50 dark:bg-neutral-800 text-neutral-500 uppercase text-[10px]">
+              <thead class="bg-neutral-50 dark:bg-neutral-800 text-neutral-500 uppercase text-xs">
                 <tr>
                   <th class="p-2">
                     Alias Terkirim

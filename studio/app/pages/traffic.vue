@@ -290,68 +290,68 @@ onBeforeUnmount(() => {
         <!-- KPI -->
         <section class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
           <div class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
-            <div class="text-[11px] text-neutral-500">
+            <div class="text-xs text-neutral-500">
               Request
             </div>
             <div class="text-xl font-bold tabular-nums text-neutral-900 dark:text-white">
               {{ fmtNum(t.requests) }}
             </div>
-            <div class="text-[11px] text-neutral-500">
+            <div class="text-xs text-neutral-500">
               {{ t.rps_avg }} req/dtk rata²
             </div>
           </div>
           <div class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
-            <div class="text-[11px] text-neutral-500">
+            <div class="text-xs text-neutral-500">
               Puncak
             </div>
             <div class="text-xl font-bold tabular-nums text-neutral-900 dark:text-white">
               {{ fmtNum(t.rpm_peak) }}<span class="text-xs font-normal text-neutral-500"> /mnt</span>
             </div>
-            <div class="text-[11px] text-neutral-500">
+            <div class="text-xs text-neutral-500">
               {{ t.peak_at ? new Date(t.peak_at * 1000).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '–' }}
             </div>
           </div>
           <div class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
-            <div class="text-[11px] text-neutral-500">
+            <div class="text-xs text-neutral-500">
               Latensi p95
             </div>
             <div class="text-xl font-bold tabular-nums" :class="t.p95 >= 1000 ? 'text-amber-600 dark:text-amber-400' : 'text-neutral-900 dark:text-white'">
               {{ fmtMs(t.p95) }}
             </div>
-            <div class="text-[11px] text-neutral-500">
+            <div class="text-xs text-neutral-500">
               p50 {{ fmtMs(t.p50) }} · p99 {{ fmtMs(t.p99) }}
             </div>
           </div>
           <div class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
-            <div class="text-[11px] text-neutral-500">
+            <div class="text-xs text-neutral-500">
               Error server (5xx)
             </div>
             <div class="text-xl font-bold tabular-nums" :class="t.err_rate >= 0.01 ? 'text-rose-600 dark:text-rose-400' : 'text-neutral-900 dark:text-white'">
               {{ fmtPct(t.err_rate) }}
             </div>
-            <div class="text-[11px] text-neutral-500">
+            <div class="text-xs text-neutral-500">
               4xx {{ fmtPct(t.client_err_rate) }}
             </div>
           </div>
           <div class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
-            <div class="text-[11px] text-neutral-500" title="Perkiraan request yang diproses bersamaan (Little's law)">
+            <div class="text-xs text-neutral-500" title="Perkiraan request yang diproses bersamaan (Little's law)">
               Request bersamaan
             </div>
             <div class="text-xl font-bold tabular-nums text-neutral-900 dark:text-white">
               {{ t.concurrency_peak }}
             </div>
-            <div class="text-[11px] text-neutral-500">
+            <div class="text-xs text-neutral-500">
               rata² {{ t.concurrency_avg }} · {{ fmtPct(t.read_share) }} baca
             </div>
           </div>
           <div class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
-            <div class="text-[11px] text-neutral-500">
+            <div class="text-xs text-neutral-500">
               Pengunjung
             </div>
             <div class="text-xl font-bold tabular-nums text-neutral-900 dark:text-white">
               {{ fmtNum(t.unique_ips) }}<span class="text-xs font-normal text-neutral-500"> IP</span>
             </div>
-            <div class="text-[11px] text-neutral-500">
+            <div class="text-xs text-neutral-500">
               {{ t.instances || 0 }} instance · respons {{ fmtBytes(t.avg_out) }}
             </div>
           </div>
@@ -364,7 +364,7 @@ onBeforeUnmount(() => {
               <h3 class="text-xs font-bold text-neutral-800 dark:text-neutral-100">
                 Request per {{ report.step_sec >= 3600 ? `${report.step_sec / 3600} jam` : `${report.step_sec / 60} menit` }}
               </h3>
-              <div class="flex items-center gap-3 text-[11px] text-neutral-500">
+              <div class="flex items-center gap-3 text-xs text-neutral-500">
                 <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-primary-500 dark:bg-primary-400" /> Berhasil & 4xx</span>
                 <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-rose-500 dark:bg-rose-400" /> Error 5xx</span>
               </div>

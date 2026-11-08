@@ -53,7 +53,7 @@ const when = (iso?: string) => iso ? new Date(iso).toLocaleString('id-ID', { day
             <UBadge v-if="g.auto" size="xs" color="secondary" variant="soft" icon="i-lucide-radar">
               Terdeteksi otomatis
             </UBadge>
-            <span class="text-[11px] text-neutral-400">muncul {{ g.hits }}× · {{ when(g.updated_at) }}</span>
+            <span class="text-xs text-neutral-400">muncul {{ g.hits }}× · {{ when(g.updated_at) }}</span>
           </div>
           <p class="mt-1 text-sm font-semibold text-neutral-900 dark:text-white">
             {{ g.topic }}

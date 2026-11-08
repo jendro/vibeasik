@@ -141,7 +141,7 @@ const handleSubmit = async () => {
                 <UIcon name="i-lucide-globe" class="w-3.5 h-3.5" />
                 <span>Global</span>
               </div>
-              <div class="text-[10px] text-neutral-500 mt-0.5">
+              <div class="text-xs text-neutral-500 mt-0.5">
                 Platform & Standar
               </div>
             </button>
@@ -156,7 +156,7 @@ const handleSubmit = async () => {
                 <UIcon name="i-lucide-folder-kanban" class="w-3.5 h-3.5" />
                 <span>Proyek</span>
               </div>
-              <div class="text-[10px] text-neutral-500 mt-0.5">
+              <div class="text-xs text-neutral-500 mt-0.5">
                 Bundle & Milestone
               </div>
             </button>
@@ -171,7 +171,7 @@ const handleSubmit = async () => {
                 <UIcon name="i-lucide-layers" class="w-3.5 h-3.5" />
                 <span>Komponen</span>
               </div>
-              <div class="text-[10px] text-neutral-500 mt-0.5">
+              <div class="text-xs text-neutral-500 mt-0.5">
                 Modul & Layanan
               </div>
             </button>
@@ -237,7 +237,7 @@ const handleSubmit = async () => {
             <label class="block font-semibold text-neutral-700 dark:text-neutral-300">
               Deskripsi & Rincian Instruksi
             </label>
-            <div class="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 p-0.5 rounded-lg text-[10px]">
+            <div class="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 p-0.5 rounded-lg text-xs">
               <button
                 type="button"
                 class="px-2 py-0.5 rounded-md font-medium transition-colors"
@@ -263,9 +263,9 @@ const handleSubmit = async () => {
               v-model="form.description"
               rows="4"
               placeholder="Jelaskan kebutuhan teknis, target implementasi, atau kriteria penyelesaian (mendukung Markdown)..."
-              class="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-white/10 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-sky-500 font-mono text-[11px]"
+              class="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-white/10 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-sky-500 font-mono text-xs"
             />
-            <div class="mt-1 flex items-center justify-between text-[10px] text-neutral-400">
+            <div class="mt-1 flex items-center justify-between text-xs text-neutral-400">
               <span>Mendukung sintaks Markdown: <strong>**tebal**</strong>, <code>`kode`</code>, <code>- daftar</code></span>
               <span class="font-mono">{{ form.description.length }} karakter</span>
             </div>

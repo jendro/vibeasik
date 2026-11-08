@@ -39,7 +39,7 @@ const sizeClasses = computed(() => {
     case 'xs':
     default:
       return {
-        badge: 'px-1.5 py-0.5 text-[11px] gap-1',
+        badge: 'px-1.5 py-0.5 text-xs gap-1',
         icon: 'w-3 h-3'
       }
   }

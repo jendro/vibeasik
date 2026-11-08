@@ -37,9 +37,9 @@ defineEmits<{
           <span>{{ it.from }}</span>
           <UIcon name="i-lucide-arrow-right" class="w-3.5 h-3.5 text-sky-500" />
           <span>{{ it.to }}</span>
-          <span class="ml-auto px-1.5 py-0.5 rounded text-[10px] font-mono font-normal bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-500">{{ it.via }}</span>
+          <span class="ml-auto px-1.5 py-0.5 rounded text-xs font-mono font-normal bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-500">{{ it.via }}</span>
         </div>
-        <p v-if="it.purpose" class="text-[11px] text-neutral-500 leading-relaxed">
+        <p v-if="it.purpose" class="text-xs text-neutral-500 leading-relaxed">
           {{ it.purpose }}
         </p>
       </div>
@@ -50,10 +50,10 @@ defineEmits<{
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-1">
       <div class="space-y-1.5">
-        <h3 class="text-[11px] font-bold uppercase tracking-wider text-neutral-400">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-400">
           Layanan Eksternal ({{ profile.external_services.length }})
         </h3>
-        <p v-if="!profile.external_services.length" class="text-[11px] text-neutral-400">
+        <p v-if="!profile.external_services.length" class="text-xs text-neutral-400">
           Tidak ada.
         </p>
         <div v-for="s in profile.external_services" :key="s.name" class="text-xs">
@@ -62,16 +62,16 @@ defineEmits<{
         </div>
       </div>
       <div class="space-y-1.5">
-        <h3 class="text-[11px] font-bold uppercase tracking-wider text-neutral-400">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-400">
           Entitas Data ({{ profile.data_entities.length }})
         </h3>
-        <p v-if="!profile.data_entities.length" class="text-[11px] text-neutral-400">
+        <p v-if="!profile.data_entities.length" class="text-xs text-neutral-400">
           Belum terdeteksi — bangun Peta Alur Data untuk melihat tabel.
         </p>
         <div v-for="d in profile.data_entities.slice(0, 12)" :key="d.name" class="text-xs">
           <code class="font-semibold text-neutral-800 dark:text-neutral-200">{{ d.name }}</code>
           <span v-if="d.description" class="text-neutral-500"> — {{ d.description }}</span>
-          <span v-if="d.used_by.length" class="text-[10px] text-neutral-400"> ({{ d.used_by.join(', ') }})</span>
+          <span v-if="d.used_by.length" class="text-xs text-neutral-400"> ({{ d.used_by.join(', ') }})</span>
         </div>
       </div>
     </div>

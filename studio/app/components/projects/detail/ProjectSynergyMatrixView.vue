@@ -22,14 +22,14 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
             Matriks Audit Menyeluruh ({{ matrixRows.length }} Baris Terhubung)
           </span>
         </div>
-        <div class="text-[11px] text-neutral-400 font-mono">
+        <div class="text-xs text-neutral-400 font-mono">
           Klik tombol "Periksa" pada cell Halaman FE untuk inspeksi alur & cURL
         </div>
       </div>
 
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs">
-          <thead class="bg-neutral-50 dark:bg-neutral-800/80 text-neutral-500 dark:text-neutral-400 font-mono text-[11px] border-b border-neutral-200 dark:border-neutral-800">
+          <thead class="bg-neutral-50 dark:bg-neutral-800/80 text-neutral-500 dark:text-neutral-400 font-mono text-xs border-b border-neutral-200 dark:border-neutral-800">
             <tr>
               <th class="py-2.5 px-3 min-w-[200px]">
                 Halaman FE & Navigasi
@@ -61,7 +61,7 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
                     <div class="font-bold text-neutral-900 dark:text-white text-xs leading-snug" :title="row.pageTitle">
                       {{ row.pageTitle }}
                     </div>
-                    <div class="font-mono text-[11px] text-sky-600 dark:text-sky-400 truncate mt-0.5" :title="row.pagePath">
+                    <div class="font-mono text-xs text-sky-600 dark:text-sky-400 truncate mt-0.5" :title="row.pagePath">
                       {{ row.pagePath }}
                     </div>
                   </div>
@@ -71,16 +71,16 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
                     color="primary"
                     variant="soft"
                     icon="i-lucide-search"
-                    class="cursor-pointer font-semibold text-[10px] px-2 py-0.5 shrink-0"
+                    class="cursor-pointer font-semibold text-xs px-2 py-0.5 shrink-0"
                     @click="openInspector(row.rawFlow, row.rawPage, 'payload')"
                   >
                     Periksa
                   </UButton>
                 </div>
-                <div v-if="row.filePath" class="text-[10px] font-mono text-neutral-400 truncate max-w-[220px]" :title="row.filePath">
+                <div v-if="row.filePath" class="text-xs font-mono text-neutral-400 truncate max-w-[220px]" :title="row.filePath">
                   {{ row.filePath }}
                 </div>
-                <div v-if="row.navigationTargets.length > 0" class="pt-0.5 text-[10px] text-neutral-500 space-y-0.5">
+                <div v-if="row.navigationTargets.length > 0" class="pt-0.5 text-xs text-neutral-500 space-y-0.5">
                   <div v-for="nt in row.navigationTargets.slice(0, 2)" :key="nt" class="truncate font-mono" :title="nt">
                     ➔ {{ nt }}
                   </div>
@@ -91,20 +91,20 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
               <td class="py-2.5 px-3 align-top space-y-1">
                 <div class="flex items-center gap-1.5 flex-wrap">
                   <span
-                    class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono border uppercase shrink-0"
+                    class="px-1.5 py-0.5 rounded text-xs font-bold font-mono border uppercase shrink-0"
                     :class="getMethodColorClass(row.method)"
                   >
                     {{ row.method }}
                   </span>
-                  <span class="font-mono font-bold text-neutral-800 dark:text-neutral-200 text-[11px] break-all">
+                  <span class="font-mono font-bold text-neutral-800 dark:text-neutral-200 text-xs break-all">
                     {{ row.routePath }}
                   </span>
                 </div>
-                <div class="font-mono text-[11px] text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5 flex-wrap pt-0.5">
+                <div class="font-mono text-xs text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5 flex-wrap pt-0.5">
                   <span class="font-semibold text-neutral-800 dark:text-neutral-200">{{ row.handler }}</span>
                   <span
                     v-if="row.middleware && row.middleware !== '-'"
-                    class="text-[10px] text-neutral-500 dark:text-neutral-400 font-sans px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700/60"
+                    class="text-xs text-neutral-500 dark:text-neutral-400 font-sans px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700/60"
                   >
                     {{ row.middleware }}
                   </span>
@@ -113,30 +113,30 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
 
               <!-- Data Dikirim & Validasi -->
               <td class="py-2.5 px-3 align-top space-y-1">
-                <div class="font-mono text-[10px] text-neutral-700 dark:text-neutral-300 line-clamp-2" :title="row.payload">
+                <div class="font-mono text-xs text-neutral-700 dark:text-neutral-300 line-clamp-2" :title="row.payload">
                   {{ row.payload }}
                 </div>
-                <div class="text-[10px] text-neutral-500 line-clamp-2" :title="row.validations.join('; ')">
+                <div class="text-xs text-neutral-500 line-clamp-2" :title="row.validations.join('; ')">
                   {{ row.validations[0] || '-' }}
                 </div>
               </td>
 
               <!-- Tabel DB & Kolom -->
               <td class="py-2.5 px-3 align-top space-y-1">
-                <div class="font-bold font-mono text-amber-700 dark:text-amber-400 text-[11px] break-words">
+                <div class="font-bold font-mono text-amber-700 dark:text-amber-400 text-xs break-words">
                   {{ row.dbTables.join(', ') || '-' }}
                 </div>
-                <div v-if="row.storedFields.length > 0" class="text-[10px] text-neutral-400 font-mono line-clamp-2" :title="row.storedFields.join(', ')">
+                <div v-if="row.storedFields.length > 0" class="text-xs text-neutral-400 font-mono line-clamp-2" :title="row.storedFields.join(', ')">
                   Kolom: {{ row.storedFields.join(', ') }}
                 </div>
               </td>
 
               <!-- Respon & UI Impact -->
               <td class="py-2.5 px-3 align-top space-y-1">
-                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 inline-block">
+                <span class="px-1.5 py-0.5 rounded text-xs font-bold font-mono bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 inline-block">
                   HTTP {{ row.statusCode }}
                 </span>
-                <p class="text-[11px] text-neutral-600 dark:text-neutral-400 line-clamp-2 pt-0.5 font-medium" :title="row.uiImpact">
+                <p class="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-2 pt-0.5 font-medium" :title="row.uiImpact">
                   {{ row.uiImpact }}
                 </p>
               </td>

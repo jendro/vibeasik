@@ -173,7 +173,7 @@ const go = (id: string) => {
     <div class="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6">
       <nav class="hidden lg:block">
         <div class="sticky top-4 space-y-0.5">
-          <p class="text-[11px] uppercase font-semibold text-neutral-500 px-2 pb-1">
+          <p class="text-xs uppercase font-semibold text-neutral-500 px-2 pb-1">
             Isi
           </p>
           <button
@@ -218,7 +218,7 @@ const go = (id: string) => {
               <p><b>pakai → dinilai → diperkuat/dilemahkan → dirapikan kurator → dipakai lagi</b>; yang belum dikenal → dipelajari pegawai → butir baru.</p>
             </div>
           </div>
-          <pre class="overflow-x-auto rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 p-3 text-[11.5px] leading-relaxed font-mono text-neutral-700 dark:text-neutral-300">  SUMBER                         PUSAT PENGETAHUAN                     PEMAKAI
+          <pre class="overflow-x-auto rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 p-3 text-xs leading-relaxed font-mono text-neutral-700 dark:text-neutral-300">  SUMBER                         PUSAT PENGETAHUAN                     PEMAKAI
   guideline · checklist audit ─┐  ┌──────────────────────────────┐    ┌─ prompt pegawai (todo)
   keahlian pegawai ───────────┼─▶│ butir ── tautan ── butir     │───▶├─ review audit LLM
   vonis audit · penilai QA ───┤  │   klaster · bukti ✓/✗ · celah│    ├─ rapat PM & spesialis
@@ -232,7 +232,7 @@ const go = (id: string) => {
             Isi satu butir (node)
           </h2>
           <div class="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800">
-            <table class="w-full text-sm [&_th]:text-left [&_th]:text-[11px] [&_th]:uppercase [&_th]:font-semibold [&_th]:text-neutral-500 [&_th]:bg-neutral-50 dark:[&_th]:bg-neutral-900 [&_th]:px-3 [&_th]:py-2 [&_td]:px-3 [&_td]:py-2 [&_td]:align-top [&_td]:border-t [&_td]:border-neutral-100 dark:[&_td]:border-neutral-800">
+            <table class="w-full text-sm [&_th]:text-left [&_th]:text-xs [&_th]:uppercase [&_th]:font-semibold [&_th]:text-neutral-500 [&_th]:bg-neutral-50 dark:[&_th]:bg-neutral-900 [&_th]:px-3 [&_th]:py-2 [&_td]:px-3 [&_td]:py-2 [&_td]:align-top [&_td]:border-t [&_td]:border-neutral-100 dark:[&_td]:border-neutral-800">
               <tbody>
                 <tr><td>Jenis</td><td><b>Patokan</b> (wajib/dilarang) · <b>Prosedur</b> (cara mengerjakan) · <b>Pelajaran</b> (dari pengalaman) · <b>Konsep</b> (pengetahuan dasar & angka acuan)</td></tr>
                 <tr><td>Domain</td><td>Ekosistem (go, web, flutter, php, …, atau ekosistem baru) <i>atau</i> area (security, testing, performance, database, …)</td></tr>
@@ -262,8 +262,8 @@ const go = (id: string) => {
                 <p class="md:col-span-2 font-semibold text-neutral-900 dark:text-white">
                   {{ i + 1 }}. {{ p.title }}
                 </p>
-                <p><span class="block text-[10px] uppercase font-semibold tracking-wide text-neutral-400">Diapakan</span>{{ p.what }}</p>
-                <p><span class="block text-[10px] uppercase font-semibold tracking-wide text-emerald-600 dark:text-emerald-400">Pengaruh</span>{{ p.effect }}</p>
+                <p><span class="block text-xs uppercase font-semibold tracking-wide text-neutral-400">Diapakan</span>{{ p.what }}</p>
+                <p><span class="block text-xs uppercase font-semibold tracking-wide text-emerald-600 dark:text-emerald-400">Pengaruh</span>{{ p.effect }}</p>
               </div>
             </li>
           </ol>
@@ -277,7 +277,7 @@ const go = (id: string) => {
           <h2 class="text-lg font-bold tracking-tight text-neutral-900 dark:text-white">
             Rumus skor & pengaruhnya ke hasil
           </h2>
-          <pre class="overflow-x-auto rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 p-3 text-[11.5px] leading-relaxed font-mono text-neutral-700 dark:text-neutral-300">relevansi = (kosinus(kueri, butir) + 0,12 bila domain sama) / relevansi tertinggi di kandidat
+          <pre class="overflow-x-auto rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 p-3 text-xs leading-relaxed font-mono text-neutral-700 dark:text-neutral-300">relevansi = (kosinus(kueri, butir) + 0,12 bila domain sama) / relevansi tertinggi di kandidat
 skor      = 0,55 × relevansi + 0,20 × utilitas + 0,15 × bobot/100 + 0,10 × e^(−hari sejak dipakai / 45)
 utilitas  = (✓ + 1) / (✓ + ✗ + 2)          — butir baru 0,5; Galeri Desain selalu 1
 tetangga  = 0,7 × skor asal × kekuatan tautan + 0,3 × skor dirinya</pre>
@@ -296,7 +296,7 @@ tetangga  = 0,7 × skor asal × kekuatan tautan + 0,3 × skor dirinya</pre>
           </h2>
           <p>Semuanya murni Go di engine lokal — tanpa CGO dan tanpa layanan embedding luar, jadi cepat (milidetik untuk ribuan butir) dan data tidak keluar mesin.</p>
           <div class="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800">
-            <table class="w-full text-sm [&_th]:text-left [&_th]:text-[11px] [&_th]:uppercase [&_th]:font-semibold [&_th]:text-neutral-500 [&_th]:bg-neutral-50 dark:[&_th]:bg-neutral-900 [&_th]:px-3 [&_th]:py-2 [&_td]:px-3 [&_td]:py-2 [&_td]:align-top [&_td]:border-t [&_td]:border-neutral-100 dark:[&_td]:border-neutral-800">
+            <table class="w-full text-sm [&_th]:text-left [&_th]:text-xs [&_th]:uppercase [&_th]:font-semibold [&_th]:text-neutral-500 [&_th]:bg-neutral-50 dark:[&_th]:bg-neutral-900 [&_th]:px-3 [&_th]:py-2 [&_td]:px-3 [&_td]:py-2 [&_td]:align-top [&_td]:border-t [&_td]:border-neutral-100 dark:[&_td]:border-neutral-800">
               <thead>
                 <tr><th>Algoritma</th><th>Untuk apa</th><th>Dasar riset</th></tr>
               </thead>
@@ -315,7 +315,7 @@ tetangga  = 0,7 × skor asal × kekuatan tautan + 0,3 × skor dirinya</pre>
             <p class="flex items-center gap-1.5 font-semibold text-neutral-900 dark:text-white mb-1">
               <UIcon name="i-lucide-sigma" class="text-indigo-500" /> Vektor TF-IDF
             </p>
-            <pre class="overflow-x-auto rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 p-3 text-[11.5px] leading-relaxed font-mono text-neutral-700 dark:text-neutral-300 mt-0">frekuensi kata: judul ×2, domain + tag ×2, isi ×1
+            <pre class="overflow-x-auto rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 p-3 text-xs leading-relaxed font-mono text-neutral-700 dark:text-neutral-300 mt-0">frekuensi kata: judul ×2, domain + tag ×2, isi ×1
 tf  = 1 + ln(frekuensi)        idf = ln((N + 1) / (df + 0,5)) + 1
 vektor = tf × idf, dinormalisasi;  kemiripan(a, b) = a · b (kosinus)</pre>
             <p class="text-xs text-neutral-500 mt-2">
@@ -330,7 +330,7 @@ vektor = tf × idf, dinormalisasi;  kemiripan(a, b) = a · b (kosinus)</pre>
             Bagaimana pengetahuan baru masuk
           </h2>
           <div class="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800">
-            <table class="w-full text-sm [&_th]:text-left [&_th]:text-[11px] [&_th]:uppercase [&_th]:font-semibold [&_th]:text-neutral-500 [&_th]:bg-neutral-50 dark:[&_th]:bg-neutral-900 [&_th]:px-3 [&_th]:py-2 [&_td]:px-3 [&_td]:py-2 [&_td]:align-top [&_td]:border-t [&_td]:border-neutral-100 dark:[&_td]:border-neutral-800">
+            <table class="w-full text-sm [&_th]:text-left [&_th]:text-xs [&_th]:uppercase [&_th]:font-semibold [&_th]:text-neutral-500 [&_th]:bg-neutral-50 dark:[&_th]:bg-neutral-900 [&_th]:px-3 [&_th]:py-2 [&_td]:px-3 [&_td]:py-2 [&_td]:align-top [&_td]:border-t [&_td]:border-neutral-100 dark:[&_td]:border-neutral-800">
               <thead>
                 <tr><th>Sumber</th><th>Lewat</th><th>Menjadi</th><th>Kapan</th></tr>
               </thead>
@@ -371,7 +371,7 @@ vektor = tf × idf, dinormalisasi;  kemiripan(a, b) = a · b (kosinus)</pre>
             Bagaimana pengetahuan digunakan
           </h2>
           <div class="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800">
-            <table class="w-full text-sm [&_th]:text-left [&_th]:text-[11px] [&_th]:uppercase [&_th]:font-semibold [&_th]:text-neutral-500 [&_th]:bg-neutral-50 dark:[&_th]:bg-neutral-900 [&_th]:px-3 [&_th]:py-2 [&_td]:px-3 [&_td]:py-2 [&_td]:align-top [&_td]:border-t [&_td]:border-neutral-100 dark:[&_td]:border-neutral-800">
+            <table class="w-full text-sm [&_th]:text-left [&_th]:text-xs [&_th]:uppercase [&_th]:font-semibold [&_th]:text-neutral-500 [&_th]:bg-neutral-50 dark:[&_th]:bg-neutral-900 [&_th]:px-3 [&_th]:py-2 [&_td]:px-3 [&_td]:py-2 [&_td]:align-top [&_td]:border-t [&_td]:border-neutral-100 dark:[&_td]:border-neutral-800">
               <thead>
                 <tr><th>Pemakai</th><th>Teks kueri</th><th>Butir</th><th>Konteks pemakaian</th></tr>
               </thead>
@@ -389,7 +389,7 @@ vektor = tf × idf, dinormalisasi;  kemiripan(a, b) = a · b (kosinus)</pre>
             </table>
           </div>
           <p>Di prompt, butir ditulis seperti ini:</p>
-          <pre class="overflow-x-auto rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 p-3 text-[11.5px] leading-relaxed font-mono text-neutral-700 dark:text-neutral-300">Pengetahuan yang dikuasai & patokan kantor dari Pusat Pengetahuan (ikuti bila relevan dengan todo ini):
+          <pre class="overflow-x-auto rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 p-3 text-xs leading-relaxed font-mono text-neutral-700 dark:text-neutral-300">Pengetahuan yang dikuasai & patokan kantor dari Pusat Pengetahuan (ikuti bila relevan dengan todo ini):
 - [K38 · patokan · security] SEC-007 Rate Limiting & Proteksi Anti Brute-Force pada Endpoint Publik: … (✓9 ✗3)
 - [K1654 · patokan · go] Cek Go (backend): query N+1, transaksi tanpa rollback, rows tidak di-Close … (✓9 ✗1)
 - Celah pengetahuan: kantor belum punya pengetahuan tentang gleam. Baca dokumentasi resmi …
@@ -420,7 +420,7 @@ vektor = tf × idf, dinormalisasi;  kemiripan(a, b) = a · b (kosinus)</pre>
           </h2>
           <p>Belajar = memperbarui bukti ✓/✗ (dan dari situ utilitas, skor, ukuran node) setiap kali hasil kerja diketahui.</p>
           <div class="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800">
-            <table class="w-full text-sm [&_th]:text-left [&_th]:text-[11px] [&_th]:uppercase [&_th]:font-semibold [&_th]:text-neutral-500 [&_th]:bg-neutral-50 dark:[&_th]:bg-neutral-900 [&_th]:px-3 [&_th]:py-2 [&_td]:px-3 [&_td]:py-2 [&_td]:align-top [&_td]:border-t [&_td]:border-neutral-100 dark:[&_td]:border-neutral-800">
+            <table class="w-full text-sm [&_th]:text-left [&_th]:text-xs [&_th]:uppercase [&_th]:font-semibold [&_th]:text-neutral-500 [&_th]:bg-neutral-50 dark:[&_th]:bg-neutral-900 [&_th]:px-3 [&_th]:py-2 [&_td]:px-3 [&_td]:py-2 [&_td]:align-top [&_td]:border-t [&_td]:border-neutral-100 dark:[&_td]:border-neutral-800">
               <thead>
                 <tr><th>Kejadian</th><th>Efek</th></tr>
               </thead>
@@ -502,7 +502,7 @@ vektor = tf × idf, dinormalisasi;  kemiripan(a, b) = a · b (kosinus)</pre>
           </h2>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
             <div v-for="c in CONSTS" :key="c[0]" class="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
-              <p class="text-[11px] text-neutral-500">
+              <p class="text-xs text-neutral-500">
                 {{ c[0] }}
               </p>
               <p class="text-lg font-bold font-mono text-neutral-900 dark:text-white">

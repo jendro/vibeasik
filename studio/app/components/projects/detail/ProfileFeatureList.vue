@@ -60,7 +60,7 @@ const hasDetail = (f: ProfileFeature) => f.pages.length + f.endpoints.length + f
             v-for="t in statusTabs"
             :key="t.value"
             type="button"
-            class="px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer"
+            class="px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer"
             :class="statusFilter === t.value
               ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-2xs'
               : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'"
@@ -88,7 +88,7 @@ const hasDetail = (f: ProfileFeature) => f.pages.length + f.endpoints.length + f
             <h3 class="text-sm font-semibold text-neutral-900 dark:text-white leading-snug">
               {{ f.name }}
             </h3>
-            <p v-if="f.domain && f.domain !== f.name" class="text-[10px] uppercase tracking-wider text-neutral-400 mt-0.5">
+            <p v-if="f.domain && f.domain !== f.name" class="text-xs uppercase tracking-wider text-neutral-400 mt-0.5">
               {{ f.domain }}
             </p>
           </div>
@@ -105,11 +105,11 @@ const hasDetail = (f: ProfileFeature) => f.pages.length + f.endpoints.length + f
           <span
             v-for="a in f.apps"
             :key="a"
-            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200/70 dark:border-sky-800/60"
+            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200/70 dark:border-sky-800/60"
           >
             <UIcon name="i-lucide-box" class="w-3 h-3" />{{ a }}
           </span>
-          <span class="text-[10px] font-mono text-neutral-400">
+          <span class="text-xs font-mono text-neutral-400">
             {{ f.pages.length }} halaman · {{ f.endpoints.length }} endpoint<template v-if="f.tables.length"> · {{ f.tables.length }} tabel</template>
           </span>
         </div>
@@ -117,14 +117,14 @@ const hasDetail = (f: ProfileFeature) => f.pages.length + f.endpoints.length + f
         <button
           v-if="hasDetail(f)"
           type="button"
-          class="inline-flex items-center gap-1 text-[11px] text-sky-600 dark:text-sky-400 hover:underline cursor-pointer"
+          class="inline-flex items-center gap-1 text-xs text-sky-600 dark:text-sky-400 hover:underline cursor-pointer"
           @click="expanded[f.name] = !expanded[f.name]"
         >
           <UIcon :name="expanded[f.name] ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="w-3.5 h-3.5" />
           {{ expanded[f.name] ? 'Sembunyikan detail' : 'Lihat halaman, endpoint & bukti' }}
         </button>
 
-        <div v-if="expanded[f.name]" class="space-y-2 pt-2 border-t border-neutral-200/70 dark:border-neutral-800 text-[11px]">
+        <div v-if="expanded[f.name]" class="space-y-2 pt-2 border-t border-neutral-200/70 dark:border-neutral-800 text-xs">
           <div v-if="f.pages.length">
             <div class="font-semibold text-neutral-500 mb-1">
               Halaman

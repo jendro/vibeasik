@@ -21,7 +21,7 @@ defineProps<{ scanResult: FastScanResult }>()
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono">
         <div class="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200 dark:border-neutral-700/60">
-          <div class="text-[10px] uppercase font-bold text-neutral-400">
+          <div class="text-xs uppercase font-bold text-neutral-400">
             Framework Name
           </div>
           <div class="mt-1 flex items-center gap-1.5 font-semibold text-neutral-800 dark:text-neutral-100">
@@ -30,7 +30,7 @@ defineProps<{ scanResult: FastScanResult }>()
         </div>
 
         <div class="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200 dark:border-neutral-700/60 sm:col-span-2">
-          <div class="text-[10px] uppercase font-bold text-neutral-400">
+          <div class="text-xs uppercase font-bold text-neutral-400">
             Engine / Architecture Type
           </div>
           <div class="mt-1 font-semibold text-neutral-800 dark:text-neutral-100 truncate" :title="scanResult.architecture?.framework_type">
@@ -56,7 +56,7 @@ defineProps<{ scanResult: FastScanResult }>()
         <div class="font-bold text-sky-900 dark:text-sky-200">
           {{ scanResult.architecture?.design_pattern || 'Model-Controller Architecture' }}
         </div>
-        <p class="text-sky-800 dark:text-sky-300 text-[11px] leading-relaxed whitespace-pre-line">
+        <p class="text-sky-800 dark:text-sky-300 text-xs leading-relaxed whitespace-pre-line">
           {{ scanResult.architecture?.pattern_details || scanResult.folder_structure_summary }}
         </p>
       </div>
@@ -69,7 +69,7 @@ defineProps<{ scanResult: FastScanResult }>()
           <UIcon name="i-lucide-blocks" class="w-4 h-4 text-purple-600 dark:text-purple-400" />
           <span class="text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">Plugins, Middlewares & Libraries</span>
         </div>
-        <span class="text-[11px] text-neutral-400 font-mono">
+        <span class="text-xs text-neutral-400 font-mono">
           {{ scanResult.architecture?.plugins?.length || 0 }} library terdeteksi
         </span>
       </div>

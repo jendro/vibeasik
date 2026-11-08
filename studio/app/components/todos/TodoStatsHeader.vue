@@ -43,18 +43,18 @@ const stats = computed(() => {
       @click="emit('filterStatus', 'uncompleted')"
     >
       <div class="flex items-center justify-between">
-        <div class="flex items-center gap-1.5 text-[11px] font-bold text-amber-900 dark:text-amber-200 uppercase tracking-wider">
+        <div class="flex items-center gap-1.5 text-xs font-bold text-amber-900 dark:text-amber-200 uppercase tracking-wider">
           <UIcon name="i-lucide-alert-circle" class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
           <span>Sisa Tugas</span>
         </div>
-        <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-200/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200">
+        <span class="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-amber-200/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200">
           Perlu Dikerjakan
         </span>
       </div>
       <div class="text-2xl font-bold font-mono text-amber-950 dark:text-amber-100 mt-1">
         {{ stats.remainingCount }}
       </div>
-      <div class="text-[10px] text-amber-800/90 dark:text-amber-300 mt-0.5 font-medium truncate">
+      <div class="text-xs text-amber-800/90 dark:text-amber-300 mt-0.5 font-medium truncate">
         {{ stats.inProgressCount }} jalan • {{ stats.pendingCount }} pending
       </div>
     </div>
@@ -65,14 +65,14 @@ const stats = computed(() => {
       title="Klik untuk melihat tugas yang sedang berjalan"
       @click="emit('filterStatus', 'in_progress')"
     >
-      <div class="flex items-center gap-1.5 text-[11px] font-semibold text-sky-700 dark:text-sky-300">
+      <div class="flex items-center gap-1.5 text-xs font-semibold text-sky-700 dark:text-sky-300">
         <UIcon name="i-lucide-play-circle" class="w-3.5 h-3.5" />
         <span>Sedang Jalan</span>
       </div>
       <div class="text-2xl font-bold font-mono text-sky-900 dark:text-sky-200 mt-1">
         {{ stats.inProgressCount }}
       </div>
-      <div class="text-[10px] text-sky-600/90 dark:text-sky-400 mt-0.5 truncate">
+      <div class="text-xs text-sky-600/90 dark:text-sky-400 mt-0.5 truncate">
         Dalam proses pengerjaan
       </div>
     </div>
@@ -83,14 +83,14 @@ const stats = computed(() => {
       title="Klik untuk melihat tugas pending"
       @click="emit('filterStatus', 'pending')"
     >
-      <div class="flex items-center gap-1.5 text-[11px] font-semibold text-neutral-700 dark:text-neutral-300">
+      <div class="flex items-center gap-1.5 text-xs font-semibold text-neutral-700 dark:text-neutral-300">
         <UIcon name="i-lucide-clock" class="w-3.5 h-3.5 text-neutral-500" />
         <span>Pending</span>
       </div>
       <div class="text-2xl font-bold font-mono text-neutral-900 dark:text-white mt-1">
         {{ stats.pendingCount }}
       </div>
-      <div class="text-[10px] text-neutral-400 mt-0.5 truncate">
+      <div class="text-xs text-neutral-400 mt-0.5 truncate">
         Antrean siap dieksekusi
       </div>
     </div>
@@ -101,14 +101,14 @@ const stats = computed(() => {
       title="Klik untuk melihat rekomendasi AI yang menunggu persetujuan"
       @click="emit('filterStatus', 'suggested')"
     >
-      <div class="flex items-center gap-1.5 text-[11px] font-semibold text-violet-700 dark:text-violet-300">
+      <div class="flex items-center gap-1.5 text-xs font-semibold text-violet-700 dark:text-violet-300">
         <UIcon name="i-lucide-sparkles" class="w-3.5 h-3.5" />
         <span>Saran AI</span>
       </div>
       <div class="text-2xl font-bold font-mono text-violet-900 dark:text-violet-200 mt-1">
         {{ stats.suggestedCount }}
       </div>
-      <div class="text-[10px] text-violet-600/80 dark:text-violet-400 mt-0.5 truncate">
+      <div class="text-xs text-violet-600/80 dark:text-violet-400 mt-0.5 truncate">
         Perlu persetujuan
       </div>
     </div>
@@ -119,28 +119,28 @@ const stats = computed(() => {
       title="Klik untuk melihat tugas yang sudah diselesaikan"
       @click="emit('filterStatus', 'completed')"
     >
-      <div class="flex items-center gap-1.5 text-[11px] font-semibold text-sky-700 dark:text-sky-300">
+      <div class="flex items-center gap-1.5 text-xs font-semibold text-sky-700 dark:text-sky-300">
         <UIcon name="i-lucide-check-circle-2" class="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
         <span>Selesai</span>
       </div>
       <div class="text-2xl font-bold font-mono text-sky-900 dark:text-sky-200 mt-1">
         {{ stats.completedCount }}
       </div>
-      <div class="text-[10px] text-sky-600/90 dark:text-sky-400 mt-0.5 truncate">
+      <div class="text-xs text-sky-600/90 dark:text-sky-400 mt-0.5 truncate">
         Tervalidasi tuntas
       </div>
     </div>
 
     <!-- 6. Total & Persentase Progres Proyek -->
     <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 shadow-2xs">
-      <div class="flex items-center gap-1.5 text-[11px] font-semibold text-neutral-600 dark:text-neutral-400">
+      <div class="flex items-center gap-1.5 text-xs font-semibold text-neutral-600 dark:text-neutral-400">
         <UIcon name="i-lucide-pie-chart" class="w-3.5 h-3.5 text-blue-500" />
         <span>Capaian</span>
       </div>
       <div class="text-2xl font-bold font-mono text-neutral-900 dark:text-white mt-1">
         {{ stats.completionPercent }}%
       </div>
-      <div class="text-[10px] text-neutral-400 mt-0.5 truncate">
+      <div class="text-xs text-neutral-400 mt-0.5 truncate">
         Dari {{ stats.total }} total agenda
       </div>
     </div>

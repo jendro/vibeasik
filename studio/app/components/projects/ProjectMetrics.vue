@@ -24,7 +24,7 @@ defineProps<{
       <div class="mt-2 text-2xl font-bold font-mono">
         {{ stats.total }}
       </div>
-      <div class="mt-0.5 text-[11px] text-neutral-500 truncate" :title="`${stats.active ?? stats.total} aktif, ${stats.hold || 0} hold, ${stats.done || 0} done`">
+      <div class="mt-0.5 text-xs text-neutral-500 truncate" :title="`${stats.active ?? stats.total} aktif, ${stats.hold || 0} hold, ${stats.done || 0} done`">
         {{ stats.active ?? stats.total }} aktif<span v-if="stats.hold || stats.done"> ({{ stats.hold || 0 }} hold, {{ stats.done || 0 }} done)</span>
       </div>
     </div>
@@ -37,7 +37,7 @@ defineProps<{
       <div class="mt-2 text-2xl font-bold font-mono text-purple-600 dark:text-purple-400">
         {{ stats.multiFe }}
       </div>
-      <div class="mt-0.5 text-[11px] text-neutral-500">
+      <div class="mt-0.5 text-xs text-neutral-500">
         Admin + Client
       </div>
     </div>
@@ -50,7 +50,7 @@ defineProps<{
       <div class="mt-2 text-2xl font-bold font-mono text-blue-600 dark:text-blue-400">
         {{ stats.bundles }}
       </div>
-      <div class="mt-0.5 text-[11px] text-neutral-500">
+      <div class="mt-0.5 text-xs text-neutral-500">
         Pasangan BE + FE
       </div>
     </div>
@@ -63,7 +63,7 @@ defineProps<{
       <div class="mt-2 text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">
         {{ stats.monorepos }}
       </div>
-      <div class="mt-0.5 text-[11px] text-neutral-500">
+      <div class="mt-0.5 text-xs text-neutral-500">
         Polyglot repos
       </div>
     </div>
@@ -76,7 +76,7 @@ defineProps<{
       <div class="mt-2 text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">
         {{ stats.deprecated || 0 }}
       </div>
-      <div class="mt-0.5 text-[11px] text-neutral-500 truncate" :title="`${stats.deprecated || 0} deprecated, ${stats.hold || 0} hold, ${stats.done || 0} selesai`">
+      <div class="mt-0.5 text-xs text-neutral-500 truncate" :title="`${stats.deprecated || 0} deprecated, ${stats.hold || 0} hold, ${stats.done || 0} selesai`">
         {{ stats.deprecated || 0 }} deprecated<span v-if="stats.hold || stats.done"> • {{ (stats.hold || 0) + (stats.done || 0) }} hold/done</span>
       </div>
     </div>
@@ -89,7 +89,7 @@ defineProps<{
       <div class="mt-2 text-2xl font-bold font-mono text-sky-600 dark:text-sky-400">
         {{ stats.avgHealth }}/100
       </div>
-      <div class="mt-0.5 text-[11px] text-neutral-500">
+      <div class="mt-0.5 text-xs text-neutral-500">
         Audit rata-rata
       </div>
     </div>

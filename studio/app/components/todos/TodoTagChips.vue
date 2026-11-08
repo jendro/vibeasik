@@ -10,7 +10,7 @@ const tags = computed(() => parseTodoTags(props.todo.tags).map(todoTagMeta))
   <span
     v-for="tag in tags"
     :key="tag.key"
-    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-medium text-[11px] border"
+    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-medium text-xs border"
     :class="tag.class"
   >
     <UIcon :name="tag.icon" class="w-3.5 h-3.5" />

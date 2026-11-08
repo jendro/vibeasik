@@ -55,7 +55,7 @@ const go = (p: string) => emit('update:path', p)
           <p v-if="detail.summary" class="text-neutral-500">
             {{ detail.summary }}
           </p>
-          <p v-if="detail.keywords" class="text-[11px] text-neutral-400">
+          <p v-if="detail.keywords" class="text-xs text-neutral-400">
             Kata kunci: {{ detail.keywords }}
           </p>
         </div>
@@ -70,7 +70,7 @@ const go = (p: string) => emit('update:path', p)
           </p>
           <ul class="space-y-0.5">
             <li v-for="u in detail.used_by" :key="u">
-              <button type="button" class="font-mono text-[11px] text-sky-700 dark:text-sky-300 hover:underline break-all text-left" @click="go(u)">
+              <button type="button" class="font-mono text-xs text-sky-700 dark:text-sky-300 hover:underline break-all text-left" @click="go(u)">
                 {{ u }}
               </button>
             </li>
@@ -83,8 +83,8 @@ const go = (p: string) => emit('update:path', p)
           </h4>
           <ul class="space-y-0.5">
             <li v-for="i in detail.imports" :key="i">
-              <span v-if="i.endsWith('/')" class="font-mono text-[11px] text-neutral-500" title="Paket/direktori">{{ i }}</span>
-              <button v-else type="button" class="font-mono text-[11px] text-sky-700 dark:text-sky-300 hover:underline break-all text-left" @click="go(i)">
+              <span v-if="i.endsWith('/')" class="font-mono text-xs text-neutral-500" title="Paket/direktori">{{ i }}</span>
+              <button v-else type="button" class="font-mono text-xs text-sky-700 dark:text-sky-300 hover:underline break-all text-left" @click="go(i)">
                 {{ i }}
               </button>
             </li>
@@ -96,7 +96,7 @@ const go = (p: string) => emit('update:path', p)
             Rute & panggilan API
           </h4>
           <div class="flex flex-wrap gap-1">
-            <span v-for="r in detail.routes" :key="r" class="px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/40 font-mono text-[10px] text-emerald-700 dark:text-emerald-300">{{ r }}</span>
+            <span v-for="r in detail.routes" :key="r" class="px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/40 font-mono text-xs text-emerald-700 dark:text-emerald-300">{{ r }}</span>
           </div>
         </section>
 
@@ -106,15 +106,15 @@ const go = (p: string) => emit('update:path', p)
           </h4>
           <ul class="divide-y divide-neutral-100 dark:divide-neutral-800">
             <li v-for="s in detail.symbols" :key="s.name + s.line" class="py-1 flex gap-2">
-              <span class="font-mono text-[10px] text-neutral-400 w-10 shrink-0 text-right">{{ s.line }}</span>
-              <span class="font-mono text-[11px]" :class="s.exported ? 'text-neutral-900 dark:text-white font-semibold' : 'text-neutral-600 dark:text-neutral-400'">{{ s.name }}</span>
-              <span class="text-[10px] text-neutral-400">{{ s.kind }}</span>
-              <span v-if="s.doc" class="text-[10px] text-neutral-500 line-clamp-1">{{ s.doc }}</span>
+              <span class="font-mono text-xs text-neutral-400 w-10 shrink-0 text-right">{{ s.line }}</span>
+              <span class="font-mono text-xs" :class="s.exported ? 'text-neutral-900 dark:text-white font-semibold' : 'text-neutral-600 dark:text-neutral-400'">{{ s.name }}</span>
+              <span class="text-xs text-neutral-400">{{ s.kind }}</span>
+              <span v-if="s.doc" class="text-xs text-neutral-500 line-clamp-1">{{ s.doc }}</span>
             </li>
           </ul>
         </section>
 
-        <p class="font-mono text-[10px] text-neutral-400 break-all">
+        <p class="font-mono text-xs text-neutral-400 break-all">
           {{ detail.abs_path }}
         </p>
       </div>

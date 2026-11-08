@@ -95,7 +95,7 @@ const tabs = computed<AppTabItem[]>(() => [
       </NuxtLink>
 
       <div class="flex items-center gap-1.5">
-        <span class="font-mono text-[11px] text-neutral-400 mr-1">App ID: #{{ comp.id }}</span>
+        <span class="font-mono text-xs text-neutral-400 mr-1">App ID: #{{ comp.id }}</span>
         <UButton
           icon="i-lucide-pencil"
           color="neutral"
@@ -146,7 +146,7 @@ const tabs = computed<AppTabItem[]>(() => [
             :class="portActive ? 'bg-sky-400 animate-pulse' : 'bg-neutral-400'"
           />
           <span
-            class="text-[10px] uppercase font-semibold"
+            class="text-xs uppercase font-semibold"
             :class="portActive ? 'text-sky-600 dark:text-sky-400' : 'text-neutral-400'"
           >
             {{ portActive ? 'LISTENING' : 'OFFLINE' }}

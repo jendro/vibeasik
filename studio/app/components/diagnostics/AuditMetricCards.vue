@@ -33,7 +33,7 @@ const emit = defineEmits<{
         </span>
         <span class="text-xs text-neutral-500">Isu Simulasi</span>
       </div>
-      <p class="text-[11px] text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-1">
+      <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-1">
         Latensi Rute API, Validasi Form, Query Risk
       </p>
     </div>
@@ -58,7 +58,7 @@ const emit = defineEmits<{
         </span>
         <span class="text-xs text-neutral-500">Isu Query</span>
       </div>
-      <p class="text-[11px] text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-1">
+      <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-1">
         N+1 Loop, SQL Injection, SELECT *, Cursor Leaks
       </p>
     </div>
@@ -83,7 +83,7 @@ const emit = defineEmits<{
         </span>
         <span class="text-xs text-neutral-500">Isu Rute</span>
       </div>
-      <p class="text-[11px] text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-1">
+      <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-1">
         Rute Mutasi Tanpa Auth, CORS Wildcard, Dangling Stubs
       </p>
     </div>
@@ -108,7 +108,7 @@ const emit = defineEmits<{
         </span>
         <span class="text-xs text-neutral-500">Isu Kualitas</span>
       </div>
-      <p class="text-[11px] text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-1">
+      <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-1">
         God Controller, Swallowed Error, Infinite Timeout
       </p>
     </div>
@@ -133,7 +133,7 @@ const emit = defineEmits<{
         </span>
         <span class="text-xs text-neutral-500">Isu Keamanan</span>
       </div>
-      <p class="text-[11px] text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-1">
+      <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-1">
         Secret Leak, Proteksi .env, Port Collision
       </p>
     </div>
@@ -158,7 +158,7 @@ const emit = defineEmits<{
         </span>
         <span class="text-xs text-neutral-500">Isu FE & Mobile</span>
       </div>
-      <p class="text-[11px] text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-1">
+      <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-1">
         File Gemuk, Bundle/APK, A11y, Layout, Aset Berat
       </p>
     </div>

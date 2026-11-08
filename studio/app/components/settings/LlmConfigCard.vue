@@ -64,7 +64,7 @@ const visionTitle = (mod: string) => {
             <h4 class="text-xs font-bold text-neutral-900 dark:text-white truncate" :title="item.name">
               {{ item.name }}
             </h4>
-            <span class="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono">
+            <span class="text-xs text-neutral-500 dark:text-neutral-400 font-mono">
               ID #{{ item.id }}
             </span>
           </div>
@@ -74,7 +74,7 @@ const visionTitle = (mod: string) => {
         <div>
           <span
             v-if="item.is_active"
-            class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 inline-flex items-center gap-1 shrink-0"
+            class="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 inline-flex items-center gap-1 shrink-0"
           >
             <span class="w-1.5 h-1.5 rounded-full bg-sky-500" />
             Aktif
@@ -82,7 +82,7 @@ const visionTitle = (mod: string) => {
           <button
             v-else
             type="button"
-            class="px-2 py-0.5 rounded text-[10px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-sky-700 dark:hover:text-sky-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 transition-colors shrink-0 cursor-pointer"
+            class="px-2 py-0.5 rounded text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-sky-700 dark:hover:text-sky-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 transition-colors shrink-0 cursor-pointer"
             title="Jadikan konfigurasi ini aktif"
             @click="$emit('activate', item)"
           >
@@ -93,11 +93,11 @@ const visionTitle = (mod: string) => {
 
       <!-- URL Display with Copy Button -->
       <div class="space-y-1">
-        <span class="text-[10px] uppercase font-semibold text-neutral-500 dark:text-neutral-400 tracking-wider">
+        <span class="text-xs uppercase font-semibold text-neutral-500 dark:text-neutral-400 tracking-wider">
           Endpoint URL
         </span>
         <div class="flex items-center justify-between gap-1 px-2.5 py-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/80 dark:border-white/10 text-xs font-mono text-neutral-800 dark:text-neutral-200">
-          <span class="truncate text-[11px]" :title="item.url">{{ item.url }}</span>
+          <span class="truncate text-xs" :title="item.url">{{ item.url }}</span>
           <button
             type="button"
             class="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 p-0.5 rounded transition-colors shrink-0 cursor-pointer"
@@ -111,7 +111,7 @@ const visionTitle = (mod: string) => {
 
       <!-- Masked API Key Section -->
       <div class="space-y-1">
-        <span class="text-[10px] uppercase font-semibold text-neutral-500 dark:text-neutral-400 tracking-wider">
+        <span class="text-xs uppercase font-semibold text-neutral-500 dark:text-neutral-400 tracking-wider">
           API Key / Auth Token
         </span>
         <div class="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/80 dark:border-white/10 text-xs">
@@ -119,18 +119,18 @@ const visionTitle = (mod: string) => {
             <UIcon name="i-lucide-key-round" class="w-3.5 h-3.5 text-neutral-400 shrink-0" />
             <span
               v-if="item.has_key"
-              class="font-mono text-[11px] text-neutral-700 dark:text-neutral-300 tracking-widest truncate"
+              class="font-mono text-xs text-neutral-700 dark:text-neutral-300 tracking-widest truncate"
               title="API key tersimpan dan selalu termasking demi keamanan"
             >
               {{ item.masked_key || '••••••••••••' }}
             </span>
-            <span v-else class="text-[11px] text-neutral-400 dark:text-neutral-500 italic">
+            <span v-else class="text-xs text-neutral-400 dark:text-neutral-500 italic">
               Tanpa Key (Auth Bebas / Server Lokal)
             </span>
           </div>
           <span
             v-if="item.has_key"
-            class="text-[9px] uppercase px-1.5 py-0.5 rounded bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 font-mono shrink-0"
+            class="text-xs uppercase px-1.5 py-0.5 rounded bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 font-mono shrink-0"
           >
             Masked
           </span>
@@ -139,7 +139,7 @@ const visionTitle = (mod: string) => {
 
       <!-- Usable Models Section -->
       <div class="space-y-1.5">
-        <div class="flex items-center justify-between text-[10px]">
+        <div class="flex items-center justify-between text-xs">
           <span class="uppercase font-semibold text-neutral-500 dark:text-neutral-400 tracking-wider">
             Model yang Bisa Digunakan ({{ item.models?.length || 1 }})
           </span>
@@ -156,7 +156,7 @@ const visionTitle = (mod: string) => {
           <span
             v-for="mod in item.models"
             :key="mod"
-            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-mono border transition-colors"
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-mono border transition-colors"
             :class="item.selected_model === mod
               ? 'bg-sky-50 dark:bg-sky-950/60 border-sky-300 dark:border-sky-700 text-sky-800 dark:text-sky-300 font-semibold'
               : 'bg-neutral-100 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300'"
@@ -169,7 +169,7 @@ const visionTitle = (mod: string) => {
               v-if="editingAlias === mod"
               v-model="aliasDraft"
               type="text"
-              class="w-28 px-1 py-0 rounded border border-sky-300 dark:border-sky-700 bg-white dark:bg-neutral-900 font-sans text-[11px] focus:outline-none focus:ring-1 focus:ring-sky-500"
+              class="w-28 px-1 py-0 rounded border border-sky-300 dark:border-sky-700 bg-white dark:bg-neutral-900 font-sans text-xs focus:outline-none focus:ring-1 focus:ring-sky-500"
               :placeholder="mod"
               :aria-label="`Alias untuk ${mod}`"
               autofocus
@@ -192,7 +192,7 @@ const visionTitle = (mod: string) => {
             >
               <UIcon name="i-lucide-tag" class="w-3 h-3" />
             </button>
-            <span v-if="item.selected_model === mod" class="text-[9px] uppercase text-sky-600 dark:text-sky-400 font-sans font-bold">
+            <span v-if="item.selected_model === mod" class="text-xs uppercase text-sky-600 dark:text-sky-400 font-sans font-bold">
               (default)
             </span>
             <button

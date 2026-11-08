@@ -46,7 +46,7 @@ const handleSaveWorkspaceSettings = () => emit('save')
             <span>{{ saving ? 'Menyimpan...' : 'Simpan Lokasi' }}</span>
           </button>
         </div>
-        <p class="text-[11px] text-neutral-500 dark:text-neutral-400">
+        <p class="text-xs text-neutral-500 dark:text-neutral-400">
           Setiap kali Anda menekan tombol "Satukan Folder" pada kartu atau detail proyek, dialog pemindahan akan otomatis mengusulkan subdirektori di bawah folder induk ini.
         </p>
       </div>

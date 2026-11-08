@@ -149,7 +149,7 @@ defineExpose({ run, text })
 <template>
   <div class="space-y-3">
     <div>
-      <p class="text-[11px] uppercase font-semibold text-neutral-500">
+      <p class="text-xs uppercase font-semibold text-neutral-500">
         Simulasi pekerjaan AI
       </p>
       <p class="text-xs text-neutral-500 mt-1 leading-relaxed">
@@ -166,7 +166,7 @@ defineExpose({ run, text })
       size="sm"
       class="w-full"
     />
-    <p v-if="projectId" class="text-[11px] text-neutral-500 -mt-1.5">
+    <p v-if="projectId" class="text-xs text-neutral-500 -mt-1.5">
       Bila pekerjaannya menyentuh beberapa aplikasi proyek (backend, frontend, mobile), todo dipecah per aplikasi.
     </p>
     <div v-if="step === 0" class="flex flex-wrap gap-1.5">
@@ -174,7 +174,7 @@ defineExpose({ run, text })
         v-for="s in SCENARIOS"
         :key="s"
         type="button"
-        class="text-left text-[11px] px-2 py-1 rounded-md border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:border-primary-400 hover:text-primary-600 dark:hover:text-primary-400 transition"
+        class="text-left text-xs px-2 py-1 rounded-md border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:border-primary-400 hover:text-primary-600 dark:hover:text-primary-400 transition"
         @click="run(s)"
       >
         {{ s }}
@@ -204,23 +204,23 @@ defineExpose({ run, text })
         </li>
       </ol>
 
-      <p v-if="step === 3" class="text-[11px] text-neutral-500 leading-relaxed">
+      <p v-if="step === 3" class="text-xs text-neutral-500 leading-relaxed">
         Butir yang bertaut ke hasil teratas ikut ditimbang (garis putus-putus) — begitu cara AI menemukan pelajaran terkait walau katanya berbeda. Hanya yang skornya cukup tinggi yang masuk.
       </p>
-      <div v-if="step >= 1 && result" class="text-[11px] text-neutral-500 leading-relaxed">
+      <div v-if="step >= 1 && result" class="text-xs text-neutral-500 leading-relaxed">
         Dikenali sebagai:
         <UBadge v-for="d in result.domains || []" :key="d" size="xs" color="neutral" variant="outline" class="mr-1">
           {{ d }}
         </UBadge>
         <span v-if="!(result.domains || []).length">pekerjaan umum (tanpa ekosistem khusus)</span>
       </div>
-      <div v-if="step >= 1 && result?.parts?.length" class="text-[11px] text-neutral-500 leading-relaxed space-y-0.5">
+      <div v-if="step >= 1 && result?.parts?.length" class="text-xs text-neutral-500 leading-relaxed space-y-0.5">
         <p>Menyentuh {{ result.parts.length }} aplikasi → dipecah per aplikasi:</p>
         <p v-for="p in result.parts" :key="p.title">
           • {{ p.apps.join(', ') }} → <b class="text-neutral-800 dark:text-neutral-200">{{ p.employee?.name || 'belum ada pegawai' }}</b>
         </p>
       </div>
-      <div v-else-if="step >= 1 && result?.employee" class="text-[11px] text-neutral-500 leading-relaxed">
+      <div v-else-if="step >= 1 && result?.employee" class="text-xs text-neutral-500 leading-relaxed">
         Dikerjakan oleh <b class="text-neutral-800 dark:text-neutral-200">{{ result.employee.name }}</b> — dipilih leader sesuai keahlian & beban kerja.
       </div>
 
@@ -229,7 +229,7 @@ defineExpose({ run, text })
           Dari <b>{{ props.total }}</b> butir, hanya <b>{{ result.hits?.length || 0 }}</b> yang paling relevan & terbukti dibawa ke prompt pekerja AI — bukan seluruh guideline sekaligus. Prompt final & semua yang dihasilkan tampil di bawah peta.
         </div>
         <div v-for="[k, hs] in byKind" :key="k" class="space-y-1">
-          <p class="text-[11px] font-semibold text-neutral-700 dark:text-neutral-300">
+          <p class="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
             <UIcon :name="KIND_META[k].icon" class="size-3 align-[-1px]" /> {{ KIND_META[k].label }} ({{ hs.length }}) · <span class="font-normal text-neutral-500">{{ SOLVES[k] }}</span>
           </p>
           <button
@@ -241,7 +241,7 @@ defineExpose({ run, text })
           >
             <UIcon :name="h.via === 'tautan' ? 'i-lucide-waypoints' : 'i-lucide-target'" class="size-3 mt-0.5 shrink-0 text-neutral-400" :title="h.via === 'tautan' ? 'Ditemukan lewat tautan' : 'Cocok langsung'" />
             <span class="flex-1 min-w-0 truncate text-neutral-800 dark:text-neutral-200">{{ h.title }}</span>
-            <span class="text-[10px] text-neutral-400 shrink-0">{{ pct(h.score) }}</span>
+            <span class="text-xs text-neutral-400 shrink-0">{{ pct(h.score) }}</span>
           </button>
         </div>
       </div>

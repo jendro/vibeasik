@@ -22,7 +22,7 @@ const copyToClipboard = (text: string, label = 'Copied!') => copyText(text, labe
                 {{ scanResult.security_audit?.double_security_level || 'ACTIVE_ENFORCED' }}
               </UBadge>
             </div>
-            <p class="text-[11px] text-amber-700 dark:text-amber-300 mt-0.5">
+            <p class="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
               {{ scanResult.security_audit?.message || 'Semua kunci rahasia, token otentikasi, dan password disensor secara berlapis sebelum dikirim ke LLM.' }}
             </p>
           </div>
@@ -39,7 +39,7 @@ const copyToClipboard = (text: string, label = 'Copied!') => copyText(text, labe
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
         <div class="p-2.5 rounded-lg bg-white/80 dark:bg-neutral-900/80 border border-amber-200/60 dark:border-amber-900/40">
-          <div class="text-[10px] uppercase font-bold text-neutral-400">
+          <div class="text-xs uppercase font-bold text-neutral-400">
             Total Kunci Tersensor
           </div>
           <div class="text-lg font-bold font-mono text-amber-600 dark:text-amber-400 mt-0.5">
@@ -47,7 +47,7 @@ const copyToClipboard = (text: string, label = 'Copied!') => copyText(text, labe
           </div>
         </div>
         <div class="p-2.5 rounded-lg bg-white/80 dark:bg-neutral-900/80 border border-amber-200/60 dark:border-amber-900/40">
-          <div class="text-[10px] uppercase font-bold text-neutral-400">
+          <div class="text-xs uppercase font-bold text-neutral-400">
             Match Keyword Khusus (Pass 1)
           </div>
           <div class="text-lg font-bold font-mono text-purple-600 dark:text-purple-400 mt-0.5">
@@ -55,7 +55,7 @@ const copyToClipboard = (text: string, label = 'Copied!') => copyText(text, labe
           </div>
         </div>
         <div class="p-2.5 rounded-lg bg-white/80 dark:bg-neutral-900/80 border border-amber-200/60 dark:border-amber-900/40">
-          <div class="text-[10px] uppercase font-bold text-neutral-400">
+          <div class="text-xs uppercase font-bold text-neutral-400">
             Pola Ancaman Bawaan (Pass 2)
           </div>
           <div class="text-lg font-bold font-mono text-sky-600 dark:text-sky-400 mt-0.5">
@@ -74,14 +74,14 @@ const copyToClipboard = (text: string, label = 'Copied!') => copyText(text, labe
             Daftar Token & Kunci yang Dialias / Disensor Pada Komponen Ini
           </span>
         </div>
-        <span class="text-[11px] text-neutral-500 font-mono">
+        <span class="text-xs text-neutral-500 font-mono">
           {{ scanResult.security_audit?.records?.length || 0 }} item terdaftar
         </span>
       </div>
 
       <div v-if="scanResult.security_audit?.records && scanResult.security_audit.records.length > 0" class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
         <table class="w-full text-left text-xs font-mono">
-          <thead class="bg-neutral-50 dark:bg-neutral-800 text-neutral-500 uppercase text-[10px] tracking-wider border-b border-neutral-200 dark:border-neutral-800">
+          <thead class="bg-neutral-50 dark:bg-neutral-800 text-neutral-500 uppercase text-xs tracking-wider border-b border-neutral-200 dark:border-neutral-800">
             <tr>
               <th class="p-2.5 w-1/4">
                 Alias Terkirim ke LLM
@@ -119,7 +119,7 @@ const copyToClipboard = (text: string, label = 'Copied!') => copyText(text, labe
                 </UBadge>
               </td>
               <td class="p-2.5 text-neutral-500 dark:text-neutral-400">
-                <span class="bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded text-[11px]">
+                <span class="bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded text-xs">
                   {{ rec.masked_preview }}
                 </span>
               </td>

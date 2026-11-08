@@ -165,7 +165,7 @@ watch(() => route.params.appId, () => {
                 <UIcon name="i-lucide-terminal" class="w-4 h-4 text-sky-400" />
                 <span>Instruksi Menjalankan</span>
               </h4>
-              <div class="space-y-1.5 font-mono text-[11px]">
+              <div class="space-y-1.5 font-mono text-xs">
                 <div v-if="parsedScanResult.how_to_run?.dev_command" class="flex justify-between items-center p-1.5 rounded bg-neutral-50 dark:bg-neutral-800">
                   <span class="text-neutral-400">Dev:</span>
                   <span class="font-bold text-sky-600 dark:text-sky-400">{{ parsedScanResult.how_to_run.dev_command }}</span>
@@ -187,7 +187,7 @@ watch(() => route.params.appId, () => {
                 <UIcon name="i-lucide-database" class="w-4 h-4 text-blue-500" />
                 <span>Database & Environment</span>
               </h4>
-              <div class="space-y-1.5 font-mono text-[11px]">
+              <div class="space-y-1.5 font-mono text-xs">
                 <div class="flex justify-between items-center p-1.5 rounded bg-neutral-50 dark:bg-neutral-800">
                   <span class="text-neutral-400">Database:</span>
                   <span class="font-bold text-neutral-800 dark:text-neutral-200">{{ parsedScanResult.extracted_env?.database_type || 'Tidak terdeteksi' }}</span>

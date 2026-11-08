@@ -121,7 +121,7 @@ const projectLatestScanDate = computed(() => {
               <div class="font-bold text-neutral-900 dark:text-white leading-tight">
                 Pipeline Scan LLM
               </div>
-              <div class="text-[10px] text-neutral-500 font-mono">
+              <div class="text-xs text-neutral-500 font-mono">
                 {{ project?.name || 'Proyek' }}
               </div>
             </div>
@@ -130,39 +130,39 @@ const projectLatestScanDate = computed(() => {
             size="xs"
             :color="projectScannedCount > 0 ? 'primary' : 'neutral'"
             variant="subtle"
-            class="font-mono text-[10px]"
+            class="font-mono text-xs"
           >
             {{ projectScannedCount }}/{{ projectTotalComps }} Folder Ter-Scan
           </UBadge>
         </div>
 
         <div v-if="projectScannedCount > 0" class="space-y-2">
-          <div class="grid grid-cols-2 gap-2 text-[11px]">
+          <div class="grid grid-cols-2 gap-2 text-xs">
             <div class="p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-neutral-800">
-              <span class="text-neutral-400 block text-[10px]">Total Rute Terpetakan</span>
+              <span class="text-neutral-400 block text-xs">Total Rute Terpetakan</span>
               <span class="font-bold text-neutral-900 dark:text-white font-mono text-sm">
                 {{ projectTotalRoutes }} rute
               </span>
             </div>
             <div class="p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-neutral-800">
-              <span class="text-neutral-400 block text-[10px]">Scan Terakhir</span>
-              <span class="font-bold text-neutral-800 dark:text-neutral-200 text-[11px] truncate block" :title="formatDate(projectLatestScanDate)">
+              <span class="text-neutral-400 block text-xs">Scan Terakhir</span>
+              <span class="font-bold text-neutral-800 dark:text-neutral-200 text-xs truncate block" :title="formatDate(projectLatestScanDate)">
                 {{ projectLatestScanDate ? formatDate(projectLatestScanDate) : 'Baru saja' }}
               </span>
             </div>
           </div>
 
-          <p class="text-[11px] text-neutral-500 leading-relaxed">
+          <p class="text-xs text-neutral-500 leading-relaxed">
             Klik untuk menjalankan ulang pipeline lengkap: fast scan seluruh folder modul, ekstraksi rute database, dan pembaruan ringkasan proyek otomatis.
           </p>
         </div>
 
         <div v-else class="space-y-1.5 py-1">
-          <div class="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-medium text-[11px]">
+          <div class="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-medium text-xs">
             <UIcon name="i-lucide-info" class="w-3.5 h-3.5" />
             <span>Belum ada modul yang di-scan</span>
           </div>
-          <p class="text-[11px] text-neutral-500 leading-relaxed">
+          <p class="text-xs text-neutral-500 leading-relaxed">
             Klik tombol ini untuk menjalankan pipeline background: memindai seluruh folder proyek, membaca framework, mendeteksi port, dan mengidentifikasi rute API secara otomatis.
           </p>
         </div>
@@ -180,7 +180,7 @@ const projectLatestScanDate = computed(() => {
               <div class="font-bold text-neutral-900 dark:text-white truncate leading-tight">
                 {{ componentName || 'Scan Folder' }}
               </div>
-              <div class="text-[10px] text-neutral-500 font-mono capitalize">
+              <div class="text-xs text-neutral-500 font-mono capitalize">
                 {{ componentRole || 'Modul' }}
               </div>
             </div>
@@ -190,7 +190,7 @@ const projectLatestScanDate = computed(() => {
             size="xs"
             :color="parsedScan ? 'primary' : 'neutral'"
             variant="subtle"
-            class="shrink-0 text-[10px]"
+            class="shrink-0 text-xs"
           >
             {{ parsedScan ? 'Terpindai' : 'Belum Scan' }}
           </UBadge>
@@ -198,7 +198,7 @@ const projectLatestScanDate = computed(() => {
 
         <!-- Popover Body: Has Last Scan Data -->
         <div v-if="parsedScan" class="space-y-2.5">
-          <div class="flex items-center justify-between text-[11px] font-mono text-neutral-400">
+          <div class="flex items-center justify-between text-xs font-mono text-neutral-400">
             <span>Waktu Scan:</span>
             <span class="text-neutral-700 dark:text-neutral-300 font-medium">
               {{ formatDate(parsedScan.scanned_at) }}
@@ -206,15 +206,15 @@ const projectLatestScanDate = computed(() => {
           </div>
 
           <!-- Quick Stats Grid -->
-          <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+          <div class="grid grid-cols-2 gap-1.5 text-xs">
             <div class="p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-neutral-800">
-              <span class="text-neutral-400 block text-[10px]">Rute / Endpoint</span>
+              <span class="text-neutral-400 block text-xs">Rute / Endpoint</span>
               <span class="font-bold font-mono text-neutral-900 dark:text-white">
                 {{ parsedScan.routes?.length || 0 }} rute
               </span>
             </div>
             <div class="p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-neutral-800">
-              <span class="text-neutral-400 block text-[10px]">Arsitektur</span>
+              <span class="text-neutral-400 block text-xs">Arsitektur</span>
               <span class="font-bold text-neutral-900 dark:text-white truncate block" :title="parsedScan.architecture?.design_pattern || 'MVC Clean'">
                 {{ parsedScan.architecture?.design_pattern || 'Standar Modul' }}
               </span>
@@ -222,7 +222,7 @@ const projectLatestScanDate = computed(() => {
           </div>
 
           <!-- Dev Command & Framework -->
-          <div class="space-y-1 text-[11px]">
+          <div class="space-y-1 text-xs">
             <div v-if="parsedScan.detected_params?.dev_command" class="flex items-center gap-1.5 font-mono text-neutral-600 dark:text-neutral-400 truncate">
               <UIcon name="i-lucide-terminal" class="w-3.5 h-3.5 text-neutral-400 shrink-0" />
               <span class="truncate">{{ parsedScan.detected_params.dev_command }}</span>
@@ -231,18 +231,18 @@ const projectLatestScanDate = computed(() => {
               <UIcon name="i-lucide-database" class="w-3.5 h-3.5 text-neutral-400 shrink-0" />
               <span class="truncate">{{ parsedScan.extracted_env.database_type }} ({{ parsedScan.extracted_env.orm_driver || 'Direct' }})</span>
             </div>
-            <div v-if="parsedScan.security_audit?.redacted_count !== undefined" class="flex items-center gap-1.5 text-neutral-500 text-[10px]">
+            <div v-if="parsedScan.security_audit?.redacted_count !== undefined" class="flex items-center gap-1.5 text-neutral-500 text-xs">
               <UIcon name="i-lucide-shield-check" class="w-3.5 h-3.5 text-sky-500 shrink-0" />
               <span>{{ parsedScan.security_audit.redacted_count }} kredensial .env terlindungi</span>
             </div>
           </div>
 
           <!-- Summary Snippet -->
-          <p v-if="parsedScan.folder_structure_summary" class="text-[11px] text-neutral-500 dark:text-neutral-400 line-clamp-2 leading-relaxed italic border-t border-neutral-100 dark:border-neutral-800/80 pt-2">
+          <p v-if="parsedScan.folder_structure_summary" class="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-2 leading-relaxed italic border-t border-neutral-100 dark:border-neutral-800/80 pt-2">
             "{{ parsedScan.folder_structure_summary }}"
           </p>
 
-          <div class="text-[10px] text-neutral-400 text-right pt-0.5">
+          <div class="text-xs text-neutral-400 text-right pt-0.5">
             Klik tombol untuk memindai ulang modul ini
           </div>
         </div>
@@ -253,7 +253,7 @@ const projectLatestScanDate = computed(() => {
             <UIcon name="i-lucide-scan-line" class="w-4 h-4" />
             <span>Belum Ada Riwayat Scan LLM</span>
           </div>
-          <p class="text-[11px] text-neutral-500 dark:text-neutral-400 leading-relaxed">
+          <p class="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
             Folder modul ini belum pernah dipindai oleh LLM. Klik tombol untuk memetakan rute, dependensi package, database, dan dev command secara otomatis.
           </p>
         </div>

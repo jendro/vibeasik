@@ -166,12 +166,12 @@ onUnmounted(() => {
               <h2 class="text-base font-bold text-neutral-900 dark:text-white truncate">
                 Simulasi Real-Time Router & Latensi Eksekusi
               </h2>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold font-mono bg-primary-100 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
+              <span class="px-2 py-0.5 rounded-full text-xs font-bold font-mono bg-primary-100 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
                 {{ stats.total }} Rute Diuji
               </span>
               <span
                 v-if="pendingDeepCount > 0"
-                class="px-2 py-0.5 rounded-full text-[10px] font-bold font-mono bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
+                class="px-2 py-0.5 rounded-full text-xs font-bold font-mono bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
               >
                 {{ pendingDeepCount }} Masalah Kritis/Peringatan
               </span>
@@ -209,46 +209,46 @@ onUnmounted(() => {
       <!-- Quick Metrics Ribbon -->
       <div class="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 bg-neutral-50/70 dark:bg-neutral-900/60 border-b border-neutral-200 dark:border-neutral-800 shrink-0">
         <div class="p-2.5 rounded-lg bg-white dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700/80">
-          <div class="text-[10px] uppercase font-bold text-neutral-500">
+          <div class="text-xs uppercase font-bold text-neutral-500">
             Rata-rata Latensi
           </div>
           <div class="text-lg font-bold font-mono text-neutral-900 dark:text-white">
             ~{{ stats.avgLatency }} ms
           </div>
-          <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+          <div class="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
             {{ stats.fast }} rute cepat (&lt;40ms)
           </div>
         </div>
         <div class="p-2.5 rounded-lg bg-white dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700/80">
-          <div class="text-[10px] uppercase font-bold text-neutral-500">
+          <div class="text-xs uppercase font-bold text-neutral-500">
             Latensi Lambat
           </div>
           <div class="text-lg font-bold font-mono text-amber-600 dark:text-amber-400">
             {{ stats.slow }}
           </div>
-          <div class="text-[10px] text-neutral-500">
+          <div class="text-xs text-neutral-500">
             Perlu caching / optimasi
           </div>
         </div>
         <div class="p-2.5 rounded-lg bg-white dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700/80">
-          <div class="text-[10px] uppercase font-bold text-neutral-500">
+          <div class="text-xs uppercase font-bold text-neutral-500">
             Tanpa Validasi Form
           </div>
           <div class="text-lg font-bold font-mono text-rose-600 dark:text-rose-400">
             {{ stats.missingValidation }}
           </div>
-          <div class="text-[10px] text-neutral-500">
+          <div class="text-xs text-neutral-500">
             Mutasi POST/PUT/PATCH
           </div>
         </div>
         <div class="p-2.5 rounded-lg bg-white dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700/80">
-          <div class="text-[10px] uppercase font-bold text-neutral-500">
+          <div class="text-xs uppercase font-bold text-neutral-500">
             Risiko Kueri Tinggi
           </div>
           <div class="text-lg font-bold font-mono text-rose-600 dark:text-rose-400">
             {{ stats.highRiskQuery }}
           </div>
-          <div class="text-[10px] text-neutral-500">
+          <div class="text-xs text-neutral-500">
             Celah unindexed / unpaginated
           </div>
         </div>
@@ -281,7 +281,7 @@ onUnmounted(() => {
             v-for="m in methods"
             :key="m"
             type="button"
-            class="px-2 py-0.5 rounded text-[11px] font-mono font-bold transition-all cursor-pointer"
+            class="px-2 py-0.5 rounded text-xs font-mono font-bold transition-all cursor-pointer"
             :class="selectedMethod === m
               ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900'
               : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'"
@@ -355,7 +355,7 @@ onUnmounted(() => {
           <!-- Header: Method + Path + Latency Pill -->
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div class="flex items-center gap-2 min-w-0">
-              <span class="px-2 py-0.5 rounded font-mono font-bold text-[11px] border shrink-0" :class="getMethodColor(sim.method)">
+              <span class="px-2 py-0.5 rounded font-mono font-bold text-xs border shrink-0" :class="getMethodColor(sim.method)">
                 {{ sim.method }}
               </span>
               <span class="font-mono font-semibold text-xs text-neutral-900 dark:text-white truncate">
@@ -366,7 +366,7 @@ onUnmounted(() => {
             <!-- Latency Pill -->
             <div class="flex items-center gap-1.5 shrink-0">
               <span
-                class="px-2 py-0.5 rounded text-[11px] font-mono font-bold border flex items-center gap-1"
+                class="px-2 py-0.5 rounded text-xs font-mono font-bold border flex items-center gap-1"
                 :class="getLatencyBadge(sim.latency_status, sim.simulated_latency_ms).class"
               >
                 <UIcon :name="getLatencyBadge(sim.latency_status, sim.simulated_latency_ms).icon" class="w-3.5 h-3.5" />
@@ -376,11 +376,11 @@ onUnmounted(() => {
           </div>
 
           <!-- Metadata Badges: Component, Handler, Validation, Rate Limit, Query Risk -->
-          <div class="flex flex-wrap items-center gap-2 text-[11px]">
+          <div class="flex flex-wrap items-center gap-2 text-xs">
             <!-- Handler / Component -->
             <span class="text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
               <UIcon name="i-lucide-code-2" class="w-3.5 h-3.5 text-neutral-400" />
-              <code class="font-mono text-[10px] bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded">{{ sim.component }}: {{ sim.handler }}</code>
+              <code class="font-mono text-xs bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded">{{ sim.component }}: {{ sim.handler }}</code>
             </span>
 
             <span class="text-neutral-300 dark:text-neutral-700">·</span>
@@ -402,7 +402,7 @@ onUnmounted(() => {
             </span>
             <span
               v-else
-              class="text-neutral-400 text-[10px]"
+              class="text-neutral-400 text-xs"
             >
               Read-Only Endpoint
             </span>
@@ -438,7 +438,7 @@ onUnmounted(() => {
           </div>
 
           <!-- Simulation Detail / Breakdown -->
-          <div v-if="sim.details" class="p-2 rounded bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/60 dark:border-neutral-700/60 text-[11px] text-neutral-600 dark:text-neutral-300 font-mono">
+          <div v-if="sim.details" class="p-2 rounded bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/60 dark:border-neutral-700/60 text-xs text-neutral-600 dark:text-neutral-300 font-mono">
             {{ sim.details }}
           </div>
         </div>

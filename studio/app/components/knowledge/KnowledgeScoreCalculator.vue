@@ -29,7 +29,7 @@ const pct = (v: number) => `${Math.round(v * 100)}%`
       <label class="block">
         <span class="flex justify-between text-xs font-medium text-neutral-700 dark:text-neutral-300">Relevansi ke pekerjaan <span class="font-mono">{{ rel }}%</span></span>
         <USlider v-model="rel" :min="0" :max="100" size="sm" class="mt-1.5" />
-        <span class="text-[11px] text-neutral-500">Kemiripan kosinus TF-IDF (+0,12 bila domain sama), dibagi relevansi tertinggi di kandidat.</span>
+        <span class="text-xs text-neutral-500">Kemiripan kosinus TF-IDF (+0,12 bila domain sama), dibagi relevansi tertinggi di kandidat.</span>
       </label>
       <div class="grid grid-cols-2 gap-3">
         <label class="block">
@@ -44,7 +44,7 @@ const pct = (v: number) => `${Math.round(v * 100)}%`
       <label class="block">
         <span class="flex justify-between text-xs font-medium text-neutral-700 dark:text-neutral-300">Bobot awal <span class="font-mono">{{ weight }}</span></span>
         <USlider v-model="weight" :min="0" :max="100" size="sm" class="mt-1.5" />
-        <span class="text-[11px] text-neutral-500">Dari severity guideline (critical 95 · high 85 · medium 70 · low 55) atau penulisnya; +3 tiap kali butir yang sama diajarkan lagi.</span>
+        <span class="text-xs text-neutral-500">Dari severity guideline (critical 95 · high 85 · medium 70 · low 55) atau penulisnya; +3 tiap kali butir yang sama diajarkan lagi.</span>
       </label>
       <label class="block">
         <span class="flex justify-between text-xs font-medium text-neutral-700 dark:text-neutral-300">Hari sejak terakhir dipakai <span class="font-mono">{{ days }}</span></span>

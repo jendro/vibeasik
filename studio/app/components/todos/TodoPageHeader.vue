@@ -120,7 +120,7 @@ const handleToggleAutopilot = (value: boolean) => emit('toggleAutopilot', value)
               </div>
 
               <div class="space-y-1">
-                <label class="text-[11px] font-semibold text-neutral-600 dark:text-neutral-400">Pilihan CLI Coding Agent:</label>
+                <label class="text-xs font-semibold text-neutral-600 dark:text-neutral-400">Pilihan CLI Coding Agent:</label>
                 <select
                   v-model="autopilotAgent"
                   class="w-full px-2 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 text-xs focus:ring-1 focus:ring-sky-500 cursor-pointer"
@@ -140,7 +140,7 @@ const handleToggleAutopilot = (value: boolean) => emit('toggleAutopilot', value)
                 </select>
               </div>
 
-              <div class="p-2 rounded-lg bg-sky-50/80 dark:bg-sky-950/30 border border-sky-200/80 dark:border-sky-900/40 text-[11px] text-sky-900 dark:text-sky-200 space-y-1">
+              <div class="p-2 rounded-lg bg-sky-50/80 dark:bg-sky-950/30 border border-sky-200/80 dark:border-sky-900/40 text-xs text-sky-900 dark:text-sky-200 space-y-1">
                 <p class="font-semibold flex items-center gap-1">
                   <UIcon name="i-lucide-check-circle" class="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
                   <span>Status Eksekusi Coding:</span>

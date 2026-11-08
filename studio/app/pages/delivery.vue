@@ -214,7 +214,7 @@ const runSampleAudit = async () => {
                 </div>
                 <div class="text-xs text-neutral-500 flex items-center gap-2 font-mono">
                   <span>{{ formatIDR(d.price_annual) }}/thn</span>
-                  <span v-if="d.auto_dns_ready" class="text-sky-500 text-[10px]">• Auto-DNS Ready</span>
+                  <span v-if="d.auto_dns_ready" class="text-sky-500 text-xs">• Auto-DNS Ready</span>
                 </div>
               </div>
 
@@ -398,12 +398,12 @@ const runSampleAudit = async () => {
                   {{ iss.severity }}
                 </UBadge>
                 <span class="font-semibold text-xs text-neutral-900 dark:text-white">{{ iss.title }}</span>
-                <span class="text-[11px] font-mono text-neutral-400 ml-auto">{{ iss.file }}</span>
+                <span class="text-xs font-mono text-neutral-400 ml-auto">{{ iss.file }}</span>
               </div>
               <p class="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
                 {{ iss.description }}
               </p>
-              <p class="text-[11px] font-mono text-amber-700 dark:text-amber-400 bg-amber-100/60 dark:bg-amber-900/30 p-2 rounded-lg">
+              <p class="text-xs font-mono text-amber-700 dark:text-amber-400 bg-amber-100/60 dark:bg-amber-900/30 p-2 rounded-lg">
                 💡 Saran Perbaikan: {{ iss.remediation }}
               </p>
             </div>

@@ -112,14 +112,14 @@ const rotate = async () => {
               {{ f.path }}
             </UButton>
           </div>
-          <p v-if="!info.component_dir" class="text-[11px] text-neutral-500">
+          <p v-if="!info.component_dir" class="text-xs text-neutral-500">
             Sumber belum terhubung ke komponen berfolder di laptop ini — salin berkasnya manual.
           </p>
-          <div class="text-[11px] font-semibold text-neutral-600 dark:text-neutral-300 pt-1">
+          <div class="text-xs font-semibold text-neutral-600 dark:text-neutral-300 pt-1">
             Lalu di entrypoint aplikasi:
           </div>
           <div class="relative">
-            <pre class="text-[11px] leading-relaxed font-mono bg-neutral-950 text-neutral-100 rounded-xl p-3 overflow-x-auto">{{ kit.usage }}</pre>
+            <pre class="text-xs leading-relaxed font-mono bg-neutral-950 text-neutral-100 rounded-xl p-3 overflow-x-auto">{{ kit.usage }}</pre>
             <UButton size="xs" color="neutral" variant="soft" icon="i-lucide-copy" class="absolute top-2 right-2" aria-label="Salin kode" @click="copy(kit.usage, 'Kode')" />
           </div>
         </template>
@@ -138,8 +138,8 @@ const rotate = async () => {
             </UButton>
           </div>
         </div>
-        <pre class="text-[11px] leading-relaxed font-mono bg-neutral-950 text-neutral-100 rounded-xl p-3 overflow-x-auto whitespace-pre">{{ maskedEnv }}</pre>
-        <ul class="text-[11px] text-neutral-500 space-y-1 leading-relaxed list-disc pl-4">
+        <pre class="text-xs leading-relaxed font-mono bg-neutral-950 text-neutral-100 rounded-xl p-3 overflow-x-auto whitespace-pre">{{ maskedEnv }}</pre>
+        <ul class="text-xs text-neutral-500 space-y-1 leading-relaxed list-disc pl-4">
           <li><strong>VIBEASIK_TRAFFIC_FLUSH_SEC</strong> = seberapa sering BE mengirim: 1–2 dtk untuk realtime, 60 untuk per menit. Request pengguna tidak pernah menunggu pengiriman ini.</li>
           <li>Yang dikirim: method, rute, path tanpa query string, status, lama proses, ukuran, IP, negara (header CDN), user agent & host perujuk. Header lain & body tidak pernah dikirim.</li>
           <li>Kunci tidak ditulis ke kode — simpan hanya di env server (ter-ignore git).</li>
@@ -152,7 +152,7 @@ const rotate = async () => {
             Ganti kunci
           </UButton>
           <template v-else>
-            <span class="text-[11px] text-amber-700 dark:text-amber-400 self-center">Kunci lama langsung ditolak. Lanjut?</span>
+            <span class="text-xs text-amber-700 dark:text-amber-400 self-center">Kunci lama langsung ditolak. Lanjut?</span>
             <UButton size="xs" color="warning" :loading="rotating" @click="rotate">
               Ya, ganti
             </UButton>

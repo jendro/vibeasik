@@ -199,13 +199,13 @@ const handleSubmit = () => {
 
         <!-- Quick Presets -->
         <div class="space-y-1">
-          <span class="text-[11px] font-medium text-neutral-500 dark:text-neutral-400">Preset Cepat:</span>
+          <span class="text-xs font-medium text-neutral-500 dark:text-neutral-400">Preset Cepat:</span>
           <div class="flex flex-wrap gap-1.5">
             <button
               v-for="p in (form.provider === 'system_one' ? systemOnePresets : standardLLMPresets)"
               :key="p.label"
               type="button"
-              class="px-2 py-0.5 text-[11px] font-mono rounded bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 transition-colors cursor-pointer"
+              class="px-2 py-0.5 text-xs font-mono rounded bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 transition-colors cursor-pointer"
               @click="applyPreset(p)"
             >
               {{ p.label }}
@@ -241,7 +241,7 @@ const handleSubmit = () => {
             <label class="block font-medium text-neutral-700 dark:text-neutral-300">
               API Key / Auth Token (Selalu Termasking)
             </label>
-            <span v-if="isEditing && form.masked_key" class="text-[10px] text-neutral-500 font-mono">
+            <span v-if="isEditing && form.masked_key" class="text-xs text-neutral-500 font-mono">
               Tersimpan: {{ form.masked_key }}
             </span>
           </div>
@@ -261,7 +261,7 @@ const handleSubmit = () => {
               <UIcon :name="showKey ? 'i-lucide-eye-off' : 'i-lucide-eye'" class="w-4 h-4" />
             </button>
           </div>
-          <p class="text-[10px] text-neutral-500 dark:text-neutral-400">
+          <p class="text-xs text-neutral-500 dark:text-neutral-400">
             Key selalu termasking saat dikembalikan dari server dan tidak akan terekspos di browser.
           </p>
         </div>
@@ -272,7 +272,7 @@ const handleSubmit = () => {
             <label class="block font-medium text-neutral-700 dark:text-neutral-300">
               Model yang Bisa Digunakan pada Konfigurasi Ini *
             </label>
-            <span class="text-[10px] text-neutral-500">
+            <span class="text-xs text-neutral-500">
               Klik model untuk menjadikannya default
             </span>
           </div>
@@ -289,7 +289,7 @@ const handleSubmit = () => {
               @click="form.selected_model = mod"
             >
               <span>{{ mod }}</span>
-              <span v-if="form.selected_model === mod" class="text-[9px] uppercase font-sans text-sky-700 dark:text-sky-300">
+              <span v-if="form.selected_model === mod" class="text-xs uppercase font-sans text-sky-700 dark:text-sky-300">
                 ✓
               </span>
               <button
@@ -302,7 +302,7 @@ const handleSubmit = () => {
               </button>
             </span>
 
-            <span v-if="form.models.length === 0" class="text-[11px] text-neutral-400 italic">
+            <span v-if="form.models.length === 0" class="text-xs text-neutral-400 italic">
               Belum ada model ditambahkan
             </span>
           </div>

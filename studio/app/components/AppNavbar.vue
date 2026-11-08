@@ -110,12 +110,12 @@ const pageTitle = computed(() => {
               </h1>
               <span
                 v-if="activeProject"
-                class="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200 dark:border-sky-800/80 shrink-0 font-sans"
+                class="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200 dark:border-sky-800/80 shrink-0 font-sans"
               >
                 Aktif
               </span>
             </div>
-            <span class="text-[11px] text-neutral-500 dark:text-neutral-400 hidden sm:inline font-sans truncate">
+            <span class="text-xs text-neutral-500 dark:text-neutral-400 hidden sm:inline font-sans truncate">
               {{ pageTitle }}
             </span>
           </div>
@@ -269,7 +269,7 @@ const pageTitle = computed(() => {
         <div v-if="isAuthenticated" class="flex items-center gap-2 pl-2 border-l border-neutral-200 dark:border-neutral-800">
           <div class="hidden xl:flex flex-col text-right">
             <NuxtLink to="/account" class="text-xs font-semibold text-neutral-800 dark:text-neutral-200 leading-tight truncate max-w-[120px] hover:underline">{{ user?.name || 'Vibecoder' }}</NuxtLink>
-            <span class="text-[10px] text-neutral-400 font-mono leading-tight">{{ user?.role }}</span>
+            <span class="text-xs text-neutral-400 font-mono leading-tight">{{ user?.role }}</span>
           </div>
           <button
             type="button"

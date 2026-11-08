@@ -52,7 +52,7 @@ const methodCls: Record<string, string> = {
 
     <div v-if="view === 'routes'" class="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800">
       <table class="w-full text-xs">
-        <thead class="bg-neutral-50 dark:bg-neutral-800/60 text-neutral-500 text-[10px] uppercase tracking-wide">
+        <thead class="bg-neutral-50 dark:bg-neutral-800/60 text-neutral-500 text-xs uppercase tracking-wide">
           <tr>
             <th class="text-left font-semibold px-3 py-2">
               Endpoint
@@ -94,7 +94,7 @@ const methodCls: Record<string, string> = {
               </div>
             </td>
             <td class="px-2 py-1.5 text-right tabular-nums whitespace-nowrap">
-              {{ fmtNum(r.count) }}<div class="text-[10px] text-neutral-400">
+              {{ fmtNum(r.count) }}<div class="text-xs text-neutral-400">
                 {{ fmtNum(r.rpm) }}/mnt
               </div>
             </td>
@@ -141,17 +141,17 @@ const methodCls: Record<string, string> = {
       <div v-for="g in groups" :key="g.group" class="rounded-xl border border-neutral-200 dark:border-neutral-800 p-3">
         <div class="flex flex-wrap items-baseline justify-between gap-2">
           <span class="font-mono text-sm font-semibold text-neutral-900 dark:text-white">{{ g.group }}</span>
-          <span class="text-[11px] text-neutral-500">{{ g.routes }} rute · {{ fmtNum(g.count) }} request · p95 {{ fmtMs(g.p95) }} · 5xx {{ fmtPct(g.err_rate) }}</span>
+          <span class="text-xs text-neutral-500">{{ g.routes }} rute · {{ fmtNum(g.count) }} request · p95 {{ fmtMs(g.p95) }} · 5xx {{ fmtPct(g.err_rate) }}</span>
         </div>
         <div class="mt-2 space-y-1">
-          <div class="flex items-center gap-2 text-[11px]">
+          <div class="flex items-center gap-2 text-xs">
             <span class="w-24 shrink-0 text-neutral-500">Porsi request</span>
             <div class="flex-1 h-2 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
               <div class="h-full rounded-full bg-primary-500 dark:bg-primary-400" :style="{ width: g.share * 100 + '%' }" />
             </div>
             <span class="w-12 text-right tabular-nums whitespace-nowrap">{{ fmtPct(g.share) }}</span>
           </div>
-          <div class="flex items-center gap-2 text-[11px]">
+          <div class="flex items-center gap-2 text-xs">
             <span class="w-24 shrink-0 text-neutral-500">Porsi waktu</span>
             <div class="flex-1 h-2 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
               <div class="h-full rounded-full bg-amber-500 dark:bg-amber-400" :style="{ width: g.time_share * 100 + '%' }" />

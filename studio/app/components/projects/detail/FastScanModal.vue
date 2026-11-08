@@ -57,7 +57,7 @@ const getCompRoleLabel = (role: string) => {
                     Zero Leak Guarantee
                   </UBadge>
                 </div>
-                <p class="text-[11px] text-sky-800 dark:text-sky-300 mt-0.5">
+                <p class="text-xs text-sky-800 dark:text-sky-300 mt-0.5">
                   Semua API key server dan AI telah disensor secara global sebelum dikirim ke LLM.
                   <span v-if="scanResult.security_audit && scanResult.security_audit.redacted_count > 0">
                     Terdeteksi <b>{{ scanResult.security_audit.redacted_count }}</b> credential sensitif yang berhasil dialiaskan dengan safe alias.
@@ -82,18 +82,18 @@ const getCompRoleLabel = (role: string) => {
 
           <!-- Expandable Security Audit Table -->
           <div v-if="showSecurityAuditDetails && scanResult.security_audit?.records" class="mt-2 pt-2 border-t border-sky-200/70 dark:border-sky-900/40 space-y-1.5 text-xs">
-            <div class="text-[10px] uppercase font-bold text-sky-900 dark:text-sky-200 tracking-wider">
+            <div class="text-xs uppercase font-bold text-sky-900 dark:text-sky-200 tracking-wider">
               Daftar Kredensial yang Dialiaskan Sebelum Masuk ke LLM:
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 font-mono text-[11px]">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 font-mono text-xs">
               <div
                 v-for="(rec, rIdx) in scanResult.security_audit.records"
                 :key="rIdx"
                 class="flex items-center justify-between p-1.5 rounded bg-white/70 dark:bg-black/30 border border-sky-100 dark:border-sky-900/40"
               >
-                <span class="text-neutral-500 text-[10px]">{{ rec.category }}:</span>
+                <span class="text-neutral-500 text-xs">{{ rec.category }}:</span>
                 <span class="text-sky-700 dark:text-sky-300 font-semibold">{{ rec.alias }}</span>
-                <span class="text-neutral-400 text-[10px]">{{ rec.masked_preview }}</span>
+                <span class="text-neutral-400 text-xs">{{ rec.masked_preview }}</span>
               </div>
             </div>
           </div>
@@ -111,7 +111,7 @@ const getCompRoleLabel = (role: string) => {
             <UBadge size="xs" :color="getCompRoleBadgeColor(scanResult.role)" variant="subtle">
               {{ getCompRoleLabel(scanResult.role) }}
             </UBadge>
-            <span class="text-neutral-400 text-[10px]">
+            <span class="text-neutral-400 text-xs">
               Scanned: {{ new Date(scanResult.scanned_at).toLocaleTimeString() }}
             </span>
           </div>

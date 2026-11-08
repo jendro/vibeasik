@@ -113,7 +113,7 @@ const save = async () => {
         <!-- Ringkasan temuan -->
         <div class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 space-y-1.5">
           <div class="flex flex-wrap items-center gap-2">
-            <span v-if="finding.rule_id" class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
+            <span v-if="finding.rule_id" class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
               {{ finding.rule_id }}
             </span>
             <span class="font-bold text-sm text-neutral-900 dark:text-white">{{ finding.title }}</span>
@@ -121,7 +121,7 @@ const save = async () => {
           <p class="text-neutral-600 dark:text-neutral-400">
             {{ finding.description }}
           </p>
-          <p v-if="finding.target_file" class="font-mono text-[11px] text-neutral-500">
+          <p v-if="finding.target_file" class="font-mono text-xs text-neutral-500">
             {{ finding.target_file }}<span v-if="finding.line">:{{ finding.line }}</span>
           </p>
           <pre v-if="finding.snippet" class="p-2 rounded-lg bg-neutral-900 text-rose-300 font-mono overflow-x-auto"><code>{{ finding.snippet }}</code></pre>
@@ -153,7 +153,7 @@ const save = async () => {
               >
                 {{ verificationLabel }}
               </UBadge>
-              <span class="text-[11px] text-neutral-500 font-mono">yakin {{ verification.confidence }}% · {{ verification.model }}</span>
+              <span class="text-xs text-neutral-500 font-mono">yakin {{ verification.confidence }}% · {{ verification.model }}</span>
             </div>
             <p class="text-neutral-700 dark:text-neutral-300 leading-relaxed">
               {{ verification.reason }}
@@ -180,7 +180,7 @@ const save = async () => {
               <UIcon :name="opt.icon" class="w-4 h-4" />
               {{ opt.label }}
             </span>
-            <span class="block mt-1 text-[11px] text-neutral-500">{{ opt.desc }}</span>
+            <span class="block mt-1 text-xs text-neutral-500">{{ opt.desc }}</span>
           </button>
         </div>
 

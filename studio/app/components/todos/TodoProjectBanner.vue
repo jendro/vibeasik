@@ -23,18 +23,18 @@ const handleSwitchProject = (id: string) => emit('switchProject', id)
           </span>
           <span
             v-if="activeProject"
-            class="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 text-[10px] font-semibold border border-blue-200 dark:border-blue-800"
+            class="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 text-xs font-semibold border border-blue-200 dark:border-blue-800"
           >
             {{ activeProject.components?.length || 0 }} Komponen
           </span>
           <span
             v-if="remainingTasksCount > 0"
-            class="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 text-[10px] font-semibold border border-amber-200 dark:border-amber-800"
+            class="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 text-xs font-semibold border border-amber-200 dark:border-amber-800"
           >
             {{ remainingTasksCount }} tugas perlu diselesaikan
           </span>
         </div>
-        <p v-if="activeProject && activeProject.components && activeProject.components.length > 0" class="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">
+        <p v-if="activeProject && activeProject.components && activeProject.components.length > 0" class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">
           Aplikasi: {{ activeProject.components.map(c => c.name).join(', ') }}
         </p>
       </div>
@@ -42,7 +42,7 @@ const handleSwitchProject = (id: string) => emit('switchProject', id)
 
     <!-- Quick Switch Active Project on this page -->
     <div class="flex items-center gap-2 shrink-0">
-      <label for="project-switcher" class="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium hidden sm:inline">
+      <label for="project-switcher" class="text-xs text-neutral-500 dark:text-neutral-400 font-medium hidden sm:inline">
         Ganti:
       </label>
       <select

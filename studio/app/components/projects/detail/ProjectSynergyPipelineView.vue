@@ -38,11 +38,11 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
               <span class="text-xs font-bold text-neutral-900 dark:text-white truncate">
                 {{ p.title }}
               </span>
-              <span class="font-mono text-[11px] text-sky-600 dark:text-sky-400 font-semibold truncate">
+              <span class="font-mono text-xs text-sky-600 dark:text-sky-400 font-semibold truncate">
                 {{ p.page_path }}
               </span>
             </div>
-            <p v-if="p.file_path" class="text-[10px] font-mono text-neutral-400 truncate mt-0.5">
+            <p v-if="p.file_path" class="text-xs font-mono text-neutral-400 truncate mt-0.5">
               {{ p.file_path }}
             </p>
           </div>
@@ -50,11 +50,11 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
 
         <div class="flex items-center gap-2 shrink-0">
           <!-- Navigation Destinations Count -->
-          <UBadge size="xs" color="success" variant="subtle" class="font-mono text-[10px]">
+          <UBadge size="xs" color="success" variant="subtle" class="font-mono text-xs">
             {{ p.navigation_targets.length }} Navigasi
           </UBadge>
           <!-- Outbound API Count -->
-          <UBadge size="xs" color="primary" variant="subtle" class="font-mono text-[10px]">
+          <UBadge size="xs" color="primary" variant="subtle" class="font-mono text-xs">
             {{ p.outbound_requests.length }} API
           </UBadge>
           <!-- Toggle Chevron Icon -->
@@ -82,17 +82,17 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
               :key="nIdx"
               class="px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-neutral-200/70 dark:border-neutral-800 text-xs shadow-2xs space-y-0.5"
             >
-              <div class="flex items-center gap-1 font-semibold text-neutral-800 dark:text-neutral-200 text-[11px]">
+              <div class="flex items-center gap-1 font-semibold text-neutral-800 dark:text-neutral-200 text-xs">
                 <UIcon name="i-lucide-arrow-right" class="w-3 h-3 text-emerald-500 shrink-0" />
                 <span class="font-mono text-emerald-700 dark:text-emerald-400">{{ nav.target_path }}</span>
                 <span class="text-neutral-500 font-normal">({{ nav.target_label }})</span>
               </div>
-              <div class="text-[9px] text-neutral-400 pl-4">
+              <div class="text-xs text-neutral-400 pl-4">
                 {{ nav.trigger }}
               </div>
             </div>
           </div>
-          <div v-else class="text-[11px] text-neutral-400 italic">
+          <div v-else class="text-xs text-neutral-400 italic">
             Tidak ada navigasi keluar langsung dari halaman ini.
           </div>
         </div>
@@ -104,7 +104,7 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
               <UIcon name="i-lucide-workflow" class="w-3.5 h-3.5 text-sky-500" />
               <span>Alur Cabang API (Klik Setiap Kotak Node Untuk Rincian Lengkap & cURL):</span>
             </span>
-            <span class="text-[10px] text-neutral-400 font-mono">
+            <span class="text-xs text-neutral-400 font-mono">
               {{ p.outbound_requests.length }} alur request
             </span>
           </div>
@@ -126,7 +126,7 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
             <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-neutral-100 dark:border-neutral-800/70">
               <div class="flex items-center gap-2">
                 <span
-                  class="px-2 py-0.5 rounded text-[10px] font-bold font-mono border uppercase shrink-0"
+                  class="px-2 py-0.5 rounded text-xs font-bold font-mono border uppercase shrink-0"
                   :class="getMethodColorClass(r.http_method)"
                 >
                   {{ r.http_method }}
@@ -139,7 +139,7 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
                 </span>
               </div>
               <div class="flex items-center gap-2">
-                <span class="text-[10px] font-mono text-neutral-400 hidden md:inline">
+                <span class="text-xs font-mono text-neutral-400 hidden md:inline">
                   Pemicu: {{ r.trigger_event }}
                 </span>
                 <!-- Tombol Buka Inspector Detail -->
@@ -149,7 +149,7 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
                   variant="soft"
                   icon="i-lucide-maximize-2"
                   title="Buka rincian lengkap alur & cURL"
-                  class="cursor-pointer font-semibold text-[11px]"
+                  class="cursor-pointer font-semibold text-xs"
                   @click="openInspector(r, { title: p.title, page_path: p.page_path, file_path: p.file_path }, 'payload')"
                 >
                   Detail Alur
@@ -162,7 +162,7 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
               <!-- Step 1: Payload Pill -->
               <button
                 type="button"
-                class="px-2.5 py-1.5 rounded-lg bg-sky-50/70 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60 font-mono text-[11px] cursor-pointer hover:bg-sky-100 dark:hover:bg-sky-900/60 transition-colors flex items-center gap-1.5 shadow-2xs"
+                class="px-2.5 py-1.5 rounded-lg bg-sky-50/70 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60 font-mono text-xs cursor-pointer hover:bg-sky-100 dark:hover:bg-sky-900/60 transition-colors flex items-center gap-1.5 shadow-2xs"
                 title="Klik untuk membuka detail payload"
                 @click="openInspector(r, { title: p.title, page_path: p.page_path, file_path: p.file_path }, 'payload')"
               >
@@ -175,7 +175,7 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
               <!-- Step 2: Validasi Pill -->
               <button
                 type="button"
-                class="px-2.5 py-1.5 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 font-mono text-[11px] cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors flex items-center gap-1.5 shadow-2xs"
+                class="px-2.5 py-1.5 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 font-mono text-xs cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors flex items-center gap-1.5 shadow-2xs"
                 title="Klik untuk membuka detail validasi"
                 @click="openInspector(r, { title: p.title, page_path: p.page_path, file_path: p.file_path }, 'validation')"
               >
@@ -188,7 +188,7 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
               <!-- Step 3: Handler Pill -->
               <button
                 type="button"
-                class="px-2.5 py-1.5 rounded-lg bg-purple-50/70 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 font-mono text-[11px] cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/60 transition-colors flex items-center gap-1.5 shadow-2xs"
+                class="px-2.5 py-1.5 rounded-lg bg-purple-50/70 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 font-mono text-xs cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/60 transition-colors flex items-center gap-1.5 shadow-2xs"
                 title="Klik untuk membuka detail router & handler backend"
                 @click="openInspector(r, { title: p.title, page_path: p.page_path, file_path: p.file_path }, 'handler')"
               >
@@ -201,7 +201,7 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
               <!-- Step 4: Database Pill -->
               <button
                 type="button"
-                class="px-2.5 py-1.5 rounded-lg bg-amber-50/70 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 font-mono text-[11px] cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors flex items-center gap-1.5 shadow-2xs"
+                class="px-2.5 py-1.5 rounded-lg bg-amber-50/70 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 font-mono text-xs cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors flex items-center gap-1.5 shadow-2xs"
                 title="Klik untuk membuka detail query database"
                 @click="openInspector(r, { title: p.title, page_path: p.page_path, file_path: p.file_path }, 'database')"
               >
@@ -214,7 +214,7 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
               <!-- Step 5: Respon Pill -->
               <button
                 type="button"
-                class="px-2.5 py-1.5 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 font-mono text-[11px] cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors flex items-center gap-1.5 shadow-2xs"
+                class="px-2.5 py-1.5 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 font-mono text-xs cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors flex items-center gap-1.5 shadow-2xs"
                 title="Klik untuk membuka format respon & dampak UI"
                 @click="openInspector(r, { title: p.title, page_path: p.page_path, file_path: p.file_path }, 'response')"
               >

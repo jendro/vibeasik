@@ -121,7 +121,7 @@ const handleExecuteMerge = async () => {
                 {{ sourceProject.components?.length || 0 }} Layanan
               </UBadge>
             </div>
-            <p class="text-neutral-600 dark:text-neutral-300 leading-relaxed text-[11px]">
+            <p class="text-neutral-600 dark:text-neutral-300 leading-relaxed text-xs">
               Semua aplikasi dari proyek ini akan dipindahkan ke proyek target, lalu proyek <strong>{{ sourceProject.name }}</strong> akan dilepas dari pemantauan (file laptop tetap aman). Keterangan proyek target akan dibuat ulang oleh AI.
             </p>
           </div>
@@ -160,18 +160,18 @@ const handleExecuteMerge = async () => {
                     {{ selectedTarget.project_type }}
                   </UBadge>
                   <span
-                    class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border"
+                    class="px-2 py-0.5 rounded-full text-xs font-mono font-bold border"
                     :class="getScoreColor(selectedTarget.health_score)"
                   >
                     {{ selectedTarget.health_score }}/100
                   </span>
                 </div>
-                <p class="text-[11px] text-neutral-500 line-clamp-1">
+                <p class="text-xs text-neutral-500 line-clamp-1">
                   {{ selectedTarget.short_description || selectedTarget.description || 'Tidak ada deskripsi.' }}
                 </p>
               </div>
 
-              <div class="text-right shrink-0 font-mono text-[11px] text-neutral-500">
+              <div class="text-right shrink-0 font-mono text-xs text-neutral-500">
                 <div>{{ selectedTarget.components?.length || 0 }} layanan saat ini</div>
                 <div class="text-primary-600 dark:text-primary-400 font-semibold">
                   + {{ sourceProject?.components?.length || 0 }} layanan baru
@@ -181,16 +181,16 @@ const handleExecuteMerge = async () => {
 
             <!-- List of services to be transferred -->
             <div class="pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-1.5">
-              <span class="text-[11px] font-medium text-neutral-500">
+              <span class="text-xs font-medium text-neutral-500">
                 Aplikasi yang akan dipindahkan ke target:
               </span>
               <div class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
                 <div
                   v-for="c in sourceProject?.components"
                   :key="c.id"
-                  class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 text-[11px] font-mono border border-neutral-200 dark:border-neutral-700"
+                  class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 text-xs font-mono border border-neutral-200 dark:border-neutral-700"
                 >
-                  <UBadge size="xs" :color="getRoleBadgeColor(c.role)" variant="subtle" class="text-[9px] px-1 py-0">
+                  <UBadge size="xs" :color="getRoleBadgeColor(c.role)" variant="subtle" class="text-xs px-1 py-0">
                     {{ getRoleLabel(c.role) }}
                   </UBadge>
                   <span>{{ c.name }}</span>
@@ -200,7 +200,7 @@ const handleExecuteMerge = async () => {
             </div>
 
             <!-- AI Summary Regeneration Notice -->
-            <div class="flex items-center gap-2 p-2.5 rounded-lg bg-sky-50/60 dark:bg-sky-950/30 border border-sky-500/20 text-[11px] text-sky-800 dark:text-sky-300">
+            <div class="flex items-center gap-2 p-2.5 rounded-lg bg-sky-50/60 dark:bg-sky-950/30 border border-sky-500/20 text-xs text-sky-800 dark:text-sky-300">
               <UIcon name="i-lucide-sparkles" class="w-3.5 h-3.5 shrink-0 text-sky-500" />
               <span>AI akan otomatis memperbarui ringkasan arsitektur proyek <strong>{{ selectedTarget.name }}</strong> setelah penggabungan selesai.</span>
             </div>
@@ -260,7 +260,7 @@ const handleExecuteMerge = async () => {
               <p class="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
                 Tidak ada proyek target yang cocok
               </p>
-              <p class="text-[11px] text-neutral-500 mt-0.5">
+              <p class="text-xs text-neutral-500 mt-0.5">
                 Coba ubah kata kunci pencarian nama proyek.
               </p>
             </div>
@@ -297,7 +297,7 @@ const handleExecuteMerge = async () => {
                   </UBadge>
 
                   <div
-                    class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border shrink-0"
+                    class="px-2 py-0.5 rounded-full text-xs font-mono font-bold border shrink-0"
                     :class="getScoreColor(target.health_score)"
                   >
                     {{ target.health_score }}/100
@@ -312,7 +312,7 @@ const handleExecuteMerge = async () => {
                   </span>
                   <span
                     v-if="target.root_path && target.root_path !== '-'"
-                    class="truncate text-[11px] text-neutral-400 max-w-[200px]"
+                    class="truncate text-xs text-neutral-400 max-w-[200px]"
                     :title="target.root_path"
                   >
                     📁 {{ target.root_path.split('/').filter(Boolean).pop() }}
@@ -320,7 +320,7 @@ const handleExecuteMerge = async () => {
                 </div>
 
                 <!-- Short description preview -->
-                <p class="text-[11px] text-neutral-600 dark:text-neutral-400 line-clamp-1">
+                <p class="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-1">
                   {{ target.short_description || target.description || 'Polyglot application bundle managed locally.' }}
                 </p>
               </div>
@@ -342,7 +342,7 @@ const handleExecuteMerge = async () => {
 
           <!-- Modal Footer Info -->
           <div class="flex items-center justify-between pt-2 border-t border-neutral-100 dark:border-neutral-800 text-xs">
-            <span class="text-neutral-500 text-[11px]">
+            <span class="text-neutral-500 text-xs">
               Klik "Pilih Target" untuk melihat ringkasan sebelum konfirmasi
             </span>
             <UButton

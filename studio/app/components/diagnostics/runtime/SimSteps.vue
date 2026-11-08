@@ -45,13 +45,13 @@ const formatDuration = (ms?: number) => {
             class="w-3 h-3"
             :class="{ 'animate-spin': stepVisual(step.status).spin }"
           />
-          <span v-else class="text-[9px] font-bold font-mono">{{ idx + 1 }}</span>
+          <span v-else class="text-xs font-bold font-mono">{{ idx + 1 }}</span>
         </span>
-        <span class="text-[11px] font-semibold leading-tight" :class="stepVisual(step.status).text">
+        <span class="text-xs font-semibold leading-tight" :class="stepVisual(step.status).text">
           {{ step.title }}
         </span>
       </div>
-      <p v-if="step.detail || step.duration_ms" class="mt-1.5 text-[10px] leading-snug text-neutral-500 dark:text-neutral-400 line-clamp-2">
+      <p v-if="step.detail || step.duration_ms" class="mt-1.5 text-xs leading-snug text-neutral-500 dark:text-neutral-400 line-clamp-2">
         <span v-if="step.duration_ms" class="font-mono text-neutral-400">{{ formatDuration(step.duration_ms) }} · </span>{{ step.detail }}
       </p>
     </li>

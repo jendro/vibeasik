@@ -224,7 +224,7 @@ const techItems: TechVersionItem[] = [
               size="xs"
               :color="item.badgeColor || 'primary'"
               variant="subtle"
-              class="text-[9px] px-1.5 py-0 font-medium truncate max-w-[95px]"
+              class="text-xs px-1.5 py-0 font-medium truncate max-w-[95px]"
             >
               {{ item.statusBadge }}
             </UBadge>
@@ -235,7 +235,7 @@ const techItems: TechVersionItem[] = [
             <div class="font-bold text-xs text-neutral-900 dark:text-white truncate group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
               {{ item.name }}
             </div>
-            <div class="text-[10px] text-neutral-400 dark:text-neutral-500 font-mono">
+            <div class="text-xs text-neutral-400 dark:text-neutral-500 font-mono">
               {{ item.categoryLabel }}
             </div>
           </div>
@@ -243,8 +243,8 @@ const techItems: TechVersionItem[] = [
 
         <!-- Latest Version Tag -->
         <div class="pt-2 border-t border-neutral-200/60 dark:border-neutral-700/50">
-          <div class="text-[9px] text-neutral-400 uppercase font-mono">Versi Terbaru:</div>
-          <div class="text-[11px] font-mono font-bold text-neutral-800 dark:text-neutral-200 truncate mt-0.5" :title="item.latestVersion">
+          <div class="text-xs text-neutral-400 uppercase font-mono">Versi Terbaru:</div>
+          <div class="text-xs font-mono font-bold text-neutral-800 dark:text-neutral-200 truncate mt-0.5" :title="item.latestVersion">
             {{ item.latestVersion }}
           </div>
         </div>

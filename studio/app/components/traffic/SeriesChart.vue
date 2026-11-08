@@ -85,8 +85,8 @@ const tipLeft = computed(() => hover.value === null ? 0 : Math.min(width.value -
     <svg :width="width" :height="height" class="block" role="img" :aria-label="mode === 'volume' ? 'Jumlah request per waktu' : 'Latensi p95 per waktu'" @mousemove="onMove" @mouseleave="hover = null">
       <g>
         <line v-for="t in ticks" :key="t.v" :x1="pad.l" :x2="width - pad.r" :y1="t.y" :y2="t.y" class="stroke-neutral-200 dark:stroke-neutral-800" stroke-width="1" />
-        <text v-for="t in ticks" :key="'l' + t.v" :x="pad.l - 6" :y="t.y + 3" text-anchor="end" class="fill-neutral-500 text-[10px]">{{ fmtTick(t.v) }}</text>
-        <text v-for="t in xTicks" :key="'x' + t.i" :x="x(t.i) + slot / 2" :y="height - 6" text-anchor="middle" class="fill-neutral-500 text-[10px]">{{ timeLabel(t.p.t) }}</text>
+        <text v-for="t in ticks" :key="'l' + t.v" :x="pad.l - 6" :y="t.y + 3" text-anchor="end" class="fill-neutral-500 text-xs">{{ fmtTick(t.v) }}</text>
+        <text v-for="t in xTicks" :key="'x' + t.i" :x="x(t.i) + slot / 2" :y="height - 6" text-anchor="middle" class="fill-neutral-500 text-xs">{{ timeLabel(t.p.t) }}</text>
       </g>
       <line v-if="hover !== null" :x1="x(hover) + slot / 2" :x2="x(hover) + slot / 2" :y1="pad.t" :y2="pad.t + innerH" class="stroke-neutral-400 dark:stroke-neutral-500" stroke-width="1" stroke-dasharray="3 3" />
       <template v-if="mode === 'volume'">
@@ -128,7 +128,7 @@ const tipLeft = computed(() => hover.value === null ? 0 : Math.min(width.value -
     </svg>
     <div
       v-if="hp"
-      class="pointer-events-none absolute top-1 z-10 w-[170px] rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white/95 dark:bg-neutral-900/95 shadow-sm px-2.5 py-1.5 text-[11px] text-neutral-700 dark:text-neutral-200"
+      class="pointer-events-none absolute top-1 z-10 w-[170px] rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white/95 dark:bg-neutral-900/95 shadow-sm px-2.5 py-1.5 text-xs text-neutral-700 dark:text-neutral-200"
       :style="{ left: tipLeft + 'px' }"
     >
       <div class="font-semibold text-neutral-900 dark:text-white">

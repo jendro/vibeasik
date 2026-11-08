@@ -59,10 +59,10 @@ const goToTodos = () => {
         <!-- Header Info -->
         <div class="p-3.5 rounded-xl bg-violet-50/70 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800/60 space-y-2">
           <div class="flex items-center justify-between">
-            <span class="px-2 py-0.5 rounded font-mono font-bold text-[11px] bg-violet-100 dark:bg-violet-900/60 text-violet-800 dark:text-violet-300">
+            <span class="px-2 py-0.5 rounded font-mono font-bold text-xs bg-violet-100 dark:bg-violet-900/60 text-violet-800 dark:text-violet-300">
               {{ resolution.rule_id }}
             </span>
-            <div class="flex items-center gap-1.5 text-neutral-500 text-[11px]">
+            <div class="flex items-center gap-1.5 text-neutral-500 text-xs">
               <UIcon name="i-lucide-cpu" class="w-3.5 h-3.5" />
               <span>Model: <strong class="text-neutral-700 dark:text-neutral-300">{{ resolution.model_used }}</strong></span>
             </div>
@@ -77,7 +77,7 @@ const goToTodos = () => {
           </p>
 
           <!-- Theory Basis -->
-          <div class="flex items-start gap-1.5 pt-1 text-[11px] text-violet-700 dark:text-violet-300 font-medium">
+          <div class="flex items-start gap-1.5 pt-1 text-xs text-violet-700 dark:text-violet-300 font-medium">
             <UIcon name="i-lucide-book-open" class="w-4 h-4 shrink-0 mt-0.5" />
             <span>Landasan Teori: {{ resolution.theory_basis }}</span>
           </div>
@@ -100,7 +100,7 @@ const goToTodos = () => {
             <UIcon name="i-lucide-check-circle-2" class="w-4 h-4 text-sky-600 dark:text-sky-400" />
             <div>
               <span class="font-bold text-sky-900 dark:text-sky-300">Todo Otomatis Dibuat di Modul Perencanaan</span>
-              <p class="text-[11px] text-sky-700 dark:text-sky-400 mt-0.5 line-clamp-1">
+              <p class="text-xs text-sky-700 dark:text-sky-400 mt-0.5 line-clamp-1">
                 "{{ resolution.created_todo.title }}"
               </p>
             </div>
@@ -115,7 +115,7 @@ const goToTodos = () => {
         <!-- Code Replacement (Before vs After) -->
         <div v-if="resolution.code_after" class="space-y-2">
           <div class="flex items-center justify-between">
-            <span class="font-semibold uppercase tracking-wider text-neutral-500 text-[11px]">
+            <span class="font-semibold uppercase tracking-wider text-neutral-500 text-xs">
               Kode Rekomendasi Siap Pakai (Drop-in Replacement):
             </span>
             <UButton
@@ -134,7 +134,7 @@ const goToTodos = () => {
 
         <!-- Step-by-Step Action Plan -->
         <div v-if="resolution.action_steps && resolution.action_steps.length > 0" class="space-y-1.5">
-          <span class="font-semibold uppercase tracking-wider text-neutral-500 text-[11px]">
+          <span class="font-semibold uppercase tracking-wider text-neutral-500 text-xs">
             Langkah Implementasi:
           </span>
           <div class="space-y-1">
@@ -143,7 +143,7 @@ const goToTodos = () => {
               :key="idx"
               class="flex items-start gap-2 p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/30 border border-neutral-100 dark:border-neutral-800"
             >
-              <span class="w-4 h-4 rounded-full bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
+              <span class="w-4 h-4 rounded-full bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
                 {{ idx + 1 }}
               </span>
               <span class="text-neutral-700 dark:text-neutral-300 leading-normal">{{ step }}</span>

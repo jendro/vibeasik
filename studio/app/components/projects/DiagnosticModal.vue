@@ -100,7 +100,7 @@ watch(open, (isOpen) => {
             <div class="text-base leading-none">
               {{ diagnostic.score }}<span class="text-xs font-normal">/100</span>
             </div>
-            <div class="text-[9px] uppercase tracking-wider font-semibold mt-0.5">
+            <div class="text-xs uppercase tracking-wider font-semibold mt-0.5">
               Skor Proyek
             </div>
           </div>
@@ -110,7 +110,7 @@ watch(open, (isOpen) => {
         <div v-if="project?.components && project.components.length > 0" class="space-y-2">
           <div class="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-neutral-500">
             <span>Aplikasi yang Diperiksa ({{ project.components.length }} Aplikasi Satu Persatu)</span>
-            <span class="text-[11px] normal-case font-normal text-neutral-400">Klik aplikasi untuk memfilter temuan</span>
+            <span class="text-xs normal-case font-normal text-neutral-400">Klik aplikasi untuk memfilter temuan</span>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -151,14 +151,14 @@ watch(open, (isOpen) => {
                   <div class="text-xs font-semibold text-neutral-800 dark:text-neutral-200 truncate">
                     {{ comp.name }}
                   </div>
-                  <div class="text-[10px] text-neutral-400 truncate">
+                  <div class="text-xs text-neutral-400 truncate">
                     {{ comp.language }} {{ comp.framework ? `(${comp.framework})` : '' }} {{ comp.port ? `:${comp.port}` : '' }}
                   </div>
                 </div>
               </div>
 
               <div
-                class="px-2 py-0.5 rounded text-[11px] font-bold border shrink-0"
+                class="px-2 py-0.5 rounded text-xs font-bold border shrink-0"
                 :class="getScoreColor(getComponentScore(comp))"
               >
                 {{ getComponentScore(comp) }}/100
@@ -178,7 +178,7 @@ watch(open, (isOpen) => {
               v-if="selectedAppId !== 'all'"
               role="button"
               tabindex="0"
-              class="text-[11px] font-normal normal-case text-sky-600 dark:text-sky-400 cursor-pointer"
+              class="text-xs font-normal normal-case text-sky-600 dark:text-sky-400 cursor-pointer"
               @click="selectedAppId = 'all'"
               @keydown.enter="selectedAppId = 'all'"
               @keydown.space.prevent="selectedAppId = 'all'"
@@ -215,7 +215,7 @@ watch(open, (isOpen) => {
                 <span class="truncate">{{ finding.title }}</span>
               </span>
               <div class="flex items-center gap-1.5 shrink-0">
-                <span v-if="finding.target_file" class="text-[10px] font-mono text-neutral-400 truncate max-w-[150px]">
+                <span v-if="finding.target_file" class="text-xs font-mono text-neutral-400 truncate max-w-[150px]">
                   {{ finding.target_file }}{{ finding.line ? `:${finding.line}` : '' }}
                 </span>
                 <UBadge size="xs" :color="finding.severity === 'CRITICAL' ? 'error' : finding.severity === 'WARNING' ? 'warning' : 'neutral'">
@@ -226,7 +226,7 @@ watch(open, (isOpen) => {
             <p class="text-neutral-600 dark:text-neutral-400">
               {{ finding.description }}
             </p>
-            <div class="text-sky-600 dark:text-sky-400 font-mono mt-1 text-[11px]">
+            <div class="text-sky-600 dark:text-sky-400 font-mono mt-1 text-xs">
               Solusi: {{ finding.suggestion }}
             </div>
           </div>

@@ -52,17 +52,17 @@ const sourceLabel: Record<string, string> = {
         <div class="min-w-0">
           <div class="flex items-center gap-1.5 flex-wrap">
             <span class="text-sm font-bold text-neutral-900 dark:text-white truncate">{{ comp.name }}</span>
-            <span class="text-[10px] font-mono text-neutral-400">{{ comp.role }}</span>
+            <span class="text-xs font-mono text-neutral-400">{{ comp.role }}</span>
           </div>
-          <code v-if="comp.command" class="block mt-0.5 text-[10px] font-mono text-neutral-500 truncate" :title="comp.command">$ {{ comp.command }}</code>
+          <code v-if="comp.command" class="block mt-0.5 text-xs font-mono text-neutral-500 truncate" :title="comp.command">$ {{ comp.command }}</code>
         </div>
-        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-bold shrink-0" :class="stateBadge(comp.state).cls">
+        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-xs font-bold shrink-0" :class="stateBadge(comp.state).cls">
           <span class="w-1.5 h-1.5 rounded-full" :class="stateBadge(comp.state).dot" />
           {{ stateBadge(comp.state).label }}
         </span>
       </div>
 
-      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-neutral-600 dark:text-neutral-300">
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-600 dark:text-neutral-300">
         <a
           v-if="comp.url && comp.state === 'running'"
           :href="comp.url"
@@ -78,10 +78,10 @@ const sourceLabel: Record<string, string> = {
         <span v-if="comp.memory_mb" class="inline-flex items-center gap-1"><UIcon name="i-lucide-memory-stick" class="w-3 h-3 text-neutral-400" />{{ Math.round(comp.memory_mb) }} MB</span>
         <span class="inline-flex items-center gap-1"><UIcon name="i-lucide-route" class="w-3 h-3 text-neutral-400" />{{ comp.routes_found }} rute</span>
         <span v-if="comp.error_lines" class="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400 font-semibold"><UIcon name="i-lucide-bug" class="w-3 h-3" />{{ comp.error_lines }} error di log</span>
-        <span v-if="comp.source" class="text-[10px] text-neutral-400">· {{ sourceLabel[comp.source] || comp.source }}</span>
+        <span v-if="comp.source" class="text-xs text-neutral-400">· {{ sourceLabel[comp.source] || comp.source }}</span>
       </div>
 
-      <p v-if="comp.note" class="text-[11px] leading-snug text-neutral-500 dark:text-neutral-400">
+      <p v-if="comp.note" class="text-xs leading-snug text-neutral-500 dark:text-neutral-400">
         {{ comp.note }}
       </p>
 
@@ -94,13 +94,13 @@ const sourceLabel: Record<string, string> = {
       >
         <div class="flex items-center gap-1 px-2 py-1 bg-neutral-100 dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700">
           <span class="w-2 h-2 rounded-full bg-rose-400" /><span class="w-2 h-2 rounded-full bg-amber-400" /><span class="w-2 h-2 rounded-full bg-emerald-400" />
-          <span class="ml-2 text-[9px] font-mono text-neutral-500 truncate">{{ comp.url }}</span>
+          <span class="ml-2 text-xs font-mono text-neutral-500 truncate">{{ comp.url }}</span>
         </div>
         <img loading="lazy" decoding="async" :src="shotSrc(comp.screenshot)" :alt="`Tampilan ${comp.name}`" class="w-full max-h-48 object-cover object-top group-hover:opacity-90 transition-opacity">
       </button>
       <div
         v-else-if="running && comp.state === 'running' && comp.role.startsWith('frontend')"
-        class="h-16 rounded-lg border border-dashed border-neutral-300 dark:border-neutral-700 flex items-center justify-center gap-1.5 text-[10px] text-neutral-400"
+        class="h-16 rounded-lg border border-dashed border-neutral-300 dark:border-neutral-700 flex items-center justify-center gap-1.5 text-xs text-neutral-400"
       >
         <UIcon name="i-lucide-camera" class="w-3.5 h-3.5" />Screenshot diambil saat uji halaman
       </div>

@@ -54,7 +54,7 @@ const setPage = (newPage: number) => {
       <div class="flex items-center gap-2.5 self-end sm:self-center flex-wrap">
         <!-- Per Page Selector -->
         <div class="flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400 text-xs">
-          <label for="todos-per-page" class="text-[11px] font-medium">Per hal:</label>
+          <label for="todos-per-page" class="text-xs font-medium">Per hal:</label>
           <select
             id="todos-per-page"
             v-model.number="perPage"

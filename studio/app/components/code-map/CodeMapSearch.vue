@@ -65,7 +65,7 @@ const useExample = (q: string) => {
       <USwitch v-model="withSnippet" label="Cuplikan kode" class="shrink-0 self-start sm:self-center" />
     </div>
 
-    <div v-if="!searched && !loading" class="flex flex-wrap items-center gap-1.5 text-[11px] text-neutral-500">
+    <div v-if="!searched && !loading" class="flex flex-wrap items-center gap-1.5 text-xs text-neutral-500">
       <span>Contoh:</span>
       <UButton v-for="ex in examples" :key="ex" size="xs" color="neutral" variant="soft" :label="ex" @click="useExample(ex)" />
     </div>
@@ -87,8 +87,8 @@ const useExample = (q: string) => {
             {{ h.path }}
           </button>
           <UBadge size="sm" color="neutral" variant="subtle" :icon="kindMeta(h.kind).icon" :label="kindMeta(h.kind).label" />
-          <span class="text-[10px] text-neutral-400 font-mono">{{ h.lines }} baris · skor {{ h.score }}</span>
-          <span v-if="h.used_by_count" class="text-[10px] text-violet-600 dark:text-violet-400 font-medium" :title="(h.used_by || []).join('\n')">
+          <span class="text-xs text-neutral-400 font-mono">{{ h.lines }} baris · skor {{ h.score }}</span>
+          <span v-if="h.used_by_count" class="text-xs text-violet-600 dark:text-violet-400 font-medium" :title="(h.used_by || []).join('\n')">
             dipakai {{ h.used_by_count }} berkas
           </span>
         </div>
@@ -96,14 +96,14 @@ const useExample = (q: string) => {
           {{ h.summary }}
         </p>
         <div v-if="h.symbols?.length || h.routes?.length" class="mt-2 flex flex-wrap gap-1.5">
-          <span v-for="s in h.symbols" :key="s.name + s.line" class="px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 font-mono text-[10px] text-neutral-700 dark:text-neutral-300 border border-neutral-200/50 dark:border-neutral-700/50" :title="s.doc || s.kind">
+          <span v-for="s in h.symbols" :key="s.name + s.line" class="px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 font-mono text-xs text-neutral-700 dark:text-neutral-300 border border-neutral-200/50 dark:border-neutral-700/50" :title="s.doc || s.kind">
             {{ s.name }}<span class="text-neutral-400">:{{ s.line }}</span>
           </span>
-          <span v-for="r in (h.routes || []).slice(0, 4)" :key="r" class="px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/40 font-mono text-[10px] text-emerald-700 dark:text-emerald-300 border border-emerald-200/40 dark:border-emerald-800/40">
+          <span v-for="r in (h.routes || []).slice(0, 4)" :key="r" class="px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/40 font-mono text-xs text-emerald-700 dark:text-emerald-300 border border-emerald-200/40 dark:border-emerald-800/40">
             {{ r }}
           </span>
         </div>
-        <pre v-if="h.snippet" class="mt-2.5 max-h-56 overflow-auto rounded-lg bg-neutral-950 text-neutral-200 text-[10.5px] leading-relaxed p-3 font-mono border border-neutral-800">{{ h.snippet }}</pre>
+        <pre v-if="h.snippet" class="mt-2.5 max-h-56 overflow-auto rounded-lg bg-neutral-950 text-neutral-200 text-xs leading-relaxed p-3 font-mono border border-neutral-800">{{ h.snippet }}</pre>
       </li>
     </ul>
   </section>

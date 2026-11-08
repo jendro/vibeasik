@@ -123,13 +123,13 @@ const targetUrl = computed(() => {
               />
             </span>
             <span
-              class="text-[10px] font-mono font-medium uppercase tracking-wider"
+              class="text-xs font-mono font-medium uppercase tracking-wider"
               :class="portActive ? 'text-sky-600 dark:text-sky-400 font-semibold' : 'text-neutral-400'"
             >
               {{ portActive ? 'LISTENING' : 'OFFLINE' }}
             </span>
           </div>
-          <div v-else class="text-[11px] text-neutral-400 font-mono">
+          <div v-else class="text-xs text-neutral-400 font-mono">
             Tanpa port
           </div>
         </div>
@@ -181,7 +181,7 @@ const targetUrl = computed(() => {
 
       <!-- Dev Command Box -->
       <div v-if="comp.dev_command" class="p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-neutral-800 text-xs font-mono space-y-1">
-        <div class="flex items-center justify-between text-neutral-400 text-[10px] uppercase">
+        <div class="flex items-center justify-between text-neutral-400 text-xs uppercase">
           <span>Dev Command</span>
           <button
             class="text-sky-600 dark:text-sky-400 hover:underline cursor-pointer"
@@ -199,17 +199,17 @@ const targetUrl = computed(() => {
       <ProjectsDetailComponentRunPanel v-if="comp.role !== 'frontend_mobile'" :comp="comp" />
 
       <!-- Environment summary if any -->
-      <div v-if="envKeys.length > 0" class="text-[11px] text-neutral-500 font-mono">
+      <div v-if="envKeys.length > 0" class="text-xs text-neutral-500 font-mono">
         <span class="text-neutral-400">Env ({{ comp.env_file }}):</span>
         <div class="flex flex-wrap gap-1 mt-1">
           <span
             v-for="k in envKeys.slice(0, 4)"
             :key="k"
-            class="px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-[10px]"
+            class="px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-xs"
           >
             {{ k }}
           </span>
-          <span v-if="envKeys.length > 4" class="text-neutral-400 text-[10px]">
+          <span v-if="envKeys.length > 4" class="text-neutral-400 text-xs">
             +{{ envKeys.length - 4 }} more
           </span>
         </div>

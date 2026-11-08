@@ -43,7 +43,7 @@ const mcpConfigJson = computed(() => {
       <!-- MCP Configuration JSON -->
       <div class="p-4 rounded-xl bg-neutral-950 text-neutral-200 space-y-2 text-xs">
         <div class="flex items-center justify-between">
-          <span class="font-mono text-sky-400 font-semibold text-[11px]">stdio Config JSON</span>
+          <span class="font-mono text-sky-400 font-semibold text-xs">stdio Config JSON</span>
           <UButton
             icon="i-lucide-copy"
             color="neutral"
@@ -54,7 +54,7 @@ const mcpConfigJson = computed(() => {
             Salin Konfigurasi
           </UButton>
         </div>
-        <pre class="p-3 rounded-lg bg-[#010810] font-mono text-sky-300 border border-white/10 text-[11px] overflow-x-auto">{{ mcpConfigJson }}</pre>
+        <pre class="p-3 rounded-lg bg-[#010810] font-mono text-sky-300 border border-white/10 text-xs overflow-x-auto">{{ mcpConfigJson }}</pre>
       </div>
 
       <!-- Agent Usage Guidance -->
