@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { Marked } from 'marked'
-import DOMPurify from 'dompurify'
+import { renderMarkdown } from '~/utils/markdownSanitizer'
 
 const props = withDefaults(
   defineProps<{
@@ -17,68 +16,7 @@ const props = withDefaults(
   }
 )
 
-const escapeHtml = (text: string): string =>
-  text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-
-// Local marked instance; raw HTML in the markdown (e.g. before/after code snippets
-// in todo descriptions containing <script>, <style>, onerror=...) is rendered as
-// plain text instead of being injected into the page.
-const md = new Marked({
-  gfm: true,
-  breaks: true,
-  renderer: {
-    html({ text }) {
-      return escapeHtml(text)
-    }
-  }
-})
-
-// Allowlist ketat untuk tag yang dihasilkan markdown; selain ini dibuang DOMPurify.
-const SANITIZE_CONFIG = {
-  ALLOWED_TAGS: [
-    'p', 'strong', 'em', 'b', 'i', 'del', 'code', 'pre', 'ul', 'ol', 'li', 'span', 'a', 'br', 'hr',
-    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'table', 'thead', 'tbody', 'tr', 'th', 'td'
-  ],
-  ALLOWED_ATTR: ['class', 'href', 'target', 'rel'],
-  ALLOW_DATA_ATTR: false
-}
-
-let linkHookInstalled = false
-const ensureLinkHook = () => {
-  if (linkHookInstalled) return
-  linkHookInstalled = true
-  DOMPurify.addHook('afterSanitizeAttributes', (node) => {
-    if (node.tagName === 'A') {
-      node.setAttribute('target', '_blank')
-      node.setAttribute('rel', 'noopener noreferrer')
-    }
-  })
-}
-
-// DOMPurify butuh DOM (browser). Tanpa DOM (prerender/SSR) fallback ke teks ter-escape, tidak pernah HTML mentah.
-const sanitizeHtml = (html: string): string => {
-  if (!DOMPurify.isSupported) return escapeHtml(html)
-  ensureLinkHook()
-  return DOMPurify.sanitize(html, SANITIZE_CONFIG)
-}
-
-const renderedHtml = computed(() => {
-  const text = (props.content || '').trim()
-  if (!text) return ''
-
-  try {
-    const raw = md.parse(text) as string
-    return sanitizeHtml(raw)
-  } catch (err) {
-    console.warn('Failed to parse markdown:', err)
-    return escapeHtml(text)
-  }
-})
+const renderedHtml = computed(() => renderMarkdown(props.content))
 
 const clampStyle = computed(() => {
   if (!props.maxLines) return undefined
