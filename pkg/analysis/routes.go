@@ -29,27 +29,7 @@ func SyncComponentRoutes(db *gorm.DB, comp *models.Component, proj *models.Proje
 		absDir = filepath.Join(proj.RootPath, comp.RelativePath)
 	}
 
-	// Auto-detect language and framework if not set or set to auto
-	if comp.Language == "auto" || comp.Language == "" || comp.Framework == "" {
-		if util.PathExists(filepath.Join(absDir, "spark")) || util.PathExists(filepath.Join(absDir, "app/Config/Routes.php")) {
-			comp.Language = "php"
-			comp.Framework = "codeigniter"
-			comp.PackageManager = "composer"
-			if comp.DevCommand == "" {
-				comp.DevCommand = "php spark serve"
-			}
-			if comp.Port == 0 {
-				comp.Port = 8080
-			}
-			_ = db.Model(comp).Updates(map[string]interface{}{
-				"language":        comp.Language,
-				"framework":       comp.Framework,
-				"package_manager": comp.PackageManager,
-				"dev_command":     comp.DevCommand,
-				"port":            comp.Port,
-			})
-		}
-	}
+	autoDetectCodeIgniter(db, comp, absDir)
 
 	// 1. Extract routes from source code via static code inspection
 	scanned := extractRoutes(absDir, comp.Role)
@@ -62,34 +42,7 @@ func SyncComponentRoutes(db *gorm.DB, comp *models.Component, proj *models.Proje
 
 	// If DB is completely empty but FastScanData already contains routes, merge them first
 	if len(existing) == 0 && comp.FastScanData != "" {
-		var fastScan models.FastScanResult
-		if err := json.Unmarshal([]byte(comp.FastScanData), &fastScan); err == nil && len(fastScan.Routes) > 0 {
-			for _, r := range fastScan.Routes {
-				dom, fnGrp := InferRouteDomainAndFunction(r.Path, r.Method)
-				desc := r.Description
-				if desc == "" {
-					desc = InferRouteDescription(r.Method, r.Path)
-				}
-				targetReqsJSON := "[]"
-				if len(r.TargetRequests) > 0 {
-					b, _ := json.Marshal(r.TargetRequests)
-					targetReqsJSON = string(b)
-				}
-				cr := models.ComponentRoute{
-					ComponentID:    comp.ID,
-					Method:         r.Method,
-					Path:           r.Path,
-					Handler:        r.Handler,
-					Middleware:     r.Middleware,
-					Description:    desc,
-					Domain:         dom,
-					FunctionGroup:  fnGrp,
-					TargetRequests: targetReqsJSON,
-				}
-				_ = db.Create(&cr).Error
-			}
-			_ = db.Where("component_id = ?", comp.ID).Find(&existing)
-		}
+		seedRoutesFromFastScan(db, comp, &existing)
 	}
 
 	// 3. Build lookup maps
@@ -108,64 +61,17 @@ func SyncComponentRoutes(db *gorm.DB, comp *models.Component, proj *models.Proje
 	for _, sc := range scanned {
 		key := normalizeRouteKey(sc.Method, sc.Path)
 		codeKeySet[key] = true
-
-		targetReqsJSON := "[]"
-		if len(sc.TargetRequests) > 0 {
-			b, _ := json.Marshal(sc.TargetRequests)
-			targetReqsJSON = string(b)
-		}
+		targetReqsJSON := marshalTargetRequests(sc.TargetRequests)
 
 		if cur, found := existingMap[key]; found {
 			// In source code and in DB: keep, do not duplicate
-			needsSave := false
-			if sc.Handler != "" && cur.Handler != sc.Handler {
-				cur.Handler = sc.Handler
-				needsSave = true
-			}
-			if sc.Middleware != "" && cur.Middleware != sc.Middleware {
-				cur.Middleware = sc.Middleware
-				needsSave = true
-			}
-			if targetReqsJSON != "[]" && cur.TargetRequests != targetReqsJSON {
-				cur.TargetRequests = targetReqsJSON
-				needsSave = true
-			}
-			if cur.Description == "" && sc.Description != "" {
-				cur.Description = sc.Description
-				needsSave = true
-			}
-			if cur.Domain == "" || cur.Domain == "Umum" {
-				d, f := InferRouteDomainAndFunction(cur.Path, cur.Method)
-				cur.Domain = d
-				if cur.FunctionGroup == "" || cur.FunctionGroup == "Lainnya" {
-					cur.FunctionGroup = f
-				}
-				needsSave = true
-			}
-			if needsSave {
+			if mergeScannedRoute(cur, sc, targetReqsJSON) {
 				_ = db.Save(cur).Error
 				updatedCount++
 			}
 		} else {
 			// In source code but NOT in DB: add new
-			domain, fnGroup := InferRouteDomainAndFunction(sc.Path, sc.Method)
-			desc := sc.Description
-			if desc == "" {
-				desc = InferRouteDescription(sc.Method, sc.Path)
-			}
-
-			newRoute := models.ComponentRoute{
-				ComponentID:    comp.ID,
-				Method:         sc.Method,
-				Path:           sc.Path,
-				Handler:        sc.Handler,
-				Middleware:     sc.Middleware,
-				Description:    desc,
-				Domain:         domain,
-				FunctionGroup:  fnGroup,
-				TargetRequests: targetReqsJSON,
-			}
-			if err := db.Create(&newRoute).Error; err == nil {
+			if err := db.Create(newComponentRoute(comp.ID, sc, targetReqsJSON)).Error; err == nil {
 				addedCount++
 			}
 		}
@@ -174,12 +80,7 @@ func SyncComponentRoutes(db *gorm.DB, comp *models.Component, proj *models.Proje
 	// 4. "jika hilang dihapus": delete routes present in DB that no longer exist in code
 	// Only delete if scanned found at least one route from code (avoid accidental wiping if dir was temporarily unreadable)
 	if len(scanned) > 0 {
-		for key, cur := range existingMap {
-			if !codeKeySet[key] {
-				db.Delete(cur)
-				deletedCount++
-			}
-		}
+		deletedCount = deleteMissingRoutes(db, existingMap, codeKeySet)
 	}
 
 	// 5. Query final routes
@@ -197,6 +98,115 @@ func SyncComponentRoutes(db *gorm.DB, comp *models.Component, proj *models.Proje
 		TotalCount:   len(finalRoutes),
 		Routes:       finalRoutes,
 	}, nil
+}
+
+// deleteMissingRoutes menghapus rute DB yang tak ada lagi di kode; mengembalikan jumlah yang dihapus.
+func deleteMissingRoutes(db *gorm.DB, existingMap map[string]*models.ComponentRoute, codeKeySet map[string]bool) int {
+	deleted := 0
+	for key, cur := range existingMap {
+		if !codeKeySet[key] {
+			db.Delete(cur)
+			deleted++
+		}
+	}
+	return deleted
+}
+
+// autoDetectCodeIgniter mengisi bahasa/framework komponen CodeIgniter bila belum ditentukan.
+func autoDetectCodeIgniter(db *gorm.DB, comp *models.Component, absDir string) {
+	if !(comp.Language == "auto" || comp.Language == "" || comp.Framework == "") {
+		return
+	}
+	if !(util.PathExists(filepath.Join(absDir, "spark")) || util.PathExists(filepath.Join(absDir, "app/Config/Routes.php"))) {
+		return
+	}
+	comp.Language = "php"
+	comp.Framework = "codeigniter"
+	comp.PackageManager = "composer"
+	if comp.DevCommand == "" {
+		comp.DevCommand = "php spark serve"
+	}
+	if comp.Port == 0 {
+		comp.Port = 8080
+	}
+	_ = db.Model(comp).Updates(map[string]interface{}{
+		"language":        comp.Language,
+		"framework":       comp.Framework,
+		"package_manager": comp.PackageManager,
+		"dev_command":     comp.DevCommand,
+		"port":            comp.Port,
+	})
+}
+
+// marshalTargetRequests menyandikan daftar target request menjadi JSON ("[]" bila kosong).
+func marshalTargetRequests(reqs []string) string {
+	if len(reqs) == 0 {
+		return "[]"
+	}
+	b, _ := json.Marshal(reqs)
+	return string(b)
+}
+
+// newComponentRoute membuat rute baru dengan domain & deskripsi hasil inferensi.
+func newComponentRoute(componentID uint, sc models.RouteInfo, targetReqsJSON string) *models.ComponentRoute {
+	domain, fnGroup := InferRouteDomainAndFunction(sc.Path, sc.Method)
+	desc := sc.Description
+	if desc == "" {
+		desc = InferRouteDescription(sc.Method, sc.Path)
+	}
+	return &models.ComponentRoute{
+		ComponentID:    componentID,
+		Method:         sc.Method,
+		Path:           sc.Path,
+		Handler:        sc.Handler,
+		Middleware:     sc.Middleware,
+		Description:    desc,
+		Domain:         domain,
+		FunctionGroup:  fnGroup,
+		TargetRequests: targetReqsJSON,
+	}
+}
+
+// seedRoutesFromFastScan memasukkan rute dari FastScanData ke DB kosong lalu memuat ulang existing.
+func seedRoutesFromFastScan(db *gorm.DB, comp *models.Component, existing *[]models.ComponentRoute) {
+	var fastScan models.FastScanResult
+	if err := json.Unmarshal([]byte(comp.FastScanData), &fastScan); err != nil || len(fastScan.Routes) == 0 {
+		return
+	}
+	for _, r := range fastScan.Routes {
+		_ = db.Create(newComponentRoute(comp.ID, r, marshalTargetRequests(r.TargetRequests))).Error
+	}
+	_ = db.Where("component_id = ?", comp.ID).Find(existing)
+}
+
+// mergeScannedRoute memperbarui rute DB dari hasil scan; true bila ada perubahan yang harus disimpan.
+func mergeScannedRoute(cur *models.ComponentRoute, sc models.RouteInfo, targetReqsJSON string) bool {
+	needsSave := false
+	if sc.Handler != "" && cur.Handler != sc.Handler {
+		cur.Handler = sc.Handler
+		needsSave = true
+	}
+	if sc.Middleware != "" && cur.Middleware != sc.Middleware {
+		cur.Middleware = sc.Middleware
+		needsSave = true
+	}
+	if targetReqsJSON != "[]" && cur.TargetRequests != targetReqsJSON {
+		cur.TargetRequests = targetReqsJSON
+		needsSave = true
+	}
+	if cur.Description == "" && sc.Description != "" {
+		cur.Description = sc.Description
+		needsSave = true
+	}
+	if cur.Domain == "" || cur.Domain == "Umum" {
+		d, f := InferRouteDomainAndFunction(cur.Path, cur.Method)
+		cur.Domain = d
+		if cur.FunctionGroup == "" || cur.FunctionGroup == "Lainnya" {
+			cur.FunctionGroup = f
+		}
+		needsSave = true
+	}
+	return needsSave
 }
 
 // maxEnrichRoutes: rute per pemanggilan pengayaan LLM; sisanya menunggu pemanggilan berikutnya.
@@ -232,186 +242,206 @@ func normalizeRouteKey(method, path string) string {
 	return strings.ToUpper(strings.TrimSpace(method)) + " " + strings.TrimSpace(path)
 }
 
+// containsAny melaporkan apakah s memuat salah satu dari subs.
+func containsAny(s string, subs ...string) bool {
+	for _, sub := range subs {
+		if strings.Contains(s, sub) {
+			return true
+		}
+	}
+	return false
+}
+
+// routeSub: aturan fungsi di dalam sebuah domain. Cocok bila (keys kosong atau path memuat salah satu keys)
+// dan (methods kosong atau method sama dengan salah satunya).
+type routeSub struct {
+	keys    []string
+	methods []string
+	group   string
+}
+
+func (s routeSub) match(p, m string) bool {
+	if len(s.keys) > 0 && !containsAny(p, s.keys...) {
+		return false
+	}
+	if len(s.methods) == 0 {
+		return true
+	}
+	for _, x := range s.methods {
+		if m == x {
+			return true
+		}
+	}
+	return false
+}
+
+// routeDomainRule: domain terpilih bila path memuat salah satu keys; fungsinya ditentukan subs (urut, pertama cocok).
+type routeDomainRule struct {
+	keys   []string
+	domain string
+	subs   []routeSub
+}
+
+func (r routeDomainRule) group(p, m string) string {
+	for _, s := range r.subs {
+		if s.match(p, m) {
+			return s.group
+		}
+	}
+	return "Lainnya"
+}
+
+var routeDomainRules = []routeDomainRule{
+	{[]string{"auth", "login", "register", "token", "logout", "password", "oauth"}, "Autentikasi & Keamanan", []routeSub{
+		{keys: []string{"login", "token"}, group: "Login & Otorisasi Sesi"},
+		{keys: []string{"register"}, group: "Registrasi Pengguna"},
+		{keys: []string{"logout"}, group: "Terminasi Sesi"},
+		{group: "Manajemen Kredensial"},
+	}},
+	{[]string{"user", "member", "profile", "role", "permission", "account"}, "Manajemen Pengguna & Akun", []routeSub{
+		{methods: []string{"GET"}, group: "Pengambilan Data Pengguna"},
+		{methods: []string{"POST", "PUT", "PATCH"}, group: "Pembaruan Profil & Akses"},
+		{group: "Operasi Akun"},
+	}},
+	{[]string{"project", "bundle", "component", "app"}, "Manajemen Proyek & Komponen", []routeSub{
+		{keys: []string{"component"}, group: "Manajemen Service & Komponen"},
+		{methods: []string{"GET"}, group: "Katalog & Detail Proyek"},
+		{group: "Registrasi & Modifikasi Proyek"},
+	}},
+	{[]string{"asset", "product", "item", "inventory", "category"}, "Aset & Inventori", []routeSub{
+		{methods: []string{"GET"}, group: "Katalog & Pencarian Aset"},
+		{group: "Mutasi & Kelola Aset"},
+	}},
+	{[]string{"diag", "health", "ping", "metric", "log", "port", "monitor"}, "Diagnostik & Monitoring", []routeSub{
+		{keys: []string{"port"}, group: "Pemeriksaan Status Port"},
+		{keys: []string{"health", "ping"}, group: "Health Check & Liveness"},
+		{group: "Audit Kesehatan Kode"},
+	}},
+	{[]string{"llm", "ai", "scan", "review", "advisor"}, "Layanan AI & Fast Scan", []routeSub{
+		{keys: []string{"fast-scan", "scan"}, group: "Pemindaian Blueprint & Arsitektur"},
+		{keys: []string{"config", "model"}, group: "Konfigurasi Multi-Model AI"},
+		{group: "Analisis Cerdas & Audit AI"},
+	}},
+	{[]string{"security", "censor", "secret", "vault"}, "Keamanan & Redaksi Rahasia", []routeSub{
+		{group: "Vault Kata Kunci Terenkripsi"},
+	}},
+	{[]string{"setting", "config", "preference"}, "Pengaturan & Konfigurasi", []routeSub{
+		{group: "Preferensi Sistem"},
+	}},
+	{[]string{"file", "upload", "download", "media", "document", "dir"}, "Media & File Storage", []routeSub{
+		{group: "Manajemen Berkas & Direktori"},
+	}},
+	{[]string{"kontingen", "official"}, "Portal & Manajemen Kontingen", []routeSub{
+		{keys: []string{"official"}, group: "Manajemen Official Kontingen"},
+		{keys: []string{"daftar", "ikuti"}, group: "Pendaftaran Kejuaraan"},
+		{keys: []string{"tagihan", "rekap"}, group: "Rekapitulasi & Tagihan Kontingen"},
+		{group: "Profil & Manajemen Kontingen"},
+	}},
+	{[]string{"atlet"}, "Portal Atlet & Peserta", []routeSub{
+		{keys: []string{"pertandingan"}, group: "Jadwal & Hasil Atlet"},
+		{group: "Biodata & Status Atlet"},
+	}},
+	{[]string{"kejuaraan", "pertandingan", "bagan", "bracket", "kelas", "kategori"}, "Kompetisi & Pertandingan", []routeSub{
+		{keys: []string{"bagan", "bracket"}, group: "Bagan Pertandingan & Bracket Tree"},
+		{keys: []string{"kelas", "kategori"}, group: "Kategori & Kelas Tanding"},
+		{group: "Manajemen Event & Jadwal Tanding"},
+	}},
+	{[]string{"bayar", "pembayaran", "tagihan", "rekening", "invoice", "billing"}, "Keuangan & Pembayaran", []routeSub{
+		{group: "Transaksi & Verifikasi Pembayaran"},
+	}},
+	{[]string{"public", "portal", "gallery", "galeri", "blog", "news", "lokasi"}, "Portal Informasi Publik", []routeSub{
+		{keys: []string{"blog", "news"}, group: "Berita & Artikel"},
+		{keys: []string{"gallery", "galeri"}, group: "Dokumentasi & Galeri"},
+		{keys: []string{"lokasi"}, group: "Informasi Lokasi & Venue"},
+		{group: "Informasi & Publikasi Umum"},
+	}},
+	{[]string{"admin"}, "Administrasi & Master Data", []routeSub{
+		{keys: []string{"verify", "verifikasi"}, group: "Verifikasi & Validasi Data"},
+		{keys: []string{"dashboard"}, group: "Dashboard Eksekutif Admin"},
+		{group: "Master Data & Pengawasan"},
+	}},
+}
+
+// routePageRule: aturan halaman frontend (method PAGE*); exact berarti path harus persis sama.
+type routePageRule struct {
+	keys          []string
+	exact         string
+	domain, group string
+}
+
+var routePageRules = []routePageRule{
+	{keys: []string{"project", "bundle", "app"}, domain: "Manajemen Proyek", group: "Katalog & Detail Proyek"},
+	{keys: []string{"port", "monitor"}, domain: "Monitoring & Jaringan", group: "Pemeriksaan Port"},
+	{keys: []string{"setting", "config"}, domain: "Pengaturan & Konfigurasi", group: "Pengaturan Sistem & LLM"},
+	{keys: []string{"scan"}, domain: "Registrasi & Scanner Proyek", group: "Pindai Direktori Lokal"},
+	{keys: []string{"mcp"}, domain: "Integrasi AI & MCP Hub", group: "MCP Agent Hub"},
+	{keys: []string{"auth", "login"}, domain: "Autentikasi & Akun", group: "Login & Otorisasi"},
+	{exact: "/", domain: "Dashboard & Pemantauan", group: "Ringkasan Workspace"},
+}
+
+func inferPageDomain(p string) (string, string) {
+	for _, r := range routePageRules {
+		if (r.exact != "" && p == r.exact) || containsAny(p, r.keys...) {
+			return r.domain, r.group
+		}
+	}
+	return "Fitur Antarmuka", "Navigasi Halaman"
+}
+
+var routeAPIMethodGroups = map[string]string{
+	"GET":    "Query & Pengambilan Data",
+	"POST":   "Pembuatan Data Baru",
+	"PUT":    "Pembaruan Data",
+	"PATCH":  "Pembaruan Data",
+	"DELETE": "Penghapusan Entitas",
+}
+
 // InferRouteDomainAndFunction uses intelligent semantic heuristics to assign domain and function
 func InferRouteDomainAndFunction(path, method string) (string, string) {
 	p := strings.ToLower(path)
 	m := strings.ToUpper(method)
 
-	// Determine Domain
-	domain := "Umum"
-	functionGroup := "Lainnya"
-
-	switch {
-	case strings.Contains(p, "auth") || strings.Contains(p, "login") || strings.Contains(p, "register") || strings.Contains(p, "token") || strings.Contains(p, "logout") || strings.Contains(p, "password") || strings.Contains(p, "oauth"):
-		domain = "Autentikasi & Keamanan"
-		if strings.Contains(p, "login") || strings.Contains(p, "token") {
-			functionGroup = "Login & Otorisasi Sesi"
-		} else if strings.Contains(p, "register") {
-			functionGroup = "Registrasi Pengguna"
-		} else if strings.Contains(p, "logout") {
-			functionGroup = "Terminasi Sesi"
-		} else {
-			functionGroup = "Manajemen Kredensial"
-		}
-
-	case strings.Contains(p, "user") || strings.Contains(p, "member") || strings.Contains(p, "profile") || strings.Contains(p, "role") || strings.Contains(p, "permission") || strings.Contains(p, "account"):
-		domain = "Manajemen Pengguna & Akun"
-		if m == "GET" {
-			functionGroup = "Pengambilan Data Pengguna"
-		} else if m == "POST" || m == "PUT" || m == "PATCH" {
-			functionGroup = "Pembaruan Profil & Akses"
-		} else {
-			functionGroup = "Operasi Akun"
-		}
-
-	case strings.Contains(p, "project") || strings.Contains(p, "bundle") || strings.Contains(p, "component") || strings.Contains(p, "app"):
-		domain = "Manajemen Proyek & Komponen"
-		if strings.Contains(p, "component") {
-			functionGroup = "Manajemen Service & Komponen"
-		} else if m == "GET" {
-			functionGroup = "Katalog & Detail Proyek"
-		} else {
-			functionGroup = "Registrasi & Modifikasi Proyek"
-		}
-
-	case strings.Contains(p, "asset") || strings.Contains(p, "product") || strings.Contains(p, "item") || strings.Contains(p, "inventory") || strings.Contains(p, "category"):
-		domain = "Aset & Inventori"
-		if m == "GET" {
-			functionGroup = "Katalog & Pencarian Aset"
-		} else {
-			functionGroup = "Mutasi & Kelola Aset"
-		}
-
-	case strings.Contains(p, "diag") || strings.Contains(p, "health") || strings.Contains(p, "ping") || strings.Contains(p, "metric") || strings.Contains(p, "log") || strings.Contains(p, "port") || strings.Contains(p, "monitor"):
-		domain = "Diagnostik & Monitoring"
-		if strings.Contains(p, "port") {
-			functionGroup = "Pemeriksaan Status Port"
-		} else if strings.Contains(p, "health") || strings.Contains(p, "ping") {
-			functionGroup = "Health Check & Liveness"
-		} else {
-			functionGroup = "Audit Kesehatan Kode"
-		}
-
-	case strings.Contains(p, "llm") || strings.Contains(p, "ai") || strings.Contains(p, "scan") || strings.Contains(p, "review") || strings.Contains(p, "advisor"):
-		domain = "Layanan AI & Fast Scan"
-		if strings.Contains(p, "fast-scan") || strings.Contains(p, "scan") {
-			functionGroup = "Pemindaian Blueprint & Arsitektur"
-		} else if strings.Contains(p, "config") || strings.Contains(p, "model") {
-			functionGroup = "Konfigurasi Multi-Model AI"
-		} else {
-			functionGroup = "Analisis Cerdas & Audit AI"
-		}
-
-	case strings.Contains(p, "security") || strings.Contains(p, "censor") || strings.Contains(p, "secret") || strings.Contains(p, "vault"):
-		domain = "Keamanan & Redaksi Rahasia"
-		functionGroup = "Vault Kata Kunci Terenkripsi"
-
-	case strings.Contains(p, "setting") || strings.Contains(p, "config") || strings.Contains(p, "preference"):
-		domain = "Pengaturan & Konfigurasi"
-		functionGroup = "Preferensi Sistem"
-
-	case strings.Contains(p, "file") || strings.Contains(p, "upload") || strings.Contains(p, "download") || strings.Contains(p, "media") || strings.Contains(p, "document") || strings.Contains(p, "dir"):
-		domain = "Media & File Storage"
-		functionGroup = "Manajemen Berkas & Direktori"
-
-	case strings.Contains(p, "kontingen") || strings.Contains(p, "official"):
-		domain = "Portal & Manajemen Kontingen"
-		if strings.Contains(p, "official") {
-			functionGroup = "Manajemen Official Kontingen"
-		} else if strings.Contains(p, "daftar") || strings.Contains(p, "ikuti") {
-			functionGroup = "Pendaftaran Kejuaraan"
-		} else if strings.Contains(p, "tagihan") || strings.Contains(p, "rekap") {
-			functionGroup = "Rekapitulasi & Tagihan Kontingen"
-		} else {
-			functionGroup = "Profil & Manajemen Kontingen"
-		}
-
-	case strings.Contains(p, "atlet"):
-		domain = "Portal Atlet & Peserta"
-		if strings.Contains(p, "pertandingan") {
-			functionGroup = "Jadwal & Hasil Atlet"
-		} else {
-			functionGroup = "Biodata & Status Atlet"
-		}
-
-	case strings.Contains(p, "kejuaraan") || strings.Contains(p, "pertandingan") || strings.Contains(p, "bagan") || strings.Contains(p, "bracket") || strings.Contains(p, "kelas") || strings.Contains(p, "kategori"):
-		domain = "Kompetisi & Pertandingan"
-		if strings.Contains(p, "bagan") || strings.Contains(p, "bracket") {
-			functionGroup = "Bagan Pertandingan & Bracket Tree"
-		} else if strings.Contains(p, "kelas") || strings.Contains(p, "kategori") {
-			functionGroup = "Kategori & Kelas Tanding"
-		} else {
-			functionGroup = "Manajemen Event & Jadwal Tanding"
-		}
-
-	case strings.Contains(p, "bayar") || strings.Contains(p, "pembayaran") || strings.Contains(p, "tagihan") || strings.Contains(p, "rekening") || strings.Contains(p, "invoice") || strings.Contains(p, "billing"):
-		domain = "Keuangan & Pembayaran"
-		functionGroup = "Transaksi & Verifikasi Pembayaran"
-
-	case strings.Contains(p, "public") || strings.Contains(p, "portal") || strings.Contains(p, "gallery") || strings.Contains(p, "galeri") || strings.Contains(p, "blog") || strings.Contains(p, "news") || strings.Contains(p, "lokasi"):
-		domain = "Portal Informasi Publik"
-		if strings.Contains(p, "blog") || strings.Contains(p, "news") {
-			functionGroup = "Berita & Artikel"
-		} else if strings.Contains(p, "gallery") || strings.Contains(p, "galeri") {
-			functionGroup = "Dokumentasi & Galeri"
-		} else if strings.Contains(p, "lokasi") {
-			functionGroup = "Informasi Lokasi & Venue"
-		} else {
-			functionGroup = "Informasi & Publikasi Umum"
-		}
-
-	case strings.Contains(p, "admin"):
-		domain = "Administrasi & Master Data"
-		if strings.Contains(p, "verify") || strings.Contains(p, "verifikasi") {
-			functionGroup = "Verifikasi & Validasi Data"
-		} else if strings.Contains(p, "dashboard") {
-			functionGroup = "Dashboard Eksekutif Admin"
-		} else {
-			functionGroup = "Master Data & Pengawasan"
-		}
-
-	case strings.HasPrefix(m, "PAGE"):
-		switch {
-		case strings.Contains(p, "project") || strings.Contains(p, "bundle") || strings.Contains(p, "app"):
-			domain = "Manajemen Proyek"
-			functionGroup = "Katalog & Detail Proyek"
-		case strings.Contains(p, "port") || strings.Contains(p, "monitor"):
-			domain = "Monitoring & Jaringan"
-			functionGroup = "Pemeriksaan Port"
-		case strings.Contains(p, "setting") || strings.Contains(p, "config"):
-			domain = "Pengaturan & Konfigurasi"
-			functionGroup = "Pengaturan Sistem & LLM"
-		case strings.Contains(p, "scan"):
-			domain = "Registrasi & Scanner Proyek"
-			functionGroup = "Pindai Direktori Lokal"
-		case strings.Contains(p, "mcp"):
-			domain = "Integrasi AI & MCP Hub"
-			functionGroup = "MCP Agent Hub"
-		case strings.Contains(p, "auth") || strings.Contains(p, "login"):
-			domain = "Autentikasi & Akun"
-			functionGroup = "Login & Otorisasi"
-		case p == "/":
-			domain = "Dashboard & Pemantauan"
-			functionGroup = "Ringkasan Workspace"
-		default:
-			domain = "Fitur Antarmuka"
-			functionGroup = "Navigasi Halaman"
-		}
-
-	default:
-		domain = "Layanan & Endpoint API"
-		if m == "GET" {
-			functionGroup = "Query & Pengambilan Data"
-		} else if m == "POST" {
-			functionGroup = "Pembuatan Data Baru"
-		} else if m == "PUT" || m == "PATCH" {
-			functionGroup = "Pembaruan Data"
-		} else if m == "DELETE" {
-			functionGroup = "Penghapusan Entitas"
+	for _, r := range routeDomainRules {
+		if containsAny(p, r.keys...) {
+			return r.domain, r.group(p, m)
 		}
 	}
+	if strings.HasPrefix(m, "PAGE") {
+		return inferPageDomain(p)
+	}
+	group := "Lainnya"
+	if g, ok := routeAPIMethodGroups[m]; ok {
+		group = g
+	}
+	return "Layanan & Endpoint API", group
+}
 
-	return domain, functionGroup
+type routeDescRule struct {
+	keys []string
+	desc string
+}
+
+var routeDescRules = []routeDescRule{
+	{[]string{"auth/login", "login"}, "Memvalidasi kredensial pengguna dan mengembalikan token otentikasi JWT untuk otorisasi sesi."},
+	{[]string{"auth/register", "register"}, "Mendaftarkan akun pengguna baru ke dalam database sistem."},
+	{[]string{"auth/logout", "logout"}, "Mengakhiri sesi aktif dan mencabut masa berlaku token otorisasi pengguna."},
+	{[]string{"health", "ping"}, "Memeriksa status ketersediaan dan kesiapan layanan server (health check)."},
+	{[]string{"ports"}, "Memeriksa status listening port sistem dan mendeteksi potensi tabrakan port."},
+	{[]string{"fast-scan"}, "Menjalankan pemindaian mendalam AI terhadap blueprint arsitektur, rute, dan environment."},
+	{[]string{"diagnose"}, "Melakukan audit statis integritas kode, git status, dan kesehatan dependensi proyek."},
+	{[]string{"ai-review"}, "Menghasilkan rekomendasi arsitektur, rencana aksi P0/P1, dan perbaikan dari AI."},
+	{[]string{"routes/sync"}, "Menyelaraskan daftar rute di database dengan kode sumber aktual pada repositori."},
+	{[]string{"routes/enrich"}, "Mengirim daftar rute ke LLM untuk pengelompokan domain bisnis dan pembuatan keterangan otomatis."},
+	{[]string{"censored-keywords"}, "Mengelola daftar kata kunci rahasia yang disensor secara global sebelum dikirim ke AI."},
+	{[]string{"settings/llm"}, "Mengambil dan memperbarui konfigurasi provider LLM aktif di sistem."},
+}
+
+// routeMethodDescFormats: templat deskripsi per method untuk rute yang tak dikenali (satu %s = path bersih).
+var routeMethodDescFormats = map[string]string{
+	"POST":   "Membuat entitas baru pada endpoint '%s'.",
+	"PUT":    "Memperbarui data entitas '%s' secara menyeluruh berdasarkan ID.",
+	"PATCH":  "Memperbarui sebagian atribut data pada entitas '%s'.",
+	"DELETE": "Menghapus entitas data '%s' dari database berdasarkan ID.",
 }
 
 // InferRouteDescription generates human-readable Indonesian description for routes
@@ -425,51 +455,21 @@ func InferRouteDescription(method, path string) string {
 	if strings.HasPrefix(m, "PAGE") {
 		return adapters.InferFrontendPageDescription(path)
 	}
-
-	switch {
-	case strings.Contains(p, "auth/login") || strings.Contains(p, "login"):
-		return "Memvalidasi kredensial pengguna dan mengembalikan token otentikasi JWT untuk otorisasi sesi."
-	case strings.Contains(p, "auth/register") || strings.Contains(p, "register"):
-		return "Mendaftarkan akun pengguna baru ke dalam database sistem."
-	case strings.Contains(p, "auth/logout") || strings.Contains(p, "logout"):
-		return "Mengakhiri sesi aktif dan mencabut masa berlaku token otorisasi pengguna."
-	case strings.Contains(p, "health") || strings.Contains(p, "ping"):
-		return "Memeriksa status ketersediaan dan kesiapan layanan server (health check)."
-	case strings.Contains(p, "ports"):
-		return "Memeriksa status listening port sistem dan mendeteksi potensi tabrakan port."
-	case strings.Contains(p, "fast-scan"):
-		return "Menjalankan pemindaian mendalam AI terhadap blueprint arsitektur, rute, dan environment."
-	case strings.Contains(p, "diagnose"):
-		return "Melakukan audit statis integritas kode, git status, dan kesehatan dependensi proyek."
-	case strings.Contains(p, "ai-review"):
-		return "Menghasilkan rekomendasi arsitektur, rencana aksi P0/P1, dan perbaikan dari AI."
-	case strings.Contains(p, "routes/sync"):
-		return "Menyelaraskan daftar rute di database dengan kode sumber aktual pada repositori."
-	case strings.Contains(p, "routes/enrich"):
-		return "Mengirim daftar rute ke LLM untuk pengelompokan domain bisnis dan pembuatan keterangan otomatis."
-	case strings.Contains(p, "censored-keywords"):
-		return "Mengelola daftar kata kunci rahasia yang disensor secara global sebelum dikirim ke AI."
-	case strings.Contains(p, "settings/llm"):
-		return "Mengambil dan memperbarui konfigurasi provider LLM aktif di sistem."
-	default:
-		switch m {
-		case "GET":
-			if strings.Contains(p, ":id") || strings.Contains(p, "[id]") {
-				return fmt.Sprintf("Mengambil rincian data tunggal untuk entitas '%s' berdasarkan ID.", cleanPath)
-			}
-			return fmt.Sprintf("Mengambil daftar koleksi data untuk layanan '%s'.", cleanPath)
-		case "POST":
-			return fmt.Sprintf("Membuat entitas baru pada endpoint '%s'.", cleanPath)
-		case "PUT":
-			return fmt.Sprintf("Memperbarui data entitas '%s' secara menyeluruh berdasarkan ID.", cleanPath)
-		case "PATCH":
-			return fmt.Sprintf("Memperbarui sebagian atribut data pada entitas '%s'.", cleanPath)
-		case "DELETE":
-			return fmt.Sprintf("Menghapus entitas data '%s' dari database berdasarkan ID.", cleanPath)
-		default:
-			return fmt.Sprintf("Menangani request HTTP %s pada endpoint '%s'.", method, path)
+	for _, r := range routeDescRules {
+		if containsAny(p, r.keys...) {
+			return r.desc
 		}
 	}
+	if m == "GET" {
+		if containsAny(p, ":id", "[id]") {
+			return fmt.Sprintf("Mengambil rincian data tunggal untuk entitas '%s' berdasarkan ID.", cleanPath)
+		}
+		return fmt.Sprintf("Mengambil daftar koleksi data untuk layanan '%s'.", cleanPath)
+	}
+	if f, ok := routeMethodDescFormats[m]; ok {
+		return fmt.Sprintf(f, cleanPath)
+	}
+	return fmt.Sprintf("Menangani request HTTP %s pada endpoint '%s'.", method, path)
 }
 
 // syncFastScanDataCache updates the FastScanData JSON on Component with current DB routes
