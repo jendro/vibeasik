@@ -1,6 +1,8 @@
 package codemap
 
 import (
+	"bytes"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -271,6 +273,63 @@ func TestEnsureFresh(t *testing.T) {
 	expectedMsg := "gagal memperbarui code map proyek 999999"
 	if !strings.Contains(err.Error(), expectedMsg) {
 		t.Fatalf("error tidak memuat pesan pembungkus %q, didapat: %v", expectedMsg, err)
+	}
+}
+
+func TestExistsPredicateContract(t *testing.T) {
+	// 1. Berkas ada -> return true, tidak ada log peringatan
+	tmpDir := t.TempDir()
+	existingFile := filepath.Join(tmpDir, "exists.txt")
+	if err := os.WriteFile(existingFile, []byte("ok"), 0o644); err != nil {
+		t.Fatalf("gagal membuat berkas uji: %v", err)
+	}
+
+	var logBuf bytes.Buffer
+	origWriter := log.Writer()
+	log.SetOutput(&logBuf)
+	defer log.SetOutput(origWriter)
+
+	if !exists(existingFile) {
+		t.Fatalf("exists(%q) = false, ekspektasi true untuk berkas yang ada", existingFile)
+	}
+	if logBuf.Len() > 0 {
+		t.Fatalf("ekspektasi tidak ada log pada berkas yang ada, didapat: %s", logBuf.String())
+	}
+
+	// 2. Berkas tidak ada (os.IsNotExist) -> return false tanpa error/panic dan tanpa log [WARN] (jalur normal predikat)
+	logBuf.Reset()
+	missingFile := filepath.Join(tmpDir, "missing.txt")
+	if exists(missingFile) {
+		t.Fatalf("exists(%q) = true, ekspektasi false untuk berkas yang tidak ada", missingFile)
+	}
+	if logBuf.Len() > 0 {
+		t.Fatalf("ekspektasi tidak ada log pada IsNotExist (jalur normal), didapat: %s", logBuf.String())
+	}
+
+	// 3. Error sistem non-IsNotExist (misal akses izin terlarang 0000 di Unix)
+	// -> return false dan log menangkap peringatan [WARN]
+	if os.Geteuid() != 0 {
+		logBuf.Reset()
+		forbiddenDir := filepath.Join(tmpDir, "forbidden")
+		if err := os.Mkdir(forbiddenDir, 0o700); err != nil {
+			t.Fatalf("gagal membuat direktori uji: %v", err)
+		}
+		if err := os.Chmod(forbiddenDir, 0o000); err != nil {
+			t.Fatalf("gagal chmod direktori uji: %v", err)
+		}
+		t.Cleanup(func() {
+			_ = os.Chmod(forbiddenDir, 0o700)
+		})
+
+		unreadablePath := filepath.Join(forbiddenDir, "unreachable.txt")
+		got := exists(unreadablePath)
+		if got {
+			t.Fatalf("exists(%q) = true, ekspektasi false untuk path dengan permission denied", unreadablePath)
+		}
+		logOutput := logBuf.String()
+		if !strings.Contains(logOutput, "[WARN] exists: os.Stat") {
+			t.Fatalf("ekspektasi log memuat '[WARN] exists: os.Stat', didapat: %q", logOutput)
+		}
 	}
 }
 
