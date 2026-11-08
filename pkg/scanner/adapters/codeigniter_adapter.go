@@ -109,80 +109,78 @@ func (a *CodeIgniterAdapter) scanSparkRoutes(dir string) ([]models.RouteInfo, er
 	return ParseSparkRoutesOutput(string(out)), nil
 }
 
+var sparkValidMethods = map[string]bool{
+	"GET": true, "POST": true, "PUT": true, "DELETE": true,
+	"PATCH": true, "OPTIONS": true, "HEAD": true, "ALL": true,
+}
+
+// isSparkSkippableRow: baris header/pembatas, metode tak dikenal, atau catchall OPTIONS (CORS preflight).
+func isSparkSkippableRow(method, rawPath string) bool {
+	if method == "METHOD" || strings.Contains(method, "-") || strings.Contains(method, "+") {
+		return true
+	}
+	if !sparkValidMethods[method] {
+		return true
+	}
+	return method == "OPTIONS" && (rawPath == "(.*)" || rawPath == "(:any)" || rawPath == "(.*)?")
+}
+
+// parseSparkRow mengubah satu baris tabel spark menjadi rute; ok=false bila baris dilewati.
+func parseSparkRow(line string) (models.RouteInfo, bool) {
+	if !strings.HasPrefix(line, "|") || !strings.HasSuffix(line, "|") {
+		return models.RouteInfo{}, false
+	}
+	parts := strings.Split(line, "|")
+	// parts[0] is before first |, parts[len-1] is after last |
+	if len(parts) < 6 {
+		return models.RouteInfo{}, false
+	}
+	method := strings.ToUpper(strings.TrimSpace(parts[1]))
+	rawPath := strings.TrimSpace(parts[2])
+	rawHandler := strings.TrimSpace(parts[4])
+	beforeFilters := strings.TrimSpace(parts[5])
+	if isSparkSkippableRow(method, rawPath) {
+		return models.RouteInfo{}, false
+	}
+
+	// Normalize route regex placeholders to CodeIgniter convention
+	cleanPath := strings.ReplaceAll(rawPath, "([0-9]+)", "(:num)")
+	cleanPath = strings.ReplaceAll(cleanPath, "(.*)", "(:any)")
+	cleanPath = CleanURLPath(cleanPath)
+
+	handler := strings.TrimPrefix(rawHandler, "\\")
+	if handler == "(Closure)" {
+		handler = "Closure / Inline Action"
+	}
+	middleware := beforeFilters
+	if middleware == "" {
+		middleware = "Public"
+	}
+	return models.RouteInfo{
+		Method:      method,
+		Path:        cleanPath,
+		Handler:     handler,
+		Description: inferEndpointDescription(method, cleanPath),
+		Middleware:  middleware,
+	}, true
+}
+
 // ParseSparkRoutesOutput parses ASCII/markdown table output from `php spark routes`
 func ParseSparkRoutesOutput(output string) []models.RouteInfo {
 	var routes []models.RouteInfo
 	seen := make(map[string]bool)
 
-	lines := strings.Split(output, "\n")
-	for _, rawLine := range lines {
-		line := strings.TrimSpace(rawLine)
-		if !strings.HasPrefix(line, "|") || !strings.HasSuffix(line, "|") {
+	for _, rawLine := range strings.Split(output, "\n") {
+		route, ok := parseSparkRow(strings.TrimSpace(rawLine))
+		if !ok {
 			continue
 		}
-		parts := strings.Split(line, "|")
-		// parts[0] is before first |, parts[len-1] is after last |
-		if len(parts) < 6 {
-			continue
-		}
-
-		method := strings.ToUpper(strings.TrimSpace(parts[1]))
-		rawPath := strings.TrimSpace(parts[2])
-		rawHandler := strings.TrimSpace(parts[4])
-		beforeFilters := ""
-		if len(parts) >= 6 {
-			beforeFilters = strings.TrimSpace(parts[5])
-		}
-
-		// Skip header rows or divider rows
-		if method == "METHOD" || strings.Contains(method, "-") || strings.Contains(method, "+") {
-			continue
-		}
-
-		validMethods := map[string]bool{
-			"GET": true, "POST": true, "PUT": true, "DELETE": true,
-			"PATCH": true, "OPTIONS": true, "HEAD": true, "ALL": true,
-		}
-		if !validMethods[method] {
-			continue
-		}
-
-		// Skip CORS preflight catchall options route: OPTIONS (.*) or OPTIONS (:any)
-		if method == "OPTIONS" && (rawPath == "(.*)" || rawPath == "(:any)" || rawPath == "(.*)?") {
-			continue
-		}
-
-		// Normalize route regex placeholders to CodeIgniter convention
-		cleanPath := rawPath
-		cleanPath = strings.ReplaceAll(cleanPath, "([0-9]+)", "(:num)")
-		cleanPath = strings.ReplaceAll(cleanPath, "(.*)", "(:any)")
-		cleanPath = CleanURLPath(cleanPath)
-
-		// Clean handler
-		handler := strings.TrimPrefix(rawHandler, "\\")
-		if handler == "(Closure)" {
-			handler = "Closure / Inline Action"
-		}
-
-		// Clean middleware
-		middleware := beforeFilters
-		if middleware == "" {
-			middleware = "Public"
-		}
-
-		key := method + " " + cleanPath
+		key := route.Method + " " + route.Path
 		if !seen[key] {
 			seen[key] = true
-			routes = append(routes, models.RouteInfo{
-				Method:      method,
-				Path:        cleanPath,
-				Handler:     handler,
-				Description: inferEndpointDescription(method, cleanPath),
-				Middleware:  middleware,
-			})
+			routes = append(routes, route)
 		}
 	}
-
 	return routes
 }
 
@@ -193,232 +191,224 @@ type ciGroupContext struct {
 	depth     int
 }
 
+var (
+	ciGroupRegex         = regexp.MustCompile(`(?i)\$routes->group\(\s*['"]([^'"]*)['"]\s*(?:,\s*(\[[^\]]*\]))?`)
+	ciMatchRouteRegex    = regexp.MustCompile(`(?i)\$routes->match\(\s*\[([^\]]+)\]\s*,\s*['"]([^'"]*)['"]\s*,\s*([^,\)]+)(?:,\s*(\[[^\]]*\]))?`)
+	ciMethodRouteRegex   = regexp.MustCompile(`(?i)\$routes->(get|post|put|delete|patch|options|head|add)\(\s*['"]([^'"]*)['"]\s*,\s*([^,\)]+)(?:,\s*(\[[^\]]*\]))?`)
+	ciResourceRouteRegex = regexp.MustCompile(`(?i)\$routes->(resource|presenter)\(\s*['"]([^'"]+)['"](?:\s*,\s*(\[[^\]]*\]))?`)
+	ciOptNamespaceRegex  = regexp.MustCompile(`['"]namespace['"]\s*=>\s*['"]([^'"]+)['"]`)
+	ciOptFilterRegex     = regexp.MustCompile(`['"]filters?['"]\s*=>\s*['"]([^'"]+)['"]`)
+	ciOptControllerRegex = regexp.MustCompile(`['"]controller['"]\s*=>\s*['"]([^'"]+)['"]`)
+)
+
+type ciResourceRoute struct {
+	method string
+	suffix string
+	action string
+}
+
+var ciResourceRoutes = []ciResourceRoute{
+	{"GET", "", "index"},
+	{"POST", "", "create"},
+	{"GET", "/(:segment)", "show"},
+	{"PUT", "/(:segment)", "update"},
+	{"DELETE", "/(:segment)", "delete"},
+}
+
+var ciPresenterExtraRoutes = []ciResourceRoute{
+	{"GET", "/new", "new"},
+	{"GET", "/(:segment)/edit", "edit"},
+}
+
+// ciParser = keadaan satu kali parse Routes.php CodeIgniter 4.
+type ciParser struct {
+	routes       []models.RouteInfo
+	seen         map[string]bool
+	groupStack   []ciGroupContext
+	currentDepth int
+}
+
+// add menambahkan rute bila kombinasi metode+path belum ada.
+func (p *ciParser) add(method, path, handler, middleware string) {
+	key := method + " " + path
+	if p.seen[key] {
+		return
+	}
+	p.seen[key] = true
+	p.routes = append(p.routes, models.RouteInfo{
+		Method:      method,
+		Path:        path,
+		Handler:     handler,
+		Description: inferEndpointDescription(method, path),
+		Middleware:  middleware,
+	})
+}
+
+// openGroup mendorong konteks grup baru bila baris adalah pembuka $routes->group.
+func (p *ciParser) openGroup(line string) {
+	gm := ciGroupRegex.FindStringSubmatch(line)
+	if len(gm) < 2 {
+		return
+	}
+	grpOpts := ""
+	if len(gm) >= 3 {
+		grpOpts = gm[2]
+	}
+
+	var parent ciGroupContext
+	if len(p.groupStack) > 0 {
+		parent = p.groupStack[len(p.groupStack)-1]
+	}
+	effNamespace := parent.namespace
+	if nsm := ciOptNamespaceRegex.FindStringSubmatch(grpOpts); len(nsm) >= 2 {
+		effNamespace = strings.Trim(nsm[1], "\\")
+	}
+	effFilter := parent.filter
+	if fm := ciOptFilterRegex.FindStringSubmatch(grpOpts); len(fm) >= 2 {
+		effFilter = fm[1]
+	}
+	p.groupStack = append(p.groupStack, ciGroupContext{
+		prefix:    combinePrefixAndPath(parent.prefix, gm[1]),
+		namespace: effNamespace,
+		filter:    effFilter,
+		depth:     p.currentDepth,
+	})
+}
+
+// context mengembalikan prefix, namespace, dan filter aktif (default filter "Public").
+func (p *ciParser) context() (prefix, namespace, filter string) {
+	filter = "Public"
+	if len(p.groupStack) > 0 {
+		cur := p.groupStack[len(p.groupStack)-1]
+		prefix, namespace = cur.prefix, cur.namespace
+		if cur.filter != "" {
+			filter = cur.filter
+		}
+	}
+	return
+}
+
+// routeFilterOf mengambil filter dari opsi rute, atau fallback ke filter grup.
+func routeFilterOf(optsRaw, fallback string) string {
+	if fm := ciOptFilterRegex.FindStringSubmatch(optsRaw); len(fm) >= 2 {
+		return fm[1]
+	}
+	return fallback
+}
+
+// optsAt mengambil grup regex ke-i bila ada, atau "".
+func optsAt(m []string, i int) string {
+	if len(m) > i {
+		return m[i]
+	}
+	return ""
+}
+
+// tryMatch: $routes->match(['put', 'post'], 'path', 'Handler', [opts])
+func (p *ciParser) tryMatch(line string) bool {
+	mm := ciMatchRouteRegex.FindStringSubmatch(line)
+	if len(mm) < 4 {
+		return false
+	}
+	curPrefix, curNamespace, curFilter := p.context()
+	fullPath := combinePrefixAndPath(curPrefix, mm[2])
+	handler := cleanCIHandler(mm[3], curNamespace)
+	routeFilter := routeFilterOf(optsAt(mm, 4), curFilter)
+
+	// Split methods e.g. 'put', 'post'
+	for _, rmp := range strings.Split(mm[1], ",") {
+		method := strings.ToUpper(strings.Trim(strings.TrimSpace(rmp), `'" `))
+		if method == "" {
+			continue
+		}
+		p.add(method, fullPath, handler, routeFilter)
+	}
+	return true
+}
+
+// tryMethod: $routes->get/post/put/delete/patch/options/head/add
+func (p *ciParser) tryMethod(line string) bool {
+	rm := ciMethodRouteRegex.FindStringSubmatch(line)
+	if len(rm) < 4 {
+		return false
+	}
+	method := strings.ToUpper(rm[1])
+	if method == "ADD" {
+		method = "ALL"
+	}
+	pathRaw := rm[2]
+	curPrefix, curNamespace, curFilter := p.context()
+	fullPath := combinePrefixAndPath(curPrefix, pathRaw)
+
+	// Skip OPTIONS (:any) CORS catchall
+	if method == "OPTIONS" && (pathRaw == "(:any)" || pathRaw == "(.*)" || fullPath == "/(:any)") {
+		return true
+	}
+	p.add(method, fullPath, cleanCIHandler(rm[3], curNamespace), routeFilterOf(optsAt(rm, 4), curFilter))
+	return true
+}
+
+// tryResource: $routes->resource / presenter
+func (p *ciParser) tryResource(line string) bool {
+	rm := ciResourceRouteRegex.FindStringSubmatch(line)
+	if len(rm) < 3 {
+		return false
+	}
+	resType := strings.ToLower(rm[1])
+	resName := strings.Trim(rm[2], "/")
+	optsRaw := optsAt(rm, 3)
+	curPrefix, curNamespace, curFilter := p.context()
+
+	ctrl := resName
+	if cm := ciOptControllerRegex.FindStringSubmatch(optsRaw); len(cm) >= 2 {
+		ctrl = cm[1]
+	}
+	ctrlHandler := cleanCIHandler(ctrl, curNamespace)
+	baseResPath := combinePrefixAndPath(curPrefix, resName)
+
+	resourceRoutes := ciResourceRoutes
+	if resType == "presenter" {
+		resourceRoutes = append(append([]ciResourceRoute(nil), ciResourceRoutes...), ciPresenterExtraRoutes...)
+	}
+	for _, rr := range resourceRoutes {
+		p.add(rr.method, baseResPath+rr.suffix, fmt.Sprintf("%s::%s", ctrlHandler, rr.action), curFilter)
+	}
+	return true
+}
+
+// handleLine memproses satu baris; pola pertama yang cocok menang. Kedalaman kurung diperbarui sekali per baris.
+func (p *ciParser) handleLine(line string) {
+	p.openGroup(line)
+	for _, try := range []func(string) bool{p.tryMatch, p.tryMethod, p.tryResource} {
+		if try(line) {
+			break
+		}
+	}
+	updateDepthAndPop(&p.groupStack, line, &p.currentDepth)
+}
+
+func isCIComment(line string) bool {
+	return strings.HasPrefix(line, "//") || strings.HasPrefix(line, "#") || strings.HasPrefix(line, "/*") || strings.HasPrefix(line, "*")
+}
+
 // ParseCodeIgniter4RoutesFromFile extracts routes from a CodeIgniter 4 Routes.php file
 func ParseCodeIgniter4RoutesFromFile(filePath string) []models.RouteInfo {
-	var routes []models.RouteInfo
-	seen := make(map[string]bool)
-
 	file, err := os.Open(filePath)
 	if err != nil {
-		return routes
+		return nil
 	}
 	defer file.Close()
 
-	var groupStack []ciGroupContext
-	currentDepth := 0
-
-	// Regexes
-	groupRegex := regexp.MustCompile(`(?i)\$routes->group\(\s*['"]([^'"]*)['"]\s*(?:,\s*(\[[^\]]*\]))?`)
-	matchRouteRegex := regexp.MustCompile(`(?i)\$routes->match\(\s*\[([^\]]+)\]\s*,\s*['"]([^'"]*)['"]\s*,\s*([^,\)]+)(?:,\s*(\[[^\]]*\]))?`)
-	methodRouteRegex := regexp.MustCompile(`(?i)\$routes->(get|post|put|delete|patch|options|head|add)\(\s*['"]([^'"]*)['"]\s*,\s*([^,\)]+)(?:,\s*(\[[^\]]*\]))?`)
-	resourceRouteRegex := regexp.MustCompile(`(?i)\$routes->(resource|presenter)\(\s*['"]([^'"]+)['"](?:\s*,\s*(\[[^\]]*\]))?`)
-
-	optNamespaceRegex := regexp.MustCompile(`['"]namespace['"]\s*=>\s*['"]([^'"]+)['"]`)
-	optFilterRegex := regexp.MustCompile(`['"]filters?['"]\s*=>\s*['"]([^'"]+)['"]`)
-
+	p := &ciParser{seen: make(map[string]bool)}
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
-		if strings.HasPrefix(line, "//") || strings.HasPrefix(line, "#") || strings.HasPrefix(line, "/*") || strings.HasPrefix(line, "*") {
+		if isCIComment(line) {
 			continue
 		}
-
-		// 1. Check for group opening
-		if gm := groupRegex.FindStringSubmatch(line); len(gm) >= 2 {
-			grpPrefix := gm[1]
-			grpOpts := ""
-			if len(gm) >= 3 {
-				grpOpts = gm[2]
-			}
-
-			parentPrefix := ""
-			parentNamespace := ""
-			parentFilter := ""
-			if len(groupStack) > 0 {
-				parent := groupStack[len(groupStack)-1]
-				parentPrefix = parent.prefix
-				parentNamespace = parent.namespace
-				parentFilter = parent.filter
-			}
-
-			effPrefix := combinePrefixAndPath(parentPrefix, grpPrefix)
-			effNamespace := parentNamespace
-			if nsm := optNamespaceRegex.FindStringSubmatch(grpOpts); len(nsm) >= 2 {
-				effNamespace = strings.Trim(nsm[1], "\\")
-			}
-
-			effFilter := parentFilter
-			if fm := optFilterRegex.FindStringSubmatch(grpOpts); len(fm) >= 2 {
-				effFilter = fm[1]
-			}
-
-			groupStack = append(groupStack, ciGroupContext{
-				prefix:    effPrefix,
-				namespace: effNamespace,
-				filter:    effFilter,
-				depth:     currentDepth,
-			})
-		}
-
-		// Track current context
-		curPrefix := ""
-		curNamespace := ""
-		curFilter := "Public"
-		if len(groupStack) > 0 {
-			cur := groupStack[len(groupStack)-1]
-			curPrefix = cur.prefix
-			curNamespace = cur.namespace
-			if cur.filter != "" {
-				curFilter = cur.filter
-			}
-		}
-
-		// 2. Check $routes->match(['put', 'post'], 'path', 'Handler', [opts])
-		if mm := matchRouteRegex.FindStringSubmatch(line); len(mm) >= 4 {
-			methodsRaw := mm[1]
-			pathRaw := mm[2]
-			handlerRaw := mm[3]
-			optsRaw := ""
-			if len(mm) >= 5 {
-				optsRaw = mm[4]
-			}
-
-			fullPath := combinePrefixAndPath(curPrefix, pathRaw)
-			handler := cleanCIHandler(handlerRaw, curNamespace)
-			routeFilter := curFilter
-			if fm := optFilterRegex.FindStringSubmatch(optsRaw); len(fm) >= 2 {
-				routeFilter = fm[1]
-			}
-
-			// Split methods e.g. 'put', 'post'
-			rawMethodParts := strings.Split(methodsRaw, ",")
-			for _, rmp := range rawMethodParts {
-				method := strings.ToUpper(strings.Trim(strings.TrimSpace(rmp), `'" `))
-				if method == "" {
-					continue
-				}
-				key := method + " " + fullPath
-				if !seen[key] {
-					seen[key] = true
-					routes = append(routes, models.RouteInfo{
-						Method:      method,
-						Path:        fullPath,
-						Handler:     handler,
-						Description: inferEndpointDescription(method, fullPath),
-						Middleware:  routeFilter,
-					})
-				}
-			}
-			updateDepthAndPop(&groupStack, line, &currentDepth)
-			continue
-		}
-
-		// 3. Check $routes->get/post/put/delete/patch/options/head/add
-		if rm := methodRouteRegex.FindStringSubmatch(line); len(rm) >= 4 {
-			method := strings.ToUpper(rm[1])
-			if method == "ADD" {
-				method = "ALL"
-			}
-			pathRaw := rm[2]
-			handlerRaw := rm[3]
-			optsRaw := ""
-			if len(rm) >= 5 {
-				optsRaw = rm[4]
-			}
-
-			fullPath := combinePrefixAndPath(curPrefix, pathRaw)
-			handler := cleanCIHandler(handlerRaw, curNamespace)
-			routeFilter := curFilter
-			if fm := optFilterRegex.FindStringSubmatch(optsRaw); len(fm) >= 2 {
-				routeFilter = fm[1]
-			}
-
-			// Skip OPTIONS (:any) CORS catchall
-			if method == "OPTIONS" && (pathRaw == "(:any)" || pathRaw == "(.*)" || fullPath == "/(:any)") {
-				updateDepthAndPop(&groupStack, line, &currentDepth)
-				continue
-			}
-
-			key := method + " " + fullPath
-			if !seen[key] {
-				seen[key] = true
-				routes = append(routes, models.RouteInfo{
-					Method:      method,
-					Path:        fullPath,
-					Handler:     handler,
-					Description: inferEndpointDescription(method, fullPath),
-					Middleware:  routeFilter,
-				})
-			}
-			updateDepthAndPop(&groupStack, line, &currentDepth)
-			continue
-		}
-
-		// 4. Check $routes->resource / presenter
-		if rm := resourceRouteRegex.FindStringSubmatch(line); len(rm) >= 3 {
-			resType := strings.ToLower(rm[1])
-			resName := strings.Trim(rm[2], "/")
-			optsRaw := ""
-			if len(rm) >= 4 {
-				optsRaw = rm[3]
-			}
-
-			ctrl := resName
-			if cm := regexp.MustCompile(`['"]controller['"]\s*=>\s*['"]([^'"]+)['"]`).FindStringSubmatch(optsRaw); len(cm) >= 2 {
-				ctrl = cm[1]
-			}
-			ctrlHandler := cleanCIHandler(ctrl, curNamespace)
-			baseResPath := combinePrefixAndPath(curPrefix, resName)
-
-			resourceRoutes := []struct {
-				method string
-				suffix string
-				action string
-			}{
-				{"GET", "", "index"},
-				{"POST", "", "create"},
-				{"GET", "/(:segment)", "show"},
-				{"PUT", "/(:segment)", "update"},
-				{"DELETE", "/(:segment)", "delete"},
-			}
-			if resType == "presenter" {
-				resourceRoutes = append(resourceRoutes,
-					struct {
-						method string
-						suffix string
-						action string
-					}{"GET", "/new", "new"},
-					struct {
-						method string
-						suffix string
-						action string
-					}{"GET", "/(:segment)/edit", "edit"},
-				)
-			}
-
-			for _, rr := range resourceRoutes {
-				p := baseResPath + rr.suffix
-				key := rr.method + " " + p
-				if !seen[key] {
-					seen[key] = true
-					routes = append(routes, models.RouteInfo{
-						Method:      rr.method,
-						Path:        p,
-						Handler:     fmt.Sprintf("%s::%s", ctrlHandler, rr.action),
-						Description: inferEndpointDescription(rr.method, p),
-						Middleware:  curFilter,
-					})
-				}
-			}
-			updateDepthAndPop(&groupStack, line, &currentDepth)
-			continue
-		}
-
-		// Update bracket depth and pop groups if closed
-		updateDepthAndPop(&groupStack, line, &currentDepth)
+		p.handleLine(line)
 	}
-
-	return routes
+	return p.routes
 }
 
 // ParseCodeIgniter3RoutesFromFile extracts routes from a CodeIgniter 3 application/config/routes.php file
