@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DOMPurify from 'dompurify'
 import { renderMarkdown } from '~/utils/markdownSanitizer'
 
 const props = withDefaults(
@@ -41,7 +42,7 @@ const clampStyle = computed(() => {
       compact ? 'markdown-compact text-xs' : 'markdown-full text-xs sm:text-sm'
     ]"
     :style="clampStyle"
-    v-html="renderedHtml"
+    v-html="DOMPurify.sanitize(renderedHtml)"
   />
 </template>
 
