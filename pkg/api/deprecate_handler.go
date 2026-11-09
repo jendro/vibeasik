@@ -1,9 +1,11 @@
 package api
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 type DeprecatePayload struct {
@@ -26,6 +28,9 @@ func (s *Server) deprecateProject(c *fiber.Ctx) error {
 
 	project, err := s.services.Projects.MarkDeprecated(c.Context(), uint(id), reason)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "project not found"})
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
@@ -47,6 +52,9 @@ func (s *Server) activateProject(c *fiber.Ctx) error {
 
 	project, err := s.services.Projects.ActivateProject(c.Context(), uint(id))
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "project not found"})
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
@@ -64,6 +72,9 @@ func (s *Server) holdProject(c *fiber.Ctx) error {
 
 	project, err := s.services.Projects.MarkHold(c.Context(), uint(id))
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "project not found"})
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
@@ -81,6 +92,9 @@ func (s *Server) doneProject(c *fiber.Ctx) error {
 
 	project, err := s.services.Projects.MarkDone(c.Context(), uint(id))
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "project not found"})
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
