@@ -12,6 +12,7 @@ import (
 type ProjectRepository interface {
 	FindAll(ctx context.Context, projectType string, status string) ([]models.Project, error)
 	FindByID(ctx context.Context, id uint) (*models.Project, error)
+	FindByIDs(ctx context.Context, ids []uint) ([]models.Project, error)
 	FindBySlug(ctx context.Context, slug string) (*models.Project, error)
 	Create(ctx context.Context, project *models.Project) error
 	Update(ctx context.Context, project *models.Project) error
@@ -52,6 +53,18 @@ func (r *gormProjectRepository) FindByID(ctx context.Context, id uint) (*models.
 		return nil, err
 	}
 	return &project, nil
+}
+
+func (r *gormProjectRepository) FindByIDs(ctx context.Context, ids []uint) ([]models.Project, error) {
+	if len(ids) == 0 {
+		return []models.Project{}, nil
+	}
+	var projects []models.Project
+	query := r.db.WithContext(ctx).Preload("Components").Where("id IN ?", ids).Order("updated_at desc")
+	if err := query.Find(&projects).Error; err != nil {
+		return nil, err
+	}
+	return projects, nil
 }
 
 func (r *gormProjectRepository) FindBySlug(ctx context.Context, slug string) (*models.Project, error) {

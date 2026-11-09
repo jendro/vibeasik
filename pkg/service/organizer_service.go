@@ -68,6 +68,13 @@ func checkIsGitRepo(path string) (bool, bool) {
 	return false, false
 }
 
+func (s *organizerService) loadProjectsForPlan(ctx context.Context, projectIDs []uint) ([]models.Project, error) {
+	if len(projectIDs) > 0 {
+		return s.projectRepo.FindByIDs(ctx, projectIDs)
+	}
+	return s.projectRepo.FindAll(ctx, "", "")
+}
+
 func (s *organizerService) GenerateReorgPlan(ctx context.Context, req models.ReorgPlanRequest) (*models.ReorgPlan, error) {
 	targetDir := strings.TrimSpace(req.TargetDirectory)
 	if targetDir == "" {
@@ -75,12 +82,12 @@ func (s *organizerService) GenerateReorgPlan(ctx context.Context, req models.Reo
 	}
 	targetDir = filepath.Clean(targetDir)
 
-	projects, err := s.projectRepo.FindAll(ctx, "", "")
+	projects, err := s.loadProjectsForPlan(ctx, req.ProjectIDs)
 	if err != nil {
 		return nil, err
 	}
 
-	filterMap := make(map[uint]bool)
+	filterMap := make(map[uint]bool, len(req.ProjectIDs))
 	for _, id := range req.ProjectIDs {
 		filterMap[id] = true
 	}

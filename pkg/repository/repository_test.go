@@ -73,6 +73,22 @@ func TestRepositories(t *testing.T) {
 			t.Fatalf("FindAll failed: %v, len: %d", err, len(all))
 		}
 
+		// FindByIDs tests
+		byEmptyIDs, err := repos.Projects.FindByIDs(ctx, []uint{})
+		if err != nil || len(byEmptyIDs) != 0 {
+			t.Fatalf("FindByIDs with empty slice failed: %v, len: %d", err, len(byEmptyIDs))
+		}
+
+		byIDs, err := repos.Projects.FindByIDs(ctx, []uint{proj.ID})
+		if err != nil || len(byIDs) != 1 || byIDs[0].ID != proj.ID {
+			t.Fatalf("FindByIDs with valid ID failed: %v, len: %d", err, len(byIDs))
+		}
+
+		byNonExistent, err := repos.Projects.FindByIDs(ctx, []uint{99999})
+		if err != nil || len(byNonExistent) != 0 {
+			t.Fatalf("FindByIDs with nonexistent ID failed: %v, len: %d", err, len(byNonExistent))
+		}
+
 		_ = repos.Projects.UpdateHealthScore(ctx, proj.ID, 95)
 		updated, _ := repos.Projects.FindByID(ctx, proj.ID)
 		if updated.HealthScore != 95 {
