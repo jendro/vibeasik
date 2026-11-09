@@ -19,6 +19,10 @@ const isGroup = computed(() => props.todo.source === 'todo_group')
 const canSplit = computed(() => isGroup.value && !props.agentRun && (props.todo.status === 'pending' || props.todo.status === 'suggested'))
 
 const { formatDateTime } = useFormatters()
+
+// Disembunyikan sementara: "Suruh Agent" mengirim todo ke CLI agent di luar IDE. Todo dikerjakan
+// langsung oleh sub agent di aplikasi AI coding (MCP). Status run yang sudah ada tetap tampil.
+const showDispatch = false
 </script>
 
 <template>
@@ -84,7 +88,7 @@ const { formatDateTime } = useFormatters()
           </template>
         </UButton>
         <UButton
-          v-else-if="todo.status !== 'completed' && todo.status !== 'rejected'"
+          v-else-if="showDispatch && todo.status !== 'completed' && todo.status !== 'rejected'"
           size="xs"
           color="primary"
           variant="soft"
