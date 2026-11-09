@@ -40,6 +40,7 @@ const subTodosByParent = computed(() => {
 // Satuan kerja yang dihitung di rekap: sub todo sudah terwakili todo gabungannya.
 const workTodos = computed(() => projectTodos.value.filter(t => !isSubTodo(t)))
 const mergeOpen = ref(false)
+const promptsOpen = ref(false)
 
 const pendingAISuggestionsCount = computed(() => {
   return projectTodos.value.filter(t => t.status === 'suggested').length
@@ -164,6 +165,7 @@ const { handleApprove, handleReject, handleSplit, handleUpdateStatus, handleDele
       @toggle-autopilot="handleToggleAutopilot"
       @open-merge="mergeOpen = true"
       @open-batch="batchOpen = true"
+      @open-prompts="promptsOpen = true"
     />
 
     <TodosTodoProjectBanner
@@ -309,6 +311,12 @@ const { handleApprove, handleReject, handleSplit, handleUpdateStatus, handleDele
       v-model:open="mergeOpen"
       :project-id="activeProjectId ?? undefined"
       @merged="loadData()"
+    />
+
+    <TodosTodoAgentPromptModal
+      v-model:open="promptsOpen"
+      :project-id="activeProjectId ?? undefined"
+      :project-name="activeProject?.name"
     />
 
     <OrchestratorDispatchModal

@@ -17,6 +17,7 @@ const emit = defineEmits<{
   toggleAutopilot: [value: boolean]
   openMerge: []
   openBatch: []
+  openPrompts: []
 }>()
 const handleToggleAutopilot = (value: boolean) => emit('toggleAutopilot', value)
 </script>
@@ -61,6 +62,18 @@ const handleToggleAutopilot = (value: boolean) => emit('toggleAutopilot', value)
         @click="emit('refresh')"
       >
         Refresh
+      </UButton>
+
+      <UButton
+        v-if="activeProjectId"
+        icon="i-lucide-clipboard-copy"
+        color="neutral"
+        variant="outline"
+        size="sm"
+        title="Prompt siap copas untuk menyuruh Claude Code, Antigravity, Cline, Cursor, atau Codex mengerjakan todo lewat MCP vibeasik"
+        @click="emit('openPrompts')"
+      >
+        Prompt Agent
       </UButton>
 
       <UButton
