@@ -333,3 +333,40 @@ func TestLoadComponentAndStatus_OptimizedProjection(t *testing.T) {
 	}
 }
 
+func BenchmarkLoadComponent_Projected(b *testing.B) {
+	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+	_ = db.AutoMigrate(&models.Project{}, &models.Component{})
+	c := models.Component{
+		ID:           1,
+		ProjectID:    1,
+		Name:         "frontend",
+		Role:         models.RoleFrontendClient,
+		DevCommand:   "npm run dev",
+		AbsolutePath: "/tmp/fe",
+		Port:         3000,
+		RunPort:      4120,
+	}
+	db.Create(&c)
+	for i := 2; i <= 10; i++ {
+		db.Create(&models.Component{
+			ID:         uint(i),
+			ProjectID:  1,
+			Name:       fmt.Sprintf("comp-%d", i),
+			Role:       models.RoleBackend,
+			DevCommand: "go run .",
+			Port:       8000 + i,
+			RunPort:    4200 + i,
+		})
+	}
+	svc := NewService(db)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_, _, err := svc.loadComponent(1)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
