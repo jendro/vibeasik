@@ -60,8 +60,8 @@ func TestPayloadValidationRejects(t *testing.T) {
 		// Komponen, rute, port, runner
 		{"PUT", "/api/components/1/routes/1", `{"description":"` + long + `"}`, "description"},
 		{"POST", "/api/components/1/routes/sync", ``, ""}, // tanpa payload: id valid, lolos validasi (bukan 400 payload)
-		{"POST", "/api/components/1/port", `{"port":70000}`, "port"},
-		{"POST", "/api/components/1/port", `{rusak`, "tidak valid"},
+		{"POST", "/api/components/1/ports", `{"port":70000}`, "port"},
+		{"POST", "/api/components/1/ports", `{rusak`, "tidak valid"},
 		{"POST", "/api/projects/abc/ensure-unique-ports", ``, "invalid project id"},
 		{"POST", "/api/projects/0/ensure-unique-ports", ``, "invalid project id"},
 		// Pengaturan LLM

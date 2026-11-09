@@ -21,7 +21,7 @@ export const useRunner = () => {
   }
 
   const assignPort = async (componentId: number, payload: { port?: number, reassign?: boolean }): Promise<{ component_id: number, run_port: number }> => {
-    return await $fetch(`${apiBase}/api/components/${componentId}/port`, { method: 'POST', body: payload })
+    return await $fetch(`${apiBase}/api/components/${componentId}/ports`, { method: 'POST', body: payload })
   }
 
   const getPortRegistry = async (): Promise<PortRegistryResponse> => {

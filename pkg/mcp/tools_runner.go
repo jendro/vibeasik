@@ -141,7 +141,7 @@ func (s *Server) toolAssignPort(args map[string]interface{}) (*ToolCallResult, e
 	port := int(argUint(args, "port"))
 	force, _ := args["reassign"].(bool)
 	if s.daemonURL != "" {
-		return s.daemonCall(http.MethodPost, fmt.Sprintf("/api/components/%d/port", cid), map[string]interface{}{"port": port, "reassign": force})
+		return s.daemonCall(http.MethodPost, fmt.Sprintf("/api/components/%d/ports", cid), map[string]interface{}{"port": port, "reassign": force})
 	}
 	comp, err := s.runner.AssignPort(cid, port, force)
 	if err != nil {

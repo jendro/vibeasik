@@ -170,7 +170,7 @@ func TestLocalAccess_MutationFailClosedSecurityBoundary(t *testing.T) {
 		{"PUT", "/api/components/1/routes/1", `{"path":"/new"}`},
 		{"DELETE", "/api/components/1/routes/1", `{}`},
 		{"POST", "/api/components/1/diagnose", `{}`},
-		{"POST", "/api/components/1/port", `{"port":3000}`},
+		{"POST", "/api/components/1/ports", `{"port":3000}`},
 		{"POST", "/api/components/1/run", `{}`},
 		{"POST", "/api/components/1/stop", `{}`},
 		{"POST", "/api/ports/ensure-unique", `{}`},
