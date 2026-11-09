@@ -118,7 +118,14 @@ const sourceLabel: Record<string, string> = {
             <UIcon name="i-lucide-x" class="w-5 h-5" />
           </button>
         </div>
-        <img :src="previewShot.src" :alt="previewShot.name" class="w-full rounded-xl shadow-2xl" style="aspect-ratio: auto 16/9">
+        <img
+          loading="lazy"
+          decoding="async"
+          :src="previewShot.src"
+          :alt="previewShot.name"
+          class="w-full rounded-xl shadow-2xl"
+          style="aspect-ratio: auto 16/9"
+        >
       </div>
     </div>
   </div>

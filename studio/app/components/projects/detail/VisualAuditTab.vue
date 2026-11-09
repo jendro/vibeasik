@@ -311,6 +311,8 @@ const quickRoutes = ['/', '/dashboard', '/login', '/admin', '/products', '/setti
           </div>
           <div class="max-h-[80vh] overflow-auto flex items-center justify-center">
             <img
+              loading="lazy"
+              decoding="async"
               :src="latestCapture?.image_path || latestAudit?.screenshot_path"
               alt="Full Resolution Screenshot"
               class="max-w-full h-auto rounded"
