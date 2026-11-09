@@ -175,3 +175,35 @@ func TestInspectAssetFile(t *testing.T) {
 		t.Errorf("small asset must not be flagged")
 	}
 }
+
+// Gambar di dalam overlay kondisional (UModal, layer v-if fixed inset-0, komponen *Lightbox) baru dirender
+// saat dibuka dan langsung terlihat, jadi FE-IMG-NO-LAZY tidak boleh muncul; gambar biasa tetap ditandai.
+func TestInspectLazyImageSkipsOverlays(t *testing.T) {
+	overlay := `<template>
+  <div>
+    <img :src="cover" alt="c" width="10" height="10">
+    <UModal :open="open">
+      <template #content>
+        <img :src="full" alt="f" class="max-w-full h-auto">
+      </template>
+    </UModal>
+    <div
+      v-if="preview"
+      class="fixed inset-0 z-50"
+    >
+      <img :src="preview.src" :alt="preview.name" class="w-full">
+    </div>
+  </div>
+</template>
+`
+	got := InspectFile(writeFixture(t, t.TempDir(), "app/pages/gal.vue", overlay), "app/pages/gal.vue", "vue")
+	f, ok := ruleSet(got)["FE-IMG-NO-LAZY"]
+	if !ok || f.Line != 3 || !strings.Contains(f.Description, "1 tag") {
+		t.Fatalf("only the inline image (line 3) must be flagged, got %+v", f)
+	}
+
+	box := "<template>\n  <img :src=\"u\" alt=\"x\" width=\"1\" height=\"1\">\n</template>\n"
+	if _, ok := ruleSet(InspectFile(writeFixture(t, t.TempDir(), "components/ShotLightbox.vue", box), "components/ShotLightbox.vue", "vue"))["FE-IMG-NO-LAZY"]; ok {
+		t.Fatal("images in a *Lightbox component must not be flagged")
+	}
+}

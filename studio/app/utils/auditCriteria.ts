@@ -1024,9 +1024,9 @@ export const AUDIT_CRITERIA: AuditCriterion[] = [
     title: 'Gambar Tanpa loading="lazy"',
     scope: 'Frontend (FE)',
     severity: 'info',
-    rule: 'Gambar di bawah lipatan layar (galeri, kartu, daftar) wajib memakai loading="lazy" dan decoding="async".',
-    rationale: 'Tanpa lazy loading, semua gambar diunduh saat halaman dibuka sehingga LCP dan kuota data pengguna terbuang.',
-    inspection_check: 'Mendeteksi tag <img> tanpa atribut loading.',
+    rule: 'Gambar di bawah lipatan layar (galeri, kartu, daftar) wajib memakai loading="lazy" dan decoding="async". Gambar di dalam overlay kondisional (modal, lightbox, drawer) dikecualikan karena baru dirender saat dibuka.',
+    rationale: 'Tanpa lazy loading, semua gambar diunduh saat halaman dibuka sehingga LCP dan kuota data pengguna terbuang. Gambar overlay sudah tertunda oleh v-if dan langsung terlihat saat dibuka, sehingga lazy hanya menunda tampilnya.',
+    inspection_check: 'Mendeteksi tag <img> tanpa atribut loading, kecuali di dalam UModal/USlideover/UDrawer/Teleport/<dialog>, layer v-if "fixed inset-0", atau komponen *Lightbox/*Modal/*Dialog.',
     suggested_action: 'Tambahkan loading="lazy"; untuk gambar hero di atas lipatan gunakan fetchpriority="high".',
     example_code: {
       bad: '<img :src="shot.url" alt="Screenshot">',

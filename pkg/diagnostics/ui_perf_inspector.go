@@ -714,6 +714,7 @@ func (c *feCounter) add(n, idx int) {
 // feScan menyimpan status pemindaian satu berkas frontend.
 type feScan struct {
 	set                                *uiIssueSet
+	overlayFile                        bool
 	lines                              []string
 	lang                               string
 	isMarkup, isAppSource              bool
@@ -731,6 +732,7 @@ func newFEScan(set *uiIssueSet, content, relPath, lang string, lines []string) *
 		lang:        lang,
 		isMarkup:    isMarkup,
 		isAppSource: isMarkup || isFrontendSourcePath(strings.ToLower(filepath.ToSlash(relPath))),
+		overlayFile: feOverlayFileRegex.MatchString(filepath.Base(relPath)),
 		// Listener / timer leak: dihitung per berkas
 		listenerUnpaired: strings.Contains(content, "addEventListener(") && !strings.Contains(content, "removeEventListener("),
 		intervalUnpaired: strings.Contains(content, "setInterval(") && !strings.Contains(content, "clearInterval("),
@@ -809,6 +811,45 @@ func (s *feScan) checkVFor(idx int, line string) {
 	}
 }
 
+// feOverlayFileRegex: komponen yang seluruhnya overlay (lightbox/modal/dialog) — gambarnya baru dirender saat dibuka.
+var feOverlayFileRegex = regexp.MustCompile(`(?i)(lightbox|modal|dialog|drawer|slideover|popover)\.(vue|svelte|tsx|jsx)$`)
+
+// feOverlayOpen: pembuka overlay yang isinya baru dipasang saat dibuka (Nuxt UI, Teleport, <dialog>, atau
+// layer v-if fixed inset-0 buatan sendiri).
+var (
+	feOverlayOpenRegex  = regexp.MustCompile(`<(UModal|USlideover|UDrawer|UPopover|Teleport|dialog)\b`)
+	feOverlayCloseRegex = regexp.MustCompile(`</(UModal|USlideover|UDrawer|UPopover|Teleport|dialog)>`)
+)
+
+// inOverlay: apakah baris idx berada di dalam overlay kondisional (dicari mundur maks 40 baris). Gambar di sana
+// tidak ikut diunduh saat halaman dibuka dan langsung terlihat begitu overlay muncul, jadi loading="lazy"
+// tidak berguna — bahkan bisa menunda gambar lightbox (patokan K3497: atribut loading ditentukan per-slot).
+func (s *feScan) inOverlay(idx int) bool {
+	for j := idx - 1; j >= 0 && j >= idx-40; j-- {
+		l := s.lines[j]
+		if feOverlayCloseRegex.MatchString(l) {
+			return false
+		}
+		if feOverlayOpenRegex.MatchString(l) {
+			return true
+		}
+		if strings.Contains(l, "fixed inset-0") && strings.Contains(tagSpanBack(s.lines, j), "v-if=") {
+			return true
+		}
+	}
+	return false
+}
+
+// tagSpanBack: teks tag yang memuat baris j (mundur ke '<' pembuka maks 5 baris, lalu maju lewat tagSpan).
+func tagSpanBack(lines []string, j int) string {
+	for k := j; k >= 0 && k >= j-5; k-- {
+		if p := strings.LastIndex(lines[k], "<"); p >= 0 {
+			return tagSpan(lines, k, p)
+		}
+	}
+	return lines[j]
+}
+
 // checkImages: <img> — dimensi, alt, lazy.
 func (s *feScan) checkImages(idx int, line string) {
 	for _, loc := range feImgTagRegex.FindAllStringIndex(line, -1) {
@@ -821,7 +862,7 @@ func (s *feScan) checkImages(idx int, line string) {
 		if !strings.Contains(tag, "alt=") && !strings.Contains(tag, ":alt=") {
 			s.set.hit("FE-IMG-MISSING-ALT", idx)
 		}
-		if !strings.Contains(tag, "loading=") {
+		if !strings.Contains(tag, "loading=") && !s.overlayFile && !s.inOverlay(idx) {
 			s.set.hit("FE-IMG-NO-LAZY", idx)
 		}
 	}
