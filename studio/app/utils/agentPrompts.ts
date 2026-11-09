@@ -41,11 +41,12 @@ const divisionSteps = (p: AgentPromptProject) =>
 
 const workerSteps = (p: AgentPromptProject, key: string) =>
   `1. Panggil \`vibeasik_todo_dispatch_plan\` {project_id: ${p.id}, coordinator: "${key}"} sebagai langkah PERTAMA. Kamu koordinator mode worker: jangan mengedit kode sendiri.\n`
-  + '2. Bila hasilnya punya `note` "delegate/workers diabaikan", berhenti dan laporkan note itu ke saya — jangan mengerjakan todo sendiri tanpa persetujuan saya.\n'
-  + '3. Untuk tiap todo di `next_wave` yang punya `delegate`: kirim lewat `vibeasik_dispatch_agent` {todo_id, profile_id: delegate.profile_id}. Jangan memanggil `update_todo` untuk todo itu — orkestrator mengurus worktree, QA gate, merge, dan statusnya.\n'
-  + '4. Tunggu dengan `vibeasik_agent_runs` {todo_ids: [...], wait_sec: 300}, ulangi sampai `active` = 0, lalu periksa hasil tiap run.\n'
-  + '5. Todo tanpa `delegate` (tidak ada worker): jangan kerjakan di percakapan ini agar konteks tidak menumpuk. Laporkan daftarnya (todo_id + judul) dan minta saya membuka percakapan baru per todo.\n'
-  + '6. Panggil `vibeasik_todo_dispatch_plan` lagi sampai `next_wave` kosong.\n\n'
+  + '2. Bila hasilnya punya `note` "delegate/workers diabaikan" atau "PERINGATAN", atau tidak ada satu pun todo di `next_wave` yang punya `delegate`, berhenti dan laporkan itu ke saya — jangan mengerjakan todo sendiri tanpa persetujuan saya.\n'
+  + '3. Buat daftar tugas (task list/checklist) berisi tiap todo `next_wave`: `#todo_id judul — employee → delegate.profile_name`, lalu perbarui statusnya (dikirim, berjalan, selesai + nilai QA) sepanjang percakapan.\n'
+  + '4. Untuk tiap todo di `next_wave` yang punya `delegate`: kirim lewat `vibeasik_dispatch_agent` {todo_id, profile_id: delegate.profile_id} — proses agent baru itulah sub agent-nya, bekerja sebagai pegawai di kolom `employee`. Jangan memanggil `update_todo` untuk todo itu — orkestrator mengurus worktree, QA gate, merge, dan statusnya.\n'
+  + '5. Tunggu dengan `vibeasik_agent_runs` {todo_ids: [...], wait_sec: 300}, ulangi sampai `active` = 0, lalu periksa hasil tiap run.\n'
+  + '6. Todo tanpa `delegate` (tidak ada worker): jangan kerjakan di percakapan ini agar konteks tidak menumpuk. Laporkan daftarnya (todo_id + judul) dan minta saya membuka percakapan baru per todo.\n'
+  + '7. Panggil `vibeasik_todo_dispatch_plan` lagi sampai `next_wave` kosong.\n\n'
 
 export function buildAgentPrompt(target: AgentPromptTarget, project: AgentPromptProject): string {
   const steps = target.subagents ? divisionSteps(project) : workerSteps(project, target.key)
