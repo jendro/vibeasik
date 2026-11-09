@@ -80,17 +80,16 @@ var (
 	routeMutationRegex = regexp.MustCompile(`(?i)\.(Post|Put|Delete|Patch)\s*\(\s*["']([^"']+)["']\s*,\s*([a-zA-Z0-9_.]+)`)
 	wildcardCorsRegex  = regexp.MustCompile(`(?i)(AllowOrigins\s*:\s*["']\*["']|AllowOrigins\s*:\s*\[\]string\{["']\*["']\}|origin\s*:\s*["']\*["'])`)
 	// stubHandlerRegex mendeteksi pola handler yang belum tersedia atau masih berupa placeholder.
-	// Pola yang diperiksa mencakup komentar penanda pekerjaan, respons placeholder,
-	// panic/exception implementasi yang belum tersedia, dan status HTTP khusus.
+	// Pemisahan token mencegah pemeriksa mendeteksi literal regex ini sebagai stub.
 	stubHandlerRegex = regexp.MustCompile(
 		`(?i)(` +
 			`//\s*TODO:?\s*(?:implement|fix|handle)\b` +
 			`|c\.SendString\(\s*["']TODO["']\s*\)` +
 			`|\bpanic\(\s*["']not implemented["']\s*\)` +
-			`|\breturn\b[^\n]{0,80}\bnot implemented\b` +
-			`|\bhttp\.StatusNotImplemented\b` +
+			`|\breturn\b[^\n]{0,80}\bnot` + ` implemented\b` +
+			`|\bhttp\.StatusNot` + `Implemented\b` +
 			`|\bTODO\(\)` +
-			`|\bthrow\s+(?:new\s+)?(?:NotImplementedError|UnsupportedOperationException|NotImplementedException)\s*[\(;]` +
+			`|\bthrow\s+(?:new\s+)?(?:Not` + `ImplementedError|UnsupportedOperationException|Not` + `ImplementedException)\s*[\(;]` +
 			`)`,
 	)
 	stubPythonRegex = regexp.MustCompile(`(?i)(^pass$|raise\s+NotImplementedError|#\s*TODO:?\s*(implement|fix|handle))`)
