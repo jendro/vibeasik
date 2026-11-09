@@ -259,6 +259,9 @@ func frontendSuggestions(project *models.Project, comp *models.Component) []mode
 func dirHasFileSuffix(dir string, suffixes ...string) bool {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
+		if !os.IsNotExist(err) {
+			log.Printf("[WARN] dirHasFileSuffix: os.ReadDir(%q): %v", dir, err)
+		}
 		return false
 	}
 	for _, e := range entries {

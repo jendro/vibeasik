@@ -8,6 +8,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -320,10 +321,8 @@ func rootInfos(roots []scanRoot) []rootInfo {
 				ri.dartPkg = string(m[1])
 			}
 		}
-		if fi, err := os.Stat(filepath.Join(r.absDir, "app")); err == nil && fi.IsDir() {
-			if _, err := os.Stat(filepath.Join(r.absDir, "nuxt.config.ts")); err == nil {
-				ri.srcDir = "app"
-			}
+		if isDir(filepath.Join(r.absDir, "app")) && exists(filepath.Join(r.absDir, "nuxt.config.ts")) {
+			ri.srcDir = "app"
 		}
 		out = append(out, ri)
 	}
@@ -598,7 +597,9 @@ func saveMeta(tx *gorm.DB, projectID uint, root string, entries []*models.CodeMa
 		}
 	}
 	var meta models.CodeMap
-	tx.Where("project_id = ?", projectID).First(&meta)
+	if err := tx.Where("project_id = ?", projectID).First(&meta).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
 	meta.ProjectID, meta.RootPath = projectID, root
 	meta.FileCount, meta.SymbolCount, meta.EnrichedCount = len(entries), symbols, enriched
 	meta.LanguagesJSON, meta.KindsJSON = toJSON(langs), toJSON(kinds)

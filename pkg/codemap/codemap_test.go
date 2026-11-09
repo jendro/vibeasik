@@ -333,6 +333,111 @@ func TestExistsPredicateContract(t *testing.T) {
 	}
 }
 
+func TestIsDirPredicateContract(t *testing.T) {
+	tmpDir := t.TempDir()
+	existingDir := filepath.Join(tmpDir, "existdir")
+	if err := os.Mkdir(existingDir, 0o755); err != nil {
+		t.Fatalf("gagal membuat direktori uji: %v", err)
+	}
+
+	var logBuf bytes.Buffer
+	origWriter := log.Writer()
+	log.SetOutput(&logBuf)
+	defer log.SetOutput(origWriter)
+
+	if !isDir(existingDir) {
+		t.Fatalf("isDir(%q) = false, ekspektasi true untuk direktori yang ada", existingDir)
+	}
+	if logBuf.Len() > 0 {
+		t.Fatalf("ekspektasi tidak ada log pada direktori yang ada, didapat: %s", logBuf.String())
+	}
+
+	// File biasa bukan direktori
+	regularFile := filepath.Join(tmpDir, "file.txt")
+	if err := os.WriteFile(regularFile, []byte("ok"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	logBuf.Reset()
+	if isDir(regularFile) {
+		t.Fatalf("isDir(%q) = true, ekspektasi false untuk regular file", regularFile)
+	}
+
+	// IsNotExist adalah jalur normal (predikat boolean murni), tidak ada log
+	logBuf.Reset()
+	missingDir := filepath.Join(tmpDir, "missingdir")
+	if isDir(missingDir) {
+		t.Fatalf("isDir(%q) = true, ekspektasi false untuk direktori tidak ada", missingDir)
+	}
+	if logBuf.Len() > 0 {
+		t.Fatalf("ekspektasi tidak ada log pada IsNotExist, didapat: %s", logBuf.String())
+	}
+
+	// Error sistem non-IsNotExist (misal permission denied) -> return false dan log [WARN]
+	if os.Geteuid() != 0 {
+		logBuf.Reset()
+		forbiddenDir := filepath.Join(tmpDir, "forbidden")
+		if err := os.Mkdir(forbiddenDir, 0o700); err != nil {
+			t.Fatalf("gagal membuat direktori uji: %v", err)
+		}
+		if err := os.Chmod(forbiddenDir, 0o000); err != nil {
+			t.Fatalf("gagal chmod: %v", err)
+		}
+		t.Cleanup(func() {
+			_ = os.Chmod(forbiddenDir, 0o700)
+		})
+		unreachableDir := filepath.Join(forbiddenDir, "child")
+		if isDir(unreachableDir) {
+			t.Fatalf("isDir(%q) = true, ekspektasi false pada permission denied", unreachableDir)
+		}
+		if !strings.Contains(logBuf.String(), "[WARN] isDir: os.Stat") {
+			t.Fatalf("ekspektasi log memuat '[WARN] isDir: os.Stat', didapat: %q", logBuf.String())
+		}
+	}
+}
+
+func TestSaveMetaDatabaseError(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Jangan migrasi tabel CodeMap agar query First(&meta) gagal dengan error non-ErrRecordNotFound
+	err = db.Transaction(func(tx *gorm.DB) error {
+		return saveMeta(tx, 1, "/test", nil, 10*time.Millisecond)
+	})
+	if err == nil {
+		t.Fatal("ekspektasi saveMeta mengembalikan error saat tabel database tidak ada / query gagal, didapat nil")
+	}
+}
+
+func TestNuxtRootsDetection(t *testing.T) {
+	root := t.TempDir()
+	appDir := filepath.Join(root, "app")
+	if err := os.Mkdir(appDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "nuxt.config.ts"), []byte("// config"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	p := models.Project{
+		ID:       1,
+		RootPath: root,
+		Components: []models.Component{
+			{Name: "web", Role: "frontend_admin", Framework: "nuxt", AbsolutePath: root},
+		},
+	}
+	roots := rootsFor(p)
+	if len(roots) == 0 {
+		t.Fatal("ekspektasi ada roots")
+	}
+	infos := rootInfos(roots)
+	if len(infos) == 0 {
+		t.Fatal("ekspektasi ada rootInfos")
+	}
+	if infos[0].srcDir != "app" {
+		t.Fatalf("infos[0].srcDir = %q, want 'app'", infos[0].srcDir)
+	}
+}
+
 func TestEffectiveRootHelpersBoundary(t *testing.T) {
 	tmp := t.TempDir()
 

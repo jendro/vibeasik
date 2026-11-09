@@ -132,6 +132,9 @@ func GenerateFolderTree(root string, maxDepth int) string {
 		}
 		entries, err := os.ReadDir(current)
 		if err != nil {
+			if !os.IsNotExist(err) {
+				log.Printf("[WARN] GenerateFolderTree: os.ReadDir(%q): %v", current, err)
+			}
 			return
 		}
 		for i, entry := range entries {

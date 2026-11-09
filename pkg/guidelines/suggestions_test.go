@@ -128,5 +128,69 @@ func TestFilePredicates(t *testing.T) {
 	if buf.Len() > 0 {
 		t.Errorf("expected no warning logs for normal missing/existing files, got: %s", buf.String())
 	}
+
+	// Normal missing directory for dirHasFileSuffix -> return false tanpa warning log
+	buf.Reset()
+	missingDir := filepath.Join(tmp, "missing_dir")
+	if dirHasFileSuffix(missingDir, ".go") {
+		t.Errorf("dirHasFileSuffix(%q) = true, want false", missingDir)
+	}
+	if buf.Len() > 0 {
+		t.Errorf("expected no warning logs for normal missing dir, got: %s", buf.String())
+	}
+
+	// Normal existing directory with file matching suffix
+	subDir := filepath.Join(tmp, "sub")
+	if err := os.Mkdir(subDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(subDir, "main.go"), []byte("package main"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if !dirHasFileSuffix(subDir, ".go") {
+		t.Errorf("dirHasFileSuffix(%q, .go) = false, want true", subDir)
+	}
+
+	// Error sistem non-IsNotExist (permission denied) -> log [WARN] dan perilaku aman
+	if os.Geteuid() != 0 {
+		forbiddenDir := filepath.Join(tmp, "forbidden")
+		if err := os.Mkdir(forbiddenDir, 0o700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Chmod(forbiddenDir, 0o000); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() {
+			_ = os.Chmod(forbiddenDir, 0o700)
+		})
+
+		// 1. fileExists pada unreadable path -> false dan log [WARN]
+		buf.Reset()
+		unreadable := filepath.Join(forbiddenDir, "secret.txt")
+		if fileExists(unreadable) {
+			t.Errorf("fileExists(%q) = true, want false on permission error", unreadable)
+		}
+		if !strings.Contains(buf.String(), "[WARN] fileExists: os.Stat") {
+			t.Errorf("expected log to contain '[WARN] fileExists: os.Stat', got: %s", buf.String())
+		}
+
+		// 2. fileMissing pada unreadable path -> false dan log [WARN] (fail-safe: jangan memicu saran keliru)
+		buf.Reset()
+		if fileMissing(unreadable) {
+			t.Errorf("fileMissing(%q) = true, want false on permission error", unreadable)
+		}
+		if !strings.Contains(buf.String(), "[WARN] fileMissing: os.Stat") {
+			t.Errorf("expected log to contain '[WARN] fileMissing: os.Stat', got: %s", buf.String())
+		}
+
+		// 3. dirHasFileSuffix pada forbidden directory -> false dan log [WARN]
+		buf.Reset()
+		if dirHasFileSuffix(forbiddenDir, ".go") {
+			t.Errorf("dirHasFileSuffix(%q) = true, want false on permission error", forbiddenDir)
+		}
+		if !strings.Contains(buf.String(), "[WARN] dirHasFileSuffix: os.ReadDir") {
+			t.Errorf("expected log to contain '[WARN] dirHasFileSuffix: os.ReadDir', got: %s", buf.String())
+		}
+	}
 }
 
