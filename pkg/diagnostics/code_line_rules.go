@@ -16,6 +16,7 @@ type fileScan struct {
 	isControllerOrHandler bool
 	guardedGroups         map[string]bool
 	inLoop                bool
+	inRawString           bool
 	lineNum               int
 	trimmed               string
 }
@@ -148,6 +149,9 @@ func ruleTrackGuardedGroups(s *fileScan) (models.Finding, bool) {
 }
 
 func ruleUnguardedMutation(s *fileScan) (models.Finding, bool) {
+	if s.inRawString {
+		return models.Finding{}, false
+	}
 	matches := routeMutationRegex.FindStringSubmatch(s.trimmed)
 	if !s.isServer || len(matches) < 3 || routeOnGuardedGroup(s.trimmed, s.guardedGroups) {
 		return models.Finding{}, false
@@ -383,13 +387,34 @@ func godControllerFinding(relPath string, lines []string) models.Finding {
 	}
 }
 
+// rawStringTracker melacak apakah baris berada dalam multiline raw string literal (backticks).
+type rawStringTracker struct {
+	inRaw bool
+}
+
+func (r *rawStringTracker) update(trimmed string) bool {
+	ticks := strings.Count(trimmed, "`")
+	if !r.inRaw {
+		if ticks%2 != 0 {
+			r.inRaw = true
+		}
+		return false
+	}
+	if ticks%2 != 0 {
+		r.inRaw = false
+	}
+	return true
+}
+
 // scanCodeLines menjalankan seluruh aturan per-baris pada isi berkas.
 func scanCodeLines(s *fileScan, lines []string) []models.Finding {
 	var findings []models.Finding
 	var loops loopTracker
+	var rawStrings rawStringTracker
 	for idx, line := range lines {
 		s.lineNum = idx + 1
 		s.trimmed = strings.TrimSpace(line)
+		s.inRawString = rawStrings.update(s.trimmed)
 		if isCommentLine(s.lang, s.trimmed) {
 			if isStubLine(s.lang, s.trimmed) {
 				findings = append(findings, stubHandlerFinding(s.relPath, s.lineNum, s.trimmed))

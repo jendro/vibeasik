@@ -31,6 +31,9 @@ func refineRouterFindings(findings []models.Finding, dir, baseRel string, hasGo 
 		rt := routemap.RouteAt(graphs, filepath.ToSlash(f.TargetFile), f.Line)
 		switch {
 		case rt == nil:
+			if isNonRouteFile(f.TargetFile) {
+				continue
+			}
 			out = append(out, f)
 		case rt.Auth || rt.Unreachable:
 			continue
@@ -116,4 +119,13 @@ func splitPos(pos string) (string, int) {
 	n := 0
 	fmt.Sscanf(ln, "%d", &n)
 	return file, n
+}
+
+// isNonRouteFile mengidentifikasi berkas yang bukan bagian dari lapisan rute/handler (mis. service, repository, model).
+func isNonRouteFile(file string) bool {
+	f := strings.ToLower(file)
+	if strings.Contains(f, "handler") || strings.Contains(f, "controller") || strings.Contains(f, "router") || strings.Contains(f, "routes") || strings.Contains(f, "server") || strings.HasSuffix(f, "main.go") {
+		return false
+	}
+	return strings.Contains(f, "service") || strings.Contains(f, "model") || strings.Contains(f, "repository")
 }

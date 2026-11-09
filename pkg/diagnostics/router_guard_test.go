@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
 func TestRouterUnguardedMutation_GroupMiddleware(t *testing.T) {
@@ -71,5 +73,94 @@ func main() {
 	}
 	if len(got) != 1 || got[0] != "be/main.go:10" {
 		t.Fatalf("auth() dipasang ulang di rute (be/main.go:10), dapat %v", got)
+	}
+}
+
+// TestRouterGlobalMiddlewareLocalAccessRecognized memverifikasi bahwa middleware global seperti s.localAccess
+// dihitung sebagai security boundary efektif oleh routemap & diagnostics sehingga rute mutasi tidak
+// menghasilkan false positive ROUTER-UNGUARDED-MUTATION (todo #3503).
+func TestRouterGlobalMiddlewareLocalAccessRecognized(t *testing.T) {
+	dir := t.TempDir()
+	files := map[string]string{
+		"go.mod": "module demo\n\ngo 1.22\n",
+		"main.go": `package main
+
+import "github.com/gofiber/fiber/v2"
+
+type Server struct{}
+
+func (s *Server) localAccess(c *fiber.Ctx) error { return c.Next() }
+
+func (s *Server) setupRoutes(app *fiber.App) {
+	app.Use(s.localAccess)
+	api := app.Group("/api")
+	api.Post("/setup/database/test", func(c *fiber.Ctx) error { return c.SendStatus(200) })
+	api.Post("/projects", func(c *fiber.Ctx) error { return c.SendStatus(201) })
+}
+
+func main() {
+	app := fiber.New()
+	s := &Server{}
+	s.setupRoutes(app)
+	app.Listen(":3000")
+}
+`,
+	}
+	for p, src := range files {
+		if err := os.WriteFile(filepath.Join(dir, p), []byte(src), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var hits []models.Finding
+	for _, f := range InspectDirectory(dir, "demo") {
+		if f.RuleID == "ROUTER-UNGUARDED-MUTATION" {
+			hits = append(hits, f)
+		}
+	}
+	if len(hits) != 0 {
+		t.Fatalf("diharapkan 0 temuan ROUTER-UNGUARDED-MUTATION karena dilindungi s.localAccess global, tapi dapat %d: %+v", len(hits), hits)
+	}
+}
+
+// TestRouterUnguardedMutation_SkipsRawStringCodeSamples memverifikasi bahwa string literal yang berisi
+// potongan kode rute (seperti di scaleup_service.go) tidak memicu temuan ROUTER-UNGUARDED-MUTATION (todo #3503).
+func TestRouterUnguardedMutation_SkipsRawStringCodeSamples(t *testing.T) {
+	src := "package service\n\n" +
+		"type Snippet struct { Code string }\n\n" +
+		"var Sample = Snippet{\n" +
+		"\tCode: `// router sample\n" +
+		"func setup(app *fiber.App) {\n" +
+		"\tprojects := app.Group(\"/projects\")\n" +
+		"\tprojects.Post(\"/\", createProject)\n" +
+		"\tprojects.Post(\"/projects\", createProject)\n" +
+		"}`,\n" +
+		"}\n"
+	dir := t.TempDir()
+	path := filepath.Join(dir, "service", "scaleup_service.go")
+	_ = os.MkdirAll(filepath.Dir(path), 0o755)
+	if err := os.WriteFile(path, []byte(src), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// 1. InspectFile langsung (tanpa routemap)
+	var fileHits []models.Finding
+	for _, f := range InspectFile(path, "service/scaleup_service.go", "go") {
+		if f.RuleID == "ROUTER-UNGUARDED-MUTATION" {
+			fileHits = append(fileHits, f)
+		}
+	}
+	if len(fileHits) != 0 {
+		t.Fatalf("InspectFile seharusnya mengabaikan rute di dalam raw string, dapat %d temuan: %+v", len(fileHits), fileHits)
+	}
+
+	// 2. InspectDirectory
+	var dirHits []models.Finding
+	for _, f := range InspectDirectory(dir, "demo") {
+		if f.RuleID == "ROUTER-UNGUARDED-MUTATION" {
+			dirHits = append(dirHits, f)
+		}
+	}
+	if len(dirHits) != 0 {
+		t.Fatalf("InspectDirectory seharusnya tidak melaporkan rute di berkas service/non-route, dapat %d temuan: %+v", len(dirHits), dirHits)
 	}
 }

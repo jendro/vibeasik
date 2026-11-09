@@ -308,7 +308,7 @@ func isAndroidSourceFile(relPath string, content string) bool {
 // InspectFile performs in-depth AST & regex audits on a single source file
 // hasAuthMiddleware: baris memuat middleware autentikasi/otorisasi (heuristik nama).
 func hasAuthMiddleware(line string) bool {
-	for _, k := range []string{"Auth", "Jwt", "JWT", "Protect", "Guard", "Require", "Role", "Perm", "Session", "Token", "Secure"} {
+	for _, k := range []string{"Auth", "Jwt", "JWT", "Protect", "Guard", "Require", "Role", "Perm", "Session", "Token", "Secure", "localAccess", "LocalAccess", "ExecAccess"} {
 		if strings.Contains(line, k) {
 			return true
 		}
