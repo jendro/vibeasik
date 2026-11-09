@@ -183,13 +183,13 @@ func (s *Server) createTodo(c *fiber.Ctx) error {
 		return badPayload(c, msg)
 	}
 
+	if denied, resp := validateCreateTodo(c, &payload); denied {
+		return resp
+	}
+
 	idempotencyKey := extractIdempotencyKey(c, &payload)
 	if existing := s.findExistingTodo(c, &payload, idempotencyKey); existing != nil {
 		return c.Status(fiber.StatusOK).JSON(existing)
-	}
-
-	if denied, resp := validateCreateTodo(c, &payload); denied {
-		return resp
 	}
 
 	applyTodoDefaults(&payload)
@@ -212,24 +212,28 @@ func (s *Server) createTodo(c *fiber.Ctx) error {
 	})
 
 	if txErr != nil {
-		if assignErr != nil {
-			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
-				"error":  "gagal menjadwalkan assignment: " + assignErr.Error(),
-				"code":   "ASSIGNMENT_ENQUEUE_FAILED",
-				"status": "error",
-				"stage":  "assignment",
-				"detail": assignErr.Error(),
-			})
-		}
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error":  "gagal menyimpan todo: " + txErr.Error(),
-			"code":   "DB_SAVE_FAILED",
-			"status": "error",
-			"stage":  "database",
-		})
+		return respondCreateTodoError(c, txErr, assignErr)
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(payload)
+}
+
+func respondCreateTodoError(c *fiber.Ctx, txErr, assignErr error) error {
+	if assignErr != nil {
+		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+			"error":  "gagal menjadwalkan assignment: " + assignErr.Error(),
+			"code":   "ASSIGNMENT_ENQUEUE_FAILED",
+			"status": "error",
+			"stage":  "assignment",
+			"detail": assignErr.Error(),
+		})
+	}
+	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		"error":  "gagal menyimpan todo: " + txErr.Error(),
+		"code":   "DB_SAVE_FAILED",
+		"status": "error",
+		"stage":  "database",
+	})
 }
 
 func validateCreateTodo(c *fiber.Ctx, payload *models.Todo) (bool, error) {
