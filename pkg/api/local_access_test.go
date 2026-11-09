@@ -136,31 +136,85 @@ func TestLocalAccess_MutationFailClosedSecurityBoundary(t *testing.T) {
 		path   string
 		body   string
 	}{
+		// Diagnostics & Findings
 		{"POST", "/api/projects/1/diagnostics/ignore-finding/finding-1", `{"finding_id":"finding-1"}`},
 		{"POST", "/api/projects/1/diagnostics/delete-finding", `{"finding_id":"finding-1"}`},
+		// Knowledge
 		{"POST", "/api/knowledge/nodes", `{"title":"Aturan Keamanan","content":"Fail-closed boundary","kind":"rule","domain":"security"}`},
+		{"POST", "/api/knowledge/recall", `{"query":"security test"}`},
 		{"POST", "/api/knowledge/curate", `{}`},
 		{"POST", "/api/knowledge/gaps/1/dismiss", `{}`},
+		// Projects Lifecycle & Mutasi
 		{"POST", "/api/projects", `{"name":"Project Luar","root_path":"/tmp/test"}`},
-		{"POST", "/api/todos", `{"title":"Todo Ilegal","project_id":1}`},
+		{"PUT", "/api/projects/1", `{"name":"Project Update"}`},
+		{"DELETE", "/api/projects/1", `{}`},
+		{"POST", "/api/projects/1/undeprecate", `{}`},
+		{"POST", "/api/projects/1/hold", `{}`},
+		{"POST", "/api/projects/1/done", `{}`},
+		{"POST", "/api/projects/1/activate", `{}`},
+		{"POST", "/api/projects/1/merge", `{}`},
+		{"POST", "/api/projects/1/summary", `{}`},
+		{"POST", "/api/projects/1/code-map/build", `{}`},
+		{"POST", "/api/projects/1/code-map/export", `{}`},
+		{"POST", "/api/projects/1/link-workspace", `{"workspace_path":"/tmp"}`},
+		{"POST", "/api/projects/1/init-vibeasik", `{}`},
+		{"POST", "/api/projects/1/consolidate", `{}`},
+		{"POST", "/api/projects/1/components", `{"name":"worker","role":"worker"}`},
+		{"POST", "/api/projects/1/run", `{}`},
+		{"POST", "/api/projects/1/stop", `{}`},
+		{"POST", "/api/projects/1/ensure-unique-ports", `{}`},
+		// Components & Routes
+		{"PUT", "/api/components/1", `{"name":"api-updated"}`},
+		{"DELETE", "/api/components/1", `{}`},
 		{"POST", "/api/components/1/routes/sync", `{}`},
-		{"POST", "/api/components/1/diagnose", `{}`},
+		{"PUT", "/api/components/1/routes/1", `{"path":"/new"}`},
 		{"DELETE", "/api/components/1/routes/1", `{}`},
-		{"POST", "/api/security/test-censor", `{"text":"test"}`},
+		{"POST", "/api/components/1/diagnose", `{}`},
 		{"POST", "/api/components/1/port", `{"port":3000}`},
+		{"POST", "/api/components/1/run", `{}`},
+		{"POST", "/api/components/1/stop", `{}`},
 		{"POST", "/api/ports/ensure-unique", `{}`},
+		// Security & Censor
+		{"POST", "/api/security/test-censor", `{"text":"test"}`},
+		{"POST", "/api/security/censored-keywords", `{"keyword":"secret"}`},
+		{"PUT", "/api/security/censored-keywords/1", `{"keyword":"secret2"}`},
+		{"DELETE", "/api/security/censored-keywords/1", `{}`},
+		// LLM Settings
 		{"PUT", "/api/settings/llm", `{"provider":"gemini"}`},
+		{"POST", "/api/settings/llm/active-provider", `{"provider":"gemini"}`},
 		{"POST", "/api/settings/llm/select-model", `{"model":"gemini-1.5-flash"}`},
 		{"POST", "/api/settings/llm/configs", `{"name":"custom","api_key":"secret"}`},
+		{"PUT", "/api/settings/llm/configs/1", `{"name":"custom2"}`},
+		{"DELETE", "/api/settings/llm/configs/1", `{}`},
+		{"POST", "/api/settings/llm/configs/1/activate", `{}`},
+		{"PUT", "/api/settings/llm/configs/1/vision", `{"vision":true}`},
 		{"PUT", "/api/settings/llm/configs/1/alias", `{"alias":"fast"}`},
 		{"PUT", "/api/settings/workspace", `{"path":"/tmp"}`},
+		// AI Templates & Cloud Audit
 		{"POST", "/api/vibeasik/security/cloud-audit", `{}`},
 		{"POST", "/api/vibeasik/ai-templates/inject", `{"template_id":"auth"}`},
+		{"POST", "/api/vibeasik/deploy/generate-plan", `{}`},
+		// Agents
+		{"POST", "/api/agents/execute", `{"command":"ls"}`},
+		{"POST", "/api/agents/custom", `{"name":"custom-bot"}`},
 		{"DELETE", "/api/agents/custom/test-agent", `{}`},
+		// Traffic
+		{"POST", "/api/traffic/sources", `{"name":"source-1"}`},
+		{"PUT", "/api/traffic/sources/1", `{"name":"source-updated"}`},
+		{"DELETE", "/api/traffic/sources/1", `{}`},
+		{"POST", "/api/traffic/sources/1/sync", `{}`},
 		{"POST", "/api/traffic/sources/1/rotate-key", `{}`},
+		{"POST", "/api/traffic/sources/1/sdk/install", `{}`},
 		{"POST", "/api/traffic/sources/1/todo", `{"title":"Optimize"}`},
+		// REA & Organizer & Todos
 		{"POST", "/api/rea/analyze", `{}`},
+		{"POST", "/api/organizer/plan", `{}`},
+		{"POST", "/api/organizer/execute", `{}`},
+		{"POST", "/api/todos", `{"title":"Todo Ilegal","project_id":1}`},
 		{"DELETE", "/api/todos/1", `{}`},
+		// MCP Endpoints
+		{"POST", "/mcp", `{"jsonrpc":"2.0","method":"tools/list"}`},
+		{"DELETE", "/mcp", `{}`},
 	}
 
 	remoteHosts := []string{
@@ -341,6 +395,43 @@ func TestLocalAccess_MutationNegativeAuthorizationAndStateImmutability(t *testin
 		t.Errorf("mutasi finding pada project_id fiktif: got %d, want 404 Not Found", resp.StatusCode)
 	}
 	_ = resp.Body.Close()
+
+	// 7. Negative Authorization: Mutasi project fiktif via PUT /api/projects/999999
+	resp = doReqWithBody(t, s, "PUT", "/api/projects/999999", "localhost", `{"name":"Hacked Project"}`, map[string]string{
+		localauth.Header: testLocalToken,
+	})
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("mutasi project pada project_id fiktif: got %d, want 404 Not Found", resp.StatusCode)
+	}
+	_ = resp.Body.Close()
+
+	// 8. Negative Authorization: Mutasi component fiktif via DELETE /api/components/999999
+	resp = doReqWithBody(t, s, "DELETE", "/api/components/999999", "localhost", `{}`, map[string]string{
+		localauth.Header: testLocalToken,
+	})
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("hapus component pada component_id fiktif: got %d, want 404 Not Found", resp.StatusCode)
+	}
+	_ = resp.Body.Close()
+
+	// 9. Negative Authorization: Hapus todo fiktif via DELETE /api/todos/999999
+	resp = doReqWithBody(t, s, "DELETE", "/api/todos/999999", "localhost", `{}`, map[string]string{
+		localauth.Header: testLocalToken,
+	})
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("hapus todo pada todo_id fiktif: got %d, want 404 Not Found", resp.StatusCode)
+	}
+	_ = resp.Body.Close()
+
+	// Verifikasi State Immutability: entitas demo project #1 dan component #1 tetap utuh
+	var projExisting models.Project
+	if err := s.db.First(&projExisting, 1).Error; err != nil || projExisting.Name != "demo" {
+		t.Fatalf("project #1 termutasi secara tidak sah! got: %+v, err: %v", projExisting, err)
+	}
+	var compExisting models.Component
+	if err := s.db.First(&compExisting, 1).Error; err != nil || compExisting.Name != "api" {
+		t.Fatalf("component #1 termutasi secara tidak sah! got: %+v, err: %v", compExisting, err)
+	}
 }
 
 // TestLocalAccess_AuthorizedMutations memverifikasi bahwa akses mutasi lokal yang sah (loopback + token lokal)

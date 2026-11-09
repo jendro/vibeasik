@@ -156,14 +156,16 @@ func (s *Server) deleteComponent(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid component id"})
 	}
 
-	comp, _ := s.repos.Components.FindByID(c.Context(), uint(id))
+	comp, err := s.repos.Components.FindByID(c.Context(), uint(id))
+	if err != nil || comp == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "component not found"})
+	}
+
 	if err := s.services.Components.Delete(c.Context(), uint(id)); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	if comp != nil {
-		registry.ProjectChanged(comp.ProjectID, "")
-	}
+	registry.ProjectChanged(comp.ProjectID, "")
 	return c.JSON(fiber.Map{"message": "component deleted"})
 }
 

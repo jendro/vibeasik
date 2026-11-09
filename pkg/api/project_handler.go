@@ -154,6 +154,10 @@ func (s *Server) updateProject(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
 	}
 
+	if _, err := s.services.Projects.GetByID(c.Context(), uint(id)); err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "project not found"})
+	}
+
 	var rawMap map[string]interface{}
 	_ = c.BodyParser(&rawMap)
 

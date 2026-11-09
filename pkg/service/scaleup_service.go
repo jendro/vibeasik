@@ -14,6 +14,12 @@ import (
 	"github.com/vibeasik/vibeasik/pkg/util"
 )
 
+// Catatan Audit Keamanan (ROUTER-UNGUARDED-MUTATION):
+// RouterCodeSample dan ControllerCodeSample di berkas ini adalah string literal
+// representasi pola arsitektur untuk edukasi (Layered, Hexagonal, Modular Monolith),
+// bukan instansiasi router aktif. Router aplikasi riil dikonfigurasi di pkg/api/server.go
+// dengan perlindungan perimeter global fail-closed (s.localAccess).
+//
 // ScaleUpService coordinates architectural pattern learning and codebase evaluation
 type ScaleUpService interface {
 	GetPatterns() []models.ArchitecturePattern
