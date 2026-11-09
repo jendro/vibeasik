@@ -41,10 +41,17 @@ func inspectProjectTooling(project *models.Project) []models.Finding {
 		return nil
 	}
 	var findings []models.Finding
+	findings = append(findings, inspectDevScript(project)...)
+	findings = append(findings, inspectMobileDevScript(project)...)
+	findings = append(findings, inspectDeployScript(project)...)
+	return findings
+}
 
-	devPath := filepath.Join(root, "dev.sh")
-	if info, err := os.Stat(devPath); err != nil {
-		findings = append(findings, models.Finding{
+func inspectDevScript(project *models.Project) []models.Finding {
+	devPath := filepath.Join(project.RootPath, "dev.sh")
+	info, err := os.Stat(devPath)
+	if err != nil {
+		return []models.Finding{{
 			Category:     "deployment",
 			Severity:     "WARNING",
 			RuleID:       "DEV-SCRIPT-MISSING",
@@ -54,48 +61,54 @@ func inspectProjectTooling(project *models.Project) []models.Finding {
 			TargetFile:   "dev.sh",
 			TheoryBasis:  "ARCH-002 Unified Local Orchestration (Dev Runner).",
 			SuggestedFix: devScriptTemplate,
-		})
-	} else {
-		content := readSmallFile(devPath)
-		if info.Mode()&0o111 == 0 {
-			findings = append(findings, models.Finding{
-				Category:    "deployment",
-				Severity:    "INFO",
-				RuleID:      "DEV-SCRIPT-NOT-EXECUTABLE",
-				Title:       "dev.sh Belum Executable",
-				Description: "dev.sh ada tetapi tidak punya izin eksekusi, sehingga ./dev.sh gagal.",
-				Suggestion:  "Jalankan chmod +x dev.sh lalu commit (git menyimpan bit eksekusi).",
-				TargetFile:  "dev.sh",
-			})
-		}
-		var missing []string
-		for _, c := range project.Components {
-			rel := strings.Trim(filepath.ToSlash(c.RelativePath), "/.")
-			if rel == "" {
-				continue
-			}
-			if !strings.Contains(content, rel) && !strings.Contains(content, filepath.Base(rel)) {
-				missing = append(missing, fmt.Sprintf("%s (%s)", c.Name, rel))
-			}
-		}
-		if len(missing) > 0 {
-			findings = append(findings, models.Finding{
-				Category:    "deployment",
-				Severity:    "WARNING",
-				RuleID:      "DEV-SCRIPT-INCOMPLETE",
-				Title:       "dev.sh Tidak Menjalankan Semua Komponen",
-				Description: fmt.Sprintf("dev.sh tidak menyebut folder komponen: %s. Semua komponen proyek wajib berjalan dari dev.sh.", strings.Join(missing, ", ")),
-				Suggestion:  "Tambahkan perintah dev komponen tersebut ke dev.sh (cd ke foldernya, PORT dari blok PORTS.md).",
-				TargetFile:  "dev.sh",
-			})
-		}
+		}}
 	}
 
-	findings = append(findings, inspectMobileDevScript(project)...)
-
-	deployPath := filepath.Join(root, "deploy.sh")
-	if !util.FileExists(deployPath) {
+	var findings []models.Finding
+	content := readSmallFile(devPath)
+	if info.Mode()&0o111 == 0 {
 		findings = append(findings, models.Finding{
+			Category:    "deployment",
+			Severity:    "INFO",
+			RuleID:      "DEV-SCRIPT-NOT-EXECUTABLE",
+			Title:       "dev.sh Belum Executable",
+			Description: "dev.sh ada tetapi tidak punya izin eksekusi, sehingga ./dev.sh gagal.",
+			Suggestion:  "Jalankan chmod +x dev.sh lalu commit (git menyimpan bit eksekusi).",
+			TargetFile:  "dev.sh",
+		})
+	}
+	if missing := findMissingDevComponents(project.Components, content); len(missing) > 0 {
+		findings = append(findings, models.Finding{
+			Category:    "deployment",
+			Severity:    "WARNING",
+			RuleID:      "DEV-SCRIPT-INCOMPLETE",
+			Title:       "dev.sh Tidak Menjalankan Semua Komponen",
+			Description: fmt.Sprintf("dev.sh tidak menyebut folder komponen: %s. Semua komponen proyek wajib berjalan dari dev.sh.", strings.Join(missing, ", ")),
+			Suggestion:  "Tambahkan perintah dev komponen tersebut ke dev.sh (cd ke foldernya, PORT dari blok PORTS.md).",
+			TargetFile:  "dev.sh",
+		})
+	}
+	return findings
+}
+
+func findMissingDevComponents(components []models.Component, content string) []string {
+	var missing []string
+	for _, c := range components {
+		rel := strings.Trim(filepath.ToSlash(c.RelativePath), "/.")
+		if rel == "" {
+			continue
+		}
+		if !strings.Contains(content, rel) && !strings.Contains(content, filepath.Base(rel)) {
+			missing = append(missing, fmt.Sprintf("%s (%s)", c.Name, rel))
+		}
+	}
+	return missing
+}
+
+func inspectDeployScript(project *models.Project) []models.Finding {
+	deployPath := filepath.Join(project.RootPath, "deploy.sh")
+	if !util.FileExists(deployPath) {
+		return []models.Finding{{
 			Category:     "deployment",
 			Severity:     "WARNING",
 			RuleID:       "DEPLOY-SCRIPT-MISSING",
@@ -105,9 +118,10 @@ func inspectProjectTooling(project *models.Project) []models.Finding {
 			TargetFile:   "deploy.sh",
 			TheoryBasis:  "SEC-002 & DEV-007: hanya .env.example yang di-commit; env server dipasang saat deploy saja.",
 			SuggestedFix: deployScriptTemplate,
-		})
-		return findings
+		}}
 	}
+
+	var findings []models.Finding
 	content := readSmallFile(deployPath)
 	if !strings.Contains(content, ".env.local") || !strings.Contains(content, "trap") {
 		findings = append(findings, models.Finding{

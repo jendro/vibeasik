@@ -116,97 +116,96 @@ func inspectDirectory(rootPath, dirPath, relPath string) *models.ComponentPropos
 		relPath = "."
 	}
 	dirName := filepath.Base(dirPath)
-
-	// Check for Go
-	if util.FileExists(filepath.Join(dirPath, "go.mod")) {
-		comp := &models.ComponentProposal{
-			Name:           formatComponentName(dirName, "Go Backend"),
-			Role:           models.RoleBackend,
-			RelativePath:   relPath,
-			AbsolutePath:   dirPath,
-			Language:       "go",
-			PackageManager: "go",
-			DevCommand:     "go run main.go",
-			BuildCommand:   "go build -o server .",
-			Port:           findPortInDir(dirPath, 8080),
-		}
-		comp.Framework = detectGoFramework(filepath.Join(dirPath, "go.mod"))
-		inspectEnv(dirPath, comp)
-		return comp
+	var comp *models.ComponentProposal
+	switch {
+	case util.FileExists(filepath.Join(dirPath, "go.mod")):
+		comp = inspectGoDirectory(dirPath, relPath, dirName)
+	case util.FileExists(filepath.Join(dirPath, "package.json")):
+		comp = inspectPackageJSON(dirPath, relPath, dirName)
+	case util.FileExists(filepath.Join(dirPath, "pubspec.yaml")):
+		comp = inspectFlutterDirectory(dirPath, relPath, dirName)
+	case util.FileExists(filepath.Join(dirPath, "requirements.txt")) || util.FileExists(filepath.Join(dirPath, "pyproject.toml")):
+		comp = inspectPythonDirectory(dirPath, relPath, dirName)
+	case isPhpDirectory(dirPath):
+		comp = inspectPhpDirectory(dirPath, relPath, dirName)
+	case util.FileExists(filepath.Join(dirPath, "Cargo.toml")):
+		comp = inspectRustDirectory(dirPath, relPath, dirName)
+	default:
+		return nil
 	}
-
-	// Check for Node / Bun / TypeScript (package.json)
-	if util.FileExists(filepath.Join(dirPath, "package.json")) {
-		comp := inspectPackageJSON(dirPath, relPath, dirName)
+	if comp != nil {
 		inspectEnv(dirPath, comp)
-		return comp
 	}
+	return comp
+}
 
-	// Check for Flutter / Dart (pubspec.yaml)
-	if util.FileExists(filepath.Join(dirPath, "pubspec.yaml")) {
-		comp := &models.ComponentProposal{
-			Name:           formatComponentName(dirName, "Flutter App"),
-			Role:           models.RoleFrontendMobile,
-			RelativePath:   relPath,
-			AbsolutePath:   dirPath,
-			Language:       "dart",
-			Framework:      "flutter",
-			PackageManager: "pub",
-			DevCommand:     "flutter run",
-			BuildCommand:   "flutter build appbundle",
-			Port:           0,
-		}
-		inspectEnv(dirPath, comp)
-		return comp
+func inspectGoDirectory(dirPath, relPath, dirName string) *models.ComponentProposal {
+	comp := &models.ComponentProposal{
+		Name:           formatComponentName(dirName, "Go Backend"),
+		Role:           models.RoleBackend,
+		RelativePath:   relPath,
+		AbsolutePath:   dirPath,
+		Language:       "go",
+		PackageManager: "go",
+		DevCommand:     "go run main.go",
+		BuildCommand:   "go build -o server .",
+		Port:           findPortInDir(dirPath, 8080),
 	}
+	comp.Framework = detectGoFramework(filepath.Join(dirPath, "go.mod"))
+	return comp
+}
 
-	// Check for Python (requirements.txt, pyproject.toml)
-	if util.FileExists(filepath.Join(dirPath, "requirements.txt")) || util.FileExists(filepath.Join(dirPath, "pyproject.toml")) {
-		comp := &models.ComponentProposal{
-			Name:           formatComponentName(dirName, "Python Service"),
-			Role:           models.RoleBackend,
-			RelativePath:   relPath,
-			AbsolutePath:   dirPath,
-			Language:       "python",
-			PackageManager: "pip",
-			DevCommand:     "python main.py",
-			BuildCommand:   "",
-			Port:           findPortInDir(dirPath, 8000),
-		}
-		comp.Framework = detectPythonFramework(dirPath)
-		inspectEnv(dirPath, comp)
-		return comp
+func inspectFlutterDirectory(dirPath, relPath, dirName string) *models.ComponentProposal {
+	return &models.ComponentProposal{
+		Name:           formatComponentName(dirName, "Flutter App"),
+		Role:           models.RoleFrontendMobile,
+		RelativePath:   relPath,
+		AbsolutePath:   dirPath,
+		Language:       "dart",
+		Framework:      "flutter",
+		PackageManager: "pub",
+		DevCommand:     "flutter run",
+		BuildCommand:   "flutter build appbundle",
+		Port:           0,
 	}
+}
 
-	// Check for PHP (composer.json, spark, artisan, or routes)
-	if util.FileExists(filepath.Join(dirPath, "composer.json")) ||
+func inspectPythonDirectory(dirPath, relPath, dirName string) *models.ComponentProposal {
+	comp := &models.ComponentProposal{
+		Name:           formatComponentName(dirName, "Python Service"),
+		Role:           models.RoleBackend,
+		RelativePath:   relPath,
+		AbsolutePath:   dirPath,
+		Language:       "python",
+		PackageManager: "pip",
+		DevCommand:     "python main.py",
+		BuildCommand:   "",
+		Port:           findPortInDir(dirPath, 8000),
+	}
+	comp.Framework = detectPythonFramework(dirPath)
+	return comp
+}
+
+func inspectRustDirectory(dirPath, relPath, dirName string) *models.ComponentProposal {
+	return &models.ComponentProposal{
+		Name:           formatComponentName(dirName, "Rust Service"),
+		Role:           models.RoleBackend,
+		RelativePath:   relPath,
+		AbsolutePath:   dirPath,
+		Language:       "rust",
+		PackageManager: "cargo",
+		DevCommand:     "cargo run",
+		BuildCommand:   "cargo build --release",
+		Port:           findPortInDir(dirPath, 8080),
+	}
+}
+
+func isPhpDirectory(dirPath string) bool {
+	return util.FileExists(filepath.Join(dirPath, "composer.json")) ||
 		util.FileExists(filepath.Join(dirPath, "spark")) ||
 		util.FileExists(filepath.Join(dirPath, "artisan")) ||
 		util.FileExists(filepath.Join(dirPath, "app/Config/Routes.php")) ||
-		util.FileExists(filepath.Join(dirPath, "application/config/routes.php")) {
-		comp := inspectPhpDirectory(dirPath, relPath, dirName)
-		inspectEnv(dirPath, comp)
-		return comp
-	}
-
-	// Check for Rust (Cargo.toml)
-	if util.FileExists(filepath.Join(dirPath, "Cargo.toml")) {
-		comp := &models.ComponentProposal{
-			Name:           formatComponentName(dirName, "Rust Service"),
-			Role:           models.RoleBackend,
-			RelativePath:   relPath,
-			AbsolutePath:   dirPath,
-			Language:       "rust",
-			PackageManager: "cargo",
-			DevCommand:     "cargo run",
-			BuildCommand:   "cargo build --release",
-			Port:           findPortInDir(dirPath, 8080),
-		}
-		inspectEnv(dirPath, comp)
-		return comp
-	}
-
-	return nil
+		util.FileExists(filepath.Join(dirPath, "application/config/routes.php"))
 }
 
 func detectCI4(dirPath, relPath, dirName, composerContent string) *models.ComponentProposal {
@@ -342,26 +341,34 @@ func detectPackageManager(dirPath string) string {
 }
 
 func detectJSFramework(allDeps map[string]bool) (string, string, int) {
-	if allDeps["nuxt"] || allDeps["nuxt3"] || allDeps["@nuxt/ui"] {
+	if hasAnyDep(allDeps, "nuxt", "nuxt3", "@nuxt/ui") {
 		return "nuxt", models.RoleFrontendClient, 3000
 	}
 	if allDeps["next"] {
 		return "next", models.RoleFrontendClient, 3000
 	}
-	if allDeps["vue"] || allDeps["react"] {
-		framework := "vue"
-		if allDeps["react"] {
-			framework = "react"
-		}
-		return framework, models.RoleFrontendClient, 5173
+	if allDeps["react"] {
+		return "react", models.RoleFrontendClient, 5173
+	}
+	if allDeps["vue"] {
+		return "vue", models.RoleFrontendClient, 5173
 	}
 	if allDeps["@nestjs/core"] {
 		return "nestjs", models.RoleBackend, 3000
 	}
-	if allDeps["express"] || allDeps["fastify"] || allDeps["koa"] {
+	if hasAnyDep(allDeps, "express", "fastify", "koa") {
 		return "express", models.RoleBackend, 8000
 	}
 	return "node", models.RoleFrontendClient, 3000
+}
+
+func hasAnyDep(allDeps map[string]bool, deps ...string) bool {
+	for _, d := range deps {
+		if allDeps[d] {
+			return true
+		}
+	}
+	return false
 }
 
 func detectJSScripts(scripts map[string]string, pm string) (string, string) {

@@ -96,17 +96,21 @@ func newAntigravityParser(path, name, client string) transcriptParser {
 	return &antigravityParser{sessionState{key: client + ":" + conv, name: name, client: client, transport: "transcript"}}
 }
 
+type antigravityToolCall struct {
+	Name string                     `json:"name"`
+	Args map[string]json.RawMessage `json:"args"`
+}
+
+type antigravityFeedEvent struct {
+	Type      string                `json:"type"`
+	Status    string                `json:"status"`
+	CreatedAt string                `json:"created_at"`
+	Content   string                `json:"content"`
+	ToolCalls []antigravityToolCall `json:"tool_calls"`
+}
+
 func (p *antigravityParser) feed(line []byte) {
-	var e struct {
-		Type      string `json:"type"`
-		Status    string `json:"status"`
-		CreatedAt string `json:"created_at"`
-		Content   string `json:"content"`
-		ToolCalls []struct {
-			Name string                     `json:"name"`
-			Args map[string]json.RawMessage `json:"args"`
-		} `json:"tool_calls"`
-	}
+	var e antigravityFeedEvent
 	if json.Unmarshal(line, &e) != nil {
 		return
 	}
@@ -115,29 +119,7 @@ func (p *antigravityParser) feed(line []byte) {
 	case "USER_INPUT":
 		p.prompt(between(e.Content, "<USER_REQUEST>", "</USER_REQUEST>"))
 	case "PLANNER_RESPONSE":
-		if len(e.ToolCalls) > 0 {
-			for _, tc := range e.ToolCalls {
-				for _, k := range []string{"Cwd", "TargetFile", "AbsolutePath", "SearchPath", "DirectoryPath"} {
-					p.workPath(argText(tc.Args[k]))
-				}
-				if tc.Name == "call_mcp_tool" {
-					var args map[string]interface{}
-					_ = json.Unmarshal([]byte(argText(tc.Args["Arguments"])), &args)
-					p.todoCall(argText(tc.Args["ToolName"]), args)
-				}
-			}
-			tc := e.ToolCalls[len(e.ToolCalls)-1]
-			action := util.FirstNonEmpty(argText(tc.Args["toolAction"]), argText(tc.Args["toolSummary"]))
-			if action == "" && tc.Name == "call_mcp_tool" {
-				action = "MCP: " + argText(tc.Args["ToolName"])
-			}
-			p.status, p.action = models.WorkerStatusWorking, util.FirstNonEmpty(action, tc.Name)
-		} else if strings.TrimSpace(e.Content) != "" {
-			p.done++
-			p.finished(actionWaiting)
-		} else {
-			p.status, p.action = models.WorkerStatusWorking, actionThinking
-		}
+		p.handlePlannerResponse(e)
 	case "GENERIC":
 		if e.Status == "RUNNING" {
 			p.status = models.WorkerStatusWorking
@@ -145,6 +127,47 @@ func (p *antigravityParser) feed(line []byte) {
 	case "ERROR_MESSAGE":
 		p.finished("Berhenti karena error")
 	}
+}
+
+func (p *antigravityParser) handlePlannerResponse(e antigravityFeedEvent) {
+	if len(e.ToolCalls) > 0 {
+		p.handlePlannerToolCalls(e.ToolCalls)
+		return
+	}
+	if strings.TrimSpace(e.Content) != "" {
+		p.done++
+		p.finished(actionWaiting)
+		return
+	}
+	p.status, p.action = models.WorkerStatusWorking, actionThinking
+}
+
+func (p *antigravityParser) handlePlannerToolCalls(calls []antigravityToolCall) {
+	for _, tc := range calls {
+		p.processToolCall(tc)
+	}
+	tc := calls[len(calls)-1]
+	action := resolveToolAction(tc)
+	p.status, p.action = models.WorkerStatusWorking, util.FirstNonEmpty(action, tc.Name)
+}
+
+func (p *antigravityParser) processToolCall(tc antigravityToolCall) {
+	for _, k := range []string{"Cwd", "TargetFile", "AbsolutePath", "SearchPath", "DirectoryPath"} {
+		p.workPath(argText(tc.Args[k]))
+	}
+	if tc.Name == "call_mcp_tool" {
+		var args map[string]interface{}
+		_ = json.Unmarshal([]byte(argText(tc.Args["Arguments"])), &args)
+		p.todoCall(argText(tc.Args["ToolName"]), args)
+	}
+}
+
+func resolveToolAction(tc antigravityToolCall) string {
+	action := util.FirstNonEmpty(argText(tc.Args["toolAction"]), argText(tc.Args["toolSummary"]))
+	if action == "" && tc.Name == "call_mcp_tool" {
+		action = "MCP: " + argText(tc.Args["ToolName"])
+	}
+	return action
 }
 
 // argText membaca argumen tool Antigravity yang disimpan sebagai string JSON (kadang berlapis dua).

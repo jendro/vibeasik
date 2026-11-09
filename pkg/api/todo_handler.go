@@ -36,9 +36,11 @@ func buildTodoFilterQuery(query *gorm.DB, c *fiber.Ctx) *gorm.DB {
 }
 
 func applyTodoStringFilters(query *gorm.DB, c *fiber.Ctx) *gorm.DB {
-	if level := c.Query("level"); level != "" {
-		query = query.Where("level = ?", level)
-	}
+	query = applyTodoCategoricalFilters(query, c)
+	return applyTodoStateFilters(query, c)
+}
+
+func applyTodoCategoricalFilters(query *gorm.DB, c *fiber.Ctx) *gorm.DB {
 	if category := c.Query("category"); category != "" && category != "all" {
 		query = models.WhereCategory(query, category)
 	}
@@ -47,6 +49,13 @@ func applyTodoStringFilters(query *gorm.DB, c *fiber.Ctx) *gorm.DB {
 	}
 	if tag := c.Query("tag"); tag != "" && tag != "all" {
 		query = models.WhereTag(query, tag)
+	}
+	return query
+}
+
+func applyTodoStateFilters(query *gorm.DB, c *fiber.Ctx) *gorm.DB {
+	if level := c.Query("level"); level != "" {
+		query = query.Where("level = ?", level)
 	}
 	if status := c.Query("status"); status != "" {
 		query = query.Where("status = ?", status)
@@ -254,23 +263,38 @@ func validateCreateTodo(c *fiber.Ctx, payload *models.Todo) (bool, error) {
 }
 
 func applyTodoDefaults(payload *models.Todo) {
-	if payload.Level == "" {
-		if payload.ComponentID != nil && *payload.ComponentID > 0 {
-			payload.Level = models.TodoLevelComponent
-		} else if payload.ProjectID != nil && *payload.ProjectID > 0 {
-			payload.Level = models.TodoLevelProject
-		} else {
-			payload.Level = models.TodoLevelGlobal
-		}
-	}
+	applyTodoLevelDefault(payload)
+	applyTodoStatusDefault(payload)
+	applyTodoMetadataDefaults(payload)
+}
 
-	if payload.Status == "" {
-		if payload.IsAISuggestion {
-			payload.Status = models.TodoStatusSuggested
-		} else {
-			payload.Status = models.TodoStatusPending
-		}
+func applyTodoLevelDefault(payload *models.Todo) {
+	if payload.Level != "" {
+		return
 	}
+	if payload.ComponentID != nil && *payload.ComponentID > 0 {
+		payload.Level = models.TodoLevelComponent
+		return
+	}
+	if payload.ProjectID != nil && *payload.ProjectID > 0 {
+		payload.Level = models.TodoLevelProject
+		return
+	}
+	payload.Level = models.TodoLevelGlobal
+}
+
+func applyTodoStatusDefault(payload *models.Todo) {
+	if payload.Status != "" {
+		return
+	}
+	if payload.IsAISuggestion {
+		payload.Status = models.TodoStatusSuggested
+		return
+	}
+	payload.Status = models.TodoStatusPending
+}
+
+func applyTodoMetadataDefaults(payload *models.Todo) {
 	if payload.Priority == "" {
 		payload.Priority = models.TodoPriorityMedium
 	}
