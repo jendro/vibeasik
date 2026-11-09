@@ -409,6 +409,113 @@ func TestSaveMetaDatabaseError(t *testing.T) {
 	}
 }
 
+func TestResolveSingleEntryImportsMalformedJSON(t *testing.T) {
+	var logBuf bytes.Buffer
+	origWriter := log.Writer()
+	log.SetOutput(&logBuf)
+	defer log.SetOutput(origWriter)
+
+	// Best-effort logging pada resolveSingleEntryImports saat JSON refs malformed
+	entryBadRefs := &models.CodeMapEntry{
+		Path:     "be/bad.go",
+		RefsJSON: "{not-valid-json",
+	}
+	imports := resolveSingleEntryImports(entryBadRefs, nil, nil)
+	if len(imports) != 0 {
+		t.Fatalf("expected empty imports for invalid JSON, got %+v", imports)
+	}
+	if !strings.Contains(logBuf.String(), "[WARN] resolveSingleEntryImports: unmarshal refs for \"be/bad.go\"") {
+		t.Fatalf("expected log to contain '[WARN] resolveSingleEntryImports', got: %q", logBuf.String())
+	}
+
+	// Kasus kosong tidak boleh mencatat warning
+	logBuf.Reset()
+	entryEmptyRefs := &models.CodeMapEntry{Path: "be/empty.go", RefsJSON: ""}
+	_ = resolveSingleEntryImports(entryEmptyRefs, nil, nil)
+	if logBuf.Len() > 0 {
+		t.Fatalf("expected no warnings for empty RefsJSON, got: %q", logBuf.String())
+	}
+}
+
+func TestGoSymbolIndexMalformedJSON(t *testing.T) {
+	var logBuf bytes.Buffer
+	origWriter := log.Writer()
+	log.SetOutput(&logBuf)
+	defer log.SetOutput(origWriter)
+
+	// Best-effort logging pada goSymbolIndex saat JSON symbols malformed
+	entryBadSyms := &models.CodeMapEntry{
+		Path:        "be/bad_syms.go",
+		Lang:        "go",
+		SymbolsJSON: "{not-valid-symbols",
+	}
+	symsMap := goSymbolIndex([]*models.CodeMapEntry{entryBadSyms})
+	if symsMap == nil {
+		t.Fatal("expected non-nil symsMap")
+	}
+	if !strings.Contains(logBuf.String(), "[WARN] goSymbolIndex: unmarshal symbols for \"be/bad_syms.go\"") {
+		t.Fatalf("expected log to contain '[WARN] goSymbolIndex', got: %q", logBuf.String())
+	}
+
+	// Lang bukan go atau symbols kosong tidak mencatat warning
+	logBuf.Reset()
+	entryEmptySyms := &models.CodeMapEntry{Path: "be/ok.go", Lang: "go", SymbolsJSON: ""}
+	entryNonGo := &models.CodeMapEntry{Path: "fe/x.ts", Lang: "typescript", SymbolsJSON: "{not-valid"}
+	_ = goSymbolIndex([]*models.CodeMapEntry{entryEmptySyms, entryNonGo})
+	if logBuf.Len() > 0 {
+		t.Fatalf("expected no warnings for empty symbols or non-go, got: %q", logBuf.String())
+	}
+}
+
+func TestCollectUnreadableRoot(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("skip root permission test on root user")
+	}
+	var logBuf bytes.Buffer
+	origWriter := log.Writer()
+	log.SetOutput(&logBuf)
+	defer log.SetOutput(origWriter)
+
+	tmpDir := t.TempDir()
+	forbiddenDir := filepath.Join(tmpDir, "unreadable_root")
+	if err := os.Mkdir(forbiddenDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(forbiddenDir, 0o000); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = os.Chmod(forbiddenDir, 0o700)
+	})
+
+	logBuf.Reset()
+	res := collect([]scanRoot{{absDir: forbiddenDir}})
+	_ = res
+}
+
+func TestSaveMetaNotFoundIsNormalPath(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AutoMigrate(&models.CodeMap{}); err != nil {
+		t.Fatal(err)
+	}
+	err = db.Transaction(func(tx *gorm.DB) error {
+		return saveMeta(tx, 42, "/normal/root", []*models.CodeMapEntry{}, 5*time.Millisecond)
+	})
+	if err != nil {
+		t.Fatalf("saveMeta failed on ErrRecordNotFound: %v", err)
+	}
+	var saved models.CodeMap
+	if err := db.Where("project_id = ?", 42).First(&saved).Error; err != nil {
+		t.Fatalf("expected record to be created: %v", err)
+	}
+	if saved.RootPath != "/normal/root" {
+		t.Errorf("saved.RootPath = %q, want '/normal/root'", saved.RootPath)
+	}
+}
+
 func TestNuxtRootsDetection(t *testing.T) {
 	root := t.TempDir()
 	appDir := filepath.Join(root, "app")
@@ -534,5 +641,3 @@ func TestEffectiveRootHelpersBoundary(t *testing.T) {
 		}
 	})
 }
-
-
