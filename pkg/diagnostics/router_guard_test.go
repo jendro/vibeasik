@@ -91,11 +91,19 @@ type Server struct{}
 
 func (s *Server) localAccess(c *fiber.Ctx) error { return c.Next() }
 
+func (s *Server) setupSetupRoutes(api fiber.Router) {
+	api.Post("/setup/database/test", func(c *fiber.Ctx) error { return c.SendStatus(200) })
+	api.Post("/setup/database", func(c *fiber.Ctx) error { return c.SendStatus(200) })
+	api.Post("/setup/complete", func(c *fiber.Ctx) error { return c.SendStatus(200) })
+	api.Post("/setup/restart", func(c *fiber.Ctx) error { return c.SendStatus(200) })
+}
+
 func (s *Server) setupRoutes(app *fiber.App) {
 	app.Use(s.localAccess)
 	api := app.Group("/api")
-	api.Post("/setup/database/test", func(c *fiber.Ctx) error { return c.SendStatus(200) })
+	s.setupSetupRoutes(api)
 	api.Post("/projects", func(c *fiber.Ctx) error { return c.SendStatus(201) })
+	app.Post("/vibeasik/deploy/generate-plan", func(c *fiber.Ctx) error { return c.SendStatus(200) })
 }
 
 func main() {

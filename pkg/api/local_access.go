@@ -61,7 +61,7 @@ func requestToken(c *fiber.Ctx) string {
 }
 
 func isAPIPath(p string) bool {
-	return strings.HasPrefix(p, "/api/") || p == "/api" || strings.HasPrefix(p, "/mcp")
+	return strings.HasPrefix(p, "/api/") || p == "/api" || strings.HasPrefix(p, "/mcp") || strings.HasPrefix(p, "/vibeasik/")
 }
 
 // isStaticAsset: berkas build Studio (JS, CSS, font, gambar) tidak rahasia dan dimuat sebelum cookie ada.

@@ -136,18 +136,32 @@ func TestLocalAccess_MutationFailClosedSecurityBoundary(t *testing.T) {
 		path   string
 		body   string
 	}{
+		// Setup Bootstrap
+		{"POST", "/api/setup/database/test", `{"driver":"sqlite","name":"test"}`},
+		{"POST", "/api/setup/database", `{"driver":"sqlite","name":"test"}`},
+		{"POST", "/api/setup/complete", `{}`},
+		{"POST", "/api/setup/restart", `{}`},
+		{"POST", "/api/setup/account", `{"choice":"skip"}`},
+		{"POST", "/api/setup/terms", `{"accept":true}`},
 		// Diagnostics & Findings
+		{"POST", "/api/projects/1/diagnostics/ignore-finding", `{"finding_id":"finding-1"}`},
 		{"POST", "/api/projects/1/diagnostics/ignore-finding/finding-1", `{"finding_id":"finding-1"}`},
 		{"POST", "/api/projects/1/diagnostics/delete-finding", `{"finding_id":"finding-1"}`},
+		{"DELETE", "/api/projects/1/diagnostics/findings", `{}`},
+		{"DELETE", "/api/projects/1/diagnostics/findings/finding-1", `{}`},
 		// Knowledge
 		{"POST", "/api/knowledge/nodes", `{"title":"Aturan Keamanan","content":"Fail-closed boundary","kind":"rule","domain":"security"}`},
+		{"POST", "/api/knowledge/nodes/1/feedback", `{"helpful":true}`},
+		{"DELETE", "/api/knowledge/nodes/1", `{}`},
 		{"POST", "/api/knowledge/recall", `{"query":"security test"}`},
 		{"POST", "/api/knowledge/curate", `{}`},
+		{"POST", "/api/knowledge/gaps", `{"topic":"security"}`},
 		{"POST", "/api/knowledge/gaps/1/dismiss", `{}`},
 		// Projects Lifecycle & Mutasi
 		{"POST", "/api/projects", `{"name":"Project Luar","root_path":"/tmp/test"}`},
 		{"PUT", "/api/projects/1", `{"name":"Project Update"}`},
 		{"DELETE", "/api/projects/1", `{}`},
+		{"POST", "/api/projects/1/deprecate", `{}`},
 		{"POST", "/api/projects/1/undeprecate", `{}`},
 		{"POST", "/api/projects/1/hold", `{}`},
 		{"POST", "/api/projects/1/done", `{}`},
@@ -166,6 +180,7 @@ func TestLocalAccess_MutationFailClosedSecurityBoundary(t *testing.T) {
 		// Components & Routes
 		{"PUT", "/api/components/1", `{"name":"api-updated"}`},
 		{"DELETE", "/api/components/1", `{}`},
+		{"POST", "/api/components/1/create-dir", `{"dir":"pkg"}`},
 		{"POST", "/api/components/1/routes/sync", `{}`},
 		{"PUT", "/api/components/1/routes/1", `{"path":"/new"}`},
 		{"DELETE", "/api/components/1/routes/1", `{}`},
@@ -194,6 +209,10 @@ func TestLocalAccess_MutationFailClosedSecurityBoundary(t *testing.T) {
 		{"POST", "/api/vibeasik/security/cloud-audit", `{}`},
 		{"POST", "/api/vibeasik/ai-templates/inject", `{"template_id":"auth"}`},
 		{"POST", "/api/vibeasik/deploy/generate-plan", `{}`},
+		// Direct vibeasik aliases (without /api)
+		{"POST", "/vibeasik/security/cloud-audit", `{}`},
+		{"POST", "/vibeasik/ai-templates/inject", `{"template_id":"auth"}`},
+		{"POST", "/vibeasik/deploy/generate-plan", `{}`},
 		// Agents
 		{"POST", "/api/agents/execute", `{"command":"ls"}`},
 		{"POST", "/api/agents/custom", `{"name":"custom-bot"}`},
@@ -211,7 +230,11 @@ func TestLocalAccess_MutationFailClosedSecurityBoundary(t *testing.T) {
 		{"POST", "/api/organizer/plan", `{}`},
 		{"POST", "/api/organizer/execute", `{}`},
 		{"POST", "/api/todos", `{"title":"Todo Ilegal","project_id":1}`},
+		{"PUT", "/api/todos/1", `{"title":"Update Todo"}`},
 		{"DELETE", "/api/todos/1", `{}`},
+		{"POST", "/api/todos/suggest", `{}`},
+		{"POST", "/api/todos/1/approve", `{}`},
+		{"POST", "/api/todos/1/reject", `{}`},
 		// MCP Endpoints
 		{"POST", "/mcp", `{"jsonrpc":"2.0","method":"tools/list"}`},
 		{"DELETE", "/mcp", `{}`},
