@@ -303,7 +303,7 @@ func AnalyzeProject(project *models.Project, allProjects []models.Project) (*mod
 
 	var structureTree string
 	if hasProjectRoot(project) {
-		structureTree = generateFolderTree(project.RootPath, 2)
+		structureTree = util.GenerateFolderTree(project.RootPath, 2)
 	}
 	return buildDiagnostic(project.ID, findings, optimizations, func(score int) string {
 		return fmt.Sprintf("Analyzed %d components across %s architecture. Detected %d findings. Codebase health score: %d/100.",
@@ -391,10 +391,6 @@ func getGitStatusShort(dir string) string {
 		return ""
 	}
 	return strings.TrimSpace(string(out))
-}
-
-func generateFolderTree(root string, maxDepth int) string {
-	return util.GenerateFolderTree(root, maxDepth)
 }
 
 // componentPathFindings memeriksa path komponen; bila ada, juga env, test, dan status git-nya.
@@ -531,7 +527,7 @@ func AnalyzeComponent(comp *models.Component, project *models.Project, allProjec
 
 	var structureTree string
 	if comp.AbsolutePath != "" {
-		structureTree = generateFolderTree(comp.AbsolutePath, 2)
+		structureTree = util.GenerateFolderTree(comp.AbsolutePath, 2)
 	}
 	return buildDiagnostic(project.ID, findings, optimizations, func(score int) string {
 		return fmt.Sprintf("Application '%s' health score: %d/100 (%d findings). Role: %s, Stack: %s/%s.",

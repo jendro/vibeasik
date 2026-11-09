@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/vibeasik/vibeasik/pkg/models"
+	"github.com/vibeasik/vibeasik/pkg/util"
 )
 
 // normTmp mengubah v menjadi JSON dengan path folder sementara diganti <TMP> agar golden stabil.
@@ -115,8 +116,8 @@ func TestAnalyzerGolden(t *testing.T) {
 	for i := 0; i < 20; i++ {
 		_ = i
 	}
-	out["tree"] = strings.ReplaceAll(generateFolderTree(root, 2), filepath.Base(root), "<ROOT>")
-	out["tree_depth1"] = strings.ReplaceAll(generateFolderTree(root, 1), filepath.Base(root), "<ROOT>")
+	out["tree"] = strings.ReplaceAll(util.GenerateFolderTree(root, 2), filepath.Base(root), "<ROOT>")
+	out["tree_depth1"] = strings.ReplaceAll(util.GenerateFolderTree(root, 1), filepath.Base(root), "<ROOT>")
 	out["has_tests"] = map[string]bool{
 		"backend": hasTests(filepath.Join(root, "backend"), "go"),
 		"web":     hasTests(filepath.Join(root, "web"), "typescript"),

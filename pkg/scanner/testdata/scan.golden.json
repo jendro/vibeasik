@@ -562,7 +562,7 @@
   ],
   "total_files": 0,
   "issues_detected": [],
-  "directory_tree": "my-proj_mono/\n├── admin-panel/\n│   ├── package.json\n│   └── tsconfig.json\n├── api-node/\n│   ├── .env.example\n│   ├── package.json\n│   └── yarn.lock\n├── apps/\n│   ├── ci4b/\n│   ├── cms/\n│   ├── lara/\n│   ├── legacy/\n│   ├── mobile/\n│   ├── plain/\n│   └── routes-only/\n├── badjson/\n│   └── package.json\n├── empty/\n│   └── readme.md\n├── go-api/\n│   ├── .env\n│   └── go.mod\n├── misc/\n│   └── package.json\n├── nest-svc/\n│   ├── bun.lockb\n│   └── package.json\n├── nx/\n│   └── package.json\n├── py-svc/\n│   └── requirements.txt\n├── py2/\n│   └── pyproject.toml\n├── py3/\n│   └── requirements.txt\n├── py4/\n│   └── requirements.txt\n├── rs/\n│   └── Cargo.toml\n└── shop-web/\n    ├── package.json\n    └── pnpm-lock.yaml\n"
+  "directory_tree": "my-proj_mono/\n├── admin-panel/\n│   ├── package.json\n│   └── tsconfig.json\n├── api-node/\n│   ├── package.json\n│   └── yarn.lock\n├── apps/\n│   ├── ci4b/\n│   ├── cms/\n│   ├── lara/\n│   ├── legacy/\n│   ├── mobile/\n│   ├── plain/\n│   └── routes-only/\n├── badjson/\n│   └── package.json\n├── empty/\n│   └── readme.md\n├── go-api/\n│   └── go.mod\n├── misc/\n│   └── package.json\n├── nest-svc/\n│   ├── bun.lockb\n│   └── package.json\n├── nx/\n│   └── package.json\n├── py-svc/\n│   └── requirements.txt\n├── py2/\n│   └── pyproject.toml\n├── py3/\n│   └── requirements.txt\n├── py4/\n│   └── requirements.txt\n├── rs/\n│   └── Cargo.toml\n└── shop-web/\n    ├── package.json\n    └── pnpm-lock.yaml\n"
  },
  "rootnode": {
   "root_path": "\u003cROOT\u003e",

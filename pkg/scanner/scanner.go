@@ -106,7 +106,7 @@ func ScanDirectory(rootPath string) (*models.ScanResult, error) {
 
 	refineComponentRoles(result)
 	result.DetectedStack = collectDetectedStack(result.Components)
-	result.DirectoryTree = generateFolderTree(absPath, 2)
+	result.DirectoryTree = util.GenerateFolderTree(absPath, 2)
 
 	return result, nil
 }
@@ -623,46 +623,6 @@ func getGitInfo(dir string) (branch, remote string) {
 		remote = strings.TrimSpace(string(out))
 	}
 	return
-}
-
-func generateFolderTree(root string, maxDepth int) string {
-	var sb strings.Builder
-	var walk func(path string, depth int, prefix string)
-
-	walk = func(current string, depth int, prefix string) {
-		if depth > maxDepth {
-			return
-		}
-		entries, err := os.ReadDir(current)
-		if err != nil {
-			return
-		}
-		for i, entry := range entries {
-			if shouldSkipDir(entry.Name()) {
-				continue
-			}
-			isLast := i == len(entries)-1
-			connector := "├── "
-			if isLast {
-				connector = "└── "
-			}
-
-			if entry.IsDir() {
-				sb.WriteString(fmt.Sprintf("%s%s%s/\n", prefix, connector, entry.Name()))
-				newPrefix := prefix + "│   "
-				if isLast {
-					newPrefix = prefix + "    "
-				}
-				walk(filepath.Join(current, entry.Name()), depth+1, newPrefix)
-			} else {
-				sb.WriteString(fmt.Sprintf("%s%s%s\n", prefix, connector, entry.Name()))
-			}
-		}
-	}
-
-	sb.WriteString(fmt.Sprintf("%s/\n", filepath.Base(root)))
-	walk(root, 1, "")
-	return sb.String()
 }
 
 func shouldSkipDir(name string) bool {
