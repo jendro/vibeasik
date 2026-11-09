@@ -101,3 +101,69 @@ func TestTwinKeyIgnoresGenericNames(t *testing.T) {
 		}
 	}
 }
+
+func TestLayerGuideHelpers(t *testing.T) {
+	t.Run("isReuseLayer", func(t *testing.T) {
+		valid := []string{LayerService, LayerRepository, LayerModel, LayerUtil}
+		for _, l := range valid {
+			if !isReuseLayer(l) {
+				t.Fatalf("expected %s to be reuse layer", l)
+			}
+		}
+		invalid := []string{LayerHandler, LayerMiddleware, "unknown", ""}
+		for _, l := range invalid {
+			if isReuseLayer(l) {
+				t.Fatalf("expected %s to NOT be reuse layer", l)
+			}
+		}
+	})
+
+	t.Run("pathContainsWords", func(t *testing.T) {
+		words := []string{"webinar", "admin"}
+		if !pathContainsWords("backend/handlers/admin_webinar.go", words) {
+			t.Fatal("expected match for admin_webinar.go")
+		}
+		if !pathContainsWords("BACKEND/HANDLERS/WEBINAR.GO", words) {
+			t.Fatal("expected case-insensitive match")
+		}
+		if pathContainsWords("backend/handlers/user.go", words) {
+			t.Fatal("did not expect match for user.go")
+		}
+		if pathContainsWords("", words) {
+			t.Fatal("did not expect match for empty string")
+		}
+	})
+
+	t.Run("buildLayerDirs", func(t *testing.T) {
+		dirs := map[string]map[string]*LayerDir{
+			LayerHandler: {
+				"a/": &LayerDir{Dir: "a/", Files: 2, Lines: 100},
+				"b/": &LayerDir{Dir: "b/", Files: 5, Lines: 200},
+				"c/": &LayerDir{Dir: "c/", Files: 5, Lines: 150},
+			},
+		}
+		res := buildLayerDirs(dirs)
+		list := res[LayerHandler]
+		if len(list) != 3 {
+			t.Fatalf("expected 3 dirs, got %d", len(list))
+		}
+		if list[0].Dir != "b/" || list[1].Dir != "c/" || list[2].Dir != "a/" {
+			t.Fatalf("unexpected sorting order: %+v", list)
+		}
+	})
+
+	t.Run("newLayerGuide", func(t *testing.T) {
+		d1 := &doc{entry: models.CodeMapEntry{Path: "backend/handlers/webinar.go", ComponentName: "BE", Lang: "go", Lines: 50}}
+		g1 := newLayerGuide(d1)
+		if g1.Scope != "BE" || g1.Target != "backend/handlers/webinar.go" {
+			t.Fatalf("unexpected guide: %+v", g1)
+		}
+
+		d2 := &doc{entry: models.CodeMapEntry{Path: "backend/handlers/webinar.go", ComponentName: "", Lang: "go", Lines: 50}}
+		g2 := newLayerGuide(d2)
+		if g2.Scope != "backend" {
+			t.Fatalf("expected topDir 'backend', got %s", g2.Scope)
+		}
+	})
+}
+

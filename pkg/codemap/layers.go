@@ -234,44 +234,74 @@ func BuildLayerGuide(db *gorm.DB, projectID uint, file string, withInventory boo
 	if target == nil {
 		return nil
 	}
-	g := &LayerGuide{Target: target.entry.Path, Layer: LayerOf(target.entry), Lang: target.entry.Lang, Lines: target.entry.Lines, Layers: map[string][]LayerDir{}}
-	inScope := scopeFilter(target)
-	g.Scope = target.entry.ComponentName
-	if g.Scope == "" {
-		g.Scope = topDir(target.entry.Path)
-	}
 
-	// 1. Peta layer: direktori nyata tiap layer di komponen & bahasa yang sama.
-	dirs := map[string]map[string]*LayerDir{}
-	var scoped []*doc
+	g := newLayerGuide(target)
+	scoped, dirs := collectLayerScope(ix, target)
+	g.Layers = buildLayerDirs(dirs)
+	if withInventory {
+		g.Inventory = inventoryOf(target)
+	}
+	g.Reuse = collectReuseFiles(scoped, target)
+	g.Twins = collectTwinFunctions(scoped, target)
+	return g
+}
+
+func newLayerGuide(target *doc) *LayerGuide {
+	scope := target.entry.ComponentName
+	if scope == "" {
+		scope = topDir(target.entry.Path)
+	}
+	return &LayerGuide{
+		Target: target.entry.Path,
+		Layer:  LayerOf(target.entry),
+		Lang:   target.entry.Lang,
+		Lines:  target.entry.Lines,
+		Scope:  scope,
+		Layers: map[string][]LayerDir{},
+	}
+}
+
+func collectLayerScope(ix *index, target *doc) ([]*doc, map[string]map[string]*LayerDir) {
+	inScope := scopeFilter(target)
+	scoped := make([]*doc, 0)
+	dirs := make(map[string]map[string]*LayerDir)
 	for _, d := range ix.docs {
 		if !inScope(d) || skipKinds[d.entry.Kind] {
 			continue
 		}
 		scoped = append(scoped, d)
-		layer := LayerOf(d.entry)
-		if layer == "" {
-			continue
-		}
-		dir := path.Dir(d.entry.Path) + "/"
-		if dirs[layer] == nil {
-			dirs[layer] = map[string]*LayerDir{}
-		}
-		ld := dirs[layer][dir]
-		if ld == nil {
-			ld = &LayerDir{Dir: dir}
-			dirs[layer][dir] = ld
-		}
-		ld.Files++
-		ld.Lines += d.entry.Lines
-		if len(ld.Some) < 3 {
-			ld.Some = append(ld.Some, path.Base(d.entry.Path))
-		}
+		addLayerDirectory(dirs, d)
 	}
-	for layer, m := range dirs {
-		list := make([]LayerDir, 0, len(m))
-		for _, ld := range m {
-			list = append(list, *ld)
+	return scoped, dirs
+}
+
+func addLayerDirectory(dirs map[string]map[string]*LayerDir, d *doc) {
+	layer := LayerOf(d.entry)
+	if layer == "" {
+		return
+	}
+	dir := path.Dir(d.entry.Path) + "/"
+	if dirs[layer] == nil {
+		dirs[layer] = map[string]*LayerDir{}
+	}
+	ld := dirs[layer][dir]
+	if ld == nil {
+		ld = &LayerDir{Dir: dir}
+		dirs[layer][dir] = ld
+	}
+	ld.Files++
+	ld.Lines += d.entry.Lines
+	if len(ld.Some) < 3 {
+		ld.Some = append(ld.Some, path.Base(d.entry.Path))
+	}
+}
+
+func buildLayerDirs(dirs map[string]map[string]*LayerDir) map[string][]LayerDir {
+	layers := make(map[string][]LayerDir, len(dirs))
+	for layer, entries := range dirs {
+		list := make([]LayerDir, 0, len(entries))
+		for _, dir := range entries {
+			list = append(list, *dir)
 		}
 		sort.Slice(list, func(i, j int) bool {
 			if list[i].Files != list[j].Files {
@@ -282,62 +312,90 @@ func BuildLayerGuide(db *gorm.DB, projectID uint, file string, withInventory boo
 		if len(list) > 5 {
 			list = list[:5]
 		}
-		g.Layers[layer] = list
+		layers[layer] = list
 	}
+	return layers
+}
 
-	// 2. Inventaris berkas target: rentang baris tiap simbol + signature dari disk.
-	if withInventory {
-		g.Inventory = inventoryOf(target)
-	}
-
-	// 3. Fungsi yang sudah ada di layer dalam untuk domain yang sama (pakai ulang, jangan tulis ulang).
+func collectReuseFiles(scoped []*doc, target *doc) []ReuseFile {
 	words := domainWords(target.entry.Path)
+	reuse := make([]ReuseFile, 0)
 	for _, d := range scoped {
 		if d == target {
 			continue
 		}
 		layer := LayerOf(d.entry)
-		if layer != LayerService && layer != LayerRepository && layer != LayerModel && layer != LayerUtil {
+		if !isReuseLayer(layer) {
 			continue
 		}
-		related := layer == LayerUtil
-		for _, w := range words {
-			if strings.Contains(strings.ToLower(d.entry.Path), w) {
-				related = true
-				break
-			}
-		}
-		var names []string
-		for _, s := range d.symbols {
-			if !isCallable(s.Kind) && s.Kind != "type" && s.Kind != "interface" && s.Kind != "class" {
-				continue
-			}
-			if !related {
-				for _, w := range words {
-					if strings.Contains(strings.ToLower(s.Name), w) {
-						names = append(names, s.Name)
-						break
-					}
-				}
-				continue
-			}
-			names = append(names, s.Name)
-		}
+		names := reuseSymbols(d, words, layer == LayerUtil || pathContainsWords(d.entry.Path, words))
 		if len(names) == 0 {
 			continue
 		}
 		if len(names) > 20 {
 			names = append(names[:20], fmt.Sprintf("…(+%d)", len(names)-20))
 		}
-		g.Reuse = append(g.Reuse, ReuseFile{Path: d.entry.Path, Layer: layer, Symbols: names})
+		reuse = append(reuse, ReuseFile{Path: d.entry.Path, Layer: layer, Symbols: names})
 	}
-	sort.SliceStable(g.Reuse, func(i, j int) bool { return layerRank(g.Reuse[i].Layer) < layerRank(g.Reuse[j].Layer) })
-	if len(g.Reuse) > 14 {
-		g.Reuse = g.Reuse[:14]
+	sort.SliceStable(reuse, func(i, j int) bool { return layerRank(reuse[i].Layer) < layerRank(reuse[j].Layer) })
+	if len(reuse) > 14 {
+		reuse = reuse[:14]
 	}
+	return reuse
+}
 
-	// 4. Kandidat fungsi kembar: fungsi berkas target yang nama ternormalisasinya sama dengan fungsi berkas lain.
-	byKey := map[string][]SymbolRef{}
+func isReuseLayer(layer string) bool {
+	return layer == LayerService || layer == LayerRepository || layer == LayerModel || layer == LayerUtil
+}
+
+func pathContainsWords(value string, words []string) bool {
+	lower := strings.ToLower(value)
+	for _, word := range words {
+		if strings.Contains(lower, word) {
+			return true
+		}
+	}
+	return false
+}
+
+func reuseSymbols(d *doc, words []string, related bool) []string {
+	var names []string
+	for _, s := range d.symbols {
+		if !isCallable(s.Kind) && s.Kind != "type" && s.Kind != "interface" && s.Kind != "class" {
+			continue
+		}
+		if related || pathContainsWords(s.Name, words) {
+			names = append(names, s.Name)
+		}
+	}
+	return names
+}
+
+func collectTwinFunctions(scoped []*doc, target *doc) []Twin {
+	byKey := indexTwinFunctions(scoped, target)
+	twins := make([]Twin, 0)
+	for _, s := range target.symbols {
+		if !isCallable(s.Kind) {
+			continue
+		}
+		key := twinKey(s.Name)
+		others := byKey[key]
+		if key == "" || len(others) == 0 {
+			continue
+		}
+		if len(others) > 4 {
+			others = others[:4]
+		}
+		twins = append(twins, Twin{Name: s.Name, Line: s.Line, Others: others})
+		if len(twins) >= 15 {
+			break
+		}
+	}
+	return twins
+}
+
+func indexTwinFunctions(scoped []*doc, target *doc) map[string][]SymbolRef {
+	byKey := make(map[string][]SymbolRef)
 	for _, d := range scoped {
 		if d == target {
 			continue
@@ -346,28 +404,14 @@ func BuildLayerGuide(db *gorm.DB, projectID uint, file string, withInventory boo
 			if !isCallable(s.Kind) {
 				continue
 			}
-			if k := twinKey(s.Name); k != "" {
-				byKey[k] = append(byKey[k], SymbolRef{Path: d.entry.Path, Layer: LayerOf(d.entry), Name: s.Name, Line: s.Line})
+			key := twinKey(s.Name)
+			if key == "" {
+				continue
 			}
+			byKey[key] = append(byKey[key], SymbolRef{Path: d.entry.Path, Layer: LayerOf(d.entry), Name: s.Name, Line: s.Line})
 		}
 	}
-	for _, s := range target.symbols {
-		if !isCallable(s.Kind) {
-			continue
-		}
-		others := byKey[twinKey(s.Name)]
-		if twinKey(s.Name) == "" || len(others) == 0 {
-			continue
-		}
-		if len(others) > 4 {
-			others = others[:4]
-		}
-		g.Twins = append(g.Twins, Twin{Name: s.Name, Line: s.Line, Others: others})
-		if len(g.Twins) >= 15 {
-			break
-		}
-	}
-	return g
+	return byKey
 }
 
 func layerRank(layer string) int {
