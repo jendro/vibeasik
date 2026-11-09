@@ -26,6 +26,9 @@ type Hooks struct {
 	SuggestTodos func(db *gorm.DB, project *models.Project, all []models.Project) []models.Todo
 	// AutoAssignOn: keputusan saran todo langsung dikerjakan agent (mempengaruhi kebijakan eksekusi).
 	AutoAssignOn func() bool
+	// EnqueueTodoAssignment menjadwalkan penugasan pegawai / antrean assignment untuk todo baru.
+	// Jika gagal, transaksi penyimpanan di-rollback agar tidak meninggalkan state parsial.
+	EnqueueTodoAssignment func(db *gorm.DB, todo *models.Todo) error
 }
 
 // H hook aktif. Diisi modul Pro di init().
@@ -88,3 +91,12 @@ func SuggestTodos(db *gorm.DB, project *models.Project, all []models.Project) []
 func AutoAssignOn() bool {
 	return H.AutoAssignOn != nil && H.AutoAssignOn()
 }
+
+// EnqueueTodoAssignment menjalankan hook antrean assignment bila terpasang; nil bila tidak ada.
+func EnqueueTodoAssignment(db *gorm.DB, todo *models.Todo) error {
+	if H.EnqueueTodoAssignment == nil {
+		return nil
+	}
+	return H.EnqueueTodoAssignment(db, todo)
+}
+

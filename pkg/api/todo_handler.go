@@ -146,11 +146,48 @@ func (s *Server) getTodo(c *fiber.Ctx) error {
 	return c.JSON(todo)
 }
 
+// extractIdempotencyKey membaca header Idempotency-Key / X-Idempotency-Key atau field payload.
+func extractIdempotencyKey(c *fiber.Ctx, payload *models.Todo) string {
+	if k := strings.TrimSpace(c.Get("Idempotency-Key")); k != "" {
+		return k
+	}
+	if k := strings.TrimSpace(c.Get("X-Idempotency-Key")); k != "" {
+		return k
+	}
+	if payload != nil && payload.IdempotencyKey != "" {
+		return strings.TrimSpace(payload.IdempotencyKey)
+	}
+	return ""
+}
+
+// findExistingTodo mencari todo duplikat berdasarkan idempotency_key atau audit_key.
+func (s *Server) findExistingTodo(c *fiber.Ctx, payload *models.Todo, key string) *models.Todo {
+	if key != "" {
+		var existing models.Todo
+		if err := s.db.WithContext(c.Context()).Where("idempotency_key = ?", key).First(&existing).Error; err == nil {
+			return &existing
+		}
+	}
+	if payload != nil && payload.AuditKey != "" {
+		var existing models.Todo
+		if err := s.db.WithContext(c.Context()).Where("audit_key = ? AND status IN ?", payload.AuditKey, []string{models.TodoStatusPending, models.TodoStatusInProgress}).First(&existing).Error; err == nil {
+			return &existing
+		}
+	}
+	return nil
+}
+
 func (s *Server) createTodo(c *fiber.Ctx) error {
 	var payload models.Todo
 	if msg := bindJSONRequired(c, &payload); msg != "" {
 		return badPayload(c, msg)
 	}
+
+	idempotencyKey := extractIdempotencyKey(c, &payload)
+	if existing := s.findExistingTodo(c, &payload, idempotencyKey); existing != nil {
+		return c.Status(fiber.StatusOK).JSON(existing)
+	}
+
 	if denied, resp := validateCreateTodo(c, &payload); denied {
 		return resp
 	}
@@ -158,9 +195,38 @@ func (s *Server) createTodo(c *fiber.Ctx) error {
 	applyTodoDefaults(&payload)
 	s.resolveTodoEntities(c, &payload)
 	finalizeTodoPayload(&payload)
+	if idempotencyKey != "" {
+		payload.IdempotencyKey = idempotencyKey
+	}
 
-	if err := s.db.WithContext(c.Context()).Create(&payload).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	var assignErr error
+	txErr := s.db.WithContext(c.Context()).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&payload).Error; err != nil {
+			return err
+		}
+		if err := s.safeEnqueueTodoAssignment(tx, &payload); err != nil {
+			assignErr = err
+			return err
+		}
+		return nil
+	})
+
+	if txErr != nil {
+		if assignErr != nil {
+			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+				"error":  "gagal menjadwalkan assignment: " + assignErr.Error(),
+				"code":   "ASSIGNMENT_ENQUEUE_FAILED",
+				"status": "error",
+				"stage":  "assignment",
+				"detail": assignErr.Error(),
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":  "gagal menyimpan todo: " + txErr.Error(),
+			"code":   "DB_SAVE_FAILED",
+			"status": "error",
+			"stage":  "database",
+		})
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(payload)

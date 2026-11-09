@@ -11,12 +11,14 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
-	"github.com/gofiber/fiber/v2/middleware/recover"
+	fiberRecover "github.com/gofiber/fiber/v2/middleware/recover"
 	"gorm.io/gorm"
 
 	"github.com/vibeasik/vibeasik/pkg/activity"
 	"github.com/vibeasik/vibeasik/pkg/localauth"
 	"github.com/vibeasik/vibeasik/pkg/mcp"
+	"github.com/vibeasik/vibeasik/pkg/models"
+	"github.com/vibeasik/vibeasik/pkg/registry"
 	"github.com/vibeasik/vibeasik/pkg/repository"
 	"github.com/vibeasik/vibeasik/pkg/runner"
 	"github.com/vibeasik/vibeasik/pkg/service"
@@ -35,6 +37,7 @@ type Server struct {
 	runner    *runner.Service
 	updater   *update.Updater
 	restart   func() error // mulai ulang engine (dipasang serve); nil bila tidak didukung
+	enqueueAssignment func(db *gorm.DB, todo *models.Todo) error // seam enqueue assignment (fallback ke registry.EnqueueTodoAssignment)
 }
 
 const (
@@ -101,7 +104,7 @@ func NewServer(db *gorm.DB) *Server {
 	})
 
 	// Middlewares
-	app.Use(recover.New())
+	app.Use(fiberRecover.New())
 	app.Use(logger.New(logger.Config{
 		Format: "[${time}] ${status} - ${method} ${path} (${latency})\n",
 	}))
@@ -109,7 +112,7 @@ func NewServer(db *gorm.DB) *Server {
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:  corsOrigins(),
 		AllowMethods:  "GET,POST,PUT,DELETE,OPTIONS",
-		AllowHeaders:  "Origin, Content-Type, Accept, Authorization, " + headerMCPSession + ", " + headerExecToken + ", " + localauth.Header,
+		AllowHeaders:  "Origin, Content-Type, Accept, Authorization, Idempotency-Key, X-Idempotency-Key, " + headerMCPSession + ", " + headerExecToken + ", " + localauth.Header,
 		ExposeHeaders: headerMCPSession,
 	}))
 
@@ -158,3 +161,25 @@ func (s *Server) Shutdown() error {
 	runner.Default().StopAll()
 	return s.app.Shutdown()
 }
+
+// SetEnqueueAssignment menyetel fungsi kustom untuk enqueue assignment todo (untuk testing atau seam injeksi).
+func (s *Server) SetEnqueueAssignment(fn func(db *gorm.DB, todo *models.Todo) error) {
+	s.enqueueAssignment = fn
+}
+
+func (s *Server) enqueueTodoAssignment(tx *gorm.DB, todo *models.Todo) error {
+	if s.enqueueAssignment != nil {
+		return s.enqueueAssignment(tx, todo)
+	}
+	return registry.EnqueueTodoAssignment(tx, todo)
+}
+
+func (s *Server) safeEnqueueTodoAssignment(tx *gorm.DB, todo *models.Todo) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("panic in assignment enqueue: %v", r)
+		}
+	}()
+	return s.enqueueTodoAssignment(tx, todo)
+}
+

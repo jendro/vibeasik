@@ -71,6 +71,7 @@ type Todo struct {
 	Rationale        string     `gorm:"type:text" json:"rationale,omitempty"`      // Penjelasan/analisis mengapa saran ini dibuat
 	Source           string     `gorm:"size:64;default:'manual'" json:"source"`    // manual, ai_agent, scanner, code_comment
 	AuditKey         string     `gorm:"size:600;index" json:"audit_key,omitempty"` // todo audit: "<rule>|<berkas>" — temuan dengan kunci sama digabung ke todo ini
+	IdempotencyKey   string     `gorm:"size:128;index" json:"idempotency_key,omitempty"` // Kunci idempotensi deduplikasi request mutasi (API-011)
 	DueDate          string     `gorm:"size:64" json:"due_date,omitempty"`
 	CompletedAt      *time.Time `gorm:"index" json:"completed_at,omitempty"`
 	CompletedByAgent string     `gorm:"size:128" json:"completed_by_agent,omitempty"` // Coding agent that completed the task (e.g. Antigravity, Claude Code, Aider, Cursor)
