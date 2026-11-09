@@ -87,6 +87,16 @@ func hasDynamicConcat(line string) bool {
 	return strings.Contains(line, "+") || strings.Contains(line, "$") || strings.Contains(line, "fmt.Sprintf")
 }
 
+func isCommandInjectionRuleMetadata(line string) bool {
+	return strings.Contains(line, "CWE-78") ||
+		strings.Contains(line, "SEC-COMMAND-INJECTION") ||
+		strings.Contains(line, "OS Command Injection") ||
+		strings.Contains(line, "ruleCommandInjection") ||
+		strings.HasPrefix(line, "//") ||
+		strings.HasPrefix(line, "/*") ||
+		strings.HasPrefix(line, "*")
+}
+
 func isStubLine(lang, line string) bool {
 	return stubHandlerRegex.MatchString(line) || (lang == "python" && stubPythonRegex.MatchString(line))
 }
@@ -156,7 +166,7 @@ func ruleUnguardedMutation(s *fileScan) (models.Finding, bool) {
 }
 
 func ruleWildcardCORS(s *fileScan) (models.Finding, bool) {
-	if !s.isServer || !wildcardCorsRegex.MatchString(s.trimmed) {
+	if !s.isServer || strings.HasPrefix(s.trimmed, "//") || strings.HasPrefix(s.trimmed, "/*") || strings.Contains(s.trimmed, "ROUTER-WILDCARD-CORS") || !wildcardCorsRegex.MatchString(s.trimmed) {
 		return models.Finding{}, false
 	}
 
@@ -225,7 +235,7 @@ func ruleHardcodedSecret(s *fileScan) (models.Finding, bool) {
 }
 
 func ruleCommandInjection(s *fileScan) (models.Finding, bool) {
-	if s.isAndroid || s.lang == "dart" || !commandInjectionRegex.MatchString(s.trimmed) || !hasDynamicConcat(s.trimmed) {
+	if s.isAndroid || s.lang == "dart" || isCommandInjectionRuleMetadata(s.trimmed) || !commandInjectionRegex.MatchString(s.trimmed) || !hasDynamicConcat(s.trimmed) {
 		return models.Finding{}, false
 	}
 	return s.newFinding("security", "CRITICAL", "SEC-COMMAND-INJECTION",
