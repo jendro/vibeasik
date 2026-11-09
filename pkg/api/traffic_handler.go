@@ -197,6 +197,7 @@ func (s *Server) deleteTrafficSource(c *fiber.Ctx) error {
 	if tx.Error != nil {
 		return tx.Error
 	}
+	defer tx.Rollback()
 	if err := tx.Where("source_id = ?", src.ID).Delete(&models.TrafficRouteStat{}).Error; err != nil {
 		tx.Rollback()
 		return err
