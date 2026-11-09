@@ -77,7 +77,7 @@ const pct = (v: number) => `${Math.round(v * 100)}%`
         </tbody>
       </table>
       <p v-if="blocked" class="text-xs text-rose-600 dark:text-rose-400">
-        Dilewati: ✗ ≥ 3 dan utilitas {{ pct(utility) }} &lt; 25% — butir yang terbukti merugikan tidak pernah dibawa ke prompt (kurator juga memensiunkannya bila utilitas &lt; 30%).
+        Dilewati: ✗ ≥ 3 dan utilitas {{ pct(utility) }} &lt; 25% — butir yang terbukti merugikan tidak pernah dibawa ke instruksi sistem (kurator juga memensiunkannya bila utilitas &lt; 30%).
       </p>
       <p v-else class="text-xs text-neutral-500 leading-relaxed">
         Relevansi menentukan lebih dari separuh skor, jadi butir yang tidak nyambung tidak akan menang walau terbukti. Di antara butir yang sama-sama relevan, bukti ✓/✗ dan bobot yang memutuskan urutan. Butir yang lolos lalu disaring keberagamannya (satu klaster maksimal separuh hasil) dan diambil teratas (todo 15 · audit 8 · rapat 10 · spesialis 6).
