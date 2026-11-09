@@ -56,13 +56,29 @@ func NewService(db *gorm.DB) *Service {
 // nonRunnableRoles are skipped by project-wide runs (need a device, or are not servers).
 var nonRunnableRoles = map[string]bool{"frontend_mobile": true, "docs": true, "cli": true}
 
-func (s *Service) loadComponent(id uint) (models.Component, []models.Component, error) {
+func (s *Service) loadComponentByID(id uint) (models.Component, error) {
 	var comp models.Component
-	if err := s.db.First(&comp, id).Error; err != nil {
-		return comp, nil, fmt.Errorf("komponen tidak ditemukan")
+	if err := s.db.
+		Select("id, project_id, name, dev_command, role, absolute_path, port, run_port").
+		First(&comp, id).Error; err != nil {
+		return comp, fmt.Errorf("komponen tidak ditemukan")
 	}
+	return comp, nil
+}
+
+func (s *Service) loadComponent(id uint) (models.Component, []models.Component, error) {
+	comp, err := s.loadComponentByID(id)
+	if err != nil {
+		return comp, nil, err
+	}
+
 	var siblings []models.Component
-	s.db.Where("project_id = ?", comp.ProjectID).Find(&siblings)
+	if err := s.db.
+		Select("id, project_id, name, dev_command, role, port, run_port").
+		Where("project_id = ?", comp.ProjectID).
+		Find(&siblings).Error; err != nil {
+		return comp, nil, fmt.Errorf("gagal memuat komponen terkait: %w", err)
+	}
 	return comp, siblings, nil
 }
 
@@ -115,7 +131,7 @@ func (s *Service) Status(id uint, withLogs bool) (Status, error) {
 	if st, ok := s.mgr.Status(id, withLogs); ok {
 		return st, nil
 	}
-	comp, _, err := s.loadComponent(id)
+	comp, err := s.loadComponentByID(id)
 	if err != nil {
 		return Status{}, err
 	}
@@ -134,7 +150,7 @@ func (s *Service) List() []Status {
 
 // AssignPort sets port manually (port>0) or lets the allocator pick (reassign forces a new one).
 func (s *Service) AssignPort(id uint, port int, reassign bool) (*models.Component, error) {
-	comp, _, err := s.loadComponent(id)
+	comp, err := s.loadComponentByID(id)
 	if err != nil {
 		return nil, err
 	}

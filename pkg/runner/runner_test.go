@@ -260,3 +260,76 @@ func TestEnsureAllMovesStalePortHolder(t *testing.T) {
 		t.Fatalf("want a=4100 b=4115, got a=%d b=%d", a.RunPort, b.RunPort)
 	}
 }
+
+func TestLoadComponentAndStatus_OptimizedProjection(t *testing.T) {
+	db := setupDB(t)
+	p := models.Project{ID: 10, Name: "Proj10", Slug: "proj10"}
+	db.Create(&p)
+
+	c1 := models.Component{
+		ID:           1001,
+		ProjectID:    10,
+		Name:         "frontend",
+		Role:         models.RoleFrontendClient,
+		DevCommand:   "npm run dev",
+		AbsolutePath: "/tmp/frontend",
+		Port:         3000,
+		RunPort:      4120,
+	}
+	c2 := models.Component{
+		ID:           1002,
+		ProjectID:    10,
+		Name:         "backend",
+		Role:         models.RoleBackend,
+		DevCommand:   "go run .",
+		AbsolutePath: "/tmp/backend",
+		Port:         8080,
+		RunPort:      4125,
+	}
+	db.Create(&c1)
+	db.Create(&c2)
+
+	svc := NewService(db)
+
+	// 1. Test loadComponentByID
+	comp, err := svc.loadComponentByID(c1.ID)
+	if err != nil {
+		t.Fatalf("loadComponentByID failed: %v", err)
+	}
+	if comp.ID != c1.ID || comp.Name != "frontend" || comp.DevCommand != "npm run dev" || comp.AbsolutePath != "/tmp/frontend" || comp.RunPort != 4120 {
+		t.Errorf("loadComponentByID fields incomplete: %+v", comp)
+	}
+
+	// 2. Test loadComponent (with siblings)
+	compLoaded, siblings, err := svc.loadComponent(c1.ID)
+	if err != nil {
+		t.Fatalf("loadComponent failed: %v", err)
+	}
+	if compLoaded.ID != c1.ID {
+		t.Errorf("loadComponent primary mismatch: %+v", compLoaded)
+	}
+	if len(siblings) != 2 {
+		t.Fatalf("expected 2 siblings for project 10, got %d", len(siblings))
+	}
+	for _, s := range siblings {
+		if s.RunPort == 0 || s.DevCommand == "" || s.Role == "" {
+			t.Errorf("sibling projection missing essential fields: %+v", s)
+		}
+	}
+
+	// 3. Test Status uses loadComponentByID (idle status)
+	st, err := svc.Status(c1.ID, false)
+	if err != nil {
+		t.Fatalf("Status failed: %v", err)
+	}
+	if st.ComponentID != c1.ID || st.State != StateIdle || st.Port != 4120 {
+		t.Errorf("Status mismatch: %+v", st)
+	}
+
+	// 4. Test nonexistent component returns error
+	_, err = svc.loadComponentByID(99999)
+	if err == nil {
+		t.Errorf("expected error for nonexistent component")
+	}
+}
+

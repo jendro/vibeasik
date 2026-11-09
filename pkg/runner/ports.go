@@ -43,9 +43,11 @@ var skipInRange = map[int]bool{4173: true, 4200: true, 4242: true, 4321: true, 4
 
 var allocMu sync.Mutex
 
+const listenProbeTimeout = 50 * time.Millisecond
+
 // IsListening reports whether something accepts TCP connections on 127.0.0.1:port.
 func IsListening(port int) bool {
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", port), 150*time.Millisecond)
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", port), listenProbeTimeout)
 	if err != nil {
 		return false
 	}
