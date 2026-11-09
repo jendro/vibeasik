@@ -227,10 +227,19 @@ func (s *Server) injectVibeAITemplate(c *fiber.Ctx) error {
 		return badPayload(c, msg)
 	}
 
-	cli := cloud.NewClient()
-	templates, err := cli.GetAITemplates()
-	if err != nil {
-		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
+	c.Set(fiber.HeaderCacheControl, "no-cache")
+
+	templates, found := getCachedAITemplates()
+	if !found {
+		cli := cloud.NewClient()
+		var err error
+		templates, err = cli.GetAITemplates()
+		if err != nil {
+			return c.Status(502).JSON(fiber.Map{"error": err.Error()})
+		}
+		if templates != nil {
+			setCachedAITemplates(templates)
+		}
 	}
 
 	var matched *cloud.AITemplateDTO
@@ -245,17 +254,9 @@ func (s *Server) injectVibeAITemplate(c *fiber.Ctx) error {
 		return c.Status(404).JSON(fiber.Map{"error": "Template AI tidak ditemukan"})
 	}
 
-	var createdFiles []string
-	for _, f := range matched.Files {
-		fullPath := filepath.Join(req.TargetPath, filepath.FromSlash(f.Filename))
-		dir := filepath.Dir(fullPath)
-		if err := os.MkdirAll(dir, 0755); err != nil {
-			return c.Status(500).JSON(fiber.Map{"error": "Gagal membuat direktori: " + err.Error()})
-		}
-		if err := os.WriteFile(fullPath, []byte(f.Content), 0644); err != nil {
-			return c.Status(500).JSON(fiber.Map{"error": "Gagal menulis file: " + err.Error()})
-		}
-		createdFiles = append(createdFiles, strings.TrimPrefix(fullPath, req.TargetPath))
+	createdFiles, err := writeTemplateFiles(req.TargetPath, matched.Files)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	return c.JSON(fiber.Map{
@@ -265,4 +266,20 @@ func (s *Server) injectVibeAITemplate(c *fiber.Ctx) error {
 		"install_guide": matched.InstallGuide,
 		"message":       "Template AI berhasil disuntikkan ke proyek lokal!",
 	})
+}
+
+func writeTemplateFiles(targetPath string, files []cloud.DeployFileDTO) ([]string, error) {
+	var createdFiles []string
+	for _, f := range files {
+		fullPath := filepath.Join(targetPath, filepath.FromSlash(f.Filename))
+		dir := filepath.Dir(fullPath)
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return nil, err
+		}
+		if err := os.WriteFile(fullPath, []byte(f.Content), 0644); err != nil {
+			return nil, err
+		}
+		createdFiles = append(createdFiles, strings.TrimPrefix(fullPath, targetPath))
+	}
+	return createdFiles, nil
 }

@@ -43,6 +43,8 @@ func (s *Server) getTrafficMeta(c *fiber.Ctx) error {
 }
 
 func (s *Server) listTrafficSources(c *fiber.Ctx) error {
+	c.Set(fiber.HeaderCacheControl, "private, max-age=60")
+
 	q := s.db.Order("id ASC")
 	if pid := c.QueryInt("project_id", 0); pid > 0 {
 		q = q.Where("project_id = ?", pid)
@@ -51,24 +53,55 @@ func (s *Server) listTrafficSources(c *fiber.Ctx) error {
 	if err := q.Find(&list).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
+
+	pMap, cMap := s.batchTrafficRelations(list)
+
 	out := make([]trafficSourceView, 0, len(list))
 	for _, src := range list {
 		v := trafficSourceView{TrafficSource: src}
 		if src.ProjectID != nil {
-			var p models.Project
-			if s.db.Select("name").First(&p, *src.ProjectID).Error == nil {
-				v.ProjectName = p.Name
-			}
+			v.ProjectName = pMap[*src.ProjectID]
 		}
 		if src.ComponentID != nil {
-			var comp models.Component
-			if s.db.Select("name").First(&comp, *src.ComponentID).Error == nil {
-				v.ComponentName = comp.Name
-			}
+			v.ComponentName = cMap[*src.ComponentID]
 		}
 		out = append(out, v)
 	}
 	return c.JSON(out)
+}
+
+func (s *Server) batchTrafficRelations(list []models.TrafficSource) (map[uint]string, map[uint]string) {
+	pMap := make(map[uint]string)
+	cMap := make(map[uint]string)
+	pIDs := make([]uint, 0, len(list))
+	cIDs := make([]uint, 0, len(list))
+
+	for _, src := range list {
+		if src.ProjectID != nil {
+			pIDs = append(pIDs, *src.ProjectID)
+		}
+		if src.ComponentID != nil {
+			cIDs = append(cIDs, *src.ComponentID)
+		}
+	}
+
+	if len(pIDs) > 0 {
+		var projects []models.Project
+		if err := s.db.Select("id, name").Where("id IN ?", pIDs).Find(&projects).Error; err == nil {
+			for _, p := range projects {
+				pMap[p.ID] = p.Name
+			}
+		}
+	}
+	if len(cIDs) > 0 {
+		var comps []models.Component
+		if err := s.db.Select("id, name").Where("id IN ?", cIDs).Find(&comps).Error; err == nil {
+			for _, comp := range comps {
+				cMap[comp.ID] = comp.Name
+			}
+		}
+	}
+	return pMap, cMap
 }
 
 type trafficSourceRequest struct {
@@ -99,49 +132,64 @@ func validInterval(sec int) int {
 	return 60
 }
 
+func (s *Server) resolveComponentSource(src *models.TrafficSource) {
+	if src.ComponentID == nil {
+		return
+	}
+	var comp models.Component
+	if s.db.Select("id, project_id, name").First(&comp, *src.ComponentID).Error == nil {
+		if src.ProjectID == nil {
+			src.ProjectID = &comp.ProjectID
+		}
+		if src.Name == "" {
+			src.Name = comp.Name
+		}
+	}
+}
+
+func prepareTrafficKeys(src *models.TrafficSource) (int, string) {
+	if src.Mode == models.TrafficModeDirect {
+		b := make([]byte, 20)
+		_, _ = rand.Read(b)
+		src.IngestKey = "vtd_" + hex.EncodeToString(b)
+		src.CloudURL = ""
+		return 0, ""
+	}
+
+	src.Mode = models.TrafficModeCloud
+	if src.CloudURL == "" {
+		src.CloudURL = strings.TrimRight(config.GetConfig().VibeasikCloudURL, "/")
+	}
+	if !strings.HasPrefix(src.CloudURL, "http://") && !strings.HasPrefix(src.CloudURL, "https://") {
+		return 400, "URL vibeasik live harus diawali http:// atau https://"
+	}
+	if err := traffic.RegisterCloud(src); err != nil {
+		return 502, err.Error()
+	}
+	return 0, ""
+}
+
 func (s *Server) createTrafficSource(c *fiber.Ctx) error {
 	var req trafficSourceRequest
 	if msg := firstProblem(bindJSON(c, &req), validateTrafficSourceRequest(req)); msg != "" {
 		return badPayload(c, msg)
 	}
+	c.Set(fiber.HeaderCacheControl, "no-cache")
+
 	src := models.TrafficSource{
 		Name: strings.TrimSpace(req.Name), ProjectID: req.ProjectID, ComponentID: req.ComponentID,
 		Mode: req.Mode, CloudURL: strings.TrimRight(strings.TrimSpace(req.CloudURL), "/"),
 		SyncIntervalSec: validInterval(req.SyncIntervalSec), Enabled: true,
 	}
-	if src.ComponentID != nil && src.ProjectID == nil {
-		var comp models.Component
-		if s.db.First(&comp, *src.ComponentID).Error == nil {
-			src.ProjectID = &comp.ProjectID
-		}
-	}
+	s.resolveComponentSource(&src)
 	if src.Name == "" {
 		src.Name = "Aplikasi live"
-		if src.ComponentID != nil {
-			var comp models.Component
-			if s.db.Select("name").First(&comp, *src.ComponentID).Error == nil {
-				src.Name = comp.Name
-			}
-		}
 	}
-	switch src.Mode {
-	case models.TrafficModeDirect:
-		b := make([]byte, 20)
-		_, _ = rand.Read(b)
-		src.IngestKey = "vtd_" + hex.EncodeToString(b)
-		src.CloudURL = ""
-	default:
-		src.Mode = models.TrafficModeCloud
-		if src.CloudURL == "" {
-			src.CloudURL = strings.TrimRight(config.GetConfig().VibeasikCloudURL, "/")
-		}
-		if !strings.HasPrefix(src.CloudURL, "http://") && !strings.HasPrefix(src.CloudURL, "https://") {
-			return c.Status(400).JSON(fiber.Map{"error": "URL vibeasik live harus diawali http:// atau https://"})
-		}
-		if err := traffic.RegisterCloud(&src); err != nil {
-			return c.Status(502).JSON(fiber.Map{"error": err.Error()})
-		}
+
+	if code, errMsg := prepareTrafficKeys(&src); code != 0 {
+		return c.Status(code).JSON(fiber.Map{"error": errMsg})
 	}
+
 	if err := s.db.Create(&src).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}

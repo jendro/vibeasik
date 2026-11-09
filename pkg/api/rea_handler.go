@@ -5,12 +5,45 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
+	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/vibeasik/vibeasik/pkg/agents"
 )
+
+var (
+	reaAnalysisCacheMu sync.RWMutex
+	reaAnalysisCache   = make(map[string]reaAnalysisCacheEntry)
+)
+
+type reaAnalysisCacheEntry struct {
+	result    fiber.Map
+	expiresAt time.Time
+}
+
+func getCachedReaAnalysis(key string) (fiber.Map, bool) {
+	reaAnalysisCacheMu.RLock()
+	defer reaAnalysisCacheMu.RUnlock()
+	entry, ok := reaAnalysisCache[key]
+	if !ok || time.Now().After(entry.expiresAt) {
+		return nil, false
+	}
+	return entry.result, true
+}
+
+func setCachedReaAnalysis(key string, result fiber.Map) {
+	reaAnalysisCacheMu.Lock()
+	defer reaAnalysisCacheMu.Unlock()
+	if len(reaAnalysisCache) > 100 {
+		reaAnalysisCache = make(map[string]reaAnalysisCacheEntry)
+	}
+	reaAnalysisCache[key] = reaAnalysisCacheEntry{
+		result:    result,
+		expiresAt: time.Now().Add(60 * time.Second),
+	}
+}
 
 // getReaStatus returns the installation status and capabilities of REA
 func (s *Server) getReaStatus(c *fiber.Ctx) error {
@@ -41,6 +74,31 @@ func (s *Server) getReaStatus(c *fiber.Ctx) error {
 	return c.JSON(result)
 }
 
+func resolveReaCommand(targetPath, analysisType string) (string, []string, error) {
+	var cmdName string
+	var cmdArgs []string
+
+	reaPath, err := exec.LookPath("rea")
+	if err != nil {
+		npxPath, npxErr := exec.LookPath("npx")
+		if npxErr != nil {
+			return "", nil, fmt.Errorf("REA belum terpasang di sistem ini")
+		}
+		cmdName = npxPath
+		cmdArgs = append(cmdArgs, "-y", "rea-agents@latest")
+	} else {
+		cmdName = reaPath
+	}
+
+	switch analysisType {
+	case "javascript", "electron":
+		cmdArgs = append(cmdArgs, "analyze-javascript-application", targetPath, "--json")
+	default:
+		cmdArgs = append(cmdArgs, "analyze-javascript-application", targetPath, "--json")
+	}
+	return cmdName, cmdArgs, nil
+}
+
 // runReaAnalysis runs a REA reverse engineering analysis on a target path
 func (s *Server) runReaAnalysis(c *fiber.Ctx) error {
 	var req struct {
@@ -57,30 +115,19 @@ func (s *Server) runReaAnalysis(c *fiber.Ctx) error {
 		req.AnalysisType = "javascript"
 	}
 
-	// Build REA command
-	var cmdName string
-	var cmdArgs []string
+	c.Set(fiber.HeaderCacheControl, "private, max-age=60")
 
-	reaPath, err := exec.LookPath("rea")
-	if err != nil {
-		reaPath, err = exec.LookPath("npx")
-		if err != nil {
-			return c.Status(422).JSON(fiber.Map{
-				"error":       "REA belum terpasang di sistem ini",
-				"install_cmd": "npm install --global rea-agents",
-			})
-		}
-		cmdName = reaPath
-		cmdArgs = append(cmdArgs, "-y", "rea-agents@latest")
-	} else {
-		cmdName = reaPath
+	cacheKey := req.AnalysisType + ":" + req.TargetPath
+	if cached, found := getCachedReaAnalysis(cacheKey); found {
+		return c.JSON(cached)
 	}
 
-	switch req.AnalysisType {
-	case "javascript", "electron":
-		cmdArgs = append(cmdArgs, "analyze-javascript-application", req.TargetPath, "--json")
-	default:
-		cmdArgs = append(cmdArgs, "analyze-javascript-application", req.TargetPath, "--json")
+	cmdName, cmdArgs, err := resolveReaCommand(req.TargetPath, req.AnalysisType)
+	if err != nil {
+		return c.Status(422).JSON(fiber.Map{
+			"error":       err.Error(),
+			"install_cmd": "npm install --global rea-agents",
+		})
 	}
 
 	ctx, cancel := context.WithTimeout(c.Context(), 120*time.Second)
@@ -96,24 +143,27 @@ func (s *Server) runReaAnalysis(c *fiber.Ctx) error {
 		outputText = fmt.Sprintf("REA analysis error: %s", execErr.Error())
 	}
 
-	// Try to parse as JSON for structured response
+	var resp fiber.Map
 	var parsed interface{}
 	if json.Valid(out) {
 		_ = json.Unmarshal(out, &parsed)
-		return c.JSON(fiber.Map{
+		resp = fiber.Map{
 			"success":       execErr == nil,
 			"analysis_type": req.AnalysisType,
 			"target_path":   req.TargetPath,
 			"duration":      duration,
 			"result":        parsed,
-		})
+		}
+	} else {
+		resp = fiber.Map{
+			"success":       execErr == nil,
+			"analysis_type": req.AnalysisType,
+			"target_path":   req.TargetPath,
+			"duration":      duration,
+			"output":        outputText,
+		}
 	}
 
-	return c.JSON(fiber.Map{
-		"success":       execErr == nil,
-		"analysis_type": req.AnalysisType,
-		"target_path":   req.TargetPath,
-		"duration":      duration,
-		"output":        outputText,
-	})
+	setCachedReaAnalysis(cacheKey, resp)
+	return c.JSON(resp)
 }

@@ -191,3 +191,198 @@ func TestSubTodo3520_GetVibeAITemplates_LatencyAndCaching(t *testing.T) {
 		t.Errorf("unexpected templates response: %+v", res)
 	}
 }
+
+// Sub todo #3521: s.injectVibeAITemplate (POST /api/vibeasik/ai-templates/inject)
+func TestSubTodo3521_InjectVibeAITemplate_LatencyAndCaching(t *testing.T) {
+	s := newGuardTestServer(t)
+	tok := map[string]string{localauth.Header: testLocalToken}
+	tmpDir, err := os.MkdirTemp("", "vibeasik_test_inject_*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	mockTemplates := []cloud.AITemplateDTO{
+		{
+			ID:          "fast-assistant",
+			Name:        "Fast Assistant",
+			Description: "Assists with fast injection",
+			Files: []cloud.DeployFileDTO{
+				{
+					Filename: "ai_helper.go",
+					Content:  "package main\n\n// injected helper",
+				},
+			},
+		},
+	}
+	setCachedAITemplates(mockTemplates)
+
+	payload := map[string]interface{}{
+		"component_id": 1,
+		"template_id":  "fast-assistant",
+		"target_path":  tmpDir,
+	}
+	bodyBytes, _ := json.Marshal(payload)
+
+	start := time.Now()
+	resp := doReqWithBody(t, s, "POST", "/api/vibeasik/ai-templates/inject", "localhost", string(bodyBytes), tok)
+	elapsed := time.Since(start)
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200 OK, got %d", resp.StatusCode)
+	}
+	if cc := resp.Header.Get("Cache-Control"); cc != "no-cache" {
+		t.Errorf("expected Cache-Control 'no-cache', got %q", cc)
+	}
+	if elapsed > 50*time.Millisecond {
+		t.Errorf("cached injectVibeAITemplate took %v, expected < 50ms", elapsed)
+	}
+
+	var res map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+		t.Fatalf("decode inject response: %v", err)
+	}
+	if res["success"] != true || res["template_name"] != "Fast Assistant" {
+		t.Errorf("unexpected response: %+v", res)
+	}
+	if _, err := os.Stat(tmpDir + "/ai_helper.go"); os.IsNotExist(err) {
+		t.Errorf("expected injected file ai_helper.go to exist in %s", tmpDir)
+	}
+}
+
+// Sub todo #3522: s.listTrafficSources (GET /api/traffic/sources)
+func TestSubTodo3522_ListTrafficSources_LatencyAndBatching(t *testing.T) {
+	s := newGuardTestServer(t)
+	_ = s.db.AutoMigrate(&models.Project{}, &models.Component{}, &models.TrafficSource{})
+
+	p := models.Project{Name: "Traffic Test Project", Slug: "traffic-test-project"}
+	s.db.Create(&p)
+	comp := models.Component{ProjectID: p.ID, Name: "Traffic Test Comp", Role: "backend"}
+	s.db.Create(&comp)
+
+	// Create multiple sources to verify N+1 batch query behavior
+	for i := 0; i < 5; i++ {
+		src := models.TrafficSource{
+			Name:        "Source Batch",
+			ProjectID:   &p.ID,
+			ComponentID: &comp.ID,
+			Mode:        models.TrafficModeDirect,
+			Enabled:     true,
+		}
+		s.db.Create(&src)
+	}
+
+	tok := map[string]string{localauth.Header: testLocalToken}
+	start := time.Now()
+	resp := doReq(t, s, "GET", "/api/traffic/sources", "localhost", tok)
+	elapsed := time.Since(start)
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200 OK, got %d", resp.StatusCode)
+	}
+	if cc := resp.Header.Get("Cache-Control"); cc != "private, max-age=60" {
+		t.Errorf("expected Cache-Control 'private, max-age=60', got %q", cc)
+	}
+	if elapsed > 50*time.Millisecond {
+		t.Errorf("listTrafficSources took %v, expected < 50ms", elapsed)
+	}
+
+	var list []trafficSourceView
+	if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
+		t.Fatalf("decode list response: %v", err)
+	}
+	if len(list) < 5 {
+		t.Fatalf("expected at least 5 traffic sources, got %d", len(list))
+	}
+	if list[0].ProjectName != "Traffic Test Project" || list[0].ComponentName != "Traffic Test Comp" {
+		t.Errorf("batch resolved relations mismatch: ProjectName=%q, ComponentName=%q", list[0].ProjectName, list[0].ComponentName)
+	}
+}
+
+// Sub todo #3523: s.createTrafficSource (POST /api/traffic/sources)
+func TestSubTodo3523_CreateTrafficSource_LatencyAndHeaders(t *testing.T) {
+	s := newGuardTestServer(t)
+	_ = s.db.AutoMigrate(&models.Project{}, &models.Component{}, &models.TrafficSource{})
+
+	p := models.Project{Name: "Source Project", Slug: "source-project"}
+	s.db.Create(&p)
+	comp := models.Component{ProjectID: p.ID, Name: "Source Component", Role: "backend"}
+	s.db.Create(&comp)
+
+	tok := map[string]string{localauth.Header: testLocalToken}
+	payload := map[string]interface{}{
+		"component_id": comp.ID,
+		"mode":         models.TrafficModeDirect,
+	}
+	bodyBytes, _ := json.Marshal(payload)
+
+	start := time.Now()
+	resp := doReqWithBody(t, s, "POST", "/api/traffic/sources", "localhost", string(bodyBytes), tok)
+	elapsed := time.Since(start)
+
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("expected 201 Created, got %d", resp.StatusCode)
+	}
+	if cc := resp.Header.Get("Cache-Control"); cc != "no-cache" {
+		t.Errorf("expected Cache-Control 'no-cache', got %q", cc)
+	}
+	if elapsed > 50*time.Millisecond {
+		t.Errorf("createTrafficSource took %v, expected < 50ms", elapsed)
+	}
+
+	var created models.TrafficSource
+	if err := json.NewDecoder(resp.Body).Decode(&created); err != nil {
+		t.Fatalf("decode created response: %v", err)
+	}
+	if created.Name != "Source Component" || created.ProjectID == nil || *created.ProjectID != p.ID {
+		t.Errorf("unexpected auto-resolved source fields: name=%q, project_id=%v", created.Name, created.ProjectID)
+	}
+}
+
+// Sub todo #3524: s.runReaAnalysis (POST /api/rea/analyze)
+func TestSubTodo3524_RunReaAnalysis_LatencyAndCaching(t *testing.T) {
+	s := newGuardTestServer(t)
+	tok := map[string]string{localauth.Header: testLocalToken}
+
+	cacheKey := "javascript:/home/test/app"
+	mockResult := map[string]interface{}{
+		"analyzed": true,
+		"score":    95,
+	}
+	setCachedReaAnalysis(cacheKey, map[string]interface{}{
+		"success":       true,
+		"analysis_type": "javascript",
+		"target_path":   "/home/test/app",
+		"duration":      "15ms",
+		"result":        mockResult,
+	})
+
+	payload := map[string]interface{}{
+		"target_path":   "/home/test/app",
+		"analysis_type": "javascript",
+	}
+	bodyBytes, _ := json.Marshal(payload)
+
+	start := time.Now()
+	resp := doReqWithBody(t, s, "POST", "/api/rea/analyze", "localhost", string(bodyBytes), tok)
+	elapsed := time.Since(start)
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200 OK, got %d", resp.StatusCode)
+	}
+	if cc := resp.Header.Get("Cache-Control"); cc != "private, max-age=60" {
+		t.Errorf("expected Cache-Control 'private, max-age=60', got %q", cc)
+	}
+	if elapsed > 50*time.Millisecond {
+		t.Errorf("cached runReaAnalysis took %v, expected < 50ms", elapsed)
+	}
+
+	var res map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+		t.Fatalf("decode rea response: %v", err)
+	}
+	if res["success"] != true || res["duration"] != "15ms" {
+		t.Errorf("unexpected rea cached result: %+v", res)
+	}
+}
+
