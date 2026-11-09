@@ -86,17 +86,83 @@ func claimedPorts(db *gorm.DB, excludeID uint) (map[int]uint, error) {
 	return claimed, nil
 }
 
-// Allocate picks and persists the run port for comp. With reassign=true the current RunPort is
-// abandoned (e.g. because a foreign process holds it) and a different free port is chosen.
-func Allocate(db *gorm.DB, comp *models.Component, reassign bool) (int, error) {
-	// Proyek tanpa slot mendapat bloknya dulu (run_port semua komponen ikut disetel).
+func ensureComponentSlot(db *gorm.DB, comp *models.Component) ([]int, error) {
 	var slot []int
 	db.Model(&models.Project{}).Where("id = ? AND port_slot IS NOT NULL", comp.ProjectID).Pluck("port_slot", &slot)
 	if len(slot) == 0 && comp.ProjectID > 0 {
 		if _, err := EnsureProjectPorts(db, comp.ProjectID); err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-			return 0, err
+			return nil, err
 		}
 		db.Model(&models.Component{}).Where("id = ?", comp.ID).Pluck("run_port", &comp.RunPort)
+	}
+	return slot, nil
+}
+
+func isPortUsable(p int, currentPort int, claimed map[int]uint) bool {
+	if p < 1024 || p > 65535 || p == currentPort || reservedPorts[p] {
+		return false
+	}
+	if _, taken := claimed[p]; taken {
+		return false
+	}
+	return IsPortFree(p)
+}
+
+func findStablePort(comp models.Component, reassign bool, claimed map[int]uint) int {
+	if reassign || comp.RunPort <= 0 {
+		return 0
+	}
+	if _, taken := claimed[comp.RunPort]; !taken && !reservedPorts[comp.RunPort] {
+		return comp.RunPort
+	}
+	return 0
+}
+
+func findFirstUsablePort(start, end int, currentPort int, claimed map[int]uint) int {
+	for p := start; p <= end; p++ {
+		if isPortUsable(p, currentPort, claimed) {
+			return p
+		}
+	}
+	return 0
+}
+
+func chooseRunPort(comp models.Component, reassign bool, planned int, slot []int, claimed map[int]uint) (int, error) {
+	if port := findStablePort(comp, reassign, claimed); port > 0 {
+		return port, nil
+	}
+	if planned > 0 && isPortUsable(planned, comp.RunPort, claimed) {
+		return planned, nil
+	}
+	if len(slot) > 0 && slot[0] >= 0 {
+		base := slotBase(slot[0])
+		if port := findFirstUsablePort(base, base+SlotSize-1, comp.RunPort, claimed); port > 0 {
+			return port, nil
+		}
+	}
+	if port := findFirstUsablePort(OverflowStart, OverflowEnd, comp.RunPort, claimed); port > 0 {
+		return port, nil
+	}
+	return 0, fmt.Errorf("tidak ada port bebas di blok proyek maupun rentang cadangan %d-%d", OverflowStart, OverflowEnd)
+}
+
+func persistRunPort(db *gorm.DB, comp *models.Component, chosen int) error {
+	if chosen == comp.RunPort {
+		return nil
+	}
+	if err := db.Model(&models.Component{}).Where("id = ?", comp.ID).Update("run_port", chosen).Error; err != nil {
+		return err
+	}
+	comp.RunPort = chosen
+	return nil
+}
+
+// Allocate picks and persists the run port for comp. With reassign=true the current RunPort is
+// abandoned (e.g. because a foreign process holds it) and a different free port is chosen.
+func Allocate(db *gorm.DB, comp *models.Component, reassign bool) (int, error) {
+	slot, err := ensureComponentSlot(db, comp)
+	if err != nil {
+		return 0, err
 	}
 	planned := PlannedPort(db, *comp)
 
@@ -108,46 +174,17 @@ func Allocate(db *gorm.DB, comp *models.Component, reassign bool) (int, error) {
 		return 0, err
 	}
 
-	usable := func(p int) bool {
-		_, taken := claimed[p]
-		return p >= 1024 && p <= 65535 && p != comp.RunPort && !taken && !reservedPorts[p] && IsPortFree(p)
+	chosen, err := chooseRunPort(*comp, reassign, planned, slot, claimed)
+	if err != nil {
+		return 0, err
 	}
 
-	chosen := 0
-	if !reassign && comp.RunPort > 0 {
-		// Stabil: tetap pakai port lama walau sedang sibuk; Start yang akan melaporkan bentrok.
-		if _, taken := claimed[comp.RunPort]; !taken && !reservedPorts[comp.RunPort] {
-			chosen = comp.RunPort
-		}
-	}
-	if chosen == 0 && planned > 0 && usable(planned) {
-		chosen = planned
-	}
-	// Offset kosong lain di blok proyek, lalu rentang cadangan di luar semua blok
-	if chosen == 0 && len(slot) > 0 && slot[0] >= 0 {
-		for p := slotBase(slot[0]); chosen == 0 && p < slotBase(slot[0])+SlotSize; p++ {
-			if usable(p) {
-				chosen = p
-			}
-		}
-	}
-	for p := OverflowStart; chosen == 0 && p <= OverflowEnd; p++ {
-		if usable(p) {
-			chosen = p
-		}
-	}
-	if chosen == 0 {
-		return 0, fmt.Errorf("tidak ada port bebas di blok proyek maupun rentang cadangan %d-%d", OverflowStart, OverflowEnd)
-	}
-
-	if chosen != comp.RunPort {
-		if err := db.Model(&models.Component{}).Where("id = ?", comp.ID).Update("run_port", chosen).Error; err != nil {
-			return 0, err
-		}
-		comp.RunPort = chosen
+	if err := persistRunPort(db, comp, chosen); err != nil {
+		return 0, err
 	}
 	return chosen, nil
 }
+
 
 // Assign sets a user-chosen run port after checking it is not owned by vibeasik or another component.
 func Assign(db *gorm.DB, comp *models.Component, port int) error {
