@@ -17,18 +17,7 @@ import (
 func rescoreTodo(todo *models.Todo, updates map[string]interface{}) bool {
 	touched := false
 	for k := range updates {
-		switch {
-		case strings.HasPrefix(k, "complexity_") && k != "complexity_source":
-			if _, ok := updates["complexity_source"]; !ok && k != "complexity_note" {
-				todo.ComplexitySource = models.ComplexitySourceManual
-			}
-			touched = true
-		case strings.HasPrefix(k, "impact_") && k != "impact_source":
-			if _, ok := updates["impact_source"]; !ok && k != "impact_summary" {
-				todo.ImpactSource = models.ComplexitySourceManual
-			}
-			touched = true
-		case k == "category":
+		if updateTouchesRescore(todo, updates, k) {
 			touched = true
 		}
 	}
@@ -36,6 +25,22 @@ func rescoreTodo(todo *models.Todo, updates map[string]interface{}) bool {
 		todo.Rescore()
 	}
 	return touched
+}
+
+func updateTouchesRescore(todo *models.Todo, updates map[string]interface{}, k string) bool {
+	if strings.HasPrefix(k, "complexity_") && k != "complexity_source" {
+		if _, ok := updates["complexity_source"]; !ok && k != "complexity_note" {
+			todo.ComplexitySource = models.ComplexitySourceManual
+		}
+		return true
+	}
+	if strings.HasPrefix(k, "impact_") && k != "impact_source" {
+		if _, ok := updates["impact_source"]; !ok && k != "impact_summary" {
+			todo.ImpactSource = models.ComplexitySourceManual
+		}
+		return true
+	}
+	return k == "category"
 }
 
 func (s *Server) approveTodo(c *fiber.Ctx) error {
@@ -60,24 +65,32 @@ func (s *Server) approveTodo(c *fiber.Ctx) error {
 		targetStatus = body.Status
 	}
 
-	todo.Status = targetStatus
-	if targetStatus == models.TodoStatusCompleted && todo.CompletedAt == nil {
-		now := time.Now()
-		todo.CompletedAt = &now
-		if todo.CompletedByAgent == "" {
-			todo.CompletedByAgent = "developer"
-		}
-	} else if targetStatus == models.TodoStatusPending || targetStatus == models.TodoStatusInProgress {
-		todo.CompletedAt = nil
-		todo.CompletedByAgent = ""
-		todo.CompletedByModel = ""
-	}
+	applyTodoApprovalState(&todo, targetStatus)
 
 	if err := s.db.Save(&todo).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	return c.JSON(fiber.Map{"status": "approved", "todo": todo})
+}
+
+func applyTodoApprovalState(todo *models.Todo, targetStatus string) {
+	todo.Status = targetStatus
+	if targetStatus == models.TodoStatusCompleted {
+		if todo.CompletedAt == nil {
+			now := time.Now()
+			todo.CompletedAt = &now
+		}
+		if todo.CompletedByAgent == "" {
+			todo.CompletedByAgent = "developer"
+		}
+		return
+	}
+	if targetStatus == models.TodoStatusPending || targetStatus == models.TodoStatusInProgress {
+		todo.CompletedAt = nil
+		todo.CompletedByAgent = ""
+		todo.CompletedByModel = ""
+	}
 }
 
 func (s *Server) rejectTodo(c *fiber.Ctx) error {
