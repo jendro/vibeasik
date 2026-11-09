@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -23,8 +25,13 @@ type SettingsRepository interface {
 }
 
 type gormSettingsRepository struct {
-	db *gorm.DB
+	db       *gorm.DB
+	mu       sync.RWMutex
+	cached   *models.LLMSettings
+	cachedAt time.Time
 }
+
+const settingsCacheTTL = 30 * time.Second
 
 // NewSettingsRepository instantiates a new SettingsRepository backed by GORM
 func NewSettingsRepository(db *gorm.DB) SettingsRepository {
@@ -32,15 +39,39 @@ func NewSettingsRepository(db *gorm.DB) SettingsRepository {
 }
 
 func (r *gormSettingsRepository) GetSettings(ctx context.Context) (*models.LLMSettings, error) {
+	r.mu.RLock()
+	cached, cachedAt := r.cached, r.cachedAt
+	r.mu.RUnlock()
+	if cached != nil && time.Since(cachedAt) < settingsCacheTTL {
+		cp := *cached
+		return &cp, nil
+	}
+
 	var settings models.LLMSettings
 	if err := r.db.WithContext(ctx).First(&settings).Error; err != nil {
 		return nil, err
 	}
-	return &settings, nil
+
+	r.mu.Lock()
+	cp := settings
+	r.cached = &cp
+	r.cachedAt = time.Now()
+	r.mu.Unlock()
+
+	res := settings
+	return &res, nil
 }
 
 func (r *gormSettingsRepository) UpdateSettings(ctx context.Context, settings *models.LLMSettings) error {
-	return r.db.WithContext(ctx).Save(settings).Error
+	if err := r.db.WithContext(ctx).Model(settings).Updates(settings).Error; err != nil {
+		return err
+	}
+	r.mu.Lock()
+	cp := *settings
+	r.cached = &cp
+	r.cachedAt = time.Now()
+	r.mu.Unlock()
+	return nil
 }
 
 func (r *gormSettingsRepository) GetAllConfigs(ctx context.Context) ([]models.LLMConfig, error) {
