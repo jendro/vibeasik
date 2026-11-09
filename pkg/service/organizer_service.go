@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"gorm.io/gorm"
@@ -31,6 +32,9 @@ type organizerService struct {
 	projectRepo   repository.ProjectRepository
 	componentRepo repository.ComponentRepository
 	db            *gorm.DB
+	wsMu          sync.RWMutex
+	cachedWS      *models.WorkspaceSettings
+	cachedWSAt    time.Time
 }
 
 // NewOrganizerService instantiates a new OrganizerService
@@ -435,9 +439,21 @@ func getComponentSubfolder(c models.Component) string {
 }
 
 func (s *organizerService) GetWorkspaceSettings(ctx context.Context) (*models.WorkspaceSettings, error) {
+	s.wsMu.RLock()
+	cached, cachedAt := s.cachedWS, s.cachedWSAt
+	s.wsMu.RUnlock()
+	if cached != nil && time.Since(cachedAt) < 60*time.Second {
+		cp := *cached
+		return &cp, nil
+	}
+
 	var ws models.WorkspaceSettings
 	if s.db != nil {
 		if err := s.db.WithContext(ctx).First(&ws).Error; err == nil {
+			s.wsMu.Lock()
+			s.cachedWS = &ws
+			s.cachedWSAt = time.Now()
+			s.wsMu.Unlock()
 			return &ws, nil
 		}
 	}
@@ -449,6 +465,10 @@ func (s *organizerService) GetWorkspaceSettings(ctx context.Context) (*models.Wo
 	if s.db != nil {
 		_ = s.db.WithContext(ctx).Create(&ws).Error
 	}
+	s.wsMu.Lock()
+	s.cachedWS = &ws
+	s.cachedWSAt = time.Now()
+	s.wsMu.Unlock()
 	return &ws, nil
 }
 
@@ -467,6 +487,10 @@ func (s *organizerService) UpdateWorkspaceSettings(ctx context.Context, defaultP
 			if err := s.db.WithContext(ctx).Save(&ws).Error; err != nil {
 				return nil, err
 			}
+			s.wsMu.Lock()
+			s.cachedWS = &ws
+			s.cachedWSAt = time.Now()
+			s.wsMu.Unlock()
 			return &ws, nil
 		}
 	}
@@ -479,6 +503,10 @@ func (s *organizerService) UpdateWorkspaceSettings(ctx context.Context, defaultP
 			return nil, err
 		}
 	}
+	s.wsMu.Lock()
+	s.cachedWS = &ws
+	s.cachedWSAt = time.Now()
+	s.wsMu.Unlock()
 	return &ws, nil
 }
 

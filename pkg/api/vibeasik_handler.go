@@ -18,10 +18,22 @@ import (
 var (
 	cloudAuditCacheMu sync.RWMutex
 	cloudAuditCache   = make(map[string]cloudAuditCacheEntry)
+
+	deployPlanCacheMu sync.RWMutex
+	deployPlanCache   = make(map[string]deployPlanCacheEntry)
+
+	aiTemplatesCacheMu sync.RWMutex
+	aiTemplatesCache   []cloud.AITemplateDTO
+	aiTemplatesCacheAt time.Time
 )
 
 type cloudAuditCacheEntry struct {
 	result    *cloud.CloudAuditResponseDTO
+	expiresAt time.Time
+}
+
+type deployPlanCacheEntry struct {
+	result    *cloud.DeployPlanResponseDTO
 	expiresAt time.Time
 }
 
@@ -45,6 +57,47 @@ func setCachedCloudAudit(key string, result *cloud.CloudAuditResponseDTO) {
 		result:    result,
 		expiresAt: time.Now().Add(60 * time.Second),
 	}
+}
+
+func getCachedDeployPlan(key string) (*cloud.DeployPlanResponseDTO, bool) {
+	deployPlanCacheMu.RLock()
+	defer deployPlanCacheMu.RUnlock()
+	entry, ok := deployPlanCache[key]
+	if !ok || time.Now().After(entry.expiresAt) {
+		return nil, false
+	}
+	return entry.result, true
+}
+
+func setCachedDeployPlan(key string, result *cloud.DeployPlanResponseDTO) {
+	deployPlanCacheMu.Lock()
+	defer deployPlanCacheMu.Unlock()
+	if len(deployPlanCache) > 100 {
+		deployPlanCache = make(map[string]deployPlanCacheEntry)
+	}
+	deployPlanCache[key] = deployPlanCacheEntry{
+		result:    result,
+		expiresAt: time.Now().Add(60 * time.Second),
+	}
+}
+
+func getCachedAITemplates() ([]cloud.AITemplateDTO, bool) {
+	aiTemplatesCacheMu.RLock()
+	defer aiTemplatesCacheMu.RUnlock()
+	if aiTemplatesCache == nil || time.Since(aiTemplatesCacheAt) > 300*time.Second {
+		return nil, false
+	}
+	cp := make([]cloud.AITemplateDTO, len(aiTemplatesCache))
+	copy(cp, aiTemplatesCache)
+	return cp, true
+}
+
+func setCachedAITemplates(templates []cloud.AITemplateDTO) {
+	aiTemplatesCacheMu.Lock()
+	defer aiTemplatesCacheMu.Unlock()
+	aiTemplatesCache = make([]cloud.AITemplateDTO, len(templates))
+	copy(aiTemplatesCache, templates)
+	aiTemplatesCacheAt = time.Now()
 }
 
 func computeBodyHash(body interface{}) string {
@@ -84,11 +137,26 @@ func (s *Server) generateVibeDeployPlan(c *fiber.Ctx) error {
 	if msg := bindJSONRequired(c, &body); msg != "" {
 		return badPayload(c, msg)
 	}
+
+	c.Set(fiber.HeaderCacheControl, "private, max-age=60")
+
+	cacheKey := computeBodyHash(body)
+	if cacheKey != "" {
+		if cached, found := getCachedDeployPlan(cacheKey); found {
+			return c.JSON(cached)
+		}
+	}
+
 	cli := cloud.NewClient()
 	plan, err := cli.GenerateDeployPlan(body)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
+
+	if cacheKey != "" && plan != nil {
+		setCachedDeployPlan(cacheKey, plan)
+	}
+
 	return c.JSON(plan)
 }
 
@@ -121,11 +189,22 @@ func (s *Server) runCloudSecurityAudit(c *fiber.Ctx) error {
 }
 
 func (s *Server) getVibeAITemplates(c *fiber.Ctx) error {
+	c.Set(fiber.HeaderCacheControl, "public, max-age=300")
+
+	if cached, found := getCachedAITemplates(); found {
+		return c.JSON(fiber.Map{"templates": cached})
+	}
+
 	cli := cloud.NewClient()
 	templates, err := cli.GetAITemplates()
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
+
+	if templates != nil {
+		setCachedAITemplates(templates)
+	}
+
 	return c.JSON(fiber.Map{"templates": templates})
 }
 

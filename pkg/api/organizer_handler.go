@@ -78,6 +78,7 @@ func (s *Server) consolidateProject(c *fiber.Ctx) error {
 }
 
 func (s *Server) getWorkspaceSettings(c *fiber.Ctx) error {
+	c.Set(fiber.HeaderCacheControl, "private, max-age=60")
 	ws, err := s.services.Organizer.GetWorkspaceSettings(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
@@ -86,6 +87,7 @@ func (s *Server) getWorkspaceSettings(c *fiber.Ctx) error {
 }
 
 func (s *Server) updateWorkspaceSettings(c *fiber.Ctx) error {
+	c.Set(fiber.HeaderCacheControl, "no-cache")
 	var payload struct {
 		DefaultProjectsRoot string `json:"default_projects_root"`
 	}

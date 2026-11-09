@@ -131,6 +131,7 @@ func (s *Server) stopProject(c *fiber.Ctx) error {
 
 // ensureUniquePorts mengalokasikan port unik untuk seluruh komponen proyek atau seluruh sistem bila id <= 0
 func (s *Server) ensureUniquePorts(c *fiber.Ctx) error {
+	c.Set(fiber.HeaderCacheControl, "no-cache")
 	// /ports/ensure-unique tanpa :id berarti semua proyek (id 0); :id yang ada harus valid.
 	var id uint
 	if c.Params("id") != "" {
