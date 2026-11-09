@@ -38,7 +38,7 @@ Community tidak butuh akun. Bagian mana pun dari fitur Pro yang belum terbuka ak
 
 Rincian formula biaya, alokasi kredit per fitur, arsitektur database GORM, alur kuota habis, dan privasi kode: lihat [Spesifikasi AI Credits & Paket](AI_CREDITS.md).
 
-Untuk tim yang memerlukan pendampingan langsung, audit kilat, atau implementasi orkestrasi AI terkelola, lihat [Paket Layanan Profesional](SERVICES.md).
+Untuk tim yang memerlukan pendampingan langsung, audit kilat, atau implementasi orkestrasi AI terkelola, lihat [Paket Layanan Profesional](SERVICES.md), [Contoh Laporan Audit Anonim](SAMPLE_AUDIT_REPORT_ANONYMIZED.md), serta [Laporan Validasi Pasar Primer](MARKET_VALIDATION_REPORT.md).
 
 ## Cara fitur Pro dibuka
 
