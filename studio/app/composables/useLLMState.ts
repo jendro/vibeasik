@@ -94,7 +94,8 @@ export const useLLMState = () => {
       const errRes: LLMTestResult = {
         success: false,
         latency_ms: 0,
-        message: err.data?.message || err.message || 'Koneksi ke endpoint LLM gagal.'
+        // Engine menolak dengan {error, code} (mis. exec_origin_forbidden 403); tampilkan alasannya, bukan pesan fetch mentah.
+        message: err.data?.error || err.data?.message || err.message || 'Koneksi ke endpoint LLM gagal.'
       }
       pingResult.value = errRes
       dismissTimeout = setTimeout(() => {
