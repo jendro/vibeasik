@@ -382,21 +382,28 @@ func SyncCensoredKeywords(db *gorm.DB) {
 	if db == nil {
 		return
 	}
+
 	var list []models.CensoredKeyword
-	if err := db.Where("is_active = ?", true).Find(&list).Error; err == nil {
-		rules := make([]security.CustomKeywordRule, 0, len(list))
-		for _, item := range list {
-			rules = append(rules, security.CustomKeywordRule{
-				ID:          item.ID,
-				Keyword:     item.Keyword,
-				Category:    item.Category,
-				Description: item.Description,
-				IsRegex:     item.IsRegex,
-				IsActive:    item.IsActive,
-			})
-		}
-		security.GlobalSanitizer.SetCustomKeywords(rules)
+	err := db.
+		Select("id", "keyword", "category", "description", "is_regex", "is_active").
+		Where("is_active = ?", true).
+		Find(&list).Error
+	if err != nil {
+		return
 	}
+
+	rules := make([]security.CustomKeywordRule, 0, len(list))
+	for _, item := range list {
+		rules = append(rules, security.CustomKeywordRule{
+			ID:          item.ID,
+			Keyword:     item.Keyword,
+			Category:    item.Category,
+			Description: item.Description,
+			IsRegex:     item.IsRegex,
+			IsActive:    item.IsActive,
+		})
+	}
+	security.GlobalSanitizer.SetCustomKeywords(rules)
 }
 
 type legacyCategoryRule struct {

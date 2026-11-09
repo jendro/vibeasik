@@ -27,15 +27,20 @@ func (s *Server) getSecurityStatus(c *fiber.Ctx) error {
 
 func (s *Server) getCensoredKeywords(c *fiber.Ctx) error {
 	var list []models.CensoredKeyword
-	if err := s.db.Order("id desc").Find(&list).Error; err != nil {
+	if err := s.db.
+		Select("id", "keyword", "category", "description", "is_regex", "is_active").
+		Order("id DESC").
+		Find(&list).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
+
 	activeCount := 0
-	for _, k := range list {
-		if k.IsActive {
+	for _, keyword := range list {
+		if keyword.IsActive {
 			activeCount++
 		}
 	}
+
 	return c.JSON(fiber.Map{
 		"keywords":          list,
 		"total":             len(list),

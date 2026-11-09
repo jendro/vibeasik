@@ -298,10 +298,27 @@ func moveOrCopy(src, dst string) error {
 	return os.RemoveAll(src)
 }
 
+type moveSyncCache struct {
+	components      map[uint]*models.Component
+	componentLoaded map[uint]bool
+	projects        map[uint]*models.Project
+	projectLoaded   map[uint]bool
+}
+
+func newMoveSyncCache() *moveSyncCache {
+	return &moveSyncCache{
+		components:      make(map[uint]*models.Component),
+		componentLoaded: make(map[uint]bool),
+		projects:        make(map[uint]*models.Project),
+		projectLoaded:   make(map[uint]bool),
+	}
+}
+
 func (s *organizerService) ExecuteMoves(ctx context.Context, payload models.ExecuteMovePayload) (*models.ExecuteMoveResult, error) {
 	result := &models.ExecuteMoveResult{
 		Moves: make([]models.FolderMoveItem, 0, len(payload.Moves)),
 	}
+	cache := newMoveSyncCache()
 
 	for _, m := range payload.Moves {
 		if m.Status == "skipped" {
@@ -326,7 +343,7 @@ func (s *organizerService) ExecuteMoves(ctx context.Context, payload models.Exec
 		result.SuccessCount++
 
 		if payload.UpdateDB {
-			s.syncMovedPaths(ctx, m, src, dst)
+			s.syncMovedPaths(ctx, cache, m, src, dst)
 		}
 		result.Moves = append(result.Moves, m)
 	}
@@ -353,26 +370,57 @@ func performMove(src, dst string) (status, errMsg string) {
 	return "success", ""
 }
 
-// syncMovedPaths memperbarui path komponen dan root proyek di database setelah pemindahan.
-func (s *organizerService) syncMovedPaths(ctx context.Context, m models.FolderMoveItem, src, dst string) {
-	if m.ComponentID > 0 {
-		comp, err := s.componentRepo.FindByID(ctx, m.ComponentID)
+func (s *organizerService) syncMovedComponent(ctx context.Context, cache *moveSyncCache, compID uint, dst string) {
+	if compID == 0 {
+		return
+	}
+	if !cache.componentLoaded[compID] {
+		cache.componentLoaded[compID] = true
+		comp, err := s.componentRepo.FindByID(ctx, compID)
 		if err == nil && comp != nil {
-			comp.AbsolutePath = dst
-			comp.RelativePath = filepath.Base(dst)
-			_ = s.componentRepo.Update(ctx, comp)
+			cache.components[compID] = comp
 		}
 	}
-	if m.ProjectID > 0 {
-		p, err := s.projectRepo.FindByID(ctx, m.ProjectID)
+	comp := cache.components[compID]
+	if comp == nil {
+		return
+	}
+	comp.AbsolutePath = dst
+	comp.RelativePath = filepath.Base(dst)
+	_ = s.componentRepo.Update(ctx, comp)
+}
+
+func (s *organizerService) syncMovedProject(ctx context.Context, cache *moveSyncCache, projID uint, src, dst string) {
+	if projID == 0 {
+		return
+	}
+	if !cache.projectLoaded[projID] {
+		cache.projectLoaded[projID] = true
+		p, err := s.projectRepo.FindByID(ctx, projID)
 		if err == nil && p != nil {
-			// If project has no components or this was the root
-			if len(p.Components) <= 1 || p.RootPath == src {
-				p.RootPath = filepath.Dir(dst)
-				_ = s.projectRepo.Update(ctx, p)
-			}
+			cache.projects[projID] = p
 		}
 	}
+	p := cache.projects[projID]
+	if p == nil {
+		return
+	}
+	// If project has no components or this was the root
+	if len(p.Components) <= 1 || p.RootPath == src {
+		p.RootPath = filepath.Dir(dst)
+		_ = s.projectRepo.Update(ctx, p)
+	}
+}
+
+// syncMovedPaths memperbarui path komponen dan root proyek di database setelah pemindahan dengan cache request-scoped.
+func (s *organizerService) syncMovedPaths(ctx context.Context, cache *moveSyncCache, m models.FolderMoveItem, src, dst string) {
+	s.syncMovedComponent(ctx, cache, m.ComponentID, dst)
+	for _, cid := range m.ComponentIDs {
+		if cid != m.ComponentID {
+			s.syncMovedComponent(ctx, cache, cid, dst)
+		}
+	}
+	s.syncMovedProject(ctx, cache, m.ProjectID, src, dst)
 }
 
 func getComponentSubfolder(c models.Component) string {
