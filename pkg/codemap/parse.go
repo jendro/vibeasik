@@ -452,9 +452,22 @@ func ruleSymbol(r symRule, line string, exported func(string) bool) (name, kind 
 
 // applyRules mencocokkan aturan simbol per baris (jauh lebih cepat daripada regex (?m)^ atas seluruh berkas);
 // simbol pada baris yang sama hanya dicatat sekali, aturan yang lebih awal menang.
+// Baris di dalam raw string literal (backticks) diabaikan agar contoh kode dokumentasi tidak diekstrak sebagai simbol.
 func applyRules(all []string, rules []symRule, exported func(string) bool) []models.CodeSymbol {
 	var out []models.CodeSymbol
+	inRaw := false
 	for i, line := range all {
+		trimmed := strings.TrimSpace(line)
+		ticks := strings.Count(trimmed, "`")
+		if inRaw {
+			if ticks%2 != 0 {
+				inRaw = false
+			}
+			continue
+		}
+		if ticks%2 != 0 {
+			inRaw = true
+		}
 		if len(out) >= maxSymbolsPerFile {
 			break
 		}

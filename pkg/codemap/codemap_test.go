@@ -641,3 +641,46 @@ func TestEffectiveRootHelpersBoundary(t *testing.T) {
 		}
 	})
 }
+
+func TestApplyRulesIgnoresRawStringLiterals(t *testing.T) {
+	src := `package service
+
+func RealFunction() string {
+	return "ok"
+}
+
+var sample = ` + "`" + `// cmd/main.go
+// CONTOH KODE DOKUMENTASI — bukan deklarasi fungsi Go
+func registerFeatures(app *fiber.App, db *gorm.DB) {
+	api := app.Group("/api")
+}
+` + "`" + `
+
+func AnotherRealFunc() {}
+`
+	p := &parsed{}
+	c := &parseCtx{
+		lang:  "go",
+		src:   src,
+		lines: newLineIndex(src),
+		all:   strings.Split(src, "\n"),
+	}
+	parseGo(p, c)
+
+	foundReal := false
+	foundAnother := false
+	for _, sym := range p.symbols {
+		if sym.Name == "registerFeatures" {
+			t.Fatalf("registerFeatures inside raw string literal must not be extracted as symbol: %+v", sym)
+		}
+		if sym.Name == "RealFunction" {
+			foundReal = true
+		}
+		if sym.Name == "AnotherRealFunc" {
+			foundAnother = true
+		}
+	}
+	if !foundReal || !foundAnother {
+		t.Fatalf("expected RealFunction and AnotherRealFunc to be extracted, got: %+v", p.symbols)
+	}
+}

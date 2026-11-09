@@ -333,16 +333,29 @@ func lineAt(lines []string, n int) string {
 	return ""
 }
 
+// isDocSymbol mengecek apakah simbol atau barisnya ditandai sebagai dokumentasi/contoh.
+func isDocSymbol(doc, sig string) bool {
+	return strings.Contains(doc, "DOKUMENTASI") || strings.Contains(doc, "CONTOH KODE") ||
+		strings.Contains(sig, "DOKUMENTASI") || strings.Contains(sig, "CONTOH KODE")
+}
+
+func isGoPrivate(s models.CodeSymbol, sig string) bool {
+	return s.Kind == "func" && !strings.HasPrefix(s.Name, "Test") && !strings.HasPrefix(s.Name, "Benchmark") &&
+		s.Name[0] >= 'a' && s.Name[0] <= 'z' && !strings.Contains(sig, "//go:")
+}
+
 // isPrivate: fungsi yang secara bahasa tidak bisa dipakai dari luar berkas/paket/kelasnya.
 func isPrivate(f *codemap.FileSymbols, s models.CodeSymbol, lines []string) bool {
 	if frameworkEntry(f, s) {
 		return false
 	}
 	sig := lineAt(lines, s.Line)
+	if isDocSymbol(s.Doc, sig) {
+		return false
+	}
 	switch f.Lang {
 	case "go":
-		return s.Kind == "func" && !strings.HasPrefix(s.Name, "Test") && !strings.HasPrefix(s.Name, "Benchmark") &&
-			s.Name[0] >= 'a' && s.Name[0] <= 'z' && !strings.Contains(sig, "//go:")
+		return isGoPrivate(s, sig)
 	case "php":
 		return strings.Contains(sig, "private function")
 	case "python":

@@ -149,6 +149,7 @@ func TestGlobalFindsDuplicateAndUnusedFunctions(t *testing.T) {
 		"be/handlers/a.go":      "package handlers\n\nfunc parseUserID(v string) (int, error) {" + body + "\nfunc UseA() { parseUserID(\"1\") }\n",
 		"be/handlers/b.go":      "package handlers\n\nfunc parseOrderID(v string) (int, error) {" + body + "\nfunc UseB() { parseOrderID(\"1\") }\n",
 		"be/handlers/dead.go":   "package handlers\n\nfunc neverCalled(v string) (int, error) {" + strings.Replace(body, "kosong", "beda", 1) + "\n",
+		"be/service/doc.go":     "package service\n\nvar sample = `\n// CONTOH KODE DOKUMENTASI — bukan deklarasi fungsi Go\nfunc registerFeatures() {}\n`\n",
 		"legacy/old/x.go":       "package old\n\nfunc parseUserID(v string) (int, error) {" + body,
 		"be/handlers/a_test.go": "package handlers\n\nfunc TestA(t *testing.T) { UseA() }\n",
 	}, models.Component{Name: "BE", Role: "backend", AbsolutePath: "be"})
@@ -161,6 +162,9 @@ func TestGlobalFindsDuplicateAndUnusedFunctions(t *testing.T) {
 			dup = append(dup, f)
 		case RuleUnusedFunction:
 			unused = append(unused, f)
+			if strings.Contains(f.Title, "registerFeatures") {
+				t.Fatalf("registerFeatures in documentation snippet must not be reported as unused: %+v", f)
+			}
 		}
 	}
 	if len(dup) != 1 || !strings.Contains(dup[0].Description, "parseOrderID") || !strings.Contains(dup[0].Title, "badan identik") || strings.Contains(dup[0].Description, "legacy/") {
