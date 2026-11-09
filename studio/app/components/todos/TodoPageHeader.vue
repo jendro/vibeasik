@@ -20,6 +20,10 @@ const emit = defineEmits<{
   openPrompts: []
 }>()
 const handleToggleAutopilot = (value: boolean) => emit('toggleAutopilot', value)
+
+// Disembunyikan sementara: "Kerjakan Otomatis" & "Batch" menjalankan agent CLI di luar IDE dan tidak
+// mengeksekusi seperti di IDE. Todo dikerjakan langsung oleh sub agent di aplikasi AI coding (lewat MCP).
+const showAutoRun = false
 </script>
 
 <template>
@@ -90,7 +94,7 @@ const handleToggleAutopilot = (value: boolean) => emit('toggleAutopilot', value)
       </UButton>
 
       <!-- Toggle Kerjakan Otomatis (Autopilot) -->
-      <div class="flex items-center gap-1 p-0.5 rounded-xl bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200 dark:border-white/10 shadow-2xs">
+      <div v-if="showAutoRun" class="flex items-center gap-1 p-0.5 rounded-xl bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200 dark:border-white/10 shadow-2xs">
         <div class="flex items-center gap-2 px-2.5 py-1">
           <span class="relative flex h-2 w-2">
             <span v-if="autopilotEnabled" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -182,6 +186,7 @@ const handleToggleAutopilot = (value: boolean) => emit('toggleAutopilot', value)
       </UButton>
 
       <UButton
+        v-if="showAutoRun"
         icon="i-lucide-bot"
         color="neutral"
         variant="outline"
