@@ -7,8 +7,15 @@ import {
   hasSameLocation,
   hasSameRuleAtLocation,
   hasSameTitleAtLocation,
+  sameId,
+  sameGeneratedKey,
+  sameLocation,
+  sameRule,
+  sameTitle,
+  MATCHERS,
   deduplicateFindings,
-  mergeFindingsLists
+  mergeFindingsLists,
+  type FindingMatcher
 } from '../app/utils/auditFindings'
 import {
   filterSynergyPages,
@@ -177,6 +184,58 @@ describe('auditFindings helper refactor (DEEP-FUNC-HIGH-COMPLEXITY CC reduction)
     expect(merged).toHaveLength(2)
     expect(merged.find(f => f.id === 'old-1')?.status).toBe('resolved')
     expect(merged.find(f => f.id === 'brand-new')).toBeDefined()
+  })
+
+  test('MATCHERS table: merupakan array readonly berisi predikat terurut sesuai spesifikasi', () => {
+    expect(Array.isArray(MATCHERS)).toBe(true)
+    expect(MATCHERS).toHaveLength(4)
+    expect(MATCHERS[0]).toBe(hasSameId)
+    expect(MATCHERS[1]).toBe(hasSameGeneratedKey)
+    expect(MATCHERS[2]).toBe(hasSameRuleAtLocation)
+    expect(MATCHERS[3]).toBe(hasSameTitleAtLocation)
+  })
+
+  test('Predikat matcher aliases: sameId, sameLocation, sameRule, sameTitle konsisten dengan fungsi aslinya', () => {
+    expect(sameId).toBe(hasSameId)
+    expect(sameGeneratedKey).toBe(hasSameGeneratedKey)
+    expect(sameLocation).toBe(hasSameLocation)
+    expect(sameRule).toBe(hasSameRuleAtLocation)
+    expect(sameTitle).toBe(hasSameTitleAtLocation)
+
+    const fA = baseFinding({ id: 't-1', rule_id: 'R-1', title: 'T-1', target_file: 'f.ts', line: 10 })
+    const fB = baseFinding({ id: 't-1', rule_id: 'R-1', title: 'T-1', target_file: 'f.ts', line: 10 })
+
+    expect(sameId(fA, fB)).toBe(true)
+    expect(sameLocation(fA, fB)).toBe(true)
+    expect(sameRule(fA, fB)).toBe(true)
+    expect(sameTitle(fA, fB)).toBe(true)
+  })
+
+  test('Characterization test: areFindingsMatching membuktikan semantik OR (disjungtif) pada setiap predikat', () => {
+    // 1. Jalur Matcher 1: ID sama
+    const fIdMatch1 = baseFinding({ id: 'id-alpha', rule_id: 'R1', target_file: 'a.ts', line: 1 })
+    const fIdMatch2 = baseFinding({ id: 'id-alpha', rule_id: 'R2', target_file: 'b.ts', line: 2 })
+    expect(areFindingsMatching(fIdMatch1, fIdMatch2)).toBe(true)
+
+    // 2. Jalur Matcher 2: Generated Key sama (ID kosong)
+    const fKeyMatch1 = baseFinding({ id: '', rule_id: 'R-KEY', target_file: 'c.ts', line: 5 })
+    const fKeyMatch2 = baseFinding({ id: '', rule_id: 'R-KEY', target_file: 'c.ts', line: 5 })
+    expect(areFindingsMatching(fKeyMatch1, fKeyMatch2)).toBe(true)
+
+    // 3. Jalur Matcher 3: RuleAtLocation sama (ID beda, Key beda)
+    const fRuleLoc1 = baseFinding({ id: 'id-diff-1', rule_id: 'SEC-X', target_file: 'd.ts', line: 10, title: 'Title A' })
+    const fRuleLoc2 = baseFinding({ id: 'id-diff-2', rule_id: 'SEC-X', target_file: 'd.ts', line: 10, title: 'Title B' })
+    expect(areFindingsMatching(fRuleLoc1, fRuleLoc2)).toBe(true)
+
+    // 4. Jalur Matcher 4: TitleAtLocation sama (ID beda, Rule kosong/beda)
+    const fTitleLoc1 = baseFinding({ id: 'id-diff-3', rule_id: '', target_file: 'e.ts', line: 20, title: 'Same Title' })
+    const fTitleLoc2 = baseFinding({ id: 'id-diff-4', rule_id: '', target_file: 'e.ts', line: 20, title: 'Same Title' })
+    expect(areFindingsMatching(fTitleLoc1, fTitleLoc2)).toBe(true)
+
+    // 5. Jalur Negative: Tidak ada satu pun kriteria yang cocok
+    const fMismatch1 = baseFinding({ id: 'id-100', rule_id: 'R-A', target_file: 'f1.ts', line: 1, title: 'A' })
+    const fMismatch2 = baseFinding({ id: 'id-200', rule_id: 'R-B', target_file: 'f2.ts', line: 2, title: 'B' })
+    expect(areFindingsMatching(fMismatch1, fMismatch2)).toBe(false)
   })
 })
 

@@ -9,17 +9,19 @@ export const getFindingKey = (f: Finding): string => {
   return `${rule}_${file}_${line}`
 }
 
-export const hasSameId = (a: Finding, b: Finding): boolean => {
+export type FindingMatcher = (a: Finding, b: Finding) => boolean
+
+export const hasSameId: FindingMatcher = (a: Finding, b: Finding): boolean => {
   return Boolean(a.id && b.id && a.id === b.id)
 }
 
-export const hasSameGeneratedKey = (a: Finding, b: Finding): boolean => {
+export const hasSameGeneratedKey: FindingMatcher = (a: Finding, b: Finding): boolean => {
   const keyA = getFindingKey(a)
   const keyB = getFindingKey(b)
   return Boolean(keyA && keyB && keyA === keyB)
 }
 
-export const hasSameLocation = (a: Finding, b: Finding): boolean => {
+export const hasSameLocation: FindingMatcher = (a: Finding, b: Finding): boolean => {
   const fileA = a.target_file || ''
   const fileB = b.target_file || ''
   const lineA = a.line || 0
@@ -27,25 +29,37 @@ export const hasSameLocation = (a: Finding, b: Finding): boolean => {
   return fileA === fileB && lineA === lineB
 }
 
-export const hasSameRuleAtLocation = (a: Finding, b: Finding): boolean => {
+export const hasSameRuleAtLocation: FindingMatcher = (a: Finding, b: Finding): boolean => {
   if (!a.rule_id || !b.rule_id || a.rule_id !== b.rule_id) {
     return false
   }
   return hasSameLocation(a, b)
 }
 
-export const hasSameTitleAtLocation = (a: Finding, b: Finding): boolean => {
+export const hasSameTitleAtLocation: FindingMatcher = (a: Finding, b: Finding): boolean => {
   if (!a.title || !b.title || a.title !== b.title) {
     return false
   }
   return hasSameLocation(a, b)
 }
 
+// Alias predikat bernama sesuai SRP (Single Responsibility Principle) dan panduan todo #3394
+export const sameId: FindingMatcher = hasSameId
+export const sameGeneratedKey: FindingMatcher = hasSameGeneratedKey
+export const sameLocation: FindingMatcher = hasSameLocation
+export const sameRule: FindingMatcher = hasSameRuleAtLocation
+export const sameTitle: FindingMatcher = hasSameTitleAtLocation
+
+// Daftar terurut = satu sumber kebenaran urutan & himpunan kriteria pencocokan.
+export const MATCHERS: readonly FindingMatcher[] = [
+  hasSameId,
+  hasSameGeneratedKey,
+  hasSameRuleAtLocation,
+  hasSameTitleAtLocation,
+]
+
 export const areFindingsMatching = (a: Finding, b: Finding): boolean => {
-  if (hasSameId(a, b)) return true
-  if (hasSameGeneratedKey(a, b)) return true
-  if (hasSameRuleAtLocation(a, b)) return true
-  return hasSameTitleAtLocation(a, b)
+  return MATCHERS.some(matches => matches(a, b))
 }
 
 export const deduplicateFindings = (list: Finding[]): Finding[] => {
