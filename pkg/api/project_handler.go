@@ -94,6 +94,20 @@ func provisionProjectDefaults(p *models.Project, createDirectories bool) {
 }
 
 func provisionComponentDefaults(comp *models.Component, rootPath string, createDirectories bool) {
+	resolveComponentPaths(comp, rootPath)
+	if comp.Role == "" {
+		comp.Role = models.RoleOther
+	}
+	resolveComponentName(comp)
+	if comp.Language == "" {
+		comp.Language = defaultComponentLanguage(comp.Role)
+	}
+	if createDirectories && comp.AbsolutePath != "" {
+		_ = os.MkdirAll(comp.AbsolutePath, 0755)
+	}
+}
+
+func resolveComponentPaths(comp *models.Component, rootPath string) {
 	if comp.RelativePath != "" && comp.AbsolutePath == "" {
 		if rootPath != "" && rootPath != "-" {
 			comp.AbsolutePath = filepath.Join(rootPath, comp.RelativePath)
@@ -104,22 +118,17 @@ func provisionComponentDefaults(comp *models.Component, rootPath string, createD
 	if comp.AbsolutePath != "" && comp.RelativePath == "" {
 		comp.RelativePath = filepath.Base(comp.AbsolutePath)
 	}
-	if comp.Role == "" {
-		comp.Role = models.RoleOther
+}
+
+func resolveComponentName(comp *models.Component) {
+	if comp.Name != "" {
+		return
 	}
-	if comp.Name == "" {
-		if comp.RelativePath != "" {
-			comp.Name = comp.RelativePath
-		} else {
-			comp.Name = "App " + comp.Role
-		}
+	if comp.RelativePath != "" {
+		comp.Name = comp.RelativePath
+		return
 	}
-	if comp.Language == "" {
-		comp.Language = defaultComponentLanguage(comp.Role)
-	}
-	if createDirectories && comp.AbsolutePath != "" {
-		_ = os.MkdirAll(comp.AbsolutePath, 0755)
-	}
+	comp.Name = "App " + comp.Role
 }
 
 func defaultComponentLanguage(role string) string {
