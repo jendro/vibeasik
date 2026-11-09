@@ -3,18 +3,24 @@ import type { Finding, ResolutionResponse } from '~/types'
 import type { FindingGroup } from '~/utils/findingGroups'
 
 const open = defineModel<boolean>('open', { default: false })
+/** Setelah batch selesai, halaman langsung menjalankan Audit & Selesaikan Semua (audit ulang + selesaikan temuan baru). */
+const autoSweep = defineModel<boolean>('autoSweep', { default: true })
 
 const props = defineProps<{
   projectId: number
   findings: Finding[]
   /** Satukan Serupa aktif: tiap baris = temuan pertama kelompok; seluruh kelompok diselesaikan dengan satu panggilan LLM. */
   groups?: FindingGroup[]
+  /** Job Audit & Selesaikan Semua sedang antre/berjalan. */
+  sweepBusy?: boolean
+  sweepLabel?: string
 }>()
 
 const emit = defineEmits<{
   (e: 'findingResolved', payload: { finding: Finding, resolution: ResolutionResponse }): void
   (e: 'viewResolution', finding: Finding): void
   (e: 'completed'): void
+  (e: 'sweep'): void
 }>()
 
 const { resolveDiagnosticIssue, resolveDiagnosticGroup } = useApi()
@@ -390,6 +396,35 @@ const { getSeverityBadgeColor } = useFormatters()
               <UIcon name="i-lucide-check-circle" class="w-4 h-4" />
               <span>Semua temuan berhasil diproses!</span>
             </div>
+          </div>
+        </div>
+
+        <!-- Audit ulang: temuan baru yang muncul setelah todo dibuat ikut diselesaikan sekaligus -->
+        <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-900/60 space-y-2.5">
+          <UCheckbox
+            v-model="autoSweep"
+            :disabled="sweepBusy"
+            label="Setelah selesai, audit ulang & langsung selesaikan temuan baru"
+            description="Audit Standar + Deep Check dijalankan lagi; temuan baru langsung diselesaikan via LLM dan diulang sampai tidak ada temuan baru (maks 3 putaran). Berjalan di antrean engine, jadi dialog ini boleh ditutup."
+          />
+          <div
+            v-if="sweepBusy || (!isExecuting && pendingCount === 0)"
+            class="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-neutral-200/80 dark:border-neutral-800"
+          >
+            <span class="text-neutral-600 dark:text-neutral-400">
+              {{ sweepBusy ? 'Audit ulang & penyelesaian sedang berjalan di antrean.' : 'Audit ulang bisa memunculkan temuan lain yang belum punya todo.' }}
+            </span>
+            <UButton
+              color="primary"
+              variant="outline"
+              size="xs"
+              icon="i-lucide-repeat"
+              :loading="sweepBusy"
+              :disabled="sweepBusy"
+              @click="emit('sweep')"
+            >
+              {{ sweepBusy && sweepLabel ? sweepLabel : 'Audit Ulang & Selesaikan Temuan Baru' }}
+            </UButton>
           </div>
         </div>
 

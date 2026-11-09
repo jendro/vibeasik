@@ -15,7 +15,7 @@ const {
 // Laporan (memuat, audit, deep check) + filter temuan + aksi temuan: state & logika ada di composable.
 const {
   reportData, loading, diagnosing, deepChecking, latestDeepCheck, resolvedFindingKeys, currentScore,
-  llmReviewJob, loadAuditReport, handleRunAudit, handleRunDeepCheck, handleDownloadDeepCheck
+  llmReviewJob, auditSweepJob, loadAuditReport, handleRunAudit, handleRunDeepCheck, handleDownloadDeepCheck
 } = useAuditReport()
 
 const {
@@ -37,6 +37,25 @@ const {
 })
 
 const resolvingAll = ref(false)
+
+// Audit & Selesaikan Semua: dari tombol header, tombol di dialog batch, atau otomatis setelah batch selesai.
+const AUTO_SWEEP_KEY = 'vibeasik.audit.autoSweep'
+const autoSweep = ref(true)
+watch(autoSweep, (v) => {
+  try {
+    localStorage.setItem(AUTO_SWEEP_KEY, v ? '1' : '0')
+  } catch {
+    // penyimpanan browser tidak tersedia — pilihan tidak diingat
+  }
+})
+// Toast "Masuk antrean" & progres sudah diurus useBackgroundJobs.
+const handleRunSweep = async () => {
+  if (!auditSweepJob.busy.value) await auditSweepJob.start()
+}
+const handleBatchDone = async () => {
+  await handleBatchCompleted()
+  if (autoSweep.value) await handleRunSweep()
+}
 const criteriaDrawerOpen = ref(false)
 const simulationDrawerOpen = ref(false)
 
@@ -60,6 +79,7 @@ const handleSwitchProject = (newId: number) => {
 onMounted(async () => {
   try {
     groupSimilar.value = localStorage.getItem(GROUP_PREF_KEY) === '1'
+    autoSweep.value = localStorage.getItem(AUTO_SWEEP_KEY) !== '0'
   } catch {
     // penyimpanan browser tidak tersedia — preferensi tidak diingat
   }
@@ -104,6 +124,8 @@ onMounted(async () => {
       :has-last-deep-check="Boolean(latestDeepCheck?.has_report || activeProject?.last_deep_check_at)"
       :llm-review-busy="llmReviewJob.busy.value"
       :llm-review-label="llmReviewJob.label.value"
+      :sweep-busy="auditSweepJob.busy.value"
+      :sweep-label="auditSweepJob.label.value"
       @switch-project="handleSwitchProject"
       @run-audit="handleRunAudit"
       @run-deep-check="handleRunDeepCheck"
@@ -112,6 +134,7 @@ onMounted(async () => {
       @resolve-all="handleResolveAll"
       @open-criteria="criteriaDrawerOpen = true"
       @run-llm-review="llmReviewJob.start()"
+      @run-sweep="handleRunSweep"
     />
 
     <!-- Uji Runtime: ringkasan hasil terakhir, pengujian lengkap di halaman /runtime-test -->
@@ -242,12 +265,16 @@ onMounted(async () => {
     <!-- Batch Resolution Modal (Progressive FE Batch Execution) -->
     <DiagnosticsBatchResolveModal
       v-model:open="batchModalOpen"
+      v-model:auto-sweep="autoSweep"
       :project-id="activeProjectId || 0"
       :findings="batchFindings"
       :groups="batchGroups"
+      :sweep-busy="auditSweepJob.busy.value"
+      :sweep-label="auditSweepJob.label.value"
       @finding-resolved="handleBatchItemResolved"
       @view-resolution="handleViewResolution"
-      @completed="handleBatchCompleted"
+      @completed="handleBatchDone"
+      @sweep="handleRunSweep"
     />
 
     <!-- Audit Inspection Criteria & Smells Drawer (Sidebar Kanan) -->

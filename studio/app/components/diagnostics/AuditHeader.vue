@@ -18,6 +18,8 @@ defineProps<{
   hasLastDeepCheck?: boolean
   llmReviewBusy?: boolean
   llmReviewLabel?: string
+  sweepBusy?: boolean
+  sweepLabel?: string
 }>()
 
 const emit = defineEmits<{
@@ -29,6 +31,7 @@ const emit = defineEmits<{
   (e: 'resolveAll'): void
   (e: 'openCriteria'): void
   (e: 'runLlmReview'): void
+  (e: 'runSweep'): void
 }>()
 
 const getScoreTextColor = (score: number) => {
@@ -220,6 +223,20 @@ const { formatDateTime } = useFormatters()
         @click="emit('runLlmReview')"
       >
         {{ llmReviewBusy && llmReviewLabel ? llmReviewLabel : 'Review LLM' }}
+      </UButton>
+
+      <!-- Audit & Selesaikan Semua: putaran audit ulang + penyelesaian di antrean engine -->
+      <UButton
+        color="neutral"
+        variant="outline"
+        icon="i-lucide-repeat"
+        size="sm"
+        :loading="sweepBusy"
+        :disabled="!project || sweepBusy"
+        title="Audit Standar + Deep Check, lalu temuan terbuka langsung diselesaikan via LLM. Diulang otomatis sampai audit ulang tidak memunculkan temuan baru (maks 3 putaran). Berjalan di antrean, progres tampil di bar Antrean."
+        @click="emit('runSweep')"
+      >
+        {{ sweepBusy && sweepLabel ? sweepLabel : 'Audit & Selesaikan Semua' }}
       </UButton>
 
       <!-- Selesaikan Bertahap via LLM -->

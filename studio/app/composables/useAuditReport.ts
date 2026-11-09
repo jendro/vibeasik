@@ -44,6 +44,21 @@ export function useAuditReport() {
     })
   })
 
+  // Audit & Selesaikan Semua (antrean engine): audit standar + Deep Check lalu temuan terbuka langsung
+  // diselesaikan via LLM, diulang sampai audit ulang tidak memunculkan temuan baru (maks 3 putaran).
+  const auditSweepJob = useJobTarget('audit_sweep', () => (activeProjectId.value ? { projectId: activeProjectId.value } : null), async (job) => {
+    if (activeProjectId.value) {
+      await loadAuditReport(activeProjectId.value, true)
+      await fetchProjects(true)
+    }
+    toast.add({
+      title: 'Audit & Penyelesaian Selesai',
+      description: (job.message || '').replace(/^Selesai:\s*/, '') || 'Temuan baru dari audit ulang sudah dimasukkan ke daftar TODO.',
+      icon: 'i-lucide-repeat',
+      color: 'success'
+    })
+  })
+
   const loadAuditReport = async (projectId: number, preserveExisting = false) => {
     if (!preserveExisting) {
       loading.value = true
@@ -192,6 +207,6 @@ export function useAuditReport() {
 
   return {
     reportData, loading, diagnosing, deepChecking, latestDeepCheck, resolvedFindingKeys, currentScore,
-    llmReviewJob, loadAuditReport, handleRunAudit, handleRunDeepCheck, handleDownloadDeepCheck
+    llmReviewJob, auditSweepJob, loadAuditReport, handleRunAudit, handleRunDeepCheck, handleDownloadDeepCheck
   }
 }

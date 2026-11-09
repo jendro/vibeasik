@@ -7,6 +7,7 @@ export type JobType
     | 'enrich_routes'
     | 'synergy_map'
     | 'llm_audit'
+    | 'audit_sweep'
     | 'code_map_enrich'
     | 'pm_plan'
     | 'design_analyze'
