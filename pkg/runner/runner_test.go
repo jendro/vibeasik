@@ -113,6 +113,60 @@ func TestAllocateUsesProjectSlot(t *testing.T) {
 	}
 }
 
+func TestServiceAssignPort(t *testing.T) {
+	db := setupDB(t)
+	db.Create(&models.Project{ID: 1, Name: "A", Slug: "a"})
+	compA := models.Component{ID: 10, ProjectID: 1, Name: "comp-a", Role: models.RoleFrontendClient, Port: 3000}
+	compB := models.Component{ID: 11, ProjectID: 1, Name: "comp-b", Role: models.RoleBackend, Port: 8080}
+	db.Create(&compA)
+	db.Create(&compB)
+
+	svc := NewService(db)
+
+	// 1. Komponen tidak ditemukan
+	if _, err := svc.AssignPort(999, 0, false); err == nil {
+		t.Fatal("AssignPort pada non-existent component harus error")
+	}
+
+	// 2. Alokasi otomatis (port == 0)
+	allocated, err := svc.AssignPort(compA.ID, 0, false)
+	if err != nil {
+		t.Fatalf("AssignPort allocate error: %v", err)
+	}
+	if allocated.RunPort != slotBase(0) {
+		t.Fatalf("RunPort = %d, want %d", allocated.RunPort, slotBase(0))
+	}
+
+	// 3. Assign manual port > 0 yang valid
+	validPort := slotBase(0) + 1
+	assigned, err := svc.AssignPort(compB.ID, validPort, false)
+	if err != nil {
+		t.Fatalf("AssignPort assign manual error: %v", err)
+	}
+	if assigned.RunPort != validPort {
+		t.Fatalf("RunPort = %d, want %d", assigned.RunPort, validPort)
+	}
+
+	// 4. Assign manual port yang sudah diklaim (harus gagal dengan wrapped error)
+	_, err = svc.AssignPort(compB.ID, allocated.RunPort, false)
+	if err == nil {
+		t.Fatal("AssignPort pada port yang sudah diklaim harus error")
+	}
+	wantErrSub := fmt.Sprintf("assign port untuk komponen %d:", compB.ID)
+	if !strings.Contains(err.Error(), wantErrSub) {
+		t.Fatalf("error message %q tidak memuat context %q", err.Error(), wantErrSub)
+	}
+
+	// 5. Assign port reserved (harus gagal dengan wrapped error)
+	_, err = svc.AssignPort(compB.ID, 8765, false)
+	if err == nil {
+		t.Fatal("AssignPort reserved port harus error")
+	}
+	if !strings.Contains(err.Error(), wantErrSub) {
+		t.Fatalf("error message %q tidak memuat context %q", err.Error(), wantErrSub)
+	}
+}
+
 // freeSlot mencari slot yang seluruh portnya bebas di mesin ini.
 func freeSlot(t *testing.T) int {
 	t.Helper()

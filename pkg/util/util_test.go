@@ -1,8 +1,11 @@
 package util
 
 import (
+	"bytes"
+	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -44,6 +47,65 @@ func TestFiles(t *testing.T) {
 	}
 	if !PathExists(f) || !PathExists(d) || PathExists(filepath.Join(d, "none")) {
 		t.Fatal("PathExists")
+	}
+}
+
+func TestFilesPermissionAndNormalNotExist(t *testing.T) {
+	var buf bytes.Buffer
+	origWriter := log.Writer()
+	log.SetOutput(&buf)
+	defer log.SetOutput(origWriter)
+
+	tmp := t.TempDir()
+	normalMissing := filepath.Join(tmp, "tidak-ada.txt")
+
+	// 1. Jalur normal: berkas tidak ada tidak boleh menghasilkan log warning
+	if PathExists(normalMissing) {
+		t.Errorf("PathExists(%q) = true, want false", normalMissing)
+	}
+	if FileExists(normalMissing) {
+		t.Errorf("FileExists(%q) = true, want false", normalMissing)
+	}
+	if ReadFileString(normalMissing) != "" {
+		t.Errorf("ReadFileString(%q) != \"\", want \"\"", normalMissing)
+	}
+	if buf.Len() > 0 {
+		t.Errorf("expected no warning logs for normal missing files, got: %s", buf.String())
+	}
+
+	// 2. Jalur abnormal: permission denied (hanya diuji jika bukan root)
+	if os.Geteuid() != 0 {
+		buf.Reset()
+		forbiddenDir := filepath.Join(tmp, "forbidden")
+		if err := os.Mkdir(forbiddenDir, 0o700); err != nil {
+			t.Fatalf("mkdir forbidden: %v", err)
+		}
+		if err := os.Chmod(forbiddenDir, 0o000); err != nil {
+			t.Fatalf("chmod forbidden: %v", err)
+		}
+		t.Cleanup(func() {
+			_ = os.Chmod(forbiddenDir, 0o700)
+		})
+
+		unreadable := filepath.Join(forbiddenDir, "file.txt")
+		if PathExists(unreadable) {
+			t.Errorf("PathExists(%q) = true, want false on permission denied", unreadable)
+		}
+		if FileExists(unreadable) {
+			t.Errorf("FileExists(%q) = true, want false on permission denied", unreadable)
+		}
+		_ = ReadFileString(unreadable)
+
+		logOut := buf.String()
+		if !strings.Contains(logOut, "[WARN] PathExists: os.Stat") {
+			t.Errorf("log output missing PathExists warning: %q", logOut)
+		}
+		if !strings.Contains(logOut, "[WARN] FileExists: os.Stat") {
+			t.Errorf("log output missing FileExists warning: %q", logOut)
+		}
+		if !strings.Contains(logOut, "[WARN] ReadFileString: os.ReadFile") {
+			t.Errorf("log output missing ReadFileString warning: %q", logOut)
+		}
 	}
 }
 

@@ -158,12 +158,13 @@ func (s *Service) AssignPort(id uint, port int, reassign bool) (*models.Componen
 		return nil, errors.New("hentikan komponen dulu sebelum mengganti port")
 	}
 	if port > 0 {
-		err = Assign(s.db, &comp, port)
-	} else {
-		_, err = Allocate(s.db, &comp, reassign)
+		if err := Assign(s.db, &comp, port); err != nil {
+			return nil, fmt.Errorf("assign port untuk komponen %d: %w", id, err)
+		}
+		return &comp, nil
 	}
-	if err != nil {
-		return nil, err
+	if _, err := Allocate(s.db, &comp, reassign); err != nil {
+		return nil, fmt.Errorf("alokasi port untuk komponen %d: %w", id, err)
 	}
 	return &comp, nil
 }
