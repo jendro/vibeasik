@@ -209,11 +209,29 @@ describe('synergy helper refactor (filterSynergyPages CC reduction)', () => {
     ...overrides
   })
 
-  test('matchesMethod: menyaring metode HTTP secara case-insensitive atau lolos jika ALL', () => {
-    const req = createMockReq({ http_method: 'POST' })
-    expect(matchesMethod(req, 'ALL')).toBe(true)
-    expect(matchesMethod(req, 'post')).toBe(true)
-    expect(matchesMethod(req, 'GET')).toBe(false)
+  test('matchesMethod: menyaring metode HTTP secara case-insensitive atau lolos jika ALL (mencakup semua cabang)', () => {
+    const reqPost = createMockReq({ http_method: 'POST' })
+    const reqGetLower = createMockReq({ http_method: 'get' })
+
+    // 1. Cabang 'ALL' (filter bernilai ALL atau case-insensitive 'all')
+    expect(matchesMethod(reqPost, 'ALL')).toBe(true)
+    expect(matchesMethod(reqPost, 'all')).toBe(true)
+
+    // 2. Cabang Fallback (string kosong, undefined, atau null defaulting ke 'ALL')
+    expect(matchesMethod(reqPost, '')).toBe(true)
+    expect(matchesMethod(reqPost, undefined as unknown as string)).toBe(true)
+    expect(matchesMethod(reqPost, null as unknown as string)).toBe(true)
+
+    // 3. Cabang Method Cocok (exact uppercase, query lowercase, atau req.http_method lowercase)
+    expect(matchesMethod(reqPost, 'POST')).toBe(true)
+    expect(matchesMethod(reqPost, 'post')).toBe(true)
+    expect(matchesMethod(reqGetLower, 'GET')).toBe(true)
+    expect(matchesMethod(reqGetLower, 'get')).toBe(true)
+
+    // 4. Cabang Method Beda (tidak cocok)
+    expect(matchesMethod(reqPost, 'GET')).toBe(false)
+    expect(matchesMethod(reqPost, 'DELETE')).toBe(false)
+    expect(matchesMethod(reqGetLower, 'POST')).toBe(false)
   })
 
   test('matchesTableOrStatus: menyaring tabel DB atau kode status response', () => {
