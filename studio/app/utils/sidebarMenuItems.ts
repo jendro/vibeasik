@@ -40,7 +40,7 @@ export const buildProjectNavItems = (activeProjectId: number | null, activeProje
       id: 'client-room',
       to: '/client-room',
       label: 'Ruang Klien',
-      desc: 'Lapor bug, tanya & minta fitur',
+      desc: 'Diskusi & lapor bug ke dewan',
       icon: 'i-lucide-handshake',
       exact: false
     },
@@ -176,6 +176,15 @@ export const GLOBAL_NAV_ITEMS: NavItem[] = [
     label: 'AI & MCP Hub',
     desc: 'Protokol konteks AI agent',
     icon: 'i-lucide-bot',
+    exact: false
+  },
+  {
+    // Peta fungsi yang memanggil LLM luar: yang dikirim, respons yang ditunggu, fungsi lanjutan.
+    id: 'llm-algorithm',
+    to: '/llm-algorithm',
+    label: 'Algoritma LLM',
+    desc: 'Cara vibeasik memanggil LLM luar',
+    icon: 'i-lucide-workflow',
     exact: false
   },
   {

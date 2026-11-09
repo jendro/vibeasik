@@ -27,6 +27,7 @@ export const PRO_PAGES: Record<string, string> = {
   '/client-room': 'office',
   '/ai-hub': 'orchestrator',
   '/orchestrator': 'orchestrator',
+  '/llm-algorithm': 'orchestrator',
   '/queue': 'orchestrator',
   '/staff': 'staff',
   '/executives': 'staff',

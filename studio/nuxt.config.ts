@@ -46,7 +46,7 @@ export default defineNuxtConfig({
   // ada (menu mengarah ke /upgrade), di build Official dirender di browser lewat 200.html.
   nitro: {
     prerender: {
-      ignore: ['/agent-office', '/recap', '/client-room', '/ai-hub', '/orchestrator', '/queue', '/staff',
+      ignore: ['/agent-office', '/recap', '/client-room', '/ai-hub', '/orchestrator', '/llm-algorithm', '/queue', '/staff',
         '/executives', '/audit-learning', '/runtime-test', '/screenshots', '/design-library', '/design-lessons',
         '/downloads']
     }
