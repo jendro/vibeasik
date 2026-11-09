@@ -77,7 +77,7 @@ export const isHumanOnlyCreator = (t: Todo): boolean => {
   return !isExecutiveOrigin(t) && !isAuditOrigin(t) && !isPmOrigin(t) && !isAiSuggestionOrigin(t) && !isAgentOrigin(t)
 }
 
-export const creatorPredicates: Record<string, (t: Todo) => boolean> = {
+export const creatorMatchers: Record<string, (t: Todo) => boolean> = {
   executive: isExecutiveOrigin,
   audit: isAuditOrigin,
   pm: isPmOrigin,
@@ -87,9 +87,11 @@ export const creatorPredicates: Record<string, (t: Todo) => boolean> = {
   ai: (t: Todo) => Boolean(t.is_ai_suggestion || t.creator_type === 'ai_agent')
 }
 
+export const creatorPredicates = creatorMatchers
+
 export const matchesCreatorFilter = (t: Todo, creator: string): boolean => {
   if (!creator || creator === 'all') return true
-  const predicate = creatorPredicates[creator]
+  const predicate = creatorMatchers[creator]
   return predicate ? predicate(t) : true
 }
 
@@ -127,12 +129,18 @@ export const matchesSearchFilter = (t: Todo, search: string): boolean => {
 }
 
 export const matchesTodoFilter = (t: Todo, f: TodoFilterState): boolean => {
-  if (!matchesLevelFilter(t, f.level)) return false
-  if (!matchesCategoryFilter(t, f.category)) return false
-  if (!matchesTagFilter(t, f.tag)) return false
-  if (!matchesCreatorFilter(t, f.creator)) return false
-  if (!matchesStatusFilter(t, f.status)) return false
-  return matchesSearchFilter(t, f.search)
+  const predicates: Array<(t: Todo) => boolean> = [
+    t => matchesLevelFilter(t, f.level),
+    t => matchesCategoryFilter(t, f.category),
+    t => matchesTagFilter(t, f.tag),
+    t => matchesCreatorFilter(t, f.creator),
+    t => matchesStatusFilter(t, f.status),
+    t => matchesSearchFilter(t, f.search)
+  ]
+  if (f.employee) {
+    predicates.push(t => matchesEmployeeFilter(t, f.employee!))
+  }
+  return predicates.every(p => p(t))
 }
 
 export const comparePriorityDesc = (a: Todo, b: Todo): number => {
@@ -177,7 +185,7 @@ export const compareStatus = (a: Todo, b: Todo): number => {
 
 export type TodoComparator = (a: Todo, b: Todo) => number
 
-export const todoComparators: Record<string, TodoComparator> = {
+export const orderComparators: Record<string, TodoComparator> = {
   priority_desc: comparePriorityDesc,
   priority_asc: comparePriorityAsc,
   impact_desc: compareImpactDesc,
@@ -188,22 +196,35 @@ export const todoComparators: Record<string, TodoComparator> = {
   status: compareStatus
 }
 
+export const todoComparators = orderComparators
+
 export const getTodoComparator = (sortBy?: string, sortOrder?: string): TodoComparator => {
   if (!sortBy) return () => 0
-  if (todoComparators[sortBy]) {
-    return todoComparators[sortBy]
+  if (orderComparators[sortBy]) {
+    return orderComparators[sortBy]
   }
   const composite = sortOrder ? `${sortBy}_${sortOrder}` : sortBy
-  if (todoComparators[composite]) {
-    return todoComparators[composite]
+  if (orderComparators[composite]) {
+    return orderComparators[composite]
   }
   return () => 0
 }
 
 // Saring lalu urutkan todo sesuai filter halaman Todo.
 export const filterAndSortTodos = (todos: Todo[], f: TodoFilterState): Todo[] => {
+  const predicates: Array<(t: Todo) => boolean> = [
+    t => matchesLevelFilter(t, f.level),
+    t => matchesCategoryFilter(t, f.category),
+    t => matchesTagFilter(t, f.tag),
+    t => matchesCreatorFilter(t, f.creator),
+    t => matchesStatusFilter(t, f.status),
+    t => matchesSearchFilter(t, f.search)
+  ]
+  if (f.employee) {
+    predicates.push(t => matchesEmployeeFilter(t, f.employee!))
+  }
   const comparator = getTodoComparator(f.orderBy)
-  return todos
-    .filter(t => matchesTodoFilter(t, f))
+  return [...todos]
+    .filter(t => predicates.every(p => p(t)))
     .sort(comparator)
 }
