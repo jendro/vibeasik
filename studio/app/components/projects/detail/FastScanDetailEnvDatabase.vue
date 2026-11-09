@@ -23,10 +23,10 @@ const addDynamicMeta = () => {
       })
     }
   )
-  if (isAdded) {
-    newMetaKey.value = ''
-    newMetaVal.value = ''
-  }
+  if (!isAdded) return
+
+  newMetaKey.value = ''
+  newMetaVal.value = ''
 }
 
 const removeDynamicMeta = (key: string) => {
