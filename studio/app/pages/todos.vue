@@ -72,7 +72,8 @@ const loadData = async () => {
     const targetProjectId = activeProjectId.value || (projects.value.length > 0 ? projects.value[0]?.id : undefined)
 
     const [tList, gList] = await Promise.all([
-      getTodos(targetProjectId ? { project_id: targetProjectId } : undefined),
+      // Batas maksimum server (200); todo terbuka selalu didahulukan, sisanya todo selesai terbaru.
+      getTodos(targetProjectId ? { project_id: targetProjectId, limit: 200 } : { limit: 200 }),
       guidelines.value.length === 0 ? getGuidelines() : Promise.resolve(guidelines.value)
     ])
     todos.value = tList || []

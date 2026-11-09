@@ -17,12 +17,17 @@ func (s *Server) getTodos(c *fiber.Ctx) error {
 	query := buildTodoFilterQuery(s.db.Model(&models.Todo{}), c)
 
 	var todos []models.Todo
-	if err := query.Order("status ASC, created_at DESC").Find(&todos).Error; err != nil {
+	// Todo terbuka didahulukan: hasil selalu dibatasi (applyTodoPagination), jadi urutan status alfabetis
+	// membuat batas terisi todo 'completed' dan todo pending/in_progress hilang dari halaman todos.
+	if err := query.Order(todoOpenFirstOrder).Find(&todos).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	return c.JSON(todos)
 }
+
+// todoOpenFirstOrder: todo yang masih terbuka di atas, todo selesai/ditolak di bawah, terbaru lebih dulu.
+const todoOpenFirstOrder = "CASE WHEN status IN ('completed', 'rejected') THEN 1 ELSE 0 END, status ASC, created_at DESC, id DESC"
 
 func buildTodoFilterQuery(query *gorm.DB, c *fiber.Ctx) *gorm.DB {
 	query = applyTodoStringFilters(query, c)
@@ -120,7 +125,7 @@ func (s *Server) getProjectTodos(c *fiber.Ctx) error {
 	query = applyTodoPagination(query, c)
 
 	var todos []models.Todo
-	if err := query.Order("status ASC, created_at DESC").Find(&todos).Error; err != nil {
+	if err := query.Order(todoOpenFirstOrder).Find(&todos).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
