@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/vibeasik/vibeasik/pkg/localauth"
@@ -19,8 +20,19 @@ import (
 // owned by the engine the studio UI sees, not by the short-lived MCP process.
 
 // SetDaemonURL forwards runner tools to a running local engine (e.g. http://127.0.0.1:8765).
+// Alamatnya juga disimpan di tingkat paket agar tool modul (registry.ToolProvider) bisa meneruskan ke daemon
+// lewat DaemonURL/DaemonRequest.
 func (s *Server) SetDaemonURL(url string) {
 	s.daemonURL = strings.TrimRight(url, "/")
+	daemonBase.Store(s.daemonURL)
+}
+
+var daemonBase atomic.Value // string
+
+// DaemonURL: alamat engine lokal yang sedang dipakai proses MCP stdio ini, "" bila tidak ada.
+func DaemonURL() string {
+	v, _ := daemonBase.Load().(string)
+	return v
 }
 
 func (s *Server) runnerToolsList() []Tool {
@@ -250,7 +262,12 @@ func (s *Server) toolEnsureUniquePorts(args map[string]interface{}) (*ToolCallRe
 }
 
 func (s *Server) daemonCall(method, path string, body interface{}) (*ToolCallResult, error) {
-	raw, err := s.daemonRequest(method, path, body)
+	return DaemonCall(s.daemonURL, method, path, body)
+}
+
+// DaemonCall meneruskan satu panggilan ke engine lokal di base dan membungkus jawabannya sebagai hasil tool.
+func DaemonCall(base, method, path string, body interface{}) (*ToolCallResult, error) {
+	raw, err := DaemonRequest(base, method, path, body)
 	if err != nil {
 		return nil, err
 	}
@@ -263,6 +280,11 @@ func (s *Server) daemonCall(method, path string, body interface{}) (*ToolCallRes
 }
 
 func (s *Server) daemonRequest(method, path string, body interface{}) ([]byte, error) {
+	return DaemonRequest(s.daemonURL, method, path, body)
+}
+
+// DaemonRequest mengirim request bertoken lokal ke engine di base dan mengembalikan body mentahnya.
+func DaemonRequest(base, method, path string, body interface{}) ([]byte, error) {
 	var reader io.Reader
 	if body != nil {
 		payload, err := json.Marshal(body)
@@ -271,7 +293,7 @@ func (s *Server) daemonRequest(method, path string, body interface{}) ([]byte, e
 		}
 		reader = bytes.NewReader(payload)
 	}
-	req, err := http.NewRequest(method, s.daemonURL+path, reader)
+	req, err := http.NewRequest(method, base+path, reader)
 	if err != nil {
 		return nil, err
 	}
