@@ -2,6 +2,8 @@ package api
 
 import (
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 
@@ -9,6 +11,46 @@ import (
 	"github.com/vibeasik/vibeasik/pkg/models"
 	"github.com/vibeasik/vibeasik/pkg/security"
 )
+
+var (
+	censorTestCacheMu sync.RWMutex
+	censorTestCache   = make(map[string]censorTestCacheEntry)
+)
+
+type censorTestCacheEntry struct {
+	clean     string
+	audit     *security.SanitizeAudit
+	expiresAt time.Time
+}
+
+func getCachedCensorTest(text string) (string, *security.SanitizeAudit, bool) {
+	censorTestCacheMu.RLock()
+	defer censorTestCacheMu.RUnlock()
+	entry, ok := censorTestCache[text]
+	if !ok || time.Now().After(entry.expiresAt) {
+		return "", nil, false
+	}
+	return entry.clean, entry.audit, true
+}
+
+func setCachedCensorTest(text, clean string, audit *security.SanitizeAudit) {
+	censorTestCacheMu.Lock()
+	defer censorTestCacheMu.Unlock()
+	if len(censorTestCache) > 100 {
+		censorTestCache = make(map[string]censorTestCacheEntry)
+	}
+	censorTestCache[text] = censorTestCacheEntry{
+		clean:     clean,
+		audit:     audit,
+		expiresAt: time.Now().Add(60 * time.Second),
+	}
+}
+
+func invalidateCensorTestCache() {
+	censorTestCacheMu.Lock()
+	defer censorTestCacheMu.Unlock()
+	censorTestCache = make(map[string]censorTestCacheEntry)
+}
 
 func (s *Server) getSecurityStatus(c *fiber.Ctx) error {
 	var activeCount int64
@@ -86,6 +128,7 @@ func (s *Server) createCensoredKeyword(c *fiber.Ctx) error {
 	}
 
 	database.SyncCensoredKeywords(s.db)
+	invalidateCensorTestCache()
 
 	return c.Status(fiber.StatusCreated).JSON(kw)
 }
@@ -129,6 +172,7 @@ func (s *Server) updateCensoredKeyword(c *fiber.Ctx) error {
 	}
 
 	database.SyncCensoredKeywords(s.db)
+	invalidateCensorTestCache()
 
 	return c.JSON(existing)
 }
@@ -139,18 +183,33 @@ func (s *Server) deleteCensoredKeyword(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 	database.SyncCensoredKeywords(s.db)
+	invalidateCensorTestCache()
 	return c.JSON(fiber.Map{"message": "censored keyword deleted successfully"})
 }
 
+type testCensorRequest struct {
+	Text string `json:"text" validate:"required"`
+}
+
 func (s *Server) testCensorPayload(c *fiber.Ctx) error {
-	var body struct {
-		Text string `json:"text"`
+	var body testCensorRequest
+	if p := firstProblem(bindJSONRequired(c, &body), needText("text", body.Text, maxText)); p != "" {
+		return badPayload(c, p)
 	}
-	if err := c.BodyParser(&body); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+
+	c.Set(fiber.HeaderCacheControl, "private, max-age=60")
+
+	if clean, audit, found := getCachedCensorTest(body.Text); found {
+		return c.JSON(fiber.Map{
+			"original":       body.Text,
+			"sanitized_text": clean,
+			"audit":          audit,
+		})
 	}
 
 	clean, audit := security.GlobalSanitizer.Sanitize(body.Text)
+	setCachedCensorTest(body.Text, clean, audit)
+
 	return c.JSON(fiber.Map{
 		"original":       body.Text,
 		"sanitized_text": clean,
