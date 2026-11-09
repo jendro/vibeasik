@@ -15,17 +15,28 @@ vibeasik dibuat dengan model **open-core**: inti-nya open source, sebagian fitur
 Kedua build memakai engine, format data, dan protokol yang sama. Data Anda (`~/.vibeasik/`) bisa dipakai oleh
 keduanya.
 
-## Paket
+## Tiga paket edisi
 
-| | Free | Pro |
-|---|---|---|
-| Scan proyek, 85 rule audit, port & runner, peta kode, todo | ✓ | ✓ |
-| MCP | 64 tool | 123 tool |
-| Pusat Pengetahuan | paket dasar; kirim otomatis terkunci | jaring lengkap; kirim otomatis dapat diubah |
-| Deep audit, AI review, pegawai AI, orkestrator, Galeri Desain, … | terkunci | ✓ |
+vibeasik menawarkan tiga tingkat paket sesuai skala kebutuhan pengembangan:
 
-Free tidak butuh akun. Bagian mana pun dari fitur Pro yang belum terbuka akan menjawab `upgrade_required` (HTTP 402
-untuk REST, kode yang sama untuk MCP), dan Studio menampilkan halaman *Upgrade* untuk fitur itu.
+| Fitur / Entitlement | Community (Free) | Pro | Team / Business |
+|---|---|---|---|
+| **Sasaran Pengguna** | Developer solo, hobiis, open source | Power developer, tech lead, konsultan | Tim rekayasa software (3–50 developer) |
+| **Harga** | **Rp 0** (Gratis selamanya) | **Rp 299.000 / bulan** (~$19/bln) | **Rp 750.000 / seat / bulan** (~$49/seat/bln) |
+| **Batas Perangkat** | Tanpa batas (tanpa akun) | Maks. 3 perangkat per akun | Hingga 5 perangkat per seat anggota |
+| **Katalog MCP Tools** | 64 tool (inti lokal) | 123 tool (lengkap) | 123 tool + enterprise org API |
+| **Fast Scan, Code Map, Port, Todo** | ✓ | ✓ | ✓ |
+| **Deep Audit & AI Code Review** | Terkunci (`upgrade_required`) | ✓ | ✓ |
+| **Pegawai AI & Orkestrator Kantor** | Terkunci (`upgrade_required`) | ✓ (1 workspace kantor) | ✓ (Multi-workspace kantor terdistribusi) |
+| **Pusat Pengetahuan** | Paket dasar tersemat | Jaring lengkap L1 (kurasi lokal) | Jaring lengkap L2 (repositori patokan tim) |
+| **AI Credits Bawaan** | 0 cloud credits | **1.000 Credits / bulan** | **3.000 Credits / seat / bulan** (pooled) |
+| **Dukungan BYOK & Local LLM** | ✓ Bebas tanpa batas kuota | ✓ Bebas tanpa memotong kredit | ✓ Bebas + Private VPC LLM gateway |
+| **Penyensoran Privasi (SEC-003)** | ✓ GlobalSanitizer | ✓ GlobalSanitizer | ✓ GlobalSanitizer + custom regex rahasia |
+| **Dukungan & SLA** | Komunitas / GitHub | Email prioritas (< 24 jam) | Dedicated Slack, SLA < 4 jam, 2 jam workshop |
+
+Community tidak butuh akun. Bagian mana pun dari fitur Pro yang belum terbuka akan menjawab `upgrade_required` (HTTP 402 untuk REST, kode yang sama untuk MCP), dan Studio menampilkan tautan peningkatan paket.
+
+Rincian formula biaya, alokasi kredit per fitur, arsitektur database GORM, alur kuota habis, dan privasi kode: lihat [Spesifikasi AI Credits & Paket](AI_CREDITS.md).
 
 Untuk tim yang memerlukan pendampingan langsung, audit kilat, atau implementasi orkestrasi AI terkelola, lihat [Paket Layanan Profesional](SERVICES.md).
 
