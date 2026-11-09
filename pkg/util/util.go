@@ -53,14 +53,20 @@ func ClipText(s string, n int) string {
 func ReadFileString(p string) string {
 	b, err := os.ReadFile(p)
 	if err != nil {
+		if !os.IsNotExist(err) {
+			log.Printf("[WARN] ReadFileString: os.ReadFile(%q): %v", p, err)
+		}
 		return ""
 	}
 	return string(b)
 }
 
-// FileExists true bila p ada DAN bukan direktori.
+// FileExists true bila p ada DAN bukan direktori. Error sistem selain "tidak ada" dicatat ke log.
 func FileExists(p string) bool {
 	info, err := os.Stat(p)
+	if err != nil && !os.IsNotExist(err) {
+		log.Printf("[WARN] FileExists: os.Stat(%q): %v", p, err)
+	}
 	return err == nil && !info.IsDir()
 }
 

@@ -1,8 +1,10 @@
 package guidelines
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -99,6 +101,11 @@ func TestGenerateSuggestionsForProjectGolden(t *testing.T) {
 }
 
 func TestFilePredicates(t *testing.T) {
+	var buf bytes.Buffer
+	origWriter := log.Writer()
+	log.SetOutput(&buf)
+	defer log.SetOutput(origWriter)
+
 	tmp := t.TempDir()
 	existing := filepath.Join(tmp, "ada.txt")
 	if err := os.WriteFile(existing, []byte("ok"), 0o644); err != nil {
@@ -117,6 +124,9 @@ func TestFilePredicates(t *testing.T) {
 	}
 	if !fileMissing(missing) {
 		t.Errorf("fileMissing(%q) = false, want true", missing)
+	}
+	if buf.Len() > 0 {
+		t.Errorf("expected no warning logs for normal missing/existing files, got: %s", buf.String())
 	}
 }
 

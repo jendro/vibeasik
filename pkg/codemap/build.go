@@ -81,6 +81,9 @@ var projectMarkers = []string{".git", "package.json", "go.mod", "pubspec.yaml", 
 
 func isDir(p string) bool {
 	fi, err := os.Stat(p)
+	if err != nil && !os.IsNotExist(err) {
+		log.Printf("[WARN] isDir: os.Stat(%q): %v", p, err)
+	}
 	return err == nil && fi.IsDir()
 }
 
@@ -268,7 +271,7 @@ func collect(roots []scanRoot) []candidate {
 	}
 	var out []candidate
 	for _, r := range roots {
-		_ = filepath.Walk(r.absDir, func(p string, info os.FileInfo, err error) error {
+		if err := filepath.Walk(r.absDir, func(p string, info os.FileInfo, err error) error {
 			if err != nil {
 				return nil
 			}
@@ -291,7 +294,9 @@ func collect(roots []scanRoot) []candidate {
 			seen[p] = true
 			out = append(out, makeCandidate(r, p, info, lang))
 			return nil
-		})
+		}); err != nil {
+			log.Printf("[WARN] collect: filepath.Walk(%q): %v", r.absDir, err)
+		}
 	}
 	return out
 }
@@ -402,7 +407,9 @@ func scanCandidates(projectID uint, files []candidate, byPath map[string]*models
 
 func resolveSingleEntryImports(e *models.CodeMapEntry, rs *resolver, goSyms map[string]map[string]string) []string {
 	var refs []string
-	_ = json.Unmarshal([]byte(e.RefsJSON), &refs)
+	if err := json.Unmarshal([]byte(e.RefsJSON), &refs); err != nil && e.RefsJSON != "" {
+		log.Printf("[WARN] resolveSingleEntryImports: unmarshal refs for %q: %v", e.Path, err)
+	}
 	var imports []string
 	sels := map[string]map[string]bool{}
 	for _, spec := range refs {
@@ -532,7 +539,9 @@ func goSymbolIndex(entries []*models.CodeMapEntry) map[string]map[string]string 
 			continue
 		}
 		var syms []models.CodeSymbol
-		_ = json.Unmarshal([]byte(e.SymbolsJSON), &syms)
+		if err := json.Unmarshal([]byte(e.SymbolsJSON), &syms); err != nil && e.SymbolsJSON != "" {
+			log.Printf("[WARN] goSymbolIndex: unmarshal symbols for %q: %v", e.Path, err)
+		}
 		dir := path.Dir(e.Path) + "/"
 		if out[dir] == nil {
 			out[dir] = map[string]string{}

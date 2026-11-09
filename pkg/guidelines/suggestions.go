@@ -2,6 +2,7 @@ package guidelines
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -43,17 +44,24 @@ func advisorTodo(project *models.Project, comp *models.Component, target string,
 
 // fileMissing adalah predikat boolean murni yang memeriksa ketiadaan berkas (K5088).
 // Kontrak predikat: os.IsNotExist(err) adalah jalur normal (bukan swallowed error).
-// Galat selain "tidak ada" (mis. izin akses) dianggap berkas ada agar tidak memicu saran keliru.
+// Galat selain "tidak ada" (mis. izin akses) dicatat sebagai [WARN] dan dianggap berkas ada agar tidak memicu saran keliru.
 func fileMissing(path string) bool {
 	_, err := os.Stat(path)
+	if err != nil && !os.IsNotExist(err) {
+		log.Printf("[WARN] fileMissing: os.Stat(%q): %v", path, err)
+	}
 	return os.IsNotExist(err)
 }
 
 // fileExists adalah predikat boolean murni yang memeriksa keberadaan berkas (K5088).
 // Kontrak predikat: err == nil menyatakan berkas ada dan dapat diakses; os.IsNotExist(err)
 // adalah jalur normal ketika berkas tidak ditemukan, bukan swallowed error.
+// Error sistem selain "tidak ada" (mis. izin akses) dicatat sebagai [WARN] agar dapat diobservasi.
 func fileExists(path string) bool {
 	_, err := os.Stat(path)
+	if err != nil && !os.IsNotExist(err) {
+		log.Printf("[WARN] fileExists: os.Stat(%q): %v", path, err)
+	}
 	return err == nil
 }
 
