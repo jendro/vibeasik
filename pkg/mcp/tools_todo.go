@@ -109,7 +109,7 @@ func filterTodoAttributes(query *gorm.DB, args map[string]interface{}) *gorm.DB 
 		query = query.Where("source = ?", src)
 	}
 	if cat, ok := activeFilter(args, "category"); ok {
-		query = query.Where("LOWER(category) = ?", strings.ToLower(cat))
+		query = models.WhereCategory(query, cat)
 	}
 	if tag, ok := args["tag"].(string); ok && tag != "all" {
 		query = models.WhereTag(query, tag)

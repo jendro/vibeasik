@@ -84,3 +84,31 @@ func WhereTag(q *gorm.DB, tag string) *gorm.DB {
 	}
 	return q.Where(expr, "%,"+tag+",%")
 }
+
+// WhereCategory menyaring todo menurut kategori: kategori utama, atau salah satu kategori todo gabungan
+// lintas kategori (kolom categories, CSV) — sehingga sub todo security yang dilebur tetap ditemukan lewat induknya.
+func WhereCategory(q *gorm.DB, cat string) *gorm.DB {
+	cat = strings.ToLower(strings.TrimSpace(cat))
+	if cat == "" {
+		return q
+	}
+	expr := "(LOWER(category) = ? OR (',' || COALESCE(categories,'') || ',') LIKE ?)"
+	if q.Dialector != nil && q.Dialector.Name() == "mysql" {
+		expr = "(LOWER(category) = ? OR CONCAT(',', COALESCE(categories,''), ',') LIKE ?)"
+	}
+	return q.Where(expr, cat, "%,"+cat+",%")
+}
+
+// JoinCategories: CSV kategori unik dengan urutan dipertahankan (kategori utama lebih dulu).
+func JoinCategories(cats ...string) string {
+	seen := map[string]bool{}
+	var out []string
+	for _, c := range cats {
+		c = strings.ToLower(strings.TrimSpace(c))
+		if c != "" && !seen[c] {
+			seen[c] = true
+			out = append(out, c)
+		}
+	}
+	return strings.Join(out, ",")
+}

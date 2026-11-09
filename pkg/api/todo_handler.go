@@ -35,7 +35,7 @@ func applyTodoStringFilters(query *gorm.DB, c *fiber.Ctx) *gorm.DB {
 		query = query.Where("level = ?", level)
 	}
 	if category := c.Query("category"); category != "" && category != "all" {
-		query = query.Where("category = ?", category)
+		query = models.WhereCategory(query, category)
 	}
 	if source := c.Query("source"); source != "" && source != "all" {
 		query = query.Where("source = ?", source)

@@ -6,7 +6,7 @@ const props = defineProps<{ todo: Todo }>()
 const levelMeta = computed(() => todoLevelMeta(props.todo))
 const priorityMeta = computed(() => todoPriorityMeta(props.todo))
 const statusMeta = computed(() => todoStatusMeta(props.todo))
-const categoryMeta = computed(() => todoCategoryMeta(props.todo))
+const categoriesMeta = computed(() => todoCategoriesMeta(props.todo))
 const targetAppsDisplay = computed(() => todoTargetAppsDisplay(props.todo))
 const recommendedModelMeta = computed(() => todoRecommendedModelMeta(props.todo))
 const originMeta = computed(() => todoOriginMeta(props.todo))
@@ -38,11 +38,13 @@ const originMeta = computed(() => todoOriginMeta(props.todo))
 
       <!-- Category Badge -->
       <span
+        v-for="cat in categoriesMeta"
+        :key="cat.key"
         class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-medium text-xs border"
-        :class="categoryMeta.class"
+        :class="cat.class"
       >
-        <UIcon :name="categoryMeta.icon" class="w-3.5 h-3.5" />
-        {{ categoryMeta.label }}
+        <UIcon :name="cat.icon" class="w-3.5 h-3.5" />
+        {{ cat.label }}
       </span>
 
       <TodosTodoTagChips :todo="todo" />

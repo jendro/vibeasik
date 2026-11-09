@@ -51,6 +51,7 @@ type Todo struct {
 	ID               uint       `gorm:"primaryKey" json:"id"`
 	Level            string     `gorm:"size:64;default:'project';index" json:"level"`    // global, project, component
 	Category         string     `gorm:"size:64;default:'general';index" json:"category"` // feature, security, ui_ux, architecture, performance, backend, devops, general
+	Categories       string     `gorm:"size:256" json:"categories,omitempty"`           // CSV semua kategori (todo gabungan lintas kategori); Category = kategori utama
 	ParentID         *uint      `gorm:"index" json:"parent_id,omitempty"`                // Cascading parent todo
 	SplitFromID      *uint      `gorm:"index" json:"split_from_id,omitempty"`            // Induk yang dipecah per aplikasi (todo_split.go); sub todo ini satu aplikasi saja
 	ProjectID        *uint      `gorm:"index" json:"project_id,omitempty"`

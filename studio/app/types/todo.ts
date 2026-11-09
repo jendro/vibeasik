@@ -15,6 +15,8 @@ export interface Todo {
   id: number
   level: TodoLevel
   category?: TodoCategory | string
+  /** CSV semua kategori todo gabungan lintas kategori; category = kategori utama */
+  categories?: string
   parent_id?: number
   split_from_id?: number
   project_id?: number

@@ -46,7 +46,7 @@ export const todoStatusMeta = (todo: Todo) => {
   }
 }
 
-export const todoCategoryMeta = (todo: Todo) => {
+export const todoCategoryMeta = (todo: Pick<Todo, 'category'>) => {
   const cat = todo.category || 'general'
   switch (cat) {
     case 'security':
@@ -66,6 +66,14 @@ export const todoCategoryMeta = (todo: Todo) => {
     default:
       return { label: 'Umum', icon: 'i-lucide-tag', class: 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700' }
   }
+}
+
+// todoCategoriesMeta: lencana semua kategori todo (todo gabungan lintas kategori membawa beberapa), kategori utama dulu.
+export const todoCategoriesMeta = (todo: Pick<Todo, 'category' | 'categories'>) => {
+  const cats = [todo.category || 'general', ...(todo.categories || '').split(',')]
+    .map(c => c.trim())
+    .filter((c, i, all) => c && all.indexOf(c) === i)
+  return cats.map(c => ({ key: c, ...todoCategoryMeta({ category: c }) }))
 }
 
 export const todoTargetAppsDisplay = (todo: Todo) => {
