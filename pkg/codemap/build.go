@@ -409,7 +409,15 @@ func resolveSingleEntryImports(e *models.CodeMapEntry, rs *resolver, goSyms map[
 	if err := json.Unmarshal([]byte(e.RefsJSON), &refs); err != nil && e.RefsJSON != "" {
 		log.Printf("[WARN] resolveSingleEntryImports: unmarshal refs for %q: %v", e.Path, err)
 	}
+	sels := collectRefsSelections(refs)
 	var imports []string
+	for _, spec := range refs {
+		imports = append(imports, resolveSpecImport(rs, goSyms, e.Path, spec, sels)...)
+	}
+	return imports
+}
+
+func collectRefsSelections(refs []string) map[string]map[string]bool {
 	sels := map[string]map[string]bool{}
 	for _, spec := range refs {
 		if strings.HasPrefix(spec, "sel:") {
@@ -420,19 +428,20 @@ func resolveSingleEntryImports(e *models.CodeMapEntry, rs *resolver, goSyms map[
 			sels[pkg][name] = true
 		}
 	}
-	for _, spec := range refs {
-		if strings.HasPrefix(spec, "sel:") {
-			continue
-		}
-		if strings.HasPrefix(spec, "goimp:") {
-			imports = append(imports, resolveGoImport(rs, goSyms, e.Path, spec[6:], sels)...)
-			continue
-		}
-		if t := rs.resolve(e.Path, spec); t != "" && t != e.Path {
-			imports = append(imports, t)
-		}
+	return sels
+}
+
+func resolveSpecImport(rs *resolver, goSyms map[string]map[string]string, currentPath, spec string, sels map[string]map[string]bool) []string {
+	if strings.HasPrefix(spec, "sel:") {
+		return nil
 	}
-	return imports
+	if strings.HasPrefix(spec, "goimp:") {
+		return resolveGoImport(rs, goSyms, currentPath, spec[6:], sels)
+	}
+	if t := rs.resolve(currentPath, spec); t != "" && t != currentPath {
+		return []string{t}
+	}
+	return nil
 }
 
 func resolveEntryImports(entries []*models.CodeMapEntry, roots []scanRoot, changed map[*models.CodeMapEntry]bool) {
