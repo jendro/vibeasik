@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -364,6 +365,110 @@ func BenchmarkLoadComponent_Projected(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		_, _, err := svc.loadComponent(1)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func TestStatusQueryCountAndProbeTimeout(t *testing.T) {
+	db := setupDB(t)
+	p := models.Project{ID: 20, Name: "Proj20", Slug: "proj20"}
+	db.Create(&p)
+
+	// Buat 1 komponen utama dan 5 komponen saudara (siblings)
+	mainComp := models.Component{
+		ID:           2001,
+		ProjectID:    20,
+		Name:         "frontend-main",
+		Role:         models.RoleFrontendClient,
+		DevCommand:   "npm run dev",
+		AbsolutePath: "/tmp/fe20",
+		Port:         3000,
+		RunPort:      4150,
+	}
+	db.Create(&mainComp)
+
+	for i := 2; i <= 6; i++ {
+		db.Create(&models.Component{
+			ID:         uint(2000 + i),
+			ProjectID:  20,
+			Name:       fmt.Sprintf("backend-%d", i),
+			Role:       models.RoleBackend,
+			DevCommand: "go run .",
+			Port:       8000 + i,
+			RunPort:    4200 + i,
+		})
+	}
+
+	var queryCount int32
+	cb := db.Callback()
+	_ = cb.Query().After("gorm:query").Register("test_count_status_queries", func(d *gorm.DB) {
+		atomic.AddInt32(&queryCount, 1)
+	})
+
+	svc := NewService(db)
+
+	// Verifikasi 1: Status komponen idle hanya mengeksekusi TEPAT 1 query (loadComponentByID)
+	// Query saudara (siblings) dihilangkan total dari hot path Status.
+	atomic.StoreInt32(&queryCount, 0)
+	st, err := svc.Status(mainComp.ID, false)
+	if err != nil {
+		t.Fatalf("Status failed: %v", err)
+	}
+	if st.ComponentID != mainComp.ID || st.State != StateIdle {
+		t.Errorf("unexpected status: %+v", st)
+	}
+	if count := atomic.LoadInt32(&queryCount); count != 1 {
+		t.Fatalf("Status query count = %d, want tepat 1 (tanpa siblings query)", count)
+	}
+
+	// Verifikasi 2: Probe TCP timeout (IsListening) dibatasi listenProbeTimeout (50ms)
+	if listenProbeTimeout != 50*time.Millisecond {
+		t.Fatalf("listenProbeTimeout = %v, want 50ms", listenProbeTimeout)
+	}
+
+	// Port yang sedang listen mengembalikan true sangat cepat (< 5ms)
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("failed to open test listener: %v", err)
+	}
+	defer ln.Close()
+	activePort := ln.Addr().(*net.TCPAddr).Port
+
+	start := time.Now()
+	if !IsListening(activePort) {
+		t.Errorf("IsListening(%d) = false, want true", activePort)
+	}
+	if elapsed := time.Since(start); elapsed > 10*time.Millisecond {
+		t.Errorf("active loopback probe too slow: %v (want < 10ms)", elapsed)
+	}
+
+	// Port tertutup segera mengembalikan false
+	if IsListening(activePort + 999) {
+		t.Errorf("IsListening on closed port returned true")
+	}
+}
+
+func BenchmarkServiceStatus_Idle(b *testing.B) {
+	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+	_ = db.AutoMigrate(&models.Project{}, &models.Component{})
+	db.Create(&models.Component{
+		ID:           1,
+		ProjectID:    1,
+		Name:         "frontend",
+		Role:         models.RoleFrontendClient,
+		DevCommand:   "npm run dev",
+		AbsolutePath: "/tmp/fe",
+		Port:         3000,
+		RunPort:      0, // idle without port probe
+	})
+	svc := NewService(db)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_, err := svc.Status(1, false)
 		if err != nil {
 			b.Fatal(err)
 		}
