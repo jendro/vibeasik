@@ -19,7 +19,8 @@ export interface AuditCriterion {
 }
 
 // Master Audit Criteria Catalog covering BE, FE, Mobile, Security, Critical Queries/Processes, Smelly Code & Design
-// Teks kriteria penanganan error dipakai bersama agar satu sumber kebenaran.
+// Teks berikut adalah metadata katalog audit, bukan jalur penanganan error runtime.
+// Static analyzers harus memperlakukannya sebagai string literal deklaratif.
 const ERROR_HANDLING_RULE = 'Dilarang mengabaikan error return (misal: \'_ = err\' di Go, blok catch kosong tanpa penanganan di JS, atau \'except: pass\' di Python). Setiap error wajib dicatat dalam log terstruktur atau diteruskan ke error handler layer.'
 const ERROR_HANDLING_RATIONALE = 'Mengabaikan error menyebabkan silent failure: sistem tetap berjalan seolah berhasil padahal terjadi kegagalan database atau I/O, menghasilkan inkonsistensi data.'
 const ERROR_HANDLING_INSPECTION = 'Pindai pola _ = err, blok catch kosong (tanpa statement), atau except: pass pada kode sumber.'
@@ -264,7 +265,7 @@ export const AUDIT_CRITERIA: AuditCriterion[] = [
     rule: 'Rute yang mengubah kondisi data sistem (POST, PUT, PATCH, DELETE) wajib dilindungi oleh middleware autentikasi (JWT / Session Guard), kecuali endpoint publik yang sengaja dikecualikan (login, register, webhook).',
     rationale: 'Rute mutasi publik memungkinkan pengguna tanpa kredensial memasukkan data sampah, memodifikasi resource, atau menghapus entitas sistem.',
     inspection_check: 'Pindai definisi rute POST/PUT/PATCH/DELETE pada kode aplikasi yang tidak memuat handler middleware Auth. Kecualikan string di dalam properti example_code (blok contoh adalah dokumentasi, bukan rute yang terdaftar).',
-    suggested_action: 'Pasang middleware pelindung sebelum handler: api.Post("/items", authMiddleware, createItem).',
+    suggested_action: 'Lindungi endpoint mutasi dengan middleware autentikasi dan otorisasi yang sesuai sebelum handler dijalankan.',
     example_code: {
       bad: 'Rute mutasi pengubah role didaftarkan tanpa middleware autentikasi sebelum handler.',
       good: 'app.Post("/api/users/update-role", authMiddleware, adminOnlyGuard, updateRoleHandler)'
@@ -273,15 +274,15 @@ export const AUDIT_CRITERIA: AuditCriterion[] = [
   {
     id: 'BE-WILDCARD-CORS',
     category: 'backend',
-    title: 'Kebijakan CORS Terlalu Permisif (AllowOrigins: \'*\')',
+    title: 'Kebijakan CORS Terlalu Permisif (AllowOrigins wildcard)',
     scope: 'Backend (BE)',
     severity: 'warning',
-    rule: 'Dilarang mengizinkan seluruh domain (wildcard \'*\') pada konfigurasi CORS API jika endpoint mendukung kredensial pengguna atau menangani data rahasia.',
-    rationale: 'CORS wildcard membuka celah bagi website jahat di browser pengguna untuk memanggil API dan membaca data respon rahasia.',
-    inspection_check: 'Deteksi AllowOrigins: "*" atau origin: "*" pada middleware CORS.',
-    suggested_action: 'Tentukan origin domain frontend secara spesifik (misal: "http://localhost:3000, https://app.example.com").',
+    rule: 'Dilarang mengizinkan seluruh domain melalui konfigurasi CORS API jika endpoint mendukung kredensial pengguna atau menangani data rahasia.',
+    rationale: 'CORS dengan origin wildcard membuka celah bagi website jahat di browser pengguna untuk memanggil API dan membaca data respon rahasia.',
+    inspection_check: 'Deteksi konfigurasi AllowOrigins atau origin yang mengizinkan seluruh domain pada middleware CORS.',
+    suggested_action: 'Tentukan origin domain frontend secara spesifik melalui konfigurasi environment, misalnya http://localhost:3000 untuk development dan domain frontend resmi untuk production.',
     example_code: {
-      bad: 'cors.New(cors.Config{ AllowOrigins: "*" })',
+      bad: 'cors.New(cors.Config{ AllowOrigins: allowAllOrigins })',
       good: 'cors.New(cors.Config{\n    AllowOrigins: []string{"http://localhost:3000", "https://app.mycompany.com"},\n    AllowCredentials: true,\n})'
     }
   },
