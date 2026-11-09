@@ -25,10 +25,12 @@ type SettingsRepository interface {
 }
 
 type gormSettingsRepository struct {
-	db       *gorm.DB
-	mu       sync.RWMutex
-	cached   *models.LLMSettings
-	cachedAt time.Time
+	db              *gorm.DB
+	mu              sync.RWMutex
+	cached          *models.LLMSettings
+	cachedAt        time.Time
+	cachedConfigs   []models.LLMConfig
+	cachedConfigsAt time.Time
 }
 
 const settingsCacheTTL = 30 * time.Second
@@ -36,6 +38,12 @@ const settingsCacheTTL = 30 * time.Second
 // NewSettingsRepository instantiates a new SettingsRepository backed by GORM
 func NewSettingsRepository(db *gorm.DB) SettingsRepository {
 	return &gormSettingsRepository{db: db}
+}
+
+func (r *gormSettingsRepository) invalidateConfigsCache() {
+	r.mu.Lock()
+	r.cachedConfigs = nil
+	r.mu.Unlock()
 }
 
 func (r *gormSettingsRepository) GetSettings(ctx context.Context) (*models.LLMSettings, error) {
@@ -75,10 +83,26 @@ func (r *gormSettingsRepository) UpdateSettings(ctx context.Context, settings *m
 }
 
 func (r *gormSettingsRepository) GetAllConfigs(ctx context.Context) ([]models.LLMConfig, error) {
+	r.mu.RLock()
+	cached, cachedAt := r.cachedConfigs, r.cachedConfigsAt
+	r.mu.RUnlock()
+	if cached != nil && time.Since(cachedAt) < settingsCacheTTL {
+		cp := make([]models.LLMConfig, len(cached))
+		copy(cp, cached)
+		return cp, nil
+	}
+
 	var list []models.LLMConfig
 	if err := r.db.WithContext(ctx).Order("id asc").Find(&list).Error; err != nil {
 		return nil, err
 	}
+
+	r.mu.Lock()
+	r.cachedConfigs = make([]models.LLMConfig, len(list))
+	copy(r.cachedConfigs, list)
+	r.cachedConfigsAt = time.Now()
+	r.mu.Unlock()
+
 	return list, nil
 }
 
@@ -103,14 +127,17 @@ func (r *gormSettingsRepository) GetActiveConfig(ctx context.Context, provider s
 }
 
 func (r *gormSettingsRepository) CreateConfig(ctx context.Context, cfg *models.LLMConfig) error {
+	defer r.invalidateConfigsCache()
 	return r.db.WithContext(ctx).Create(cfg).Error
 }
 
 func (r *gormSettingsRepository) UpdateConfig(ctx context.Context, cfg *models.LLMConfig) error {
+	defer r.invalidateConfigsCache()
 	return r.db.WithContext(ctx).Save(cfg).Error
 }
 
 func (r *gormSettingsRepository) DeleteConfig(ctx context.Context, id uint) error {
+	defer r.invalidateConfigsCache()
 	return r.db.WithContext(ctx).Delete(&models.LLMConfig{}, id).Error
 }
 
@@ -131,5 +158,6 @@ func (r *gormSettingsRepository) SetActiveConfig(ctx context.Context, id uint) (
 		return nil, fmt.Errorf("failed to activate config: %w", err)
 	}
 
+	r.invalidateConfigsCache()
 	return &target, nil
 }

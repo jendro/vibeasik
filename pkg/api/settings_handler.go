@@ -48,6 +48,7 @@ func (s *Server) updateLLMSettings(c *fiber.Ctx) error {
 }
 
 func (s *Server) setActiveProvider(c *fiber.Ctx) error {
+	c.Set(fiber.HeaderCacheControl, "no-store")
 	var body struct {
 		Provider string `json:"provider"`
 	}
@@ -66,6 +67,7 @@ func (s *Server) setActiveProvider(c *fiber.Ctx) error {
 }
 
 func (s *Server) selectActiveModel(c *fiber.Ctx) error {
+	c.Set(fiber.HeaderCacheControl, "no-store")
 	var body struct {
 		Model string `json:"model"`
 	}
@@ -85,6 +87,7 @@ func (s *Server) selectActiveModel(c *fiber.Ctx) error {
 }
 
 func (s *Server) getLLMConfigs(c *fiber.Ctx) error {
+	c.Set(fiber.HeaderCacheControl, "private, max-age=60")
 	configs, err := s.services.Settings.GetConfigs(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
@@ -144,6 +147,7 @@ func validateLLMConfigPayload(p UpsertLLMConfigPayload) string {
 }
 
 func (s *Server) createLLMConfig(c *fiber.Ctx) error {
+	c.Set(fiber.HeaderCacheControl, "no-store")
 	var payload UpsertLLMConfigPayload
 	if msg := firstProblem(bindJSONRequired(c, &payload), validateLLMConfigPayload(payload)); msg != "" {
 		return badPayload(c, msg)

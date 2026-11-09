@@ -1,14 +1,60 @@
 package api
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/vibeasik/vibeasik/pkg/cloud"
 )
+
+var (
+	cloudAuditCacheMu sync.RWMutex
+	cloudAuditCache   = make(map[string]cloudAuditCacheEntry)
+)
+
+type cloudAuditCacheEntry struct {
+	result    *cloud.CloudAuditResponseDTO
+	expiresAt time.Time
+}
+
+func getCachedCloudAudit(key string) (*cloud.CloudAuditResponseDTO, bool) {
+	cloudAuditCacheMu.RLock()
+	defer cloudAuditCacheMu.RUnlock()
+	entry, ok := cloudAuditCache[key]
+	if !ok || time.Now().After(entry.expiresAt) {
+		return nil, false
+	}
+	return entry.result, true
+}
+
+func setCachedCloudAudit(key string, result *cloud.CloudAuditResponseDTO) {
+	cloudAuditCacheMu.Lock()
+	defer cloudAuditCacheMu.Unlock()
+	if len(cloudAuditCache) > 100 {
+		cloudAuditCache = make(map[string]cloudAuditCacheEntry)
+	}
+	cloudAuditCache[key] = cloudAuditCacheEntry{
+		result:    result,
+		expiresAt: time.Now().Add(60 * time.Second),
+	}
+}
+
+func computeBodyHash(body interface{}) string {
+	b, err := json.Marshal(body)
+	if err != nil {
+		return ""
+	}
+	h := sha256.Sum256(b)
+	return hex.EncodeToString(h[:])
+}
 
 func (s *Server) getVibeTutorials(c *fiber.Ctx) error {
 	category := c.Query("category")
@@ -51,11 +97,26 @@ func (s *Server) runCloudSecurityAudit(c *fiber.Ctx) error {
 	if msg := bindJSONRequired(c, &body); msg != "" {
 		return badPayload(c, msg)
 	}
+
+	c.Set(fiber.HeaderCacheControl, "private, max-age=60")
+
+	cacheKey := computeBodyHash(body)
+	if cacheKey != "" {
+		if cached, found := getCachedCloudAudit(cacheKey); found {
+			return c.JSON(cached)
+		}
+	}
+
 	cli := cloud.NewClient()
 	result, err := cli.AuditProject(body)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
+
+	if cacheKey != "" && result != nil {
+		setCachedCloudAudit(cacheKey, result)
+	}
+
 	return c.JSON(result)
 }
 

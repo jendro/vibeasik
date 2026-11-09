@@ -91,17 +91,13 @@ func (s *settingsService) SetActiveProvider(ctx context.Context, provider string
 		return err
 	}
 	settings.ActiveProvider = provider
-	if err := s.settingsRepo.UpdateSettings(ctx, settings); err != nil {
-		return err
+
+	// Pre-fetch active config and apply directly to settings before single update
+	if activeCfg, err := s.settingsRepo.GetActiveConfig(ctx, provider); err == nil && activeCfg != nil {
+		s.applyConfigToSettings(settings, activeCfg)
 	}
 
-	// Sync active config for this provider
-	activeCfg, err := s.settingsRepo.GetActiveConfig(ctx, provider)
-	if err == nil && activeCfg != nil {
-		s.syncConfigToSettings(ctx, activeCfg)
-	}
-
-	return nil
+	return s.settingsRepo.UpdateSettings(ctx, settings)
 }
 
 func (s *settingsService) SelectActiveModel(ctx context.Context, model string) error {
@@ -116,15 +112,26 @@ func (s *settingsService) SelectActiveModel(ctx context.Context, model string) e
 	}
 
 	activeCfg, _ := s.settingsRepo.GetActiveConfig(ctx, settings.ActiveProvider)
-	if activeCfg != nil {
+	if activeCfg != nil && activeCfg.SelectedModel != model {
 		activeCfg.SelectedModel = model
 		_ = s.settingsRepo.UpdateConfig(ctx, activeCfg)
 	}
 
+	var changed bool
 	if settings.ActiveProvider == models.ProviderStandardLLM {
-		settings.StandardLLMSelected = model
+		if settings.StandardLLMSelected != model {
+			settings.StandardLLMSelected = model
+			changed = true
+		}
 	} else {
-		settings.SystemOneModel = model
+		if settings.SystemOneModel != model {
+			settings.SystemOneModel = model
+			changed = true
+		}
+	}
+
+	if !changed && activeCfg != nil && activeCfg.SelectedModel == model {
+		return nil
 	}
 
 	return s.settingsRepo.UpdateSettings(ctx, settings)
@@ -249,12 +256,8 @@ func (s *settingsService) ActivateConfig(ctx context.Context, id uint) (*models.
 	return &dto, nil
 }
 
-func (s *settingsService) syncConfigToSettings(ctx context.Context, cfg *models.LLMConfig) {
-	if cfg == nil {
-		return
-	}
-	settings, err := s.settingsRepo.GetSettings(ctx)
-	if err != nil {
+func (s *settingsService) applyConfigToSettings(settings *models.LLMSettings, cfg *models.LLMConfig) {
+	if cfg == nil || settings == nil {
 		return
 	}
 
@@ -280,6 +283,17 @@ func (s *settingsService) syncConfigToSettings(ctx context.Context, cfg *models.
 		}
 		settings.ActiveProvider = models.ProviderStandardLLM
 	}
+}
 
+func (s *settingsService) syncConfigToSettings(ctx context.Context, cfg *models.LLMConfig) {
+	if cfg == nil {
+		return
+	}
+	settings, err := s.settingsRepo.GetSettings(ctx)
+	if err != nil {
+		return
+	}
+
+	s.applyConfigToSettings(settings, cfg)
 	_ = s.settingsRepo.UpdateSettings(ctx, settings)
 }
