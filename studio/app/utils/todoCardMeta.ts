@@ -83,35 +83,50 @@ export const todoTargetAppsDisplay = (todo: Todo) => {
   return 'Global Platform'
 }
 
-export const todoRecommendedModelMeta = (todo: Todo) => {
-  if (todo.status === 'completed' || todo.status === 'rejected') return null
+export type ModelSuggestion = {
+  label: string
+  badgeClass: string
+  icon: string
+  title: string
+}
 
-  const comp = todo.complexity_level
-  const cat = todo.category
-  const prio = todo.priority
-
-  if (comp === 'complex' || prio === 'critical' || cat === 'architecture' || cat === 'security') {
-    return {
-      label: 'Saran: Claude Opus 5',
-      badgeClass: 'bg-violet-100/80 text-violet-800 dark:bg-violet-950/40 dark:text-violet-300 border-violet-200 dark:border-violet-800',
-      icon: 'i-lucide-brain-circuit',
-      title: 'Tugas rumit / arsitektur / keamanan kritis: Disarankan model flagship (Claude Opus 5 via OpenCode)'
-    }
-  }
-  if (comp === 'quick' || cat === 'ui_ux' || cat === 'general') {
-    return {
-      label: 'Saran: GLM 5.2 / Flash',
-      badgeClass: 'bg-emerald-100/80 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
-      icon: 'i-lucide-zap',
-      title: 'Tugas ringan / UI polish: Cukup model cepat & hemat (GLM 5.2 OpenCode atau Gemini Flash Antigravity)'
-    }
-  }
-  return {
+export const MODEL_SUGGESTIONS: Record<'flagship' | 'fast' | 'balanced', ModelSuggestion> = {
+  flagship: {
+    label: 'Saran: Claude Opus 5',
+    badgeClass: 'bg-violet-100/80 text-violet-800 dark:bg-violet-950/40 dark:text-violet-300 border-violet-200 dark:border-violet-800',
+    icon: 'i-lucide-brain-circuit',
+    title: 'Tugas rumit / arsitektur / keamanan kritis: Disarankan model flagship (Claude Opus 5 via OpenCode)'
+  },
+  fast: {
+    label: 'Saran: GLM 5.2 / Flash',
+    badgeClass: 'bg-emerald-100/80 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+    icon: 'i-lucide-zap',
+    title: 'Tugas ringan / UI polish: Cukup model cepat & hemat (GLM 5.2 OpenCode atau Gemini Flash Antigravity)'
+  },
+  balanced: {
     label: 'Saran: Claude Sonnet 5',
     badgeClass: 'bg-blue-100/80 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200 dark:border-blue-800',
     icon: 'i-lucide-sparkles',
     title: 'Tugas fitur / backend standar: Disarankan model cerdas & seimbang (Claude Sonnet 5 / DeepSeek V4 Pro via OpenCode)'
   }
+}
+
+export const isFlagshipTask = (todo: Todo): boolean =>
+  todo.complexity_level === 'complex' ||
+  todo.priority === 'critical' ||
+  todo.category === 'architecture' ||
+  todo.category === 'security'
+
+export const isFastTask = (todo: Todo): boolean =>
+  todo.complexity_level === 'quick' ||
+  todo.category === 'ui_ux' ||
+  todo.category === 'general'
+
+export const todoRecommendedModelMeta = (todo: Todo): ModelSuggestion | null => {
+  if (todo.status === 'completed' || todo.status === 'rejected') return null
+  if (isFlagshipTask(todo)) return MODEL_SUGGESTIONS.flagship
+  if (isFastTask(todo)) return MODEL_SUGGESTIONS.fast
+  return MODEL_SUGGESTIONS.balanced
 }
 
 export interface TodoOriginMetaResult {

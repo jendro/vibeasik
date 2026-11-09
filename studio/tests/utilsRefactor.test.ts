@@ -24,6 +24,10 @@ import {
 } from '../app/utils/synergy'
 import {
   todoOriginMeta,
+  todoRecommendedModelMeta,
+  isFlagshipTask,
+  isFastTask,
+  MODEL_SUGGESTIONS,
   isExecutiveOrigin,
   isAuditOrigin,
   isPmOrigin,
@@ -618,3 +622,49 @@ describe('todoFilter helper refactor (filterAndSortTodos CC reduction)', () => {
     expect(result[1].id).toBe(3) // high di bawah critical
   })
 })
+
+describe('todoRecommendedModelMeta helper refactor (CC reduction via lookup table)', () => {
+  const mockTask = (overrides?: Partial<Todo>): Todo => ({
+    id: 1,
+    project_id: 1,
+    title: 'Task Contoh',
+    category: 'backend',
+    priority: 'medium',
+    status: 'pending',
+    complexity_level: 'normal',
+    created_at: new Date().toISOString(),
+    ...overrides
+  })
+
+  test('mengembalikan null jika task completed atau rejected', () => {
+    expect(todoRecommendedModelMeta(mockTask({ status: 'completed' }))).toBeNull()
+    expect(todoRecommendedModelMeta(mockTask({ status: 'rejected' }))).toBeNull()
+  })
+
+  test('isFlagshipTask: mengenali task kompleks, arsitektur, security, atau critical', () => {
+    expect(isFlagshipTask(mockTask({ complexity_level: 'complex' }))).toBe(true)
+    expect(isFlagshipTask(mockTask({ priority: 'critical' }))).toBe(true)
+    expect(isFlagshipTask(mockTask({ category: 'architecture' }))).toBe(true)
+    expect(isFlagshipTask(mockTask({ category: 'security' }))).toBe(true)
+    expect(isFlagshipTask(mockTask({ category: 'backend', priority: 'medium', complexity_level: 'normal' }))).toBe(false)
+  })
+
+  test('isFastTask: mengenali task quick, ui_ux, atau general', () => {
+    expect(isFastTask(mockTask({ complexity_level: 'quick' }))).toBe(true)
+    expect(isFastTask(mockTask({ category: 'ui_ux' }))).toBe(true)
+    expect(isFastTask(mockTask({ category: 'general' }))).toBe(true)
+    expect(isFastTask(mockTask({ category: 'backend', complexity_level: 'normal' }))).toBe(false)
+  })
+
+  test('todoRecommendedModelMeta: memilih saran flagship, fast, atau balanced secara deterministik', () => {
+    const flagshipTodo = mockTask({ complexity_level: 'complex' })
+    expect(todoRecommendedModelMeta(flagshipTodo)).toEqual(MODEL_SUGGESTIONS.flagship)
+
+    const fastTodo = mockTask({ category: 'ui_ux' })
+    expect(todoRecommendedModelMeta(fastTodo)).toEqual(MODEL_SUGGESTIONS.fast)
+
+    const standardTodo = mockTask({ category: 'backend', complexity_level: 'normal', priority: 'medium' })
+    expect(todoRecommendedModelMeta(standardTodo)).toEqual(MODEL_SUGGESTIONS.balanced)
+  })
+})
+
