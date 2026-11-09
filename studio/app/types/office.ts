@@ -206,6 +206,10 @@ export interface AgentRecap {
 
 /** Jenis permintaan klien di Ruang Klien; menentukan cara dewan menanggapi & menyusun todo. */
 export type ClientRequestKind = 'bug' | 'question' | 'feature' | 'change' | 'other'
+/** Penerima pesan Ruang Klien; 'auto' = gerbang Jev memilih penanggung jawab. */
+export type ClientRecipient = 'auto' | 'all' | 'ceo' | 'cto' | 'product_owner' | 'cmo'
+/** Cara penanggung jawab ditentukan: dipilih klien, gerbang Jev, atau aturan lokal. */
+export type ClientRoutedBy = 'manual' | 'jev' | 'rules'
 
 /** Pekerjaan dewan yang sedang berjalan di Ruang Klien (dilaporkan komponen chat ke panel kanan). */
 export interface ClientBoardActivity {
@@ -229,7 +233,7 @@ export interface ExecutiveChatMessageDTO {
   id: number
   project_id: number
   role: 'user' | 'assistant'
-  target: 'all' | 'ceo' | 'cto' | 'product_owner' | 'cmo'
+  target?: 'all' | 'ceo' | 'cto' | 'product_owner' | 'cmo'
   kind?: ClientRequestKind
   speaker_role?: string
   speaker_name?: string
@@ -240,6 +244,8 @@ export interface ExecutiveChatMessageDTO {
   board_notes?: any[]
   saved_todos?: ClientTodoRef[]
   model_name?: string
+  routed_by?: ClientRoutedBy
+  route_reason?: string
   created_at: string
 }
 
@@ -263,4 +269,9 @@ export interface ExecutiveChatResponseDTO {
   saved_todos?: any[]
   model: string
   message_id: number
+  kind?: ClientRequestKind
+  target?: 'all' | 'ceo' | 'cto' | 'product_owner' | 'cmo'
+  routed_by?: ClientRoutedBy
+  route_reason?: string
+  confidence?: number
 }

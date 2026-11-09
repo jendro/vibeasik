@@ -18,13 +18,15 @@ type ExecutiveChatMessage struct {
 	TodosJSON    string    `gorm:"type:text" json:"todos_json,omitempty"`    // Serialized []LLMTodoRecommendation
 	SavedTodoIDs string    `gorm:"size:512" json:"saved_todo_ids,omitempty"` // CSV id todo yang dibuat dari balasan ini
 	ModelName    string    `gorm:"size:128" json:"model_name,omitempty"`
+	RoutedBy     string    `gorm:"size:16" json:"routed_by,omitempty"`     // cara penanggung jawab ditentukan: manual, jev, rules
+	RouteReason  string    `gorm:"size:255" json:"route_reason,omitempty"` // alasan singkat triase (ditampilkan ke klien)
 	CreatedAt    time.Time `json:"created_at"`
 }
 
 // ExecutiveChatRequest payload dari frontend saat mengirim pesan ke eksekutif
 type ExecutiveChatRequest struct {
 	Message       string `json:"message"`
-	Target        string `json:"target,omitempty"`          // "all", "ceo", "cto", "product_owner"
+	Target        string `json:"target,omitempty"`          // "auto" (default), "all", "ceo", "cto", "product_owner", "cmo"
 	Kind          string `json:"kind,omitempty"`            // jenis permintaan klien: bug, question, feature, change, other
 	Model         string `json:"model,omitempty"`           // Model pilihan pengguna (misal gpt-4o, claude-3-5-sonnet, deepseek-chat)
 	AutoSaveTodos bool   `json:"auto_save_todos,omitempty"` // Bila true, todo rekomendasi langsung disimpan ke DB
@@ -43,4 +45,9 @@ type ExecutiveChatResponse struct {
 	SavedTodos   []Todo                  `json:"saved_todos,omitempty"`
 	Model        string                  `json:"model"`
 	MessageID    uint                    `json:"message_id"`
+	Kind         string                  `json:"kind,omitempty"`         // jenis pesan hasil triase
+	Target       string                  `json:"target,omitempty"`       // penanggung jawab hasil triase
+	RoutedBy     string                  `json:"routed_by,omitempty"`    // manual, jev, rules
+	RouteReason  string                  `json:"route_reason,omitempty"` // alasan singkat triase
+	Confidence   float64                 `json:"confidence,omitempty"`   // peluang pilihan penanggung jawab dari Jev
 }
