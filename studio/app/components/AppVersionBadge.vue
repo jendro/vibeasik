@@ -21,7 +21,7 @@ const studioBuiltAt = computed(() => {
 <template>
   <div class="flex items-center gap-1.5 min-w-0">
     <span
-      class="text-[11px] font-mono text-neutral-500 dark:text-slate-400 truncate"
+      class="text-xs font-mono text-neutral-500 dark:text-slate-400 truncate"
       :title="`${info ? `Engine: ${info.current}\n` : ''}Studio build: ${studioVersion}${studioBuiltAt ? ` (${studioBuiltAt})` : ''}`"
     >
       <template v-if="info">{{ label }} · </template>studio {{ studioVersion }}
@@ -30,7 +30,7 @@ const studioBuiltAt = computed(() => {
     <button
       v-if="info && available && canClick"
       type="button"
-      class="inline-flex items-center gap-1 rounded-full bg-sky-600 hover:bg-sky-700 text-white px-1.5 py-px text-[10px] font-semibold transition-colors disabled:opacity-80 disabled:cursor-wait focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+      class="inline-flex items-center gap-1 rounded-full bg-sky-600 hover:bg-sky-700 text-white px-1.5 py-px text-xs font-semibold transition-colors disabled:opacity-80 disabled:cursor-wait focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
       :disabled="busy"
       :title="ready ? 'Sudah terunduh. Klik untuk mulai ulang dan memakainya' : `Klik untuk mengunduh dan memasang ${info.latest}`"
       @click.prevent.stop="updateNow"
@@ -56,7 +56,7 @@ const studioBuiltAt = computed(() => {
       :href="info.url"
       target="_blank"
       rel="noopener"
-      class="inline-flex items-center gap-1 rounded-full bg-sky-600 hover:bg-sky-700 text-white px-1.5 py-px text-[10px] font-semibold"
+      class="inline-flex items-center gap-1 rounded-full bg-sky-600 hover:bg-sky-700 text-white px-1.5 py-px text-xs font-semibold"
       title="Versi baru tersedia: buka halaman unduhan"
     >
       <span class="size-1.5 rounded-full bg-white" /> Baru {{ info.latest }}

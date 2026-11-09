@@ -144,7 +144,7 @@ const dateOnly = (iso?: string) => iso ? new Date(iso).toLocaleDateString('id-ID
 
       <!-- 2. Isi (markdown) -->
       <section class="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
-        <p class="text-[11px] font-semibold uppercase tracking-wide text-neutral-500 mb-2">
+        <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-2">
           Isi
         </p>
         <MarkdownViewer :content="detail.node.content" />
@@ -152,7 +152,7 @@ const dateOnly = (iso?: string) => iso ? new Date(iso).toLocaleDateString('id-ID
 
       <!-- 3. Ringkasan angka -->
       <section>
-        <p class="text-[11px] font-semibold uppercase tracking-wide text-neutral-500 mb-2">
+        <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-2">
           Ringkasan
         </p>
         <div class="grid grid-cols-5 gap-2">
@@ -160,12 +160,12 @@ const dateOnly = (iso?: string) => iso ? new Date(iso).toLocaleDateString('id-ID
             <p class="text-base font-bold" :class="t.c">
               {{ t.v }}
             </p>
-            <p class="text-[10px] uppercase font-semibold text-neutral-500">
+            <p class="text-xs uppercase font-semibold text-neutral-500">
               {{ t.l }}
             </p>
           </div>
         </div>
-        <p class="text-[11px] text-neutral-400 mt-2">
+        <p class="text-xs text-neutral-400 mt-2">
           Dibuat {{ dateOnly(detail.node.created_at) }} · diperbarui {{ dateOnly(detail.node.updated_at) }}
           <template v-if="detail.node.last_used_at">
             · terakhir dipakai {{ dateOnly(detail.node.last_used_at) }}
@@ -208,7 +208,7 @@ const dateOnly = (iso?: string) => iso ? new Date(iso).toLocaleDateString('id-ID
                 <div class="h-full rounded-full" :class="scoreColor(k.score)" :style="{ width: `${Math.max(3, k.uses / maxKind * 100)}%` }" />
               </div>
             </div>
-            <p class="text-[11px] text-neutral-400">
+            <p class="text-xs text-neutral-400">
               Hanya angka per jenis pekerjaan; isi pekerjaan pengguna tidak diketahui.
             </p>
           </template>
