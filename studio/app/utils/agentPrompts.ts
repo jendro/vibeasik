@@ -6,14 +6,16 @@ export interface AgentPromptTarget {
   key: string
   label: string
   icon: string
-  /** true: agent punya tool sub agent sendiri (Claude Code) → mode divisi; selain itu mode worker. */
+  /** true: agent punya sub agent sendiri di aplikasinya (Claude Code, Antigravity) → mode divisi; selain itu mode worker. */
   subagents: boolean
+  /** Cara menjalankan sub agent di aplikasi itu (untuk mode divisi). */
+  subagentTool?: string
   hint: string
 }
 
 export const agentPromptTargets: AgentPromptTarget[] = [
-  { key: 'claude', label: 'Claude Code', icon: 'i-simple-icons-claude', subagents: true, hint: 'Punya sub agent sendiri: tiap todo dikerjakan satu sub agent baru (konteks bersih), koordinator hanya menerima ringkasannya.' },
-  { key: 'agy', label: 'Antigravity', icon: 'i-simple-icons-google', subagents: false, hint: 'Mode worker: tiap todo dikirim ke proses agent baru lewat orkestrator vibeasik (konteks bersih per todo).' },
+  { key: 'claude', label: 'Claude Code', icon: 'i-simple-icons-claude', subagents: true, subagentTool: 'tool Agent/Task, foreground', hint: 'Punya sub agent sendiri: tiap todo dikerjakan satu sub agent baru (konteks bersih), koordinator hanya menerima ringkasannya.' },
+  { key: 'agy', label: 'Antigravity', icon: 'i-simple-icons-google', subagents: true, subagentTool: 'agent/sub agent baru di Antigravity', hint: 'Punya sub agent sendiri: tiap todo dikerjakan satu sub agent baru di Antigravity (konteks bersih) sebagai pegawai vibeasik, koordinator hanya menerima ringkasannya.' },
   { key: 'cline', label: 'Cline', icon: 'i-lucide-terminal', subagents: false, hint: 'Mode worker: tiap todo dikirim ke proses agent baru lewat orkestrator vibeasik (konteks bersih per todo).' },
   { key: 'cursor', label: 'Cursor', icon: 'i-simple-icons-cursor', subagents: false, hint: 'Mode worker: tiap todo dikirim ke proses agent baru lewat orkestrator vibeasik (konteks bersih per todo).' },
   { key: 'codex', label: 'Codex', icon: 'i-lucide-code-xml', subagents: false, hint: 'Mode worker: tiap todo dikirim ke proses agent baru lewat orkestrator vibeasik (konteks bersih per todo).' },
@@ -32,9 +34,9 @@ const intro = (p: AgentPromptProject) =>
 
 const closing = 'Hemat konteks: kamu hanya koordinator. Jangan membaca kode, diff lengkap, atau log panjang sendiri; cukup ringkasan dari sub agent/run dan hasil tool vibeasik. Untuk setiap todo: ikuti brief pegawai vibeasik (persona & pengetahuannya), tulis PEGAWAI:, PENGETAHUAN:, dan PELAJARAN: di completion_note. Jangan membuat todo baru sendiri; temuan lanjutan tulis di completion_note. Di akhir, laporkan per todo: pegawai, hasil, nilai QA, hash commit.'
 
-const divisionSteps = (p: AgentPromptProject) =>
-  `1. Panggil \`vibeasik_todo_dispatch_plan\` {project_id: ${p.id}, coordinator: "claude"} sebagai langkah PERTAMA, lalu ikuti \`coordinator_steps\`-nya. Kamu koordinator: jangan mengedit kode sendiri.\n`
-  + '2. Untuk tiap todo di `next_wave`: `update_todo` {todo_id, status: "in_progress"}, lalu jalankan SATU sub agent baru (tool Agent/Task, foreground) dengan `subagent_prompt` apa adanya dan model `subagent_model`. Satu sub agent = satu todo: tutup setelah melapor, jangan dipakai ulang untuk todo lain. Paralel hanya bila `next_wave.parallel` = true.\n'
+const divisionSteps = (p: AgentPromptProject, t: AgentPromptTarget) =>
+  `1. Panggil \`vibeasik_todo_dispatch_plan\` {project_id: ${p.id}, coordinator: "${t.key}", workers: false} sebagai langkah PERTAMA, lalu ikuti \`coordinator_steps\`-nya. Kamu koordinator: jangan mengedit kode sendiri.\n`
+  + `2. Untuk tiap todo di \`next_wave\`: \`update_todo\` {todo_id, status: "in_progress"}, lalu jalankan SATU sub agent baru (${t.subagentTool || 'sub agent di aplikasimu'}) dengan \`subagent_prompt\` apa adanya (memuat persona, standar, dan pengetahuan pegawai — jangan diringkas) dan model \`subagent_model\` bila ada. Jangan memakai \`vibeasik_dispatch_agent\`. Satu sub agent = satu todo: tutup setelah melapor, jangan dipakai ulang untuk todo lain. Paralel hanya bila \`next_wave.parallel\` = true.\n`
   + '3. Setelah sub agent melapor: commit sisa perubahan di worktree todo, build/test, lalu `vibeasik_qa_gate`. next=rework → sub agent baru dengan `feedback_section`; next=merge → squash satu todo = satu commit; next=escalated → simpan branch, jangan squash.\n'
   + '4. `update_todo` status "completed" (atau kembali "pending" beserta alasan bila gagal).\n'
   + '5. Panggil `vibeasik_todo_dispatch_plan` lagi sampai `next_wave` kosong.\n\n'
@@ -49,6 +51,6 @@ const workerSteps = (p: AgentPromptProject, key: string) =>
   + '7. Panggil `vibeasik_todo_dispatch_plan` lagi sampai `next_wave` kosong.\n\n'
 
 export function buildAgentPrompt(target: AgentPromptTarget, project: AgentPromptProject): string {
-  const steps = target.subagents ? divisionSteps(project) : workerSteps(project, target.key)
+  const steps = target.subagents ? divisionSteps(project, target) : workerSteps(project, target.key)
   return intro(project) + 'Langkah:\n' + steps + closing
 }
