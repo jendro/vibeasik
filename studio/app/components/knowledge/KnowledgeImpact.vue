@@ -59,7 +59,7 @@ const scoreText = (s: number) => s < 0 ? 'belum dinilai' : `${s}% berguna`
               { l: 'Nilai keberhasilan', v: impact.score < 0 ? '-' : `${impact.score}%`, c: 'text-primary' }
             ]" :key="t.l" class="rounded-lg bg-neutral-50 dark:bg-neutral-800/60 p-3"
           >
-            <p class="text-[11px] uppercase font-semibold text-neutral-500">
+            <p class="text-xs uppercase font-semibold text-neutral-500">
               {{ t.l }}
             </p>
             <p class="text-xl font-bold" :class="t.c">
@@ -97,7 +97,7 @@ const scoreText = (s: number) => s < 0 ? 'belum dinilai' : `${s}% berguna`
             </div>
           </div>
         </div>
-        <p class="text-[11px] text-neutral-400">
+        <p class="text-xs text-neutral-400">
           Dari {{ impact.devices }} perangkat · diperbarui berkala.
         </p>
       </template>

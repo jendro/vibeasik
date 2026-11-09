@@ -51,7 +51,7 @@ const total = computed(() => slices.value.reduce((s, i) => s + i.value, 0))
         <span class="font-mono text-neutral-500">{{ s.value }}</span>
         <span class="font-mono w-10 text-right font-semibold text-neutral-800 dark:text-neutral-200">{{ s.pct.toFixed(s.pct < 10 ? 1 : 0) }}%</span>
       </li>
-      <li class="text-[11px] text-neutral-400 pt-0.5">
+      <li class="text-xs text-neutral-400 pt-0.5">
         Total {{ total }}
       </li>
     </ul>
