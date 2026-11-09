@@ -6,6 +6,7 @@ package analysis
 
 import (
 	"github.com/vibeasik/vibeasik/pkg/models"
+	"github.com/vibeasik/vibeasik/pkg/security"
 	"gorm.io/gorm"
 )
 
@@ -17,7 +18,9 @@ func queryActiveLLM(db *gorm.DB, systemPrompt, userPrompt string) (string, error
 	if LLMQuery == nil {
 		return "", nil
 	}
-	return LLMQuery(db, systemPrompt, userPrompt)
+	cleanSys := security.SanitizeText(systemPrompt)
+	cleanUser := security.SanitizeText(userPrompt)
+	return LLMQuery(db, cleanSys, cleanUser)
 }
 
 // ExtractRoutes mengekstrak rute secara statis dari dir (dipakai modul Pro saat memperkaya rute).

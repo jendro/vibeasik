@@ -1,6 +1,8 @@
 package api
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -12,9 +14,25 @@ import (
 	"github.com/vibeasik/vibeasik/pkg/security"
 )
 
+const (
+	maxCensorCacheEntries = 128
+	censorCacheTTL        = 60 * time.Second
+)
+
+// CensorCacheStats merekam metrik cache terpisah dari latency endpoint (K2157)
+type CensorCacheStats struct {
+	Hits      uint64 `json:"hits"`
+	Misses    uint64 `json:"misses"`
+	Bypasses  uint64 `json:"bypasses"`
+	Expiries  uint64 `json:"expiries"`
+	Evictions uint64 `json:"evictions"`
+}
+
 var (
 	censorTestCacheMu sync.RWMutex
 	censorTestCache   = make(map[string]censorTestCacheEntry)
+	censorStatsMu     sync.Mutex
+	censorCacheStats  CensorCacheStats
 )
 
 type censorTestCacheEntry struct {
@@ -23,26 +41,92 @@ type censorTestCacheEntry struct {
 	expiresAt time.Time
 }
 
-func getCachedCensorTest(text string) (string, *security.SanitizeAudit, bool) {
+// computeCensorCacheKey menghasilkan canonical hash key (K5741) agar raw secrets tidak tersimpan di memori cache
+func computeCensorCacheKey(text string) string {
+	h := sha256.Sum256([]byte(strings.TrimSpace(text)))
+	return fmt.Sprintf("censor:sha256:%x", h)
+}
+
+func recordCensorStat(fn func(*CensorCacheStats)) {
+	censorStatsMu.Lock()
+	defer censorStatsMu.Unlock()
+	fn(&censorCacheStats)
+}
+
+func getCensorCacheStats() CensorCacheStats {
+	censorStatsMu.Lock()
+	defer censorStatsMu.Unlock()
+	return censorCacheStats
+}
+
+func resetCensorCacheStats() {
+	censorStatsMu.Lock()
+	defer censorStatsMu.Unlock()
+	censorCacheStats = CensorCacheStats{}
+}
+
+func getCachedCensorTest(key string) (string, *security.SanitizeAudit, bool) {
 	censorTestCacheMu.RLock()
-	defer censorTestCacheMu.RUnlock()
-	entry, ok := censorTestCache[text]
-	if !ok || time.Now().After(entry.expiresAt) {
+	entry, ok := censorTestCache[key]
+	censorTestCacheMu.RUnlock()
+
+	if !ok {
+		recordCensorStat(func(s *CensorCacheStats) { s.Misses++ })
 		return "", nil, false
 	}
+
+	if time.Now().After(entry.expiresAt) {
+		censorTestCacheMu.Lock()
+		delete(censorTestCache, key)
+		censorTestCacheMu.Unlock()
+		recordCensorStat(func(s *CensorCacheStats) {
+			s.Misses++
+			s.Expiries++
+		})
+		return "", nil, false
+	}
+
+	recordCensorStat(func(s *CensorCacheStats) { s.Hits++ })
 	return entry.clean, entry.audit, true
 }
 
-func setCachedCensorTest(text, clean string, audit *security.SanitizeAudit) {
+func evictExpiredOrOldestCensorEntries(now time.Time) {
+	for k, v := range censorTestCache {
+		if now.After(v.expiresAt) {
+			delete(censorTestCache, k)
+			recordCensorStat(func(s *CensorCacheStats) { s.Expiries++ })
+		}
+	}
+	if len(censorTestCache) < maxCensorCacheEntries {
+		return
+	}
+	var oldestKey string
+	var oldestTime time.Time
+	for k, v := range censorTestCache {
+		if oldestKey == "" || v.expiresAt.Before(oldestTime) {
+			oldestKey = k
+			oldestTime = v.expiresAt
+		}
+	}
+	if oldestKey != "" {
+		delete(censorTestCache, oldestKey)
+		recordCensorStat(func(s *CensorCacheStats) { s.Evictions++ })
+	}
+}
+
+func setCachedCensorTest(key, clean string, audit *security.SanitizeAudit) {
 	censorTestCacheMu.Lock()
 	defer censorTestCacheMu.Unlock()
-	if len(censorTestCache) > 100 {
-		censorTestCache = make(map[string]censorTestCacheEntry)
+
+	now := time.Now()
+	if len(censorTestCache) >= maxCensorCacheEntries {
+		evictExpiredOrOldestCensorEntries(now)
 	}
-	censorTestCache[text] = censorTestCacheEntry{
+
+	censorTestCache[key] = censorTestCacheEntry{
 		clean:     clean,
 		audit:     audit,
-		expiresAt: time.Now().Add(60 * time.Second),
+		expiresAt: now.Add(censorCacheTTL),
 	}
 }
 
@@ -191,15 +275,26 @@ type testCensorRequest struct {
 	Text string `json:"text" validate:"required"`
 }
 
+func shouldBypassCensorCache(c *fiber.Ctx) bool {
+	cc := c.Get(fiber.HeaderCacheControl)
+	if strings.Contains(cc, "no-cache") || strings.Contains(cc, "no-store") {
+		return true
+	}
+	return c.Get("X-Bypass-Cache") == "true"
+}
+
 func (s *Server) testCensorPayload(c *fiber.Ctx) error {
 	var body testCensorRequest
 	if p := firstProblem(bindJSONRequired(c, &body), needText("text", body.Text, maxText)); p != "" {
 		return badPayload(c, p)
 	}
 
-	c.Set(fiber.HeaderCacheControl, "private, max-age=60")
-
-	if clean, audit, found := getCachedCensorTest(body.Text); found {
+	// 1. Jalur bypass: permintaan eksplisit client untuk tidak memakai cache (K2563)
+	if shouldBypassCensorCache(c) {
+		recordCensorStat(func(s *CensorCacheStats) { s.Bypasses++ })
+		clean, audit := security.GlobalSanitizer.Sanitize(body.Text)
+		c.Set("X-Cache", "BYPASS")
+		c.Set(fiber.HeaderCacheControl, "private, no-cache, no-store")
 		return c.JSON(fiber.Map{
 			"original":       body.Text,
 			"sanitized_text": clean,
@@ -207,9 +302,24 @@ func (s *Server) testCensorPayload(c *fiber.Ctx) error {
 		})
 	}
 
-	clean, audit := security.GlobalSanitizer.Sanitize(body.Text)
-	setCachedCensorTest(body.Text, clean, audit)
+	// 2. Jalur cache hit dengan canonical key (K5741)
+	key := computeCensorCacheKey(body.Text)
+	if clean, audit, found := getCachedCensorTest(key); found {
+		c.Set("X-Cache", "HIT")
+		c.Set(fiber.HeaderCacheControl, "private, max-age=60")
+		return c.JSON(fiber.Map{
+			"original":       body.Text,
+			"sanitized_text": clean,
+			"audit":          audit,
+		})
+	}
 
+	// 3. Jalur cold miss: sanitasi penuh & simpan dengan canonical key
+	clean, audit := security.GlobalSanitizer.Sanitize(body.Text)
+	setCachedCensorTest(key, clean, audit)
+
+	c.Set("X-Cache", "MISS")
+	c.Set(fiber.HeaderCacheControl, "private, max-age=60")
 	return c.JSON(fiber.Map{
 		"original":       body.Text,
 		"sanitized_text": clean,

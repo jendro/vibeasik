@@ -315,8 +315,8 @@ func (s *Sanitizer) Sanitize(input string) (string, *SanitizeAudit) {
 		}
 	}
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
 	run := &sanitizeRun{
 		result:       input,
