@@ -74,7 +74,7 @@ const pageTitle = computed(() => {
   <header class="sticky top-0 z-30 h-16 border-b border-neutral-200 dark:border-white/10 bg-white/90 dark:bg-[#020c18]/85 backdrop-blur-md transition-colors duration-200">
     <div class="h-full px-4 sm:px-6 flex items-center justify-between gap-4">
       <!-- Left side: Toggle & Brand / Page Title -->
-      <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+      <div class="flex-1 flex items-center gap-3 sm:gap-4 min-w-0">
         <!-- Mobile Sidebar Toggle -->
         <button
           type="button"
@@ -97,7 +97,7 @@ const pageTitle = computed(() => {
         </button>
 
         <!-- Brand / Current View Title: Project Name on Header -->
-        <div class="flex items-center gap-2.5 min-w-0">
+        <div class="hidden sm:flex items-center gap-2.5 min-w-0">
           <NuxtLink to="/cockpit" class="flex items-center gap-2 group md:hidden">
             <div class="w-8 h-8 rounded-lg bg-sky-600 flex items-center justify-center text-white shrink-0 shadow-xs">
               <UIcon name="i-lucide-layers" class="w-4 h-4" />
@@ -123,7 +123,7 @@ const pageTitle = computed(() => {
       </div>
 
       <!-- Right side: Actions & Status -->
-      <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
+      <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
         <!-- Active Project Selector (Di sebelah kiri model AI selector) -->
         <div class="flex items-center gap-1.5">
           <div class="relative flex items-center">
@@ -132,7 +132,7 @@ const pageTitle = computed(() => {
             </span>
             <select
               :value="activeProjectId ?? ''"
-              class="h-7 appearance-none pl-8 pr-7 py-0 text-xs font-mono font-medium rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50/80 dark:bg-neutral-800/80 text-neutral-800 dark:text-neutral-200 hover:border-neutral-300 dark:hover:border-neutral-600 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-colors max-w-[125px] sm:max-w-[180px] truncate"
+              class="h-7 appearance-none pl-8 pr-7 py-0 text-xs font-mono font-medium rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50/80 dark:bg-neutral-800/80 text-neutral-800 dark:text-neutral-200 hover:border-neutral-300 dark:hover:border-neutral-600 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-colors max-w-[96px] md:max-w-[120px] xl:max-w-[180px] truncate"
               title="Proyek Aktif (Klik untuk memilih atau memfilter proyek)"
               aria-label="Pilih proyek aktif"
               @change="(e) => handleSelectActiveProject((e.target as HTMLSelectElement).value)"
@@ -157,7 +157,7 @@ const pageTitle = computed(() => {
           <NuxtLink
             v-if="activeProjectId"
             :to="`/projects/${activeProjectId}`"
-            class="h-7 w-7 flex items-center justify-center shrink-0 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50/80 dark:bg-neutral-800/80 text-neutral-500 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-800 transition-colors"
+            class="h-7 w-7 hidden sm:flex items-center justify-center shrink-0 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50/80 dark:bg-neutral-800/80 text-neutral-500 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-800 transition-colors"
             title="Buka detail proyek aktif"
             aria-label="Buka detail proyek aktif"
           >
@@ -174,7 +174,7 @@ const pageTitle = computed(() => {
             <select
               :value="selectedModel"
               :disabled="isSwitchingModel"
-              class="h-7 appearance-none pl-8 pr-7 py-0 text-xs font-mono font-medium rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-50/80 dark:bg-slate-900/80 text-neutral-800 dark:text-neutral-200 hover:border-neutral-300 dark:hover:border-neutral-600 focus:outline-none focus:ring-1 focus:ring-sky-500 cursor-pointer disabled:opacity-60 transition-colors max-w-[130px] sm:max-w-[185px] truncate"
+              class="h-7 appearance-none pl-8 pr-7 py-0 text-xs font-mono font-medium rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-50/80 dark:bg-slate-900/80 text-neutral-800 dark:text-neutral-200 hover:border-neutral-300 dark:hover:border-neutral-600 focus:outline-none focus:ring-1 focus:ring-sky-500 cursor-pointer disabled:opacity-60 transition-colors max-w-[96px] md:max-w-[120px] xl:max-w-[185px] truncate"
               :title="`Model LLM Biasa aktif: ${selectedModel} (klik untuk memilih model)`"
               aria-label="Pilih model LLM Biasa aktif"
               @change="(e) => handleSelectModel((e.target as HTMLSelectElement).value)"
@@ -200,7 +200,7 @@ const pageTitle = computed(() => {
           <!-- Quick Ping Action Button (Sama tinggi dengan select model: h-7 w-7) -->
           <button
             type="button"
-            class="h-7 w-7 flex items-center justify-center shrink-0 rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-50/80 dark:bg-slate-900/80 text-neutral-500 hover:text-sky-600 dark:hover:text-sky-400 hover:border-sky-300 dark:hover:border-sky-800 transition-colors cursor-pointer disabled:opacity-50"
+            class="h-7 w-7 hidden sm:flex items-center justify-center shrink-0 rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-50/80 dark:bg-slate-900/80 text-neutral-500 hover:text-sky-600 dark:hover:text-sky-400 hover:border-sky-300 dark:hover:border-sky-800 transition-colors cursor-pointer disabled:opacity-50"
             :disabled="isPinging || !selectedModel"
             :title="isPinging ? 'Sedang melakukan ping...' : `Ping model aktif (${modelLabel(selectedModel || '')})`"
             aria-label="Ping model LLM aktif"
@@ -216,11 +216,12 @@ const pageTitle = computed(() => {
         <!-- API Connection Status Badge -->
         <button
           type="button"
-          class="h-7 inline-flex items-center justify-center shrink-0 gap-1.5 px-2.5 rounded-full text-xs border transition-colors select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 min-w-[76px] sm:min-w-[140px]"
+          class="h-7 inline-flex items-center justify-center shrink-0 gap-1.5 w-7 xl:w-auto xl:px-2.5 rounded-full text-xs border transition-colors select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 xl:min-w-[140px]"
           :class="apiConnected
             ? 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800/60'
             : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800/60'"
           :title="`Click to refresh. API ${apiConnected ? 'Active' : 'Offline'} on ${apiBase}`"
+          :aria-label="`Status API: ${apiConnected ? 'aktif' : 'offline'} di ${apiBase}`"
           @click="emit('checkApi')"
         >
           <span
@@ -230,14 +231,11 @@ const pageTitle = computed(() => {
               checking ? 'animate-ping' : ''
             ]"
           />
-          <span class="font-mono font-medium hidden sm:inline">
+          <span class="font-mono font-medium hidden xl:inline">
             {{ checking ? 'Checking...' : apiConnected ? 'Go API :8765' : 'Go API Offline' }}
           </span>
-          <span class="font-mono font-medium sm:hidden">
-            {{ checking ? '...' : apiConnected ? ':8765' : 'Offline' }}
-          </span>
         </button>
-        <UColorModeButton />
+        <UColorModeButton class="hidden sm:inline-flex" />
 
         <!-- Link to Public Website -->
         <UButton
@@ -269,8 +267,8 @@ const pageTitle = computed(() => {
             <UIcon name="i-lucide-log-out" class="w-4 h-4" />
           </button>
         </div>
-        <UButton v-else to="/account" size="xs" variant="soft" icon="i-lucide-log-in" class="ml-2">
-          Masuk akun
+        <UButton v-else to="/account" size="xs" variant="soft" icon="i-lucide-log-in" class="ml-1 xl:ml-2" aria-label="Masuk akun" title="Masuk akun">
+          <span class="hidden xl:inline">Masuk akun</span>
         </UButton>
       </div>
     </div>
