@@ -8,7 +8,7 @@ describe('buildAgentPrompt', () => {
   test('Claude Code memakai mode divisi dengan sub agent', () => {
     const p = buildAgentPrompt(target('claude'), project)
     expect(p).toContain('vibeasik_todo_dispatch_plan` {project_id: 49, coordinator: "claude"}')
-    expect(p).toContain('sub agent')
+    expect(p).toContain('jangan dipakai ulang')
     expect(p).not.toContain('vibeasik_dispatch_agent')
   })
 
@@ -17,6 +17,7 @@ describe('buildAgentPrompt', () => {
     expect(p).toContain('coordinator: "agy"')
     expect(p).toContain('vibeasik_dispatch_agent')
     expect(p).toContain('delegate/workers diabaikan')
+    expect(p).toContain('percakapan baru per todo')
   })
 
   test('semua prompt melarang scan dan menyebut proyek', () => {
@@ -25,6 +26,7 @@ describe('buildAgentPrompt', () => {
       expect(p).toContain('project_id 49')
       expect(p).toContain('jangan scan')
       expect(p).toContain('"vibeasik (repo baru)"')
+      expect(p).toContain('Hemat konteks')
     }
   })
 })
