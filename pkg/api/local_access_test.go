@@ -140,10 +140,26 @@ func TestLocalAccess_MutationFailClosedSecurityBoundary(t *testing.T) {
 		{"POST", "/api/projects/1/diagnostics/delete-finding", `{"finding_id":"finding-1"}`},
 		{"POST", "/api/knowledge/nodes", `{"title":"Aturan Keamanan","content":"Fail-closed boundary","kind":"rule","domain":"security"}`},
 		{"POST", "/api/knowledge/curate", `{}`},
+		{"POST", "/api/knowledge/gaps/1/dismiss", `{}`},
 		{"POST", "/api/projects", `{"name":"Project Luar","root_path":"/tmp/test"}`},
 		{"POST", "/api/todos", `{"title":"Todo Ilegal","project_id":1}`},
 		{"POST", "/api/components/1/routes/sync", `{}`},
+		{"POST", "/api/components/1/diagnose", `{}`},
+		{"DELETE", "/api/components/1/routes/1", `{}`},
+		{"POST", "/api/security/test-censor", `{"text":"test"}`},
+		{"POST", "/api/components/1/port", `{"port":3000}`},
+		{"POST", "/api/ports/ensure-unique", `{}`},
 		{"PUT", "/api/settings/llm", `{"provider":"gemini"}`},
+		{"POST", "/api/settings/llm/select-model", `{"model":"gemini-1.5-flash"}`},
+		{"POST", "/api/settings/llm/configs", `{"name":"custom","api_key":"secret"}`},
+		{"PUT", "/api/settings/llm/configs/1/alias", `{"alias":"fast"}`},
+		{"PUT", "/api/settings/workspace", `{"path":"/tmp"}`},
+		{"POST", "/api/vibeasik/security/cloud-audit", `{}`},
+		{"POST", "/api/vibeasik/ai-templates/inject", `{"template_id":"auth"}`},
+		{"DELETE", "/api/agents/custom/test-agent", `{}`},
+		{"POST", "/api/traffic/sources/1/rotate-key", `{}`},
+		{"POST", "/api/traffic/sources/1/todo", `{"title":"Optimize"}`},
+		{"POST", "/api/rea/analyze", `{}`},
 		{"DELETE", "/api/todos/1", `{}`},
 	}
 
@@ -157,8 +173,15 @@ func TestLocalAccess_MutationFailClosedSecurityBoundary(t *testing.T) {
 	}
 
 	for _, tc := range mutationRoutes {
+		// Uji 1: Localhost tanpa token auth -> HARUS 401 Unauthorized
+		respLocal := doReqWithBody(t, s, tc.method, tc.path, "localhost", tc.body, nil)
+		if respLocal.StatusCode != http.StatusUnauthorized {
+			t.Errorf("%s %s host=localhost (tanpa token) → %d, want 401 Unauthorized", tc.method, tc.path, respLocal.StatusCode)
+		}
+		_ = respLocal.Body.Close()
+
 		for _, host := range remoteHosts {
-			// Uji 1: Remote non-loopback tanpa auth token -> HARUS 403 Forbidden
+			// Uji 2: Remote non-loopback tanpa auth token -> HARUS 403 Forbidden
 			resp := doReqWithBody(t, s, tc.method, tc.path, host, tc.body, nil)
 			if resp.StatusCode != http.StatusForbidden {
 				t.Errorf("%s %s host=%s (tanpa token) → %d, want 403 Forbidden", tc.method, tc.path, host, resp.StatusCode)
@@ -170,7 +193,7 @@ func TestLocalAccess_MutationFailClosedSecurityBoundary(t *testing.T) {
 				t.Errorf("%s %s host=%s: error message = %v, want host_forbidden", tc.method, tc.path, host, bodyMap["error"])
 			}
 
-			// Uji 2: Remote non-loopback dengan auth token (mode LAN nonaktif) -> TETAP 403 Forbidden
+			// Uji 3: Remote non-loopback dengan auth token (mode LAN nonaktif) -> TETAP 403 Forbidden
 			respWithToken := doReqWithBody(t, s, tc.method, tc.path, host, tc.body, map[string]string{
 				localauth.Header: testLocalToken,
 			})
