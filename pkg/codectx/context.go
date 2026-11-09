@@ -450,21 +450,40 @@ func (b *builder) scanFileLexicalCallers(c *Context, f, o *codemap.FileSymbols, 
 		return
 	}
 	lines := b.src.lines(o.AbsPath)
-	match := re
 	if isTest {
-		match = testRe
+		b.scanTestFileCallers(c, o, lines, testRe)
+		return
 	}
-	for n, l := range lines {
-		if (o == f && n+1 == defLine) || !match.MatchString(l) {
-			continue
-		}
-		if isTest {
-			if len(c.Tests) < 4 && (len(c.Tests) == 0 || c.Tests[len(c.Tests)-1] != o.Path) {
-				c.Tests = append(c.Tests, o.Path)
-			}
+	b.scanAppFileCallers(c, f, o, defLine, lines, re)
+}
+
+func (b *builder) scanTestFileCallers(c *Context, o *codemap.FileSymbols, lines []string, testRe *regexp.Regexp) {
+	for _, l := range lines {
+		if testRe.MatchString(l) {
+			b.recordTestScope(c, o.Path)
 			break
 		}
-		b.recordLexicalCaller(c, o, n+1, l)
+	}
+}
+
+func (b *builder) recordTestScope(c *Context, path string) {
+	if len(c.Tests) >= 4 {
+		return
+	}
+	if len(c.Tests) == 0 || c.Tests[len(c.Tests)-1] != path {
+		c.Tests = append(c.Tests, path)
+	}
+}
+
+func (b *builder) scanAppFileCallers(c *Context, f, o *codemap.FileSymbols, defLine int, lines []string, re *regexp.Regexp) {
+	for n, l := range lines {
+		lineNum := n + 1
+		if o == f && lineNum == defLine {
+			continue
+		}
+		if re.MatchString(l) {
+			b.recordLexicalCaller(c, o, lineNum, l)
+		}
 	}
 }
 
@@ -621,50 +640,79 @@ func (c *Context) Prompt() string {
 		return ""
 	}
 	var b strings.Builder
+	c.writePromptHeader(&b)
+	c.writePromptRoutes(&b)
+	c.writePromptTargetUnit(&b)
+	c.writePromptCallees(&b)
+	c.writePromptAlsoCalls(&b)
+	c.writePromptCallers(&b)
+	c.writePromptTests(&b)
+	return b.String()
+}
+
+func (c *Context) writePromptHeader(b *strings.Builder) {
 	mode := "peta kode + resolusi nama leksikal; pemanggilan yang namanya ambigu tidak ditampilkan"
 	if c.Precise {
 		mode = "call graph bertipe go/types"
 	}
-	fmt.Fprintf(&b, "\nKonteks Kode Menyeluruh (%s). Nilai dari alur nyata — fungsi utuh, yang dipanggilnya, pemanggilnya, test, dan rute — bukan dari satu baris. Bila masalah sudah ditangani di fungsi lain dalam alur ini, itu bukan temuan.\n", mode)
-	if len(c.Routes) > 0 {
-		b.WriteString("Rute yang menjangkau fungsi ini:\n")
-		for _, r := range c.Routes {
-			b.WriteString("- " + r + "\n")
-		}
+	fmt.Fprintf(b, "\nKonteks Kode Menyeluruh (%s). Nilai dari alur nyata — fungsi utuh, yang dipanggilnya, pemanggilnya, test, dan rute — bukan dari satu baris. Bila masalah sudah ditangani di fungsi lain dalam alur ini, itu bukan temuan.\n", mode)
+}
+
+func (c *Context) writePromptRoutes(b *strings.Builder) {
+	if len(c.Routes) == 0 {
+		return
 	}
+	b.WriteString("Rute yang menjangkau fungsi ini:\n")
+	for _, r := range c.Routes {
+		b.WriteString("- " + r + "\n")
+	}
+}
+
+func (c *Context) writePromptTargetUnit(b *strings.Builder) {
 	layer := ""
 	if c.Unit.Layer != "" {
 		layer = ", layer " + c.Unit.Layer
 	}
-	fmt.Fprintf(&b, "Fungsi target %s (%s:%d-%d%s):\n%s", c.Unit.Name, c.Unit.Path, c.Unit.From, c.Unit.To, layer, c.Unit.Code)
-	if len(c.Callees) > 0 {
-		b.WriteString("\nDipanggil oleh fungsi target (kedalaman 1 = langsung):\n")
-		for _, s := range c.Callees {
-			fmt.Fprintf(&b, "· %s — %s:%d-%d (kedalaman %d", s.Name, s.Path, s.From, s.To, s.Depth)
-			if s.Layer != "" {
-				b.WriteString(", layer " + s.Layer)
-			}
-			b.WriteString(")\n" + s.Code)
-		}
+	fmt.Fprintf(b, "Fungsi target %s (%s:%d-%d%s):\n%s", c.Unit.Name, c.Unit.Path, c.Unit.From, c.Unit.To, layer, c.Unit.Code)
+}
+
+func (c *Context) writePromptCallees(b *strings.Builder) {
+	if len(c.Callees) == 0 {
+		return
 	}
+	b.WriteString("\nDipanggil oleh fungsi target (kedalaman 1 = langsung):\n")
+	for _, s := range c.Callees {
+		fmt.Fprintf(b, "· %s — %s:%d-%d (kedalaman %d", s.Name, s.Path, s.From, s.To, s.Depth)
+		if s.Layer != "" {
+			b.WriteString(", layer " + s.Layer)
+		}
+		b.WriteString(")\n" + s.Code)
+	}
+}
+
+func (c *Context) writePromptAlsoCalls(b *strings.Builder) {
 	if len(c.AlsoCalls) > 0 {
 		b.WriteString("Juga memanggil (kode tidak disertakan): " + strings.Join(c.AlsoCalls, ", ") + "\n")
 	}
-	switch {
-	case c.CallerCount == 0:
+}
+
+func (c *Context) writePromptCallers(b *strings.Builder) {
+	if c.CallerCount == 0 {
 		b.WriteString("\nPemanggil: tidak ditemukan pemanggil langsung di kode aplikasi (bisa handler rute, callback framework, atau kode mati).\n")
-	default:
-		fmt.Fprintf(&b, "\nPemanggil (%d tempat):\n", c.CallerCount)
-		for _, cs := range c.Callers {
-			fmt.Fprintf(&b, "- %s:%d di %s: %s\n", cs.Path, cs.Line, cs.Caller, cs.Text)
-		}
+		return
 	}
+	fmt.Fprintf(b, "\nPemanggil (%d tempat):\n", c.CallerCount)
+	for _, cs := range c.Callers {
+		fmt.Fprintf(b, "- %s:%d di %s: %s\n", cs.Path, cs.Line, cs.Caller, cs.Text)
+	}
+}
+
+func (c *Context) writePromptTests(b *strings.Builder) {
 	if len(c.Tests) > 0 {
 		b.WriteString("Diuji oleh: " + strings.Join(c.Tests, ", ") + "\n")
 	} else {
 		b.WriteString("Diuji oleh: belum ada test yang merujuk fungsi ini.\n")
 	}
-	return b.String()
 }
 
 // calleeRank: layer dalam (repository → service → model) & fungsi bermuatan lebih dulu, helper 1–4 baris belakangan.
