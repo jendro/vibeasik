@@ -27,6 +27,8 @@ keduanya.
 Free tidak butuh akun. Bagian mana pun dari fitur Pro yang belum terbuka akan menjawab `upgrade_required` (HTTP 402
 untuk REST, kode yang sama untuk MCP), dan Studio menampilkan halaman *Upgrade* untuk fitur itu.
 
+Untuk tim yang memerlukan pendampingan langsung, audit kilat, atau implementasi orkestrasi AI terkelola, lihat [Paket Layanan Profesional](SERVICES.md).
+
 ## Cara fitur Pro dibuka
 
 1. `vibeasik login` membuka browser untuk masuk (alur *device*, tanpa menyalin password ke terminal).
