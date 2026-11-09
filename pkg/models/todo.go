@@ -61,7 +61,7 @@ type Todo struct {
 	TargetApps       string     `gorm:"size:512" json:"target_apps,omitempty"` // e.g. "Backend API (BE) [1 App]" or "Seluruh Aplikasi (2 Apps)"
 	Title            string     `gorm:"size:512;not null" json:"title"`
 	Description      string     `gorm:"type:text" json:"description"`
-	Status           string     `gorm:"size:64;default:'pending';index" json:"status"` // pending, in_progress, completed, suggested, rejected
+	Status           string     `gorm:"size:64;default:'pending';index;index:idx_todos_status_created,priority:1" json:"status"` // pending, in_progress, completed, suggested, rejected
 	Priority         string     `gorm:"size:64;default:'medium'" json:"priority"`      // low, medium, high, critical
 	CreatorType      string     `gorm:"size:64;default:'human'" json:"creator_type"`   // human, ai_agent
 	CreatorName      string     `gorm:"size:255;default:'developer'" json:"creator_name"`
@@ -89,7 +89,7 @@ type Todo struct {
 	InheritedFrom    string     `gorm:"size:128" json:"inherited_from,omitempty"`                     // Nama eks pegawai yang ilmunya/standarnya diwarisi
 	TodoComplexity              // Kerumitan multi-dimensi (logika, koding, cakupan, risiko) untuk orkestrator agent
 	TodoImpact                  // Dampak pada aplikasi (7 dimensi 0–5 → skor final 0–100 berbobot kategori)
-	CreatedAt        time.Time  `json:"created_at"`
+	CreatedAt        time.Time  `gorm:"index:idx_todos_status_created,priority:2" json:"created_at"`
 	UpdatedAt        time.Time  `json:"updated_at"`
 }
 

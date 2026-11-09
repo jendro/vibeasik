@@ -73,16 +73,32 @@ func applyTodoEntityFilters(query *gorm.DB, c *fiber.Ctx) *gorm.DB {
 	return query
 }
 
-func applyTodoPagination(query *gorm.DB, c *fiber.Ctx) *gorm.DB {
-	if limitStr := c.Query("limit"); limitStr != "" {
-		if limit, err := strconv.Atoi(limitStr); err == nil && limit > 0 {
-			query = query.Limit(limit)
-		}
+const (
+	// defaultTodoLimit: jumlah baris default GET /api/todos agar query tidak
+	// pernah menjadi unbounded result set (High Performance MySQL, Ch.6).
+	defaultTodoLimit = 50
+	// maxTodoLimit: plafon baris per request supaya klien tidak menarik
+	// seluruh tabel dalam satu panggilan.
+	maxTodoLimit = 200
+)
+
+// todoQueryLimit menerjemahkan ?limit menjadi jumlah baris yang SELALU terbatas:
+// kosong/tidak valid -> defaultTodoLimit, melebihi plafon -> maxTodoLimit.
+func todoQueryLimit(c *fiber.Ctx) int {
+	limit, err := strconv.Atoi(c.Query("limit"))
+	if err != nil || limit <= 0 {
+		return defaultTodoLimit
 	}
-	if offsetStr := c.Query("offset"); offsetStr != "" {
-		if offset, err := strconv.Atoi(offsetStr); err == nil && offset >= 0 {
-			query = query.Offset(offset)
-		}
+	if limit > maxTodoLimit {
+		return maxTodoLimit
+	}
+	return limit
+}
+
+func applyTodoPagination(query *gorm.DB, c *fiber.Ctx) *gorm.DB {
+	query = query.Limit(todoQueryLimit(c))
+	if offset, err := strconv.Atoi(c.Query("offset")); err == nil && offset > 0 {
+		query = query.Offset(offset)
 	}
 	return query
 }
@@ -135,10 +151,10 @@ func (s *Server) createTodo(c *fiber.Ctx) error {
 	}
 
 	applyTodoDefaults(&payload)
-	s.resolveTodoEntities(&payload)
+	s.resolveTodoEntities(c, &payload)
 	finalizeTodoPayload(&payload)
 
-	if err := s.db.Create(&payload).Error; err != nil {
+	if err := s.db.WithContext(c.Context()).Create(&payload).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
@@ -194,27 +210,49 @@ func applyTodoDefaults(payload *models.Todo) {
 	}
 }
 
-func (s *Server) resolveTodoEntities(payload *models.Todo) {
+// todoEntityRefs menampung nama entity yang sudah didenormalisasi untuk payload todo.
+type todoEntityRefs struct {
+	ComponentName string
+	ProjectID     uint
+	ProjectName   string
+}
+
+// resolveTodoEntities mengisi ProjectID/ProjectName/ComponentName dengan maksimal dua
+// round-trip: satu JOIN komponen→proyek, satu lookup proyek bila belum terisi.
+func (s *Server) resolveTodoEntities(c *fiber.Ctx, payload *models.Todo) {
+	refs := s.lookupTodoEntityRefs(c, payload)
+	payload.ComponentName = refs.ComponentName
+	payload.ProjectName = refs.ProjectName
+
 	if payload.ProjectID != nil && *payload.ProjectID > 0 {
-		var p models.Project
-		if err := s.db.Select("name").First(&p, *payload.ProjectID).Error; err == nil {
-			payload.ProjectName = p.Name
-		}
+		return
 	}
+	if refs.ProjectID == 0 {
+		return
+	}
+	id := refs.ProjectID
+	payload.ProjectID = &id
+}
+
+func (s *Server) lookupTodoEntityRefs(c *fiber.Ctx, payload *models.Todo) todoEntityRefs {
+	var refs todoEntityRefs
+	db := s.db.WithContext(c.Context())
 
 	if payload.ComponentID != nil && *payload.ComponentID > 0 {
-		var comp models.Component
-		if err := s.db.Select("name, project_id").First(&comp, *payload.ComponentID).Error; err == nil {
-			payload.ComponentName = comp.Name
-			if payload.ProjectID == nil || *payload.ProjectID == 0 {
-				payload.ProjectID = &comp.ProjectID
-				var p models.Project
-				if err := s.db.Select("name").First(&p, comp.ProjectID).Error; err == nil {
-					payload.ProjectName = p.Name
-				}
-			}
-		}
+		db.Table("components").
+			Select("components.name AS component_name, components.project_id, projects.name AS project_name").
+			Joins("LEFT JOIN projects ON projects.id = components.project_id").
+			Where("components.id = ?", *payload.ComponentID).
+			Limit(1).
+			Scan(&refs)
 	}
+
+	needProject := payload.ProjectID != nil && *payload.ProjectID > 0 && refs.ProjectName == ""
+	if needProject {
+		db.Model(&models.Project{}).Select("name").Where("id = ?", *payload.ProjectID).Limit(1).Pluck("name", &refs.ProjectName)
+	}
+
+	return refs
 }
 
 func finalizeTodoPayload(payload *models.Todo) {

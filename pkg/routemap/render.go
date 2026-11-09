@@ -6,8 +6,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/vibeasik/vibeasik/pkg/util"
 )
 
 // maxMarkdownRoutes membatasi rute per modul di CODEMAP.md; sisanya ada lengkap di routes.jsonl.
@@ -337,10 +335,6 @@ func writeRouteLine(b *strings.Builder, rt *Route, auth, k string, globals map[s
 		}
 	}
 	b.WriteString("\n")
-}
-
-func uniq(in []string) []string {
-	return util.Uniq(in)
 }
 
 type jsonlRoute struct {

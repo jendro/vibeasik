@@ -202,38 +202,63 @@ func newClaudeParser(path string) transcriptParser {
 	}
 }
 
-func (p *claudeParser) feed(line []byte) {
-	var e struct {
-		Type          string          `json:"type"`
-		Timestamp     string          `json:"timestamp"`
-		Cwd           string          `json:"cwd"`
-		IsSidechain   bool            `json:"isSidechain"`
-		IsMeta        bool            `json:"isMeta"`
-		ToolUseResult json.RawMessage `json:"toolUseResult"`
-		Message       struct {
-			ID         string          `json:"id"`
-			Model      string          `json:"model"`
-			StopReason string          `json:"stop_reason"`
-			Content    json.RawMessage `json:"content"`
-		} `json:"message"`
+type claudeFeedEvent struct {
+	Type          string          `json:"type"`
+	Timestamp     string          `json:"timestamp"`
+	Cwd           string          `json:"cwd"`
+	IsSidechain   bool            `json:"isSidechain"`
+	IsMeta        bool            `json:"isMeta"`
+	ToolUseResult json.RawMessage `json:"toolUseResult"`
+	Message       struct {
+		ID         string          `json:"id"`
+		Model      string          `json:"model"`
+		StopReason string          `json:"stop_reason"`
+		Content    json.RawMessage `json:"content"`
+	} `json:"message"`
+}
+
+func decodeClaudeFeedEvent(line []byte, sidechain bool) (claudeFeedEvent, bool) {
+	var event claudeFeedEvent
+	if err := json.Unmarshal(line, &event); err != nil {
+		return claudeFeedEvent{}, false
 	}
-	if json.Unmarshal(line, &e) != nil || e.IsSidechain != p.sidechain || e.IsMeta || (e.Type != "user" && e.Type != "assistant") {
-		return
+	if event.IsSidechain != sidechain {
+		return claudeFeedEvent{}, false
 	}
-	p.at(e.Timestamp)
-	p.workPath(e.Cwd)
-	var blocks []claudeBlock
+	if event.IsMeta {
+		return claudeFeedEvent{}, false
+	}
+	if event.Type != "user" && event.Type != "assistant" {
+		return claudeFeedEvent{}, false
+	}
+	return event, true
+}
+
+func decodeClaudeContent(content json.RawMessage) (string, []claudeBlock) {
 	var text string
-	if json.Unmarshal(e.Message.Content, &text) != nil {
-		_ = json.Unmarshal(e.Message.Content, &blocks)
+	if json.Unmarshal(content, &text) == nil {
+		return text, nil
 	}
 
-	if e.Type == "user" {
-		p.handleUserEvent(text, blocks, e.ToolUseResult)
+	var blocks []claudeBlock
+	_ = json.Unmarshal(content, &blocks)
+	return "", blocks
+}
+
+func (p *claudeParser) feed(line []byte) {
+	event, ok := decodeClaudeFeedEvent(line, p.sidechain)
+	if !ok {
 		return
 	}
 
-	p.handleAssistantEvent(e.Message.ID, e.Message.Model, e.Message.StopReason, blocks)
+	p.at(event.Timestamp)
+	p.workPath(event.Cwd)
+	text, blocks := decodeClaudeContent(event.Message.Content)
+	if event.Type == "user" {
+		p.handleUserEvent(text, blocks, event.ToolUseResult)
+		return
+	}
+	p.handleAssistantEvent(event.Message.ID, event.Message.Model, event.Message.StopReason, blocks)
 }
 
 func (p *claudeParser) handleUserEvent(text string, blocks []claudeBlock, toolUseResult json.RawMessage) {
