@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -188,24 +189,30 @@ func (s *Server) trafficRecommendationTodo(c *fiber.Ctx) error {
 }
 
 // ingestTrafficDirect: mode direct — BE (dev/staging) mengirim langsung ke engine ini tanpa lewat vibeasik live.
+// Kunci diambil dari header X-Vibeasik-Key; bila kosong, dari field "key" di badan (snippet browser tanpa preflight CORS).
 func (s *Server) ingestTrafficDirect(c *fiber.Ctx) error {
-	key := strings.TrimSpace(c.Get("X-Vibeasik-Key"))
+	c.Set(fiber.HeaderAccessControlAllowOrigin, "*")
+	var req trafficIngestBody
+	parseErr := json.Unmarshal(c.Body(), &req)
+	key, fromBody := strings.TrimSpace(c.Get("X-Vibeasik-Key")), false
+	if key == "" {
+		key, fromBody = strings.TrimSpace(req.Key), true
+	}
 	var src models.TrafficSource
 	if key == "" || s.db.Where("mode = ? AND ingest_key = ?", models.TrafficModeDirect, key).First(&src).Error != nil {
 		return c.Status(401).JSON(fiber.Map{"error": "kunci traffic tidak valid"})
 	}
+	if parseErr != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "badan harus JSON"})
+	}
 	if !src.Enabled {
 		return c.Status(202).JSON(fiber.Map{"accepted": 0, "paused": true})
 	}
-	var req struct {
-		Instance string          `json:"instance"`
-		Events   []traffic.Event `json:"events"`
-	}
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
-	}
 	if len(req.Events) > traffic.MaxEventsPerIngest {
 		return c.Status(413).JSON(fiber.Map{"error": "maksimal 5000 event per kiriman"})
+	}
+	if fromBody {
+		req.Events = traffic.BrowserEventsOnly(req.Events)
 	}
 	n, err := traffic.Ingest(s.db, &src, req.Events, req.Instance)
 	if err != nil {
@@ -214,6 +221,12 @@ func (s *Server) ingestTrafficDirect(c *fiber.Ctx) error {
 	now := time.Now()
 	s.db.Model(&src).Updates(map[string]any{"last_ingest_at": now, "last_sync_at": now})
 	return c.Status(202).JSON(fiber.Map{"accepted": n})
+}
+
+type trafficIngestBody struct {
+	Key      string          `json:"key"`
+	Instance string          `json:"instance"`
+	Events   []traffic.Event `json:"events"`
 }
 
 func clipString(v string, n int) string {

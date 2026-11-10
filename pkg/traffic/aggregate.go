@@ -231,6 +231,14 @@ func Ingest(db *gorm.DB, src *models.TrafficSource, events []Event, defaultInsta
 	lk.Lock()
 	defer lk.Unlock()
 
+	events, special := splitKinds(events)
+	if err := ingestSpecial(db, src.ID, special, defaultInstance); err != nil {
+		return 0, err
+	}
+	if len(events) == 0 {
+		return len(special), nil
+	}
+
 	acc := &ingestAcc{routes: map[routeKey]*routeAcc{}, dims: map[dimKey][2]int64{}}
 	now := timeNow()
 	recent := make([]models.TrafficRecentEvent, 0, 200)
@@ -252,7 +260,7 @@ func Ingest(db *gorm.DB, src *models.TrafficSource, events []Event, defaultInsta
 		return 0, err
 	}
 	trimRecent(db, src.ID)
-	return len(events), nil
+	return len(events) + len(special), nil
 }
 
 func bucketsOf(set map[int64]bool) []int64 {

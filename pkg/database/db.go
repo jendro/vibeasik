@@ -154,6 +154,8 @@ func migrateDatabaseSchema(db *gorm.DB) error {
 		&models.TrafficRouteStat{},
 		&models.TrafficDimStat{},
 		&models.TrafficRecentEvent{},
+		&models.TrafficErrorGroup{},
+		&models.TrafficProcess{},
 	)
 	if err != nil {
 		return fmt.Errorf("failed to migrate database schema: %w", err)

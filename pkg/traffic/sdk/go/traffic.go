@@ -8,6 +8,10 @@
 //	VIBEASIK_TRAFFIC_INSTANCE   nama instance (default hostname)
 //	VIBEASIK_TRAFFIC_HASH_IP    1 = IP disamarkan (SHA-256) sebelum dikirim
 //	VIBEASIK_TRAFFIC_SKIP       prefix path yang tidak dicatat, pisah koma (default /health)
+//	VIBEASIK_RELEASE            versi/commit rilis; ikut di semua event (opsional)
+//
+// Selain request, SDK mengirim event error (panic yang tertangkap, lalu diteruskan seperti semula)
+// dan heartbeat tiap 30 detik (rilis, memori, uptime).
 package vibeasiktraffic
 
 import (
@@ -38,6 +42,16 @@ type Event struct {
 	Country  string  `json:"country,omitempty"`
 	UA       string  `json:"ua,omitempty"`
 	Referer  string  `json:"referer,omitempty"`
+
+	Kind     string `json:"kind,omitempty"` // "" = request | "error" | "heartbeat"
+	Release  string `json:"release,omitempty"`
+	Instance string `json:"instance,omitempty"`
+	ErrType  string `json:"err_type,omitempty"`
+	ErrMsg   string `json:"err_msg,omitempty"`
+	Stack    string `json:"stack,omitempty"`
+	Side     string `json:"side,omitempty"`
+	MemBytes int64  `json:"mem_bytes,omitempty"`
+	UptimeS  int64  `json:"uptime_s,omitempty"`
 }
 
 const maxBuffer = 20000 // event di memori; lebih dari ini dibuang (server tidak boleh bocor memori)
@@ -83,6 +97,7 @@ func start() {
 			Flush()
 		}
 	}()
+	go heartbeatLoop()
 }
 
 // Record mencatat satu request. Tidak pernah memblokir request (hanya append ke buffer).
@@ -95,16 +110,12 @@ func Record(ev Event) {
 			return
 		}
 	}
-	once.Do(start)
+	ensureStarted()
 	if hashIP && ev.IP != "" {
 		sum := sha256.Sum256([]byte(ev.IP + key))
 		ev.IP = "h:" + hex.EncodeToString(sum[:8])
 	}
-	mu.Lock()
-	if len(buf) < maxBuffer {
-		buf = append(buf, ev)
-	}
-	mu.Unlock()
+	push(ev)
 }
 
 // Flush mengirim buffer sekarang (panggil juga saat graceful shutdown).
@@ -205,19 +216,31 @@ func Middleware(next http.Handler) http.Handler {
 	if !Enabled() {
 		return next
 	}
+	ensureStarted()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		rec := &recorder{ResponseWriter: w}
+		defer func() {
+			if p := recover(); p != nil {
+				RecordPanic(p, r.Method, "", r.URL.Path, http.StatusInternalServerError)
+				recordHTTP(r, rec, start, http.StatusInternalServerError)
+				panic(p) // diteruskan: net/http tetap menangani panic seperti tanpa SDK
+			}
+		}()
 		next.ServeHTTP(rec, r)
-		status := rec.status
-		if status == 0 {
-			status = http.StatusOK
-		}
-		Record(Event{
-			TS: start.UnixMilli(), Method: r.Method, Path: r.URL.Path, Status: status,
-			DurMS:   float64(time.Since(start).Microseconds()) / 1000,
-			BytesIn: max(r.ContentLength, 0), BytesOut: rec.bytes,
-			IP: ClientIP(r.Header, r.RemoteAddr), Country: Country(r.Header), UA: r.UserAgent(), Referer: RefererHost(r.Referer()),
-		})
+		recordHTTP(r, rec, start, http.StatusOK)
+	})
+}
+
+func recordHTTP(r *http.Request, rec *recorder, start time.Time, fallback int) {
+	status := rec.status
+	if status == 0 {
+		status = fallback
+	}
+	Record(Event{
+		TS: start.UnixMilli(), Method: r.Method, Path: r.URL.Path, Status: status,
+		DurMS:   float64(time.Since(start).Microseconds()) / 1000,
+		BytesIn: max(r.ContentLength, 0), BytesOut: rec.bytes,
+		IP: ClientIP(r.Header, r.RemoteAddr), Country: Country(r.Header), UA: r.UserAgent(), Referer: RefererHost(r.Referer()),
 	})
 }

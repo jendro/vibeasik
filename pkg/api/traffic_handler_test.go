@@ -21,6 +21,8 @@ func TestDeleteTrafficSource_AtomicAndRollback(t *testing.T) {
 		&models.TrafficRouteStat{},
 		&models.TrafficDimStat{},
 		&models.TrafficRecentEvent{},
+		&models.TrafficErrorGroup{},
+		&models.TrafficProcess{},
 	); err != nil {
 		t.Fatalf("migrate traffic models: %v", err)
 	}
@@ -123,6 +125,8 @@ func BenchmarkDeleteTrafficSource(b *testing.B) {
 		&models.TrafficRouteStat{},
 		&models.TrafficDimStat{},
 		&models.TrafficRecentEvent{},
+		&models.TrafficErrorGroup{},
+		&models.TrafficProcess{},
 	)
 
 	b.ResetTimer()

@@ -258,6 +258,11 @@ func (s *Server) deleteTrafficSource(c *fiber.Ctx) error {
 		tx.Rollback()
 		return err
 	}
+	for _, m := range []any{&models.TrafficErrorGroup{}, &models.TrafficProcess{}} {
+		if err := tx.Where("source_id = ?", src.ID).Delete(m).Error; err != nil {
+			return err
+		}
+	}
 	if err := tx.Delete(src).Error; err != nil {
 		tx.Rollback()
 		return err

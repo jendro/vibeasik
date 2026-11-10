@@ -24,6 +24,16 @@ type Event struct {
 	UA       string  `json:"ua"`
 	Referer  string  `json:"referer"`
 	Instance string  `json:"instance,omitempty"`
+
+	// Jenis event: "" / "request" (bawaan), "error", "heartbeat". Semua field di bawah opsional.
+	Kind     string `json:"kind,omitempty"`
+	Release  string `json:"release,omitempty"`
+	ErrType  string `json:"err_type,omitempty"`
+	ErrMsg   string `json:"err_msg,omitempty"`
+	Stack    string `json:"stack,omitempty"`
+	Side     string `json:"side,omitempty"`
+	MemBytes int64  `json:"mem_bytes,omitempty"`
+	UptimeS  int64  `json:"uptime_s,omitempty"`
 }
 
 // RouteNotFound = rute gabungan untuk 404 tanpa pola rute framework (pemindai acak tidak meledakkan jumlah rute).
