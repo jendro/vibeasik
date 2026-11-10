@@ -28,6 +28,8 @@ export interface Employee {
   motto: string
   skills: Record<string, number> | null
   traits: Record<string, number> | null
+  /** Kunci prinsip kerja yang dipegang pegawai (maks. 3) */
+  principles?: string[] | null
   avatar: EmployeeAvatar
   desk: number
   /** Divisi yang dipimpin (leader menimbang siapa mengerjakan todo divisinya). */
@@ -51,6 +53,40 @@ export interface Employee {
   inherited_notes_count?: number
   inherited_summary?: string
   hired_at: string
+}
+
+/** Satu langkah kerja pegawai beserta riwayat pemeriksaannya. */
+export interface EmployeePlaybookStep {
+  id: string
+  phase: 'pahami' | 'rancang' | 'kerjakan' | 'periksa' | 'lapor'
+  title: string
+  instruction: string
+  must: boolean
+  risk: number
+  checked_by_program: boolean
+  skill: string
+  /** Kotak ingatan: 0 belum pernah diperiksa, 1 baru gagal, makin tinggi makin dikuasai */
+  box: number
+  passed: number
+  failed: number
+  last_note?: string
+}
+
+/** Langkah kerja, prinsip, dan kondisi seorang pegawai. */
+export interface EmployeePlaybook {
+  employee_id: number
+  name: string
+  role: string
+  /** false = peran ini baru memakai langkah umum */
+  own_book: boolean
+  work_style: string
+  principles: string[]
+  principle_keys: string[]
+  principle_options: { key: string, text: string }[] | null
+  condition: 'mantap' | 'waspada' | 'tertekan' | 'jenuh'
+  condition_reason?: string
+  habits: string[]
+  steps: EmployeePlaybookStep[] | null
 }
 
 /** Pegawai + angka ringkas (daftar). */
