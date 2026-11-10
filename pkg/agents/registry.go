@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/vibeasik/vibeasik/pkg/activity"
 	"github.com/vibeasik/vibeasik/pkg/models"
+	"github.com/vibeasik/vibeasik/pkg/registry"
 )
 
 type Registry struct {
@@ -111,52 +113,24 @@ func (r *Registry) Execute(ctx context.Context, req models.AgentExecutionRequest
 	execCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	var execPath string
-	var args []string
-
-	// Check if it's built-in
-	if adapter, ok := r.Get(req.AgentKey); ok {
-		detected, path, _ := adapter.Detect()
-		if !detected {
-			return nil, fmt.Errorf("agent '%s' tidak terdeteksi pada sistem (perintah '%s' tidak ditemukan di PATH)", adapter.Name(), adapter.Command())
-		}
-		execPath = path
-		args = adapter.BuildArgs(req.Prompt, req.ProjectPath)
-	} else if db != nil {
-		// Check custom agent from DB
-		var custom models.LocalAgentConfig
-		if err := db.Where("key = ?", req.AgentKey).First(&custom).Error; err != nil {
-			return nil, fmt.Errorf("agent dengan key '%s' tidak ditemukan", req.AgentKey)
-		}
-		path, err := exec.LookPath(custom.Command)
-		if err != nil {
-			return nil, fmt.Errorf("perintah '%s' tidak ditemukan di PATH sistem", custom.Command)
-		}
-		execPath = path
-
-		// Build args from template with robust quote-aware prompt substitution
-		args = splitArgs(custom.ArgsTemplate, req.Prompt)
-	} else {
-		return nil, fmt.Errorf("agent '%s' tidak dikenali", req.AgentKey)
+	workDir, err := resolveAgentWorkDir(req.ProjectPath)
+	if err != nil {
+		return nil, err
+	}
+	execPath, args, err := r.resolveAgentCommand(req, workDir, db)
+	if err != nil {
+		return nil, err
+	}
+	execPath, args, env, err := registry.WrapAgentCommand(execPath, args, workDir, os.Environ())
+	if err != nil {
+		return nil, fmt.Errorf("eksekusi agent '%s' dibatalkan oleh hook: %w", req.AgentKey, err)
 	}
 
-	// Validate project path
-	workDir := req.ProjectPath
-	if workDir == "" {
-		workDir = "."
-	}
-	if info, err := os.Stat(workDir); err != nil || !info.IsDir() {
-		// Fallback to current working directory
-		workDir = "."
-	}
-
-	done := activity.BeginLocalAgent(req.AgentKey, req.Prompt, req.ProjectPath)
+	done := activity.BeginLocalAgent(req.AgentKey, req.Prompt, workDir)
 
 	cmd := exec.CommandContext(execCtx, execPath, args...)
 	cmd.Dir = workDir
-
-	// Inherit environment plus standard PATH
-	cmd.Env = os.Environ()
+	cmd.Env = env
 
 	out, err := cmd.CombinedOutput()
 	duration := time.Since(startTime).Round(time.Millisecond).String()
@@ -190,6 +164,50 @@ func (r *Registry) Execute(ctx context.Context, req models.AgentExecutionRequest
 		Duration: duration,
 		Message:  fmt.Sprintf("Eksekusi selesai dalam %s dengan status code %d", duration, exitCode),
 	}, nil
+}
+
+// resolveAgentWorkDir memvalidasi direktori kerja agent dan mengembalikannya dalam bentuk absolut.
+// Gagal-tertutup: path kosong, tidak ada, atau bukan direktori ditolak — agent tidak pernah
+// dijalankan diam-diam di direktori kerja proses engine.
+func resolveAgentWorkDir(projectPath string) (string, error) {
+	if strings.TrimSpace(projectPath) == "" {
+		return "", fmt.Errorf("project_path wajib diisi: direktori kerja agent tidak boleh kosong")
+	}
+	abs, err := filepath.Abs(projectPath)
+	if err != nil {
+		return "", fmt.Errorf("project_path '%s' tidak valid: %w", projectPath, err)
+	}
+	info, err := os.Stat(abs)
+	if err != nil {
+		return "", fmt.Errorf("project_path '%s' tidak dapat dibuka: %w", abs, err)
+	}
+	if !info.IsDir() {
+		return "", fmt.Errorf("project_path '%s' bukan direktori", abs)
+	}
+	return abs, nil
+}
+
+// resolveAgentCommand mencari biner dan argumen agent (bawaan atau kustom dari DB).
+func (r *Registry) resolveAgentCommand(req models.AgentExecutionRequest, workDir string, db *gorm.DB) (string, []string, error) {
+	if adapter, ok := r.Get(req.AgentKey); ok {
+		detected, path, _ := adapter.Detect()
+		if !detected {
+			return "", nil, fmt.Errorf("agent '%s' tidak terdeteksi pada sistem (perintah '%s' tidak ditemukan di PATH)", adapter.Name(), adapter.Command())
+		}
+		return path, adapter.BuildArgs(req.Prompt, workDir), nil
+	}
+	if db == nil {
+		return "", nil, fmt.Errorf("agent '%s' tidak dikenali", req.AgentKey)
+	}
+	var custom models.LocalAgentConfig
+	if err := db.Where("key = ?", req.AgentKey).First(&custom).Error; err != nil {
+		return "", nil, fmt.Errorf("agent dengan key '%s' tidak ditemukan", req.AgentKey)
+	}
+	path, err := exec.LookPath(custom.Command)
+	if err != nil {
+		return "", nil, fmt.Errorf("perintah '%s' tidak ditemukan di PATH sistem", custom.Command)
+	}
+	return path, splitArgs(custom.ArgsTemplate, req.Prompt), nil
 }
 
 func splitArgs(template, prompt string) []string {

@@ -29,6 +29,10 @@ type Hooks struct {
 	// EnqueueTodoAssignment menjadwalkan penugasan pegawai / antrean assignment untuk todo baru.
 	// Jika gagal, transaksi penyimpanan di-rollback agar tidak meninggalkan state parsial.
 	EnqueueTodoAssignment func(db *gorm.DB, todo *models.Todo) error
+	// AgentCommand membungkus perintah agent lokal sebelum dijalankan (mis. menjalankan agent di
+	// sandbox atau mengunci direktori kerja). Menerima path biner, argumen, direktori kerja absolut,
+	// dan env; mengembalikan path, argumen, dan env yang benar-benar dijalankan. Error = batal.
+	AgentCommand func(path string, args []string, dir string, env []string) (string, []string, []string, error)
 }
 
 // H hook aktif. Diisi modul Pro di init().
@@ -100,3 +104,10 @@ func EnqueueTodoAssignment(db *gorm.DB, todo *models.Todo) error {
 	return H.EnqueueTodoAssignment(db, todo)
 }
 
+// WrapAgentCommand menjalankan hook AgentCommand bila ada; tanpa hook masukan dikembalikan apa adanya.
+func WrapAgentCommand(path string, args []string, dir string, env []string) (string, []string, []string, error) {
+	if H.AgentCommand == nil {
+		return path, args, env, nil
+	}
+	return H.AgentCommand(path, args, dir, env)
+}
