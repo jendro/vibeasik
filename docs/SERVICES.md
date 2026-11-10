@@ -1,6 +1,6 @@
 # Paket Layanan Profesional & Pilot Service vibeasik
 
-Dokumen ini mendefinisikan tiga paket layanan profesional (professional services) berbasis platform vibeasik, jaminan privasi repositori privat, instrumen validasi pasar, checklist operasional, alur pembayaran manual, serta hasil verifikasi pilot terhadap pelanggan berbayar.
+Dokumen ini mendefinisikan tiga paket layanan profesional (professional services) berbasis platform vibeasik, jaminan privasi repositori privat, checklist operasional, dan alur pembayaran manual.
 
 ---
 
