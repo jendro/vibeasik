@@ -625,3 +625,59 @@ type EmployeeStepStat struct {
 	CreatedAt  time.Time  `json:"created_at"`
 	UpdatedAt  time.Time  `json:"updated_at"`
 }
+
+// Status langkah kerja yang tumbuh dari pengalaman.
+const (
+	LearnedStepTrial    = "trial"    // sedang dicoba: dihitung diam-diam, belum memengaruhi nilai
+	LearnedStepActive   = "active"   // dipakai di lembar kerja & pemeriksaan hasil
+	LearnedStepRetired  = "retired"  // dihentikan (salah sasaran, tidak berguna, atau sudah naik menjadi langkah peran)
+	LearnedStepRejected = "rejected" // usulan ditolak saat divalidasi; disimpan sebagai jejak
+)
+
+// EmployeeLearnedStep adalah langkah kerja yang tumbuh dari pengalaman, bukan bawaan: diusulkan dari keluhan
+// penilai yang berulang, divalidasi & dicoba dulu oleh program, lalu dipakai pegawai pemiliknya (OwnerEmployeeID)
+// atau seluruh perannya (OwnerEmployeeID kosong).
+type EmployeeLearnedStep struct {
+	ID              uint     `gorm:"primaryKey" json:"id"`
+	Code            string   `gorm:"size:16;uniqueIndex" json:"code"`
+	Role            string   `gorm:"size:64;index" json:"role"`
+	OwnerEmployeeID *uint    `gorm:"index" json:"owner_employee_id,omitempty"`
+	OwnerName       string   `gorm:"size:128" json:"owner_name,omitempty"`
+	Phase           string   `gorm:"size:16" json:"phase"`
+	Title           string   `gorm:"size:160" json:"title"`
+	Instruction     string   `gorm:"type:text" json:"instruction"`
+	Evidence        string   `gorm:"type:text" json:"evidence,omitempty"`
+	Risk            int      `json:"risk"`
+	Tags            []string `gorm:"type:text;serializer:json" json:"tags"`
+	Skill           string   `gorm:"size:64" json:"skill"`
+	// Areas & Words: kapan langkah berlaku (area berkas yang disentuh, atau kata di tugas bila berkas belum diketahui)
+	Areas []string `gorm:"type:text;serializer:json" json:"areas"`
+	Words []string `gorm:"type:text;serializer:json" json:"words"`
+	// Pattern: pola yang tidak boleh muncul di baris baru pada berkas area FileArea ("" = hanya dinilai penilai).
+	// Context: pola yang harus ada di berkas agar ia diperiksa (opsional).
+	Pattern      string   `gorm:"type:text" json:"pattern,omitempty"`
+	FileArea     string   `gorm:"size:16" json:"file_area,omitempty"`
+	Context      string   `gorm:"type:text" json:"context,omitempty"`
+	Message      string   `gorm:"size:255" json:"message,omitempty"`
+	BadExamples  []string `gorm:"type:text;serializer:json" json:"bad_examples,omitempty"`
+	GoodExamples []string `gorm:"type:text;serializer:json" json:"good_examples,omitempty"`
+	Status       string   `gorm:"size:16;index" json:"status"`
+	StatusReason string   `gorm:"type:text" json:"status_reason,omitempty"`
+	// Asal usulan: keluhan penilai yang memicunya (Trigger), sumbernya, dan model penulis usulan
+	Source     string `gorm:"size:32" json:"source"`
+	SourceRef  string `gorm:"size:255" json:"source_ref,omitempty"`
+	Trigger    string `gorm:"type:text" json:"trigger,omitempty"`
+	Complaints int    `json:"complaints"`
+	Model      string `gorm:"size:160" json:"model,omitempty"`
+	// Angka masa percobaan: berapa kali diperiksa, berapa kali menandai, dan jumlah nilai penilai saat menandai/tidak
+	TrialChecks   int        `json:"trial_checks"`
+	TrialHits     int        `json:"trial_hits"`
+	HitScoreSum   int        `json:"hit_score_sum"`
+	MissScoreSum  int        `json:"miss_score_sum"`
+	BacktestFiles int        `json:"backtest_files"`
+	BacktestHits  int        `json:"backtest_hits"`
+	ActivatedAt   *time.Time `json:"activated_at,omitempty"`
+	RetiredAt     *time.Time `json:"retired_at,omitempty"`
+	CreatedAt     time.Time  `json:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at"`
+}

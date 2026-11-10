@@ -143,6 +143,7 @@ func migrateDatabaseSchema(db *gorm.DB) error {
 		&models.LLMProviderState{},
 		&models.EmployeeTurnover{},
 		&models.EmployeeStepStat{},
+		&models.EmployeeLearnedStep{},
 		&models.ProjectExecutive{},
 		&models.ExecutiveKnowledge{},
 		&models.ExecutiveChatMessage{},
