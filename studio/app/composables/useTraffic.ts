@@ -1,4 +1,4 @@
-import type { Todo, TrafficMeta, TrafficRecentEvent, TrafficReport, TrafficSDKInfo, TrafficSource, TrafficSourceInput, TrafficWindow } from '~/types'
+import type { Todo, TrafficGeoStatus, TrafficMeta, TrafficRecentEvent, TrafficReport, TrafficSDKInfo, TrafficSource, TrafficSourceInput, TrafficWindow } from '~/types'
 
 /** Traffic Analyzer: sumber traffic aplikasi live, laporan per jendela waktu, ekor live, SDK & saran → todo. */
 export const useTraffic = () => {
@@ -8,6 +8,7 @@ export const useTraffic = () => {
 
   return {
     getMeta: () => $fetch<TrafficMeta>(`${base}/meta`),
+    getGeoStatus: () => $fetch<TrafficGeoStatus>(`${base}/geo`),
     listSources: (projectId?: number | null) => $fetch<TrafficSource[]>(`${base}/sources`, { query: { project_id: projectId || undefined } }),
     createSource: (body: TrafficSourceInput) => $fetch<TrafficSource>(`${base}/sources`, { method: 'POST', body }),
     updateSource: (id: number, body: TrafficSourceInput) => $fetch<TrafficSource>(src(id), { method: 'PUT', body }),

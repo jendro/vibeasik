@@ -229,6 +229,7 @@ func (s *Server) setupRoutes() {
 
 	// Traffic Analyzer: statistik request aplikasi live → saran rate limit, cache, LB, pecah service (Aturan 48)
 	api.Get("/traffic/meta", s.getTrafficMeta)
+	api.Get("/traffic/geo", s.getTrafficGeoStatus)
 	api.Post("/traffic/ingest", s.ingestTrafficDirect)
 	api.Get("/traffic/sources", s.listTrafficSources)
 	api.Post("/traffic/sources", s.createTrafficSource)

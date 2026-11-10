@@ -405,7 +405,14 @@ onBeforeUnmount(() => {
             :has-project="Boolean(source?.project_id)"
           />
           <TrafficRouteTable v-else-if="tab === 'routes'" :routes="report.routes" :groups="report.groups" />
-          <TrafficBreakdown v-else-if="tab === 'origin'" :report="report" />
+          <div v-else-if="tab === 'origin'" class="space-y-4">
+            <TrafficBreakdown :report="report" />
+            <TrafficGeoBreakdown :report="report" />
+            <p class="text-xs text-neutral-500">
+              <a href="https://db-ip.com" target="_blank" rel="noopener" class="underline">IP Geolocation by DB-IP</a>
+              · basis data lokasi offline berlisensi CC BY 4.0
+            </p>
+          </div>
           <TrafficLiveTail v-else-if="tab === 'live'" :events="recent" />
           <TrafficSetupPanel v-else-if="source" :source="source" @rotated="loadSources" />
         </section>

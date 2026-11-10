@@ -1,0 +1,352 @@
+{
+ "asns": [
+  {
+   "value": "AS7713",
+   "count": 6,
+   "err": 0,
+   "share": 0.46153846153846156
+  },
+  {
+   "value": "AS23693",
+   "count": 3,
+   "err": 0,
+   "share": 0.23076923076923078
+  },
+  {
+   "value": "AS16509",
+   "count": 1,
+   "err": 0,
+   "share": 0.07692307692307693
+  }
+ ],
+ "cities": [
+  {
+   "value": "Jakarta, ID",
+   "count": 6,
+   "err": 0,
+   "share": 0.46153846153846156
+  },
+  {
+   "value": "Surabaya, ID",
+   "count": 3,
+   "err": 0,
+   "share": 0.23076923076923078
+  },
+  {
+   "value": "Ashburn, US",
+   "count": 1,
+   "err": 0,
+   "share": 0.07692307692307693
+  }
+ ],
+ "countries": [
+  {
+   "value": "ID",
+   "count": 9,
+   "err": 0,
+   "share": 0.6923076923076923
+  },
+  {
+   "value": "SG",
+   "count": 2,
+   "err": 0,
+   "share": 0.15384615384615385
+  },
+  {
+   "value": "US",
+   "count": 1,
+   "err": 0,
+   "share": 0.07692307692307693
+  }
+ ],
+ "net_types": [
+  {
+   "value": "residential",
+   "count": 6,
+   "err": 0,
+   "share": 0.46153846153846156
+  },
+  {
+   "value": "mobile",
+   "count": 3,
+   "err": 0,
+   "share": 0.23076923076923078
+  },
+  {
+   "value": "hosting",
+   "count": 1,
+   "err": 0,
+   "share": 0.07692307692307693
+  }
+ ],
+ "orgs": [
+  {
+   "value": "PT Telekomunikasi Indonesia",
+   "count": 6,
+   "err": 0,
+   "share": 0.46153846153846156
+  },
+  {
+   "value": "PT Telekomunikasi Selular",
+   "count": 3,
+   "err": 0,
+   "share": 0.23076923076923078
+  },
+  {
+   "value": "Amazon.com, Inc.",
+   "count": 1,
+   "err": 0,
+   "share": 0.07692307692307693
+  }
+ ],
+ "recent": [
+  {
+   "id": 0,
+   "at": "2026-01-01T19:00:29+07:00",
+   "method": "GET",
+   "route": "/api/items/:id",
+   "path": "/api/items/1",
+   "status": 200,
+   "dur_ms": 20,
+   "bytes_out": 0,
+   "ip": "203.0.113.9",
+   "country": "ID",
+   "city": "Jakarta",
+   "asn": 7713,
+   "org": "PT Telekomunikasi Indonesia",
+   "net_type": "residential",
+   "ua_class": "desktop",
+   "client": "Chrome",
+   "referer": "",
+   "instance": "api-1"
+  },
+  {
+   "id": 0,
+   "at": "2026-01-01T19:00:28.999+07:00",
+   "method": "GET",
+   "route": "/api/items/:id",
+   "path": "/api/items/1",
+   "status": 200,
+   "dur_ms": 20,
+   "bytes_out": 0,
+   "ip": "203.0.113.9",
+   "country": "ID",
+   "city": "Jakarta",
+   "asn": 7713,
+   "org": "PT Telekomunikasi Indonesia",
+   "net_type": "residential",
+   "ua_class": "desktop",
+   "client": "Chrome",
+   "referer": "",
+   "instance": "api-1"
+  },
+  {
+   "id": 0,
+   "at": "2026-01-01T19:00:28.998+07:00",
+   "method": "GET",
+   "route": "/api/items/:id",
+   "path": "/api/items/1",
+   "status": 200,
+   "dur_ms": 20,
+   "bytes_out": 0,
+   "ip": "203.0.113.9",
+   "country": "ID",
+   "city": "Jakarta",
+   "asn": 7713,
+   "org": "PT Telekomunikasi Indonesia",
+   "net_type": "residential",
+   "ua_class": "desktop",
+   "client": "Chrome",
+   "referer": "",
+   "instance": "api-1"
+  },
+  {
+   "id": 0,
+   "at": "2026-01-01T19:00:28.997+07:00",
+   "method": "GET",
+   "route": "/api/items/:id",
+   "path": "/api/items/1",
+   "status": 200,
+   "dur_ms": 20,
+   "bytes_out": 0,
+   "ip": "203.0.113.9",
+   "country": "ID",
+   "city": "Jakarta",
+   "asn": 7713,
+   "org": "PT Telekomunikasi Indonesia",
+   "net_type": "residential",
+   "ua_class": "desktop",
+   "client": "Chrome",
+   "referer": "",
+   "instance": "api-1"
+  },
+  {
+   "id": 0,
+   "at": "2026-01-01T19:00:28.996+07:00",
+   "method": "GET",
+   "route": "/api/items/:id",
+   "path": "/api/items/1",
+   "status": 200,
+   "dur_ms": 20,
+   "bytes_out": 0,
+   "ip": "203.0.113.9",
+   "country": "ID",
+   "city": "Jakarta",
+   "asn": 7713,
+   "org": "PT Telekomunikasi Indonesia",
+   "net_type": "residential",
+   "ua_class": "desktop",
+   "client": "Chrome",
+   "referer": "",
+   "instance": "api-1"
+  },
+  {
+   "id": 0,
+   "at": "2026-01-01T19:00:28.995+07:00",
+   "method": "GET",
+   "route": "/api/items/:id",
+   "path": "/api/items/1",
+   "status": 200,
+   "dur_ms": 20,
+   "bytes_out": 0,
+   "ip": "203.0.113.9",
+   "country": "ID",
+   "city": "Jakarta",
+   "asn": 7713,
+   "org": "PT Telekomunikasi Indonesia",
+   "net_type": "residential",
+   "ua_class": "desktop",
+   "client": "Chrome",
+   "referer": "",
+   "instance": "api-1"
+  },
+  {
+   "id": 0,
+   "at": "2026-01-01T19:00:28+07:00",
+   "method": "GET",
+   "route": "/api/items/:id",
+   "path": "/api/items/1",
+   "status": 200,
+   "dur_ms": 20,
+   "bytes_out": 0,
+   "ip": "198.51.100.7",
+   "country": "ID",
+   "city": "Surabaya",
+   "asn": 23693,
+   "org": "PT Telekomunikasi Selular",
+   "net_type": "mobile",
+   "ua_class": "desktop",
+   "client": "Chrome",
+   "referer": "",
+   "instance": "api-1"
+  },
+  {
+   "id": 0,
+   "at": "2026-01-01T19:00:27.999+07:00",
+   "method": "GET",
+   "route": "/api/items/:id",
+   "path": "/api/items/1",
+   "status": 200,
+   "dur_ms": 20,
+   "bytes_out": 0,
+   "ip": "198.51.100.7",
+   "country": "ID",
+   "city": "Surabaya",
+   "asn": 23693,
+   "org": "PT Telekomunikasi Selular",
+   "net_type": "mobile",
+   "ua_class": "desktop",
+   "client": "Chrome",
+   "referer": "",
+   "instance": "api-1"
+  },
+  {
+   "id": 0,
+   "at": "2026-01-01T19:00:27.998+07:00",
+   "method": "GET",
+   "route": "/api/items/:id",
+   "path": "/api/items/1",
+   "status": 200,
+   "dur_ms": 20,
+   "bytes_out": 0,
+   "ip": "198.51.100.7",
+   "country": "ID",
+   "city": "Surabaya",
+   "asn": 23693,
+   "org": "PT Telekomunikasi Selular",
+   "net_type": "mobile",
+   "ua_class": "desktop",
+   "client": "Chrome",
+   "referer": "",
+   "instance": "api-1"
+  },
+  {
+   "id": 0,
+   "at": "2026-01-01T19:00:27+07:00",
+   "method": "GET",
+   "route": "/api/items/:id",
+   "path": "/api/items/1",
+   "status": 200,
+   "dur_ms": 20,
+   "bytes_out": 0,
+   "ip": "192.0.2.5",
+   "country": "US",
+   "city": "Ashburn",
+   "asn": 16509,
+   "org": "Amazon.com, Inc.",
+   "net_type": "hosting",
+   "ua_class": "desktop",
+   "client": "Chrome",
+   "referer": "",
+   "instance": "api-1"
+  },
+  {
+   "id": 0,
+   "at": "2026-01-01T19:00:26+07:00",
+   "method": "GET",
+   "route": "/api/items/:id",
+   "path": "/api/items/1",
+   "status": 200,
+   "dur_ms": 20,
+   "bytes_out": 0,
+   "ip": "10.0.0.1",
+   "country": "",
+   "ua_class": "desktop",
+   "client": "Chrome",
+   "referer": "",
+   "instance": "api-1"
+  },
+  {
+   "id": 0,
+   "at": "2026-01-01T19:00:25+07:00",
+   "method": "GET",
+   "route": "/api/items/:id",
+   "path": "/api/items/1",
+   "status": 200,
+   "dur_ms": 20,
+   "bytes_out": 0,
+   "ip": "anon-1f3a",
+   "country": "SG",
+   "ua_class": "desktop",
+   "client": "Chrome",
+   "referer": "",
+   "instance": "api-1"
+  },
+  {
+   "id": 0,
+   "at": "2026-01-01T19:00:24.5+07:00",
+   "method": "GET",
+   "route": "/api/items/:id",
+   "path": "/api/items/1",
+   "status": 200,
+   "dur_ms": 20,
+   "bytes_out": 0,
+   "ip": "anon-1f3a",
+   "country": "SG",
+   "ua_class": "desktop",
+   "client": "Chrome",
+   "referer": "",
+   "instance": "api-1"
+  }
+ ]
+}

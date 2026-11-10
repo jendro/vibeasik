@@ -109,6 +109,7 @@ type normEvent struct {
 	method, path, route       string
 	instance, uaClass, client string
 	ref, country, ip          string
+	geo                       geoFields
 	dur                       float64
 	isErr                     bool
 	minute, hour              int64
@@ -180,6 +181,7 @@ func (a *ingestAcc) addDims(n normEvent) {
 		a.addDim(models.TrafficGranHour, n.hour, "auth_ip", n.ip, n.isErr)
 	}
 	a.addDim(models.TrafficGranHour, n.hour, "country", n.country, n.isErr)
+	a.addGeoDims(n)
 	a.addDim(models.TrafficGranHour, n.hour, "ua", n.uaClass, n.isErr)
 	a.addDim(models.TrafficGranHour, n.hour, "client", n.client, n.isErr)
 	a.addDim(models.TrafficGranHour, n.hour, "referer", n.ref, n.isErr)
@@ -246,10 +248,11 @@ func Ingest(db *gorm.DB, src *models.TrafficSource, events []Event, defaultInsta
 	lastInstance := ""
 	for i, ev := range events {
 		n := normalizeEvent(ev, now, defaultInstance)
+		applyGeo(&n)
 		acc.addRoute(n)
 		acc.addDims(n)
 		if i >= len(events)-200 {
-			recent = append(recent, recentEventOf(src.ID, n))
+			recent = append(recent, withGeo(recentEventOf(src.ID, n), n))
 		}
 		if n.at.After(lastAt) {
 			lastAt = n.at
@@ -371,4 +374,5 @@ func Prune(db *gorm.DB) {
 	predicate := "(gran = ? AND bucket < ?) OR (gran = ? AND bucket < ?)"
 	db.Where(predicate, models.TrafficGranMinute, minCut, models.TrafficGranHour, hourCut).Delete(&models.TrafficRouteStat{})
 	db.Where(predicate, models.TrafficGranMinute, minCut, models.TrafficGranHour, hourCut).Delete(&models.TrafficDimStat{})
+	maskOldIPs(db, now)
 }

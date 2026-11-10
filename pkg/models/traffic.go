@@ -57,7 +57,7 @@ type TrafficRouteStat struct {
 	Hist     string  `gorm:"size:255" json:"-"`
 }
 
-// TrafficDimStat = hitungan per dimensi (ip, country, ua, client, referer, status, instance, auth_ip, notfound, gpath).
+// TrafficDimStat = hitungan per dimensi (ip, country, city, asn, org, net_type, ua, client, referer, status, instance, auth_ip, notfound, gpath).
 type TrafficDimStat struct {
 	ID       uint   `gorm:"primaryKey" json:"-"`
 	SourceID uint   `gorm:"uniqueIndex:idx_traffic_dim_key,priority:1;not null" json:"-"`
@@ -82,6 +82,10 @@ type TrafficRecentEvent struct {
 	BytesOut int64     `json:"bytes_out"`
 	IP       string    `gorm:"size:64" json:"ip"`
 	Country  string    `gorm:"size:8" json:"country"`
+	City     string    `gorm:"size:64" json:"city,omitempty"`
+	ASN      uint32    `json:"asn,omitempty"`
+	Org      string    `gorm:"size:128" json:"org,omitempty"`
+	NetType  string    `gorm:"size:16" json:"net_type,omitempty"` // mobile | residential | hosting | vpn | unknown
 	UAClass  string    `gorm:"size:16" json:"ua_class"`
 	Client   string    `gorm:"size:32" json:"client"`
 	Referer  string    `gorm:"size:255" json:"referer"`

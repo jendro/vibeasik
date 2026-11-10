@@ -27,6 +27,7 @@ import (
 	"github.com/vibeasik/vibeasik/pkg/standard"
 	"github.com/vibeasik/vibeasik/pkg/telemetry"
 	"github.com/vibeasik/vibeasik/pkg/traffic"
+	"github.com/vibeasik/vibeasik/pkg/traffic/geo"
 	"github.com/vibeasik/vibeasik/pkg/update"
 )
 
@@ -107,6 +108,8 @@ var serveCmd = &cobra.Command{
 		codemap.StartAutoSync(ctx, db, codemap.AutoSyncInterval)
 		// Traffic Analyzer: tarik statistik aplikasi live sesuai interval tiap sumber.
 		traffic.StartSyncer(ctx, db)
+		// Basis data lokasi & jaringan IP (DB-IP Lite): unduh bila belum ada atau sudah >30 hari; matikan: VIBEASIK_GEO_AUTO=0.
+		geo.StartAutoUpdate(ctx, geo.Default())
 		// Pusat Pengetahuan: sinkron patokan & pengetahuan, tautan, klaster, pangkas berkala.
 		knowledge.Start(ctx, db)
 

@@ -134,6 +134,10 @@ type Report struct {
 	Groups          []GroupRow           `json:"groups"`
 	Status          []KV                 `json:"status"`
 	Countries       []KV                 `json:"countries"`
+	Cities          []KV                 `json:"cities,omitempty"`
+	ASNs            []KV                 `json:"asns,omitempty"`
+	Orgs            []KV                 `json:"orgs,omitempty"`
+	NetTypes        []KV                 `json:"net_types,omitempty"`
 	Referers        []KV                 `json:"referers"`
 	UAClasses       []KV                 `json:"ua_classes"`
 	Clients         []KV                 `json:"clients"`
@@ -429,6 +433,7 @@ func topKV(dims map[string][]KV, name string, n int) []KV {
 func fillDimLists(rep *Report, dims map[string][]KV) {
 	rep.Status = topKV(dims, "status", 20)
 	rep.Countries = topKV(dims, "country", 15)
+	fillGeoLists(rep, dims)
 	rep.Referers = topKV(dims, "referer", 15)
 	rep.UAClasses = topKV(dims, "ua", 10)
 	rep.Clients = topKV(dims, "client", 15)

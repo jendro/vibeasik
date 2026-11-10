@@ -48,7 +48,7 @@ const statusCls = (s: number) => s >= 500 ? 'text-rose-600 dark:text-rose-400' :
             {{ fmtMs(e.dur_ms) }}
           </td>
           <td class="px-2 py-1 whitespace-nowrap text-neutral-600 dark:text-neutral-300">
-            {{ e.ip }}<span v-if="e.country" class="text-neutral-400"> · {{ e.country }}</span><span v-if="e.referer" class="text-neutral-400"> · {{ e.referer }}</span>
+            {{ e.ip }}<span v-if="e.city || e.country" class="text-neutral-400"> · {{ e.city ? `${e.city}, ${e.country}` : e.country }}</span><span v-if="e.org" class="text-neutral-400"> · {{ e.org }}</span><span v-if="e.referer" class="text-neutral-400"> · {{ e.referer }}</span>
           </td>
           <td class="px-3 py-1 whitespace-nowrap text-neutral-500">
             {{ e.client }} <span class="text-neutral-400">({{ e.ua_class }})</span><span v-if="e.instance" class="text-neutral-400"> · {{ e.instance }}</span>

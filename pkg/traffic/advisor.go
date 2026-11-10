@@ -91,6 +91,7 @@ func Advise(rep *Report) []Recommendation {
 		adviceRateLimitIP, adviceRateLimitAuth, adviceBurst, adviceBots, adviceScanner,
 		adviceCacheRoutes, adviceCacheStatic, advicePerformance, adviceErrors5xx,
 		advicePayload, adviceSplitGroups, adviceSaturation, adviceInstances, adviceWriteHeavy,
+		adviceDatacenterTraffic, adviceASNConcentration,
 	}
 	recs := []Recommendation{}
 	for _, step := range steps {

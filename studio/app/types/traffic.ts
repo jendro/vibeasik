@@ -139,6 +139,11 @@ export interface TrafficReport {
   groups: TrafficGroupRow[]
   status: TrafficKV[]
   countries: TrafficKV[]
+  /** Kota, ASN, organisasi, jenis jaringan: hanya ada bila basis data geo terpasang dan ada event ber-IP publik. */
+  cities?: TrafficKV[]
+  asns?: TrafficKV[]
+  orgs?: TrafficKV[]
+  net_types?: TrafficKV[]
   referers: TrafficKV[]
   ua_classes: TrafficKV[]
   clients: TrafficKV[]
@@ -159,6 +164,10 @@ export interface TrafficRecentEvent {
   bytes_out: number
   ip: string
   country: string
+  city?: string
+  asn?: number
+  org?: string
+  net_type?: string
   ua_class: string
   client: string
   referer: string
@@ -194,4 +203,13 @@ export interface TrafficSourceInput {
   cloud_url?: string
   sync_interval_sec?: number
   enabled?: boolean
+}
+
+export interface TrafficGeoStatus {
+  city_ready: boolean
+  asn_ready: boolean
+  city_built?: number
+  asn_built?: number
+  auto_update: boolean
+  update_cmd: string
 }

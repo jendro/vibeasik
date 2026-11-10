@@ -331,6 +331,7 @@ const steps = ['Akun', 'Ketentuan', 'Database']
             <a href="https://vibeasik.com/terms" target="_blank" rel="noopener" class="text-sky-600 dark:text-sky-400 underline">Syarat &amp; Ketentuan lengkap</a>
             <a href="https://vibeasik.com/legal/knowledge-license" target="_blank" rel="noopener" class="text-sky-600 dark:text-sky-400 underline">Lisensi Pengetahuan</a>
             <a href="https://github.com/vibeasik/vibeasik" target="_blank" rel="noopener" class="text-sky-600 dark:text-sky-400 underline">Kode sumber (Apache-2.0)</a>
+            <a href="https://db-ip.com" target="_blank" rel="noopener" class="text-sky-600 dark:text-sky-400 underline">IP Geolocation by DB-IP</a>
           </div>
           <UCheckbox
             v-model="agreed"

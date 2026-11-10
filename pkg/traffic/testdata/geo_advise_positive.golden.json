@@ -1,0 +1,28 @@
+[
+ {
+  "id": "security:datacenter",
+  "rule": "TRAFFIC-DATACENTER-DOMINANT",
+  "category": "security",
+  "severity": "warning",
+  "title": "Trafik dari datacenter/VPN mendominasi",
+  "detail": "70.0% request berasal dari jaringan hosting/VPN, bukan dari jaringan seluler atau rumahan. Itu pola khas bot, scraper, atau panggilan antar-server; bila aplikasi ini memang dipakai server lain (API publik), abaikan saran ini.",
+  "action": "Cek apakah rute teratas memang dipakai integrasi server. Bila tidak, pasang rate limit lebih ketat atau tantangan bot untuk jaringan hosting/VPN dan jangan menghitungnya sebagai pengguna sungguhan di metrik produk.",
+  "evidence": [
+   "hosting 600, VPN 100 dari 1000 request terklasifikasi",
+   "seluler 100, rumahan 200"
+  ]
+ },
+ {
+  "id": "security:asn:AS14061",
+  "rule": "TRAFFIC-ASN-SPIKE",
+  "category": "security",
+  "severity": "warning",
+  "title": "Lonjakan dari satu jaringan (AS14061)",
+  "detail": "56.0% dari seluruh request datang dari satu ASN (AS14061). Pengguna sungguhan tersebar di banyak ISP; konsentrasi setinggi ini biasanya satu pelaku (bot, scraper, atau serangan) atau satu integrasi.",
+  "action": "Lihat IP teratas dari jaringan ini. Bila bukan integrasi yang dikenal, batasi lewat rate limit per ASN/rentang IP di CDN atau firewall.",
+  "evidence": [
+   "AS14061: 560 request (56.0%)",
+   "kesalahan dari ASN ini: 30"
+  ]
+ }
+]
