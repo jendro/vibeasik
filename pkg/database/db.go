@@ -144,6 +144,7 @@ func migrateDatabaseSchema(db *gorm.DB) error {
 		&models.EmployeeTurnover{},
 		&models.EmployeeStepStat{},
 		&models.EmployeeLearnedStep{},
+		&models.EmployeeCustomRole{},
 		&models.ProjectExecutive{},
 		&models.ExecutiveKnowledge{},
 		&models.ExecutiveChatMessage{},

@@ -685,3 +685,47 @@ type EmployeeLearnedStep struct {
 	CreatedAt     time.Time  `json:"created_at"`
 	UpdatedAt     time.Time  `json:"updated_at"`
 }
+
+// Status peran pegawai yang tumbuh dari pekerjaan.
+const (
+	CustomRoleActive   = "active"
+	CustomRoleRejected = "rejected" // usulan ditolak saat divalidasi; disimpan sebagai jejak
+	CustomRoleRetired  = "retired"
+)
+
+// RoleSeed adalah satu butir pengetahuan bawaan sebuah peran.
+type RoleSeed struct {
+	Topic   string `json:"topic"`
+	Content string `json:"content"`
+	Kind    string `json:"kind"`
+	Weight  int    `json:"weight"`
+}
+
+// EmployeeCustomRole adalah peran pegawai yang tidak ada di katalog bawaan: lahir dari sekelompok todo yang tidak
+// punya peran pas. Keywords mengarahkan todo ke peran ini.
+type EmployeeCustomRole struct {
+	ID           uint           `gorm:"primaryKey" json:"id"`
+	Key          string         `gorm:"size:64;uniqueIndex" json:"key"`
+	Title        string         `gorm:"size:128" json:"title"`
+	Division     string         `gorm:"size:32" json:"division"`
+	Icon         string         `gorm:"size:64" json:"icon,omitempty"`
+	Technical    bool           `json:"technical"`
+	Brief        string         `gorm:"type:text" json:"brief"`
+	Specialty    string         `gorm:"size:255" json:"specialty"`
+	Stack        []string       `gorm:"type:text;serializer:json" json:"stack"`
+	Skills       map[string]int `gorm:"type:text;serializer:json" json:"skills"`
+	Categories   []string       `gorm:"type:text;serializer:json" json:"categories"`
+	Keywords     []string       `gorm:"type:text;serializer:json" json:"keywords"`
+	Knowledge    []RoleSeed     `gorm:"type:text;serializer:json" json:"knowledge"`
+	Status       string         `gorm:"size:16;index" json:"status"`
+	StatusReason string         `gorm:"type:text" json:"status_reason,omitempty"`
+	Trigger      string         `gorm:"type:text" json:"trigger,omitempty"` // judul todo yang memicunya
+	SourceRef    string         `gorm:"size:255" json:"source_ref,omitempty"`
+	Todos        int            `json:"todos"`
+	Coverage     int            `json:"coverage"` // persen todo pemicu yang tertangkap kata kuncinya
+	Overlap      int            `json:"overlap"`  // persen todo peran lain yang ikut tertangkap
+	Model        string         `gorm:"size:160" json:"model,omitempty"`
+	HiredID      *uint          `json:"hired_id,omitempty"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+}
