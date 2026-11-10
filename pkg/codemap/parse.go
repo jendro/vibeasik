@@ -777,3 +777,9 @@ func classify(relPath, lang string) string {
 	}
 	return "module"
 }
+
+// KindOf mengembalikan bahasa & peran berkas dari path-nya saja, tanpa membaca isi berkas.
+func KindOf(relPath string) (lang, kind string) {
+	lang = langFor(path.Base(relPath))
+	return lang, classify(relPath, lang)
+}
