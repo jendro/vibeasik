@@ -134,6 +134,16 @@ export interface EmployeePlaybook {
   steps: EmployeePlaybookStep[] | null
 }
 
+/** Hasil ekspor paket pegawai: isi berkas bertanda tangan dan ringkasannya. */
+export interface EmployeePackageExport {
+  file: { package: unknown, public_key: string, signature: string }
+  passport: { format: string, serial: string, copy_no: number, license: string, origin: string, exported_at: string }
+  knowledge: number
+  /** Butir pengetahuan yang tidak ikut karena menyebut proyek atau path */
+  dropped: number
+  steps: number
+}
+
 /** Pegawai + angka ringkas (daftar). */
 export interface EmployeeSummary extends Employee {
   knowledge: number

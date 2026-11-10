@@ -11,6 +11,9 @@ export const useStaffApi = () => {
 
   const getEmployeePlaybook = async (id: number): Promise<EmployeePlaybook> => await $fetch<EmployeePlaybook>(`${apiBase}/api/staff/${id}/playbook`)
 
+  const exportEmployeePackage = async (id: number): Promise<EmployeePackageExport> =>
+    await $fetch<EmployeePackageExport>(`${apiBase}/api/staff/${id}/package`, { method: 'POST' })
+
   const hireEmployee = async (role: string): Promise<Employee> => await $fetch<Employee>(`${apiBase}/api/staff`, { method: 'POST', body: { role } })
 
   const updateEmployee = async (id: number, body: Partial<Employee>): Promise<Employee> => await $fetch<Employee>(`${apiBase}/api/staff/${id}`, { method: 'PUT', body })
@@ -166,6 +169,7 @@ export const useStaffApi = () => {
     getStaff,
     getEmployee,
     getEmployeePlaybook,
+    exportEmployeePackage,
     hireEmployee,
     updateEmployee,
     resignEmployee,

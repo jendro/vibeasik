@@ -729,3 +729,25 @@ type EmployeeCustomRole struct {
 	CreatedAt    time.Time      `json:"created_at"`
 	UpdatedAt    time.Time      `json:"updated_at"`
 }
+
+// Arah paket pegawai.
+const (
+	PassportExport = "export"
+	PassportImport = "import"
+)
+
+// EmployeePassport mencatat paket pegawai yang diekspor dari atau diimpor ke kantor ini: nomor seri tiap salinan,
+// sidik jari kunci penanda tangan asalnya, dan rekam jejak yang dibawa paket itu.
+type EmployeePassport struct {
+	ID         uint      `gorm:"primaryKey" json:"id"`
+	EmployeeID uint      `gorm:"index" json:"employee_id"`
+	Name       string    `gorm:"size:128" json:"name"`
+	Serial     string    `gorm:"size:64;uniqueIndex" json:"serial"`
+	Direction  string    `gorm:"size:16;index" json:"direction"`
+	CopyNo     int       `json:"copy_no"`
+	License    string    `gorm:"size:32" json:"license"`
+	Origin     string    `gorm:"size:64" json:"origin"` // sidik jari kunci publik penanda tangan
+	Record     string    `gorm:"type:text" json:"record,omitempty"`
+	File       string    `gorm:"size:512" json:"file,omitempty"`
+	CreatedAt  time.Time `json:"created_at"`
+}

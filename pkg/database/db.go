@@ -145,6 +145,7 @@ func migrateDatabaseSchema(db *gorm.DB) error {
 		&models.EmployeeStepStat{},
 		&models.EmployeeLearnedStep{},
 		&models.EmployeeCustomRole{},
+		&models.EmployeePassport{},
 		&models.ProjectExecutive{},
 		&models.ExecutiveKnowledge{},
 		&models.ExecutiveChatMessage{},
