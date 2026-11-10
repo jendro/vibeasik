@@ -45,8 +45,10 @@ type Employee struct {
 	Skills map[string]int `gorm:"type:text;serializer:json" json:"skills"`
 	// Traits: bobot kepribadian 0–100 (ketelitian, kreativitas, kecepatan, komunikasi, keberanian)
 	Traits map[string]int `gorm:"type:text;serializer:json" json:"traits"`
-	Avatar EmployeeAvatar `gorm:"type:text;serializer:json" json:"avatar"`
-	Desk   int            `json:"desk"` // urutan kursi di zona divisinya
+	// Principles: kunci prinsip pegangan kerja pegawai (dipilih saat direkrut; menentukan urutan & pilihan langkah kerjanya)
+	Principles []string       `gorm:"type:text;serializer:json" json:"principles"`
+	Avatar     EmployeeAvatar `gorm:"type:text;serializer:json" json:"avatar"`
+	Desk       int            `json:"desk"` // urutan kursi di zona divisinya
 	// LeadsDivision: divisi yang dipimpin pegawai ini (leader/manager). Leader memahami spesialisasi timnya
 	// dan menimbang siapa yang mengerjakan setiap todo divisinya.
 	LeadsDivision string `gorm:"size:64;index" json:"leads_division,omitempty"`
@@ -606,4 +608,20 @@ type EmployeeTurnover struct {
 	InheritedSummary    string     `gorm:"type:text" json:"inherited_summary,omitempty"`
 	CreatedAt           time.Time  `json:"created_at"`
 	UpdatedAt           time.Time  `json:"updated_at"`
+}
+
+// EmployeeStepStat mencatat riwayat satu langkah pegangan kerja pada satu pegawai: berapa kali lolos/gagal saat
+// hasil kerjanya diperiksa, dan kotak ingatannya (1 = baru gagal, selalu diingat; makin tinggi makin jarang diulang).
+type EmployeeStepStat struct {
+	ID         uint       `gorm:"primaryKey" json:"id"`
+	EmployeeID uint       `gorm:"uniqueIndex:idx_employee_step" json:"employee_id"`
+	StepID     string     `gorm:"size:32;uniqueIndex:idx_employee_step" json:"step_id"`
+	Box        int        `json:"box"`
+	Passed     int        `json:"passed"`
+	Failed     int        `json:"failed"`
+	LastTodoID uint       `json:"last_todo_id"`
+	LastNote   string     `gorm:"type:text" json:"last_note,omitempty"`
+	LastAt     *time.Time `json:"last_at,omitempty"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
 }
