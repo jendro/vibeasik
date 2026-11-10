@@ -46,9 +46,13 @@ type Employee struct {
 	// Traits: bobot kepribadian 0–100 (ketelitian, kreativitas, kecepatan, komunikasi, keberanian)
 	Traits map[string]int `gorm:"type:text;serializer:json" json:"traits"`
 	// Principles: kunci prinsip pegangan kerja pegawai (dipilih saat direkrut; menentukan urutan & pilihan langkah kerjanya)
-	Principles []string       `gorm:"type:text;serializer:json" json:"principles"`
-	Avatar     EmployeeAvatar `gorm:"type:text;serializer:json" json:"avatar"`
-	Desk       int            `json:"desk"` // urutan kursi di zona divisinya
+	Principles []string `gorm:"type:text;serializer:json" json:"principles"`
+	// Mind: pola pikir pegawai sebagai sumbu dua kutub 0–100 (cara menangkap, menimbang, bekerja, berhubungan).
+	// Taste: selera tampilan sebagai sumbu dua kutub 0–100 (kepadatan, bentuk, warna, kontras, …).
+	Mind   map[string]int `gorm:"type:text;serializer:json" json:"mind"`
+	Taste  map[string]int `gorm:"type:text;serializer:json" json:"taste"`
+	Avatar EmployeeAvatar `gorm:"type:text;serializer:json" json:"avatar"`
+	Desk   int            `json:"desk"` // urutan kursi di zona divisinya
 	// LeadsDivision: divisi yang dipimpin pegawai ini (leader/manager). Leader memahami spesialisasi timnya
 	// dan menimbang siapa yang mengerjakan setiap todo divisinya.
 	LeadsDivision string `gorm:"size:64;index" json:"leads_division,omitempty"`

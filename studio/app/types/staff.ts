@@ -30,6 +30,10 @@ export interface Employee {
   traits: Record<string, number> | null
   /** Kunci prinsip kerja yang dipegang pegawai (maks. 3) */
   principles?: string[] | null
+  /** Pola pikir: sumbu dua kutub 0–100 */
+  mind?: Record<string, number> | null
+  /** Selera tampilan: sumbu dua kutub 0–100 */
+  taste?: Record<string, number> | null
   avatar: EmployeeAvatar
   desk: number
   /** Divisi yang dipimpin (leader menimbang siapa mengerjakan todo divisinya). */
@@ -70,6 +74,46 @@ export interface EmployeePlaybookStep {
   passed: number
   failed: number
   last_note?: string
+  /** Tumbuh dari pengalaman (bukan bawaan) */
+  learned?: boolean
+  /** Milik pegawai ini saja */
+  personal?: boolean
+  /** Masih dicoba diam-diam: belum memengaruhi nilai */
+  trial?: boolean
+  trial_checks?: number
+  trial_hits?: number
+  origin?: string
+}
+
+/** Satu sumbu dua kutub (0 = kutub low, 100 = kutub high). */
+export interface EmployeeAxis {
+  key: string
+  group: string
+  low: string
+  high: string
+  value: number
+}
+
+/** Satu pilihan gaya pegawai di dalam rentang galeri. */
+export interface EmployeeStylePick {
+  key: string
+  label: string
+  value: string
+  range: string
+  why: string
+}
+
+/** Pola pikir & selera seorang pegawai. */
+export interface EmployeeMind {
+  code: string
+  type: string
+  lines: string[] | null
+  strengths: string[] | null
+  blind_spots: string[] | null
+  axes: EmployeeAxis[]
+  taste: EmployeeAxis[]
+  taste_words: string[] | null
+  style?: { words: string[] | null, numbers: EmployeeStylePick[] | null, accent?: EmployeeStylePick, styles: string[] | null, basis: string }
 }
 
 /** Langkah kerja, prinsip, dan kondisi seorang pegawai. */
@@ -86,6 +130,7 @@ export interface EmployeePlaybook {
   condition: 'mantap' | 'waspada' | 'tertekan' | 'jenuh'
   condition_reason?: string
   habits: string[]
+  mind: EmployeeMind
   steps: EmployeePlaybookStep[] | null
 }
 
