@@ -88,7 +88,7 @@ const hasDetail = (f: ProfileFeature) => f.pages.length + f.endpoints.length + f
             <h3 class="text-sm font-semibold text-neutral-900 dark:text-white leading-snug">
               {{ f.name }}
             </h3>
-            <p v-if="f.domain && f.domain !== f.name" class="text-xs uppercase tracking-wider text-neutral-400 mt-0.5">
+            <p v-if="f.domain && f.domain !== f.name" class="text-xs text-neutral-400 mt-0.5">
               {{ f.domain }}
             </p>
           </div>

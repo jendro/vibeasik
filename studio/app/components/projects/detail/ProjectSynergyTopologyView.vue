@@ -65,7 +65,7 @@ defineProps<{ synergyMap: ProjectSynergyMap | null }>()
             </span>
           </div>
           <div class="space-y-1">
-            <span class="text-xs uppercase font-semibold text-neutral-400">Field Tersimpan:</span>
+            <span class="text-xs font-semibold text-neutral-400">Field Tersimpan:</span>
             <div class="flex flex-wrap gap-1">
               <span
                 v-for="f in tbl.fields"

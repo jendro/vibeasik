@@ -26,7 +26,7 @@ const handleDelete = (route: ComponentRoute) => emit('delete', route)
   >
     <div class="overflow-x-auto">
       <table class="w-full text-left text-xs">
-        <thead class="bg-neutral-50 dark:bg-neutral-800 text-neutral-500 uppercase text-xs tracking-wider border-b border-neutral-200 dark:border-white/[0.08]">
+        <thead class="bg-neutral-50 dark:bg-neutral-800 text-neutral-500 text-xs border-b border-neutral-200 dark:border-white/[0.08]">
           <tr v-if="isFrontend">
             <th class="py-3 px-4 w-20">
               Tipe

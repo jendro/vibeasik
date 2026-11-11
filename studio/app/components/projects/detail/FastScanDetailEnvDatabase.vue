@@ -58,7 +58,7 @@ const removeDynamicMeta = (key: string) => {
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-database" class="w-4 h-4 text-primary-600 dark:text-primary-400" />
-          <span class="text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">Database & Persistence</span>
+          <span class="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Database & Persistence</span>
         </div>
         <TechBadge
           v-if="scanResult.extracted_env?.database_type"
@@ -69,7 +69,7 @@ const removeDynamicMeta = (key: string) => {
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono">
         <div class="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200 dark:border-neutral-700/60">
-          <div class="text-xs uppercase font-bold text-neutral-400">
+          <div class="text-xs font-semibold text-neutral-400">
             Database Engine
           </div>
           <div class="mt-1 flex items-center gap-1.5 font-semibold text-neutral-800 dark:text-neutral-100">
@@ -78,7 +78,7 @@ const removeDynamicMeta = (key: string) => {
         </div>
 
         <div class="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200 dark:border-neutral-700/60">
-          <div class="text-xs uppercase font-bold text-neutral-400">
+          <div class="text-xs font-semibold text-neutral-400">
             ORM / Driver / Client
           </div>
           <div class="mt-1 flex items-center gap-1.5 font-semibold text-neutral-800 dark:text-neutral-100">
@@ -87,7 +87,7 @@ const removeDynamicMeta = (key: string) => {
         </div>
 
         <div class="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200 dark:border-neutral-700/60">
-          <div class="text-xs uppercase font-bold text-neutral-400">
+          <div class="text-xs font-semibold text-neutral-400">
             Nama DB / Target Koneksi
           </div>
           <div class="mt-1 font-semibold text-neutral-800 dark:text-neutral-100 truncate" :title="scanResult.extracted_env?.database_name">
@@ -101,11 +101,11 @@ const removeDynamicMeta = (key: string) => {
     <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-3">
       <div class="flex items-center gap-2">
         <UIcon name="i-lucide-key-round" class="w-4 h-4 text-sky-600 dark:text-sky-400" />
-        <span class="text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">Mekanisme Login & Autentikasi</span>
+        <span class="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Mekanisme Login & Autentikasi</span>
       </div>
 
       <div class="space-y-1.5">
-        <label class="block text-xs font-semibold text-neutral-500 uppercase tracking-wider">Metode Login yang Tersedia:</label>
+        <label class="block text-xs font-semibold text-neutral-500">Metode Login yang Tersedia:</label>
         <div v-if="scanResult.extracted_env?.auth_methods && scanResult.extracted_env.auth_methods.length > 0" class="flex flex-wrap gap-2">
           <TechBadge
             v-for="(auth, aIdx) in scanResult.extracted_env.auth_methods"
@@ -120,7 +120,7 @@ const removeDynamicMeta = (key: string) => {
       </div>
 
       <div v-if="scanResult.extracted_env?.login_endpoints && scanResult.extracted_env.login_endpoints.length > 0" class="space-y-1.5">
-        <label class="block text-xs font-semibold text-neutral-500 uppercase tracking-wider">Endpoint Login / Auth:</label>
+        <label class="block text-xs font-semibold text-neutral-500">Endpoint Login / Auth:</label>
         <div class="flex flex-wrap gap-2 font-mono text-xs">
           <span
             v-for="(ep, epIdx) in scanResult.extracted_env.login_endpoints"
@@ -149,7 +149,7 @@ const removeDynamicMeta = (key: string) => {
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-tag" class="w-4 h-4 text-purple-600 dark:text-purple-400" />
-          <span class="text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">Metadata & Atribut Dinamis Komponen</span>
+          <span class="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Metadata & Atribut Dinamis Komponen</span>
         </div>
         <span class="text-xs text-neutral-400">Dapat ditambah & disimpan fleksibel</span>
       </div>

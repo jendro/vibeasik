@@ -113,7 +113,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="space-y-6 w-full px-4 sm:px-6 lg:px-8 pt-6 pb-16">
+  <div class="space-y-6 w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-16">
     <!-- Header -->
     <DiagnosticsAuditHeader
       :project="activeProject"

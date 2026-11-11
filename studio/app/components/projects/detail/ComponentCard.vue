@@ -123,7 +123,7 @@ const targetUrl = computed(() => {
               />
             </span>
             <span
-              class="text-xs font-mono font-medium uppercase tracking-wider"
+              class="text-xs font-mono font-medium"
               :class="portActive ? 'text-sky-600 dark:text-sky-400 font-semibold' : 'text-neutral-400'"
             >
               {{ portActive ? 'LISTENING' : 'OFFLINE' }}
@@ -181,7 +181,7 @@ const targetUrl = computed(() => {
 
       <!-- Dev Command Box -->
       <div v-if="comp.dev_command" class="p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-white/[0.08] text-xs font-mono space-y-1">
-        <div class="flex items-center justify-between text-neutral-400 text-xs uppercase">
+        <div class="flex items-center justify-between text-neutral-400 text-xs">
           <span>Dev Command</span>
           <button
             class="text-sky-600 dark:text-sky-400 hover:underline cursor-pointer"

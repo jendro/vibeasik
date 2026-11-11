@@ -84,7 +84,7 @@ const handleRunComponentAiReview = () => emit('run')
 
       <!-- Action Plan Grid -->
       <div v-if="componentAiReview.action_plan?.length" class="space-y-2.5">
-        <h5 class="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+        <h5 class="text-xs font-semibold text-neutral-400">
           Rencana Aksi & Rekomendasi Fitur
         </h5>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">

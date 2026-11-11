@@ -117,7 +117,7 @@ const goToTodos = () => {
         <!-- Code Replacement (Before vs After) -->
         <div v-if="resolution.code_after" class="space-y-2">
           <div class="flex items-center justify-between">
-            <span class="font-semibold uppercase tracking-wider text-neutral-500 text-xs">
+            <span class="font-semibold text-neutral-500 text-xs">
               Kode Rekomendasi Siap Pakai (Drop-in Replacement):
             </span>
             <UButton
@@ -136,7 +136,7 @@ const goToTodos = () => {
 
         <!-- Step-by-Step Action Plan -->
         <div v-if="resolution.action_steps && resolution.action_steps.length > 0" class="space-y-1.5">
-          <span class="font-semibold uppercase tracking-wider text-neutral-500 text-xs">
+          <span class="font-semibold text-neutral-500 text-xs">
             Langkah Implementasi:
           </span>
           <div class="space-y-1">

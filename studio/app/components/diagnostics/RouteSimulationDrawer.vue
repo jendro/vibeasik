@@ -209,7 +209,7 @@ onUnmounted(() => {
       <!-- Quick Metrics Ribbon -->
       <div class="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 bg-neutral-50/70 dark:bg-neutral-900/60 border-b border-neutral-200 dark:border-white/[0.08] shrink-0">
         <div class="p-2.5 rounded-lg bg-white dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700/80">
-          <div class="text-xs uppercase font-bold text-neutral-500">
+          <div class="text-xs font-semibold text-neutral-500">
             Rata-rata Latensi
           </div>
           <div class="text-lg font-bold font-mono text-neutral-900 dark:text-white">
@@ -220,7 +220,7 @@ onUnmounted(() => {
           </div>
         </div>
         <div class="p-2.5 rounded-lg bg-white dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700/80">
-          <div class="text-xs uppercase font-bold text-neutral-500">
+          <div class="text-xs font-semibold text-neutral-500">
             Latensi Lambat
           </div>
           <div class="text-lg font-bold font-mono text-amber-600 dark:text-amber-400">
@@ -231,7 +231,7 @@ onUnmounted(() => {
           </div>
         </div>
         <div class="p-2.5 rounded-lg bg-white dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700/80">
-          <div class="text-xs uppercase font-bold text-neutral-500">
+          <div class="text-xs font-semibold text-neutral-500">
             Tanpa Validasi Form
           </div>
           <div class="text-lg font-bold font-mono text-rose-600 dark:text-rose-400">
@@ -242,7 +242,7 @@ onUnmounted(() => {
           </div>
         </div>
         <div class="p-2.5 rounded-lg bg-white dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700/80">
-          <div class="text-xs uppercase font-bold text-neutral-500">
+          <div class="text-xs font-semibold text-neutral-500">
             Risiko Kueri Tinggi
           </div>
           <div class="text-lg font-bold font-mono text-rose-600 dark:text-rose-400">

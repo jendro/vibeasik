@@ -1,12 +1,26 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
-import type { Project, ConsolidateResult } from '~/types'
+import type { Project, ProjectProfile, ConsolidateResult } from '~/types'
 import ConsolidateProjectModal from '~/components/projects/ConsolidateProjectModal.vue'
 import LastScanPopover from './LastScanPopover.vue'
 
 const props = defineProps<{
   project: Project
+  profile?: ProjectProfile | null
 }>()
+
+const TYPE_LABEL: Record<string, string> = { multi_fe: 'Multi-frontend', bundle: 'Backend + frontend', monorepo: 'Monorepo', single_app: 'Satu aplikasi' }
+const STATUS: Record<string, { label: string, cls: string }> = {
+  deprecated: { label: 'Usang', cls: 'bg-amber-500/10 text-amber-700 dark:text-amber-400' },
+  hold: { label: 'Ditahan', cls: 'bg-amber-500/10 text-amber-700 dark:text-amber-400' },
+  done: { label: 'Selesai', cls: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' }
+}
+const MATURITY: Record<string, string> = { idea: 'Ide', prototype: 'Prototipe', mvp: 'MVP', beta: 'Beta', production: 'Produksi' }
+const maturity = computed(() => {
+  const st = props.profile?.maturity?.stage
+  return st ? (MATURITY[st] || st) + (props.profile?.source === 'heuristic' ? ' (perkiraan)' : '') : ''
+})
+const score = computed(() => props.project.health_score ?? null)
 
 const emit = defineEmits<{
   deleteProject: []
@@ -62,91 +76,110 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [
 </script>
 
 <template>
-  <div class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] p-4 sm:p-5 space-y-3">
-    <div class="flex items-center justify-between gap-3 text-xs">
-      <NuxtLink
-        to="/cockpit"
-        class="inline-flex items-center gap-1.5 text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors font-medium"
-      >
-        <UIcon name="i-lucide-arrow-left" class="w-3.5 h-3.5" />
-        <span>Semua Proyek</span>
-      </NuxtLink>
+  <div class="space-y-4 pb-5">
+    <NuxtLink
+      to="/cockpit"
+      class="inline-flex items-center gap-1.5 text-xs text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors"
+    >
+      <UIcon name="i-lucide-arrow-left" class="size-3.5" />
+      Katalog proyek
+    </NuxtLink>
 
-      <div class="flex items-center gap-2">
-        <LastScanPopover
-          :project="project"
-          :is-project-level="true"
-          align="end"
-          side="bottom"
-        >
-          <UButton
-            icon="i-lucide-play"
-            color="primary"
-            variant="soft"
-            size="xs"
-            title="Jalankan pipeline LLM: Fast Scan tiap aplikasi, deteksi halaman & rute, lalu susun profil proyek"
-            @click="$emit('startPipeline')"
+    <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+      <div class="min-w-0 space-y-2.5">
+        <div class="flex flex-wrap items-center gap-2">
+          <h2 class="text-2xl sm:text-[28px] font-semibold tracking-tight text-neutral-950 dark:text-white">
+            {{ project.name }}
+          </h2>
+          <span v-if="STATUS[project.status || '']" class="rounded-md px-2 py-0.5 text-xs font-medium" :class="STATUS[project.status || '']!.cls">
+            {{ STATUS[project.status || '']!.label }}
+          </span>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-neutral-500 dark:text-slate-400">
+          <span class="inline-flex items-center gap-1.5">
+            <UIcon name="i-lucide-boxes" class="size-3.5" />
+            {{ TYPE_LABEL[project.project_type] || project.project_type }} · {{ project.components?.length || 0 }} aplikasi
+          </span>
+          <span v-if="project.git_branch" class="inline-flex items-center gap-1.5">
+            <UIcon name="i-lucide-git-branch" class="size-3.5" />{{ project.git_branch }}
+          </span>
+          <button
+            v-if="project.root_path && project.root_path !== '-'"
+            type="button"
+            class="inline-flex items-center gap-1.5 font-mono min-w-0 max-w-full hover:text-neutral-800 dark:hover:text-slate-200"
+            :title="`${project.root_path} — klik untuk menyalin`"
+            @click="copyToClipboard(project.root_path)"
           >
-            Jalankan Scan LLM
+            <UIcon name="i-lucide-folder" class="size-3.5 shrink-0" />
+            <span class="truncate">{{ project.root_path }}</span>
+          </button>
+          <span
+            v-if="!isProjectUnified(project)"
+            class="inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-400"
+            title="Aplikasi proyek ini tersebar di beberapa folder — satukan lewat menu aksi"
+          >
+            <UIcon name="i-lucide-folders" class="size-3.5" />Folder terpencar
+          </span>
+          <span class="font-mono">#{{ project.id }}</span>
+        </div>
+
+        <div v-if="project.short_description" class="text-sm text-neutral-700 dark:text-slate-300 max-w-3xl">
+          <MarkdownViewer :content="project.short_description" compact />
+        </div>
+      </div>
+
+      <div class="flex flex-wrap lg:flex-col items-center lg:items-end gap-4 shrink-0">
+        <div class="flex items-center gap-4 rounded-xl border border-neutral-200 dark:border-white/[0.08] px-4 py-3">
+          <div class="text-right">
+            <div class="text-3xl font-semibold tracking-tight tabular-nums leading-none" :class="healthTone(score)">
+              {{ score ?? '—' }}
+            </div>
+            <div class="mt-1 text-xs text-neutral-500">
+              skor kesehatan
+            </div>
+          </div>
+          <div class="w-px self-stretch bg-neutral-200 dark:bg-white/[0.08]" />
+          <div class="text-xs space-y-1">
+            <div class="font-medium" :class="healthTone(score)">
+              {{ healthLabel(score) }}
+            </div>
+            <div class="text-neutral-500">
+              Tahap: <span class="text-neutral-800 dark:text-slate-200">{{ maturity || 'belum dianalisis' }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <UButton to="/audit-report" size="sm" color="neutral" variant="outline" icon="i-lucide-shield-check">
+            Temuan audit
           </UButton>
-        </LastScanPopover>
-        <UDropdownMenu :items="moreItems" :content="{ align: 'end' }">
-          <UButton
-            icon="i-lucide-ellipsis"
-            color="neutral"
-            variant="outline"
-            size="xs"
-            :loading="initingProject"
-            aria-label="Aksi lain"
-          />
-        </UDropdownMenu>
-      </div>
-    </div>
-
-    <div class="space-y-2">
-      <div class="flex flex-wrap items-center gap-2 sm:gap-2.5">
-        <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">
-          {{ project.name }}
-        </h1>
-        <UBadge
-          size="sm"
-          :color="project.project_type === 'multi_fe' ? 'secondary' : project.project_type === 'bundle' ? 'info' : 'warning'"
-          variant="subtle"
-        >
-          {{ project.project_type === 'multi_fe' ? 'Multi-Frontend System' : project.project_type === 'bundle' ? 'Backend + Frontend Bundle' : project.project_type }}
-        </UBadge>
-        <UBadge v-if="project.status === 'deprecated'" size="sm" color="warning" variant="solid">
-          DEPRECATED
-        </UBadge>
-        <UBadge v-else-if="project.status === 'hold'" size="sm" color="warning" variant="subtle">
-          ON HOLD
-        </UBadge>
-        <UBadge v-else-if="project.status === 'done'" size="sm" color="success" variant="subtle">
-          DONE (SELESAI)
-        </UBadge>
-        <UBadge v-if="project.git_branch" size="sm" color="success" variant="outline">
-          <UIcon name="i-lucide-git-branch" class="w-3.5 h-3.5 mr-1" />
-          {{ project.git_branch }}
-        </UBadge>
-        <UBadge
-          v-if="!isProjectUnified(project)"
-          size="sm"
-          color="warning"
-          variant="subtle"
-          title="Komponen proyek masih terpencar di folder terpisah — satukan lewat menu aksi"
-        >
-          <UIcon name="i-lucide-folder-git-2" class="w-3.5 h-3.5 mr-1" />
-          Folder Terpencar
-        </UBadge>
-      </div>
-
-      <div v-if="project.root_path && project.root_path !== '-'" class="flex items-center gap-1.5 text-xs text-neutral-500 font-mono min-w-0">
-        <UIcon name="i-lucide-folder" class="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-        <span class="truncate" :title="project.root_path">{{ project.root_path }}</span>
-      </div>
-
-      <div v-if="project.short_description" class="text-sm text-neutral-700 dark:text-neutral-300 max-w-4xl">
-        <MarkdownViewer :content="project.short_description" compact />
+          <LastScanPopover
+            :project="project"
+            :is-project-level="true"
+            align="end"
+            side="bottom"
+          >
+            <UButton
+              icon="i-lucide-play"
+              color="neutral"
+              size="sm"
+              title="Jalankan pipeline LLM: Fast Scan tiap aplikasi, deteksi halaman & rute, lalu susun profil proyek"
+              @click="$emit('startPipeline')"
+            >
+              Scan LLM
+            </UButton>
+          </LastScanPopover>
+          <UDropdownMenu :items="moreItems" :content="{ align: 'end' }">
+            <UButton
+              icon="i-lucide-ellipsis"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              :loading="initingProject"
+              aria-label="Aksi lain"
+            />
+          </UDropdownMenu>
+        </div>
       </div>
     </div>
 

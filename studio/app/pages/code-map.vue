@@ -82,29 +82,15 @@ const mcpTools = ['vibeasik_code_map_search', 'vibeasik_code_map_file', 'vibeasi
 </script>
 
 <template>
-  <div class="w-full px-4 sm:px-6 lg:px-8 pt-6 pb-20 space-y-6">
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 sm:p-6 rounded-xl bg-white dark:bg-[#04111f] border border-neutral-200 dark:border-white/[0.08]">
-      <div class="flex items-center gap-3.5 min-w-0">
-        <div class="size-11 shrink-0 rounded-xl bg-neutral-900 dark:bg-white/10 text-white flex items-center justify-center">
-          <UIcon name="i-lucide-map" class="size-5.5" />
-        </div>
-        <div class="min-w-0">
-          <div class="flex items-center gap-2 flex-wrap">
-            <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-white">
-              Peta Kode untuk AI Agent
-            </h1>
-            <UBadge v-if="activeProject" size="sm" color="primary" variant="subtle">
-              {{ activeProject.name }}
-            </UBadge>
-          </div>
-          <p class="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-1 leading-relaxed">
-            Indeks per berkas (peran, simbol, impor, dipakai oleh, rute, ringkasan) yang dicari ala RAG — agent menemukan lokasi kode tanpa membaca seluruh repositori.
-          </p>
-        </div>
-      </div>
-      <div v-if="activeProjectId" class="flex flex-wrap items-center gap-2 shrink-0">
-        <UButton color="neutral" variant="outline" icon="i-lucide-refresh-cw" label="Bangun ulang" :loading="building" @click="rebuild(false)" />
+  <div class="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20 space-y-6">
+    <AppPageHeader
+      title="Peta Kode"
+      description="Indeks per berkas (peran, simbol, impor, pemakai, rute, ringkasan) yang dicari ala RAG — agent menemukan lokasi kode tanpa membaca seluruh repositori."
+    >
+      <template v-if="activeProjectId" #actions>
+        <UButton size="sm" color="neutral" variant="ghost" icon="i-lucide-refresh-cw" label="Bangun ulang" :loading="building" @click="rebuild(false)" />
         <UButton
+          size="sm"
           color="neutral"
           variant="outline"
           icon="i-lucide-sparkles"
@@ -115,15 +101,16 @@ const mcpTools = ['vibeasik_code_map_search', 'vibeasik_code_map_file', 'vibeasi
           @click="enrichJob.start()"
         />
         <UButton
-          color="primary"
-          icon="i-lucide-sparkles"
+          size="sm"
+          color="neutral"
+          icon="i-lucide-link"
           label="Init vibeasik"
           :loading="initing"
           title="Tulis .vibeasik.json (tautan AI) + .vibeasik/CODEMAP.md & codemap.jsonl; setelah itu peta diperbarui otomatis saat kode berubah"
           @click="runInit"
         />
-      </div>
-    </div>
+      </template>
+    </AppPageHeader>
 
     <UAlert v-if="!activeProjectId" color="neutral" variant="subtle" icon="i-lucide-folder-search" title="Pilih proyek aktif" description="Pilih proyek lewat pemilih proyek di navbar atas untuk melihat peta kodenya." />
     <UAlert v-if="error" color="error" variant="subtle" icon="i-lucide-alert-circle" title="Peta kode tidak bisa dimuat" :description="error" />

@@ -42,7 +42,7 @@ const perEffort = computed(() => impactPerEffort(props.todo).toFixed(0))
         </p>
 
         <div v-for="g in groups" :key="g.audience" class="space-y-1">
-          <div class="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+          <div class="text-xs font-semibold text-neutral-400">
             {{ impactAudienceLabel[g.audience] || g.audience }}
           </div>
           <div v-for="d in g.items" :key="d.key" :title="d.hint" class="space-y-0.5">

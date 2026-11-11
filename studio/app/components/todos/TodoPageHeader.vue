@@ -27,24 +27,18 @@ const showAutoRun = false
 </script>
 
 <template>
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-3 border-b border-neutral-200 dark:border-white/10">
-    <div class="min-w-0">
-      <div class="flex items-center gap-2.5 flex-wrap">
-        <h1 class="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white flex items-center gap-2">
-          <UIcon name="i-lucide-clipboard-check" class="w-6 h-6 text-violet-500 shrink-0" />
-          <span>Perencanaan & Agenda Bertingkat</span>
-        </h1>
-        <UBadge v-if="activeProject" size="sm" color="primary" variant="subtle">
-          {{ activeProject.name }}
-        </UBadge>
-      </div>
-      <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-        Fokus perencanaan teknis proyek aktif (Bundle & Komponen/Module) dengan rubrik terukur, pelacak tugas sisa, dan saran AI Agent.
+  <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pb-5 border-b border-neutral-200 dark:border-white/[0.07]">
+    <div class="min-w-0 space-y-1.5">
+      <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-neutral-950 dark:text-white">
+        Perencanaan &amp; Todo
+      </h2>
+      <p class="text-sm text-neutral-600 dark:text-slate-400 max-w-3xl">
+        Todo proyek aktif (tingkat proyek & aplikasi) dengan rubrik terukur, sisa pekerjaan, dan saran AI — dikerjakan agent coding lewat MCP.
       </p>
     </div>
 
     <!-- Action Buttons Row: Rata Kanan -->
-    <div class="flex items-center justify-end flex-wrap gap-2.5 shrink-0 self-end md:self-center ml-auto">
+    <div class="flex items-center flex-wrap gap-2 shrink-0">
       <UButton
         icon="i-lucide-book-open"
         color="neutral"
@@ -53,7 +47,7 @@ const showAutoRun = false
         title="Buka daftar buku panduan dan rubrik penilaian AI"
         @click="emit('openGuidelines')"
       >
-        Lihat Patokan
+        Patokan
       </UButton>
 
       <UButton
@@ -65,7 +59,7 @@ const showAutoRun = false
         title="Muat ulang data todo proyek aktif"
         @click="emit('refresh')"
       >
-        Refresh
+        Muat ulang
       </UButton>
 
       <UButton

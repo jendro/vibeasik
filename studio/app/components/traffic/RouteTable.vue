@@ -52,7 +52,7 @@ const methodCls: Record<string, string> = {
 
     <div v-if="view === 'routes'" class="overflow-x-auto rounded-xl border border-neutral-200 dark:border-white/[0.08]">
       <table class="w-full text-xs">
-        <thead class="bg-neutral-50 dark:bg-neutral-800/60 text-neutral-500 text-xs uppercase tracking-wide">
+        <thead class="bg-neutral-50 dark:bg-neutral-800/60 text-neutral-500 text-xs">
           <tr>
             <th class="text-left font-semibold px-3 py-2">
               Endpoint

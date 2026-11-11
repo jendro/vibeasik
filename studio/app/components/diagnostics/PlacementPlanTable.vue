@@ -16,7 +16,7 @@ const actionLabel: Record<string, string> = {
 
 <template>
   <div class="space-y-2">
-    <div class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
+    <div class="flex items-center gap-1.5 text-xs font-semibold text-neutral-700 dark:text-neutral-300">
       <UIcon name="i-lucide-map" class="w-3.5 h-3.5 text-emerald-500" />
       <span>Peta Penempatan Logika (sesuai Peta Layer Proyek):</span>
     </div>

@@ -91,7 +91,7 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
               <td class="py-2.5 px-3 align-top space-y-1">
                 <div class="flex items-center gap-1.5 flex-wrap">
                   <span
-                    class="px-1.5 py-0.5 rounded text-xs font-bold font-mono border uppercase shrink-0"
+                    class="px-1.5 py-0.5 rounded text-xs font-semibold font-mono border shrink-0"
                     :class="getMethodColorClass(row.method)"
                   >
                     {{ row.method }}

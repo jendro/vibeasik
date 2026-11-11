@@ -265,19 +265,27 @@ const handleCreateDirOnDisk = async (comp: ProjectComponent) => {
 </script>
 
 <template>
-  <div v-if="loading" class="p-4 sm:p-6 lg:p-8 space-y-6">
+  <div v-if="loading" class="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
     <div class="h-28 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] animate-pulse" />
     <div class="h-96 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] animate-pulse" />
   </div>
 
-  <div v-else-if="project" class="flex-1 flex flex-col lg:flex-row items-stretch w-full min-h-[calc(100vh-4rem)] relative">
-    <!-- Main column: project header (always visible) + active tab -->
-    <div class="flex-1 min-w-0 w-full p-4 sm:p-6 lg:p-8 space-y-6 lg:mr-72 xl:mr-80">
-      <ProjectsDetailProjectDetailHeader
-        :project="project"
-        @delete-project="deleteProjectOpen = true"
-        @start-pipeline="handleStartPipeline"
-      />
+  <div v-else-if="project" class="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+    <!-- Kepala proyek, lalu bilah tab yang menempel saat digulir -->
+    <ProjectsDetailProjectDetailHeader
+      :project="project"
+      :profile="profile"
+      @delete-project="deleteProjectOpen = true"
+      @start-pipeline="handleStartPipeline"
+    />
+
+    <ProjectsDetailProjectDetailSidebar
+      v-model:active-tab="activeTab"
+      :project="project"
+      :profile="profile"
+    />
+
+    <div class="pt-6 space-y-6">
 
       <ProLockCard v-if="lockedFeature" :feature="lockedFeature" />
 
@@ -352,12 +360,6 @@ const handleCreateDirOnDisk = async (comp: ProjectComponent) => {
         :port-statuses="portStatuses"
       />
     </div>
-
-    <ProjectsDetailProjectDetailSidebar
-      v-model:active-tab="activeTab"
-      :project="project"
-      :profile="profile"
-    />
 
     <!-- Modals -->
     <ProjectsDetailComponentEditModal

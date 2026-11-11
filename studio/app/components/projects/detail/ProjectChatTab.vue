@@ -374,7 +374,7 @@ const getPriorityBadgeClass = (priority: string) => {
 
         <!-- Quick Idea Prompts -->
         <div class="w-full pt-2 space-y-2">
-          <span class="text-xs font-semibold uppercase text-slate-400">Contoh Ide Permintaan:</span>
+          <span class="text-xs font-semibold text-slate-400">Contoh Ide Permintaan:</span>
           <div class="flex flex-wrap justify-center gap-1.5">
             <button
               v-for="chip in quickIdeaChips"
@@ -436,7 +436,7 @@ const getPriorityBadgeClass = (priority: string) => {
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <UIcon name="i-lucide-list-todo" class="size-4 text-emerald-500" />
-                <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+                <h4 class="text-xs font-semibold text-slate-900 dark:text-slate-100">
                   Rekomendasi TODO untuk Pekerja AI ({{ msg.todos.length }} Task)
                 </h4>
               </div>
@@ -469,7 +469,7 @@ const getPriorityBadgeClass = (priority: string) => {
                   <div class="space-y-1">
                     <div class="flex flex-wrap items-center gap-1.5">
                       <span
-                        class="px-2 py-0.5 rounded text-xs font-bold border uppercase"
+                        class="px-2 py-0.5 rounded text-xs font-semibold border"
                         :class="getPriorityBadgeClass(todo.priority)"
                       >
                         {{ todo.priority }}
@@ -550,7 +550,7 @@ const getPriorityBadgeClass = (priority: string) => {
     <div class="p-3 sm:p-4 border-t border-slate-200 dark:border-white/[0.08] bg-slate-50/50 dark:bg-slate-900/60 space-y-2">
       <!-- Quick Chips if messages exist -->
       <div v-if="messages.length > 0" class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-        <span class="text-xs uppercase font-semibold text-slate-400 shrink-0">Ide Cepat:</span>
+        <span class="text-xs font-semibold text-slate-400 shrink-0">Ide Cepat:</span>
         <button
           v-for="chip in quickIdeaChips"
           :key="chip"

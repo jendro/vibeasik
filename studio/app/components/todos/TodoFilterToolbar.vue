@@ -78,7 +78,7 @@ const toggleUncompletedStatus = () => {
 
     <!-- Row 2: Category Filter Pills -->
     <div class="flex flex-wrap items-center gap-1.5 text-xs pb-1">
-      <span class="text-neutral-400 text-xs font-semibold uppercase tracking-wider mr-1">Kategori:</span>
+      <span class="text-neutral-400 text-xs font-semibold mr-1">Kategori:</span>
       <button
         type="button"
         class="px-2.5 py-1 rounded-md font-medium text-xs transition-colors cursor-pointer"

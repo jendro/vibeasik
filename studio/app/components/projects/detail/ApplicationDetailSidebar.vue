@@ -77,7 +77,7 @@ const techInfo = computed(() => {
                 class="w-2 h-2 rounded-full shrink-0"
                 :class="portActive ? 'bg-sky-500 animate-pulse' : 'bg-neutral-300 dark:bg-neutral-600'"
               />
-              <span class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+              <span class="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
                 Status Aplikasi
               </span>
             </div>
@@ -128,7 +128,7 @@ const techInfo = computed(() => {
           <div class="text-2xl font-bold leading-none">
             {{ componentDiagnostic.score }}<span class="text-xs font-normal">/100</span>
           </div>
-          <div class="text-xs uppercase font-semibold mt-0.5">
+          <div class="text-xs font-semibold mt-0.5">
             Code Health
           </div>
         </div>
@@ -168,7 +168,7 @@ const techInfo = computed(() => {
       <!-- Quick Metrics inside Status -->
       <div class="relative z-10 grid grid-cols-2 gap-2 text-xs">
         <div class="p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-100 dark:border-neutral-800/80">
-          <div class="flex items-center justify-between text-xs text-neutral-400 uppercase font-medium">
+          <div class="flex items-center justify-between text-xs text-neutral-400 font-medium">
             <span>Status Port</span>
             <button
               v-if="comp.port > 0"
@@ -184,13 +184,13 @@ const techInfo = computed(() => {
             <span>{{ comp.port > 0 ? ':' + comp.port : 'Tanpa port' }}</span>
             <span v-if="portActive" class="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
           </div>
-          <div class="text-xs uppercase font-semibold font-mono" :class="portActive ? 'text-sky-600 dark:text-sky-400' : 'text-neutral-400'">
+          <div class="text-xs font-semibold font-mono" :class="portActive ? 'text-sky-600 dark:text-sky-400' : 'text-neutral-400'">
             {{ comp.port > 0 ? (portActive ? 'LISTENING' : 'OFFLINE') : '-' }}
           </div>
         </div>
 
         <div class="p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-100 dark:border-neutral-800/80">
-          <div class="text-xs text-neutral-400 uppercase font-medium">
+          <div class="text-xs text-neutral-400 font-medium">
             Stack
           </div>
           <div class="font-bold text-neutral-800 dark:text-neutral-200 text-xs mt-0.5 truncate capitalize">
@@ -204,7 +204,7 @@ const techInfo = computed(() => {
 
       <!-- Dev Command snippet -->
       <div v-if="comp.dev_command" class="relative z-10 p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-100 dark:border-neutral-800/80 text-xs font-mono space-y-1">
-        <div class="flex items-center justify-between text-neutral-400 text-xs uppercase">
+        <div class="flex items-center justify-between text-neutral-400 text-xs">
           <span>Dev Command</span>
           <button
             type="button"

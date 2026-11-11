@@ -11,7 +11,7 @@ defineProps<{ scanResult: FastScanResult }>()
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-cpu" class="w-4 h-4 text-primary-600 dark:text-primary-400" />
-          <span class="text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">Framework & Engine HTTP</span>
+          <span class="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Framework & Engine HTTP</span>
         </div>
         <TechBadge
           :tech="scanResult.architecture?.framework || scanResult.detected_params.framework"
@@ -21,7 +21,7 @@ defineProps<{ scanResult: FastScanResult }>()
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono">
         <div class="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200 dark:border-neutral-700/60">
-          <div class="text-xs uppercase font-bold text-neutral-400">
+          <div class="text-xs font-semibold text-neutral-400">
             Framework Name
           </div>
           <div class="mt-1 flex items-center gap-1.5 font-semibold text-neutral-800 dark:text-neutral-100">
@@ -30,7 +30,7 @@ defineProps<{ scanResult: FastScanResult }>()
         </div>
 
         <div class="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200 dark:border-neutral-700/60 sm:col-span-2">
-          <div class="text-xs uppercase font-bold text-neutral-400">
+          <div class="text-xs font-semibold text-neutral-400">
             Engine / Architecture Type
           </div>
           <div class="mt-1 font-semibold text-neutral-800 dark:text-neutral-100 truncate" :title="scanResult.architecture?.framework_type">
@@ -45,7 +45,7 @@ defineProps<{ scanResult: FastScanResult }>()
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-network" class="w-4 h-4 text-sky-600 dark:text-sky-400" />
-          <span class="text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">Desain Pola Arsitektur (Design Pattern)</span>
+          <span class="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Desain Pola Arsitektur (Design Pattern)</span>
         </div>
         <UBadge size="xs" color="success" variant="subtle">
           {{ scanResult.architecture?.design_pattern || 'MVC Pattern' }}
@@ -67,7 +67,7 @@ defineProps<{ scanResult: FastScanResult }>()
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-blocks" class="w-4 h-4 text-purple-600 dark:text-purple-400" />
-          <span class="text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">Plugins, Middlewares & Libraries</span>
+          <span class="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Plugins, Middlewares & Libraries</span>
         </div>
         <span class="text-xs text-neutral-400 font-mono">
           {{ scanResult.architecture?.plugins?.length || 0 }} library terdeteksi

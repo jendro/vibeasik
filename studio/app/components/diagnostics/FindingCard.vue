@@ -206,7 +206,7 @@ const getCategoryColor = (cat: string) => {
             color="primary"
             variant="solid"
             icon="i-lucide-layers"
-            class="font-mono text-xs font-bold tracking-wider uppercase px-1.5 py-0"
+            class="font-mono text-xs font-semibold px-1.5 py-0"
             title="Temuan ini dideteksi khusus melalui Deep Check"
           >
             DEEP
@@ -219,7 +219,7 @@ const getCategoryColor = (cat: string) => {
             color="secondary"
             variant="soft"
             icon="i-lucide-sparkles"
-            class="font-mono text-xs font-bold tracking-wider uppercase px-1.5 py-0"
+            class="font-mono text-xs font-semibold px-1.5 py-0"
             :title="`Temuan dari review audit LLM${finding.model_used ? ` (${modelName(finding.model_used)})` : ''} — verifikasi sebelum diterapkan`"
           >
             LLM
@@ -413,7 +413,7 @@ const getCategoryColor = (cat: string) => {
 
         <!-- Action Steps for Agent / Dev -->
         <div v-if="finding.action_steps && finding.action_steps.length > 0" class="space-y-2">
-          <div class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
+          <div class="flex items-center gap-1.5 text-xs font-semibold text-neutral-700 dark:text-neutral-300">
             <UIcon name="i-lucide-list-ordered" class="w-3.5 h-3.5 text-primary-500" />
             <span>Langkah-langkah Penyelesaian (Action Steps untuk AI Agent):</span>
           </div>
@@ -436,7 +436,7 @@ const getCategoryColor = (cat: string) => {
         <!-- Code Replacement (Before vs After) -->
         <div v-if="finding.code_after" class="space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
+            <span class="text-xs font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
               <UIcon name="i-lucide-code-2" class="w-3.5 h-3.5 text-sky-400" />
               Kode Rekomendasi Solusi (Drop-in Replacement):
             </span>
@@ -470,7 +470,7 @@ const getCategoryColor = (cat: string) => {
 
         <!-- Code Snippet -->
         <div v-if="finding.snippet" class="space-y-1">
-          <span class="text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
+          <span class="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
             Kode Terindikasi (Baris {{ finding.line || '1' }}):
           </span>
           <pre class="p-2.5 rounded-lg bg-neutral-900 text-rose-300 font-mono text-xs overflow-x-auto border border-neutral-800"><code>{{ finding.snippet }}</code></pre>
@@ -478,7 +478,7 @@ const getCategoryColor = (cat: string) => {
 
         <!-- Suggested Fix / Action -->
         <div class="space-y-1">
-          <span class="text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
+          <span class="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
             Saran Perbaikan:
           </span>
           <div class="p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200 dark:border-white/[0.08] text-xs text-neutral-700 dark:text-neutral-300 font-mono leading-relaxed">

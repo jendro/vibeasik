@@ -13,4 +13,4 @@ export const healthBar = (s: number | null | undefined) => s == null
 
 export const healthLabel = (s: number | null | undefined) => s == null
   ? 'Belum diaudit'
-  : s >= HEALTH_GOOD ? 'Sehat · siap produksi' : s >= HEALTH_WARN ? 'Perlu perbaikan ringan' : 'Kritis · banyak temuan'
+  : s >= HEALTH_GOOD ? 'Sehat' : s >= HEALTH_WARN ? 'Perlu perbaikan' : 'Kritis'

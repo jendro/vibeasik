@@ -206,7 +206,7 @@ const savePasted = async () => {
           </UButton>
         </div>
         <div class="pt-1 space-y-1">
-          <div class="text-xs uppercase font-semibold text-neutral-400">
+          <div class="text-xs font-semibold text-neutral-400">
             Perbarui sebagian (salin perintah singkat)
           </div>
           <div class="flex flex-wrap gap-1.5">

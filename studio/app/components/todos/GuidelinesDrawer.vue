@@ -106,7 +106,7 @@ const severityClass = (s: string) => {
                 </div>
 
                 <span
-                  class="px-2 py-0.5 rounded text-xs font-medium border uppercase"
+                  class="px-2 py-0.5 rounded text-xs font-medium border"
                   :class="severityClass(item.severity)"
                 >
                   {{ item.severity }}
@@ -115,7 +115,7 @@ const severityClass = (s: string) => {
 
               <!-- Rule -->
               <div class="space-y-1">
-                <div class="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+                <div class="text-xs font-semibold text-neutral-500">
                   Aturan (Rule):
                 </div>
                 <p class="text-neutral-700 dark:text-neutral-300 leading-relaxed font-sans">
@@ -125,7 +125,7 @@ const severityClass = (s: string) => {
 
               <!-- Rationale -->
               <div class="space-y-1">
-                <div class="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+                <div class="text-xs font-semibold text-neutral-500">
                   Rasional / Alasan:
                 </div>
                 <p class="text-neutral-600 dark:text-neutral-400 leading-relaxed font-sans text-xs">

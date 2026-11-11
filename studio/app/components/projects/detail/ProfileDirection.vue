@@ -98,7 +98,7 @@ const severityClass: Record<ProfileRisk['severity'], string> = {
         >
           <div class="flex items-center justify-between gap-2">
             <span class="font-semibold">{{ r.title }}</span>
-            <span class="text-xs uppercase font-bold tracking-wider shrink-0">{{ r.severity }}</span>
+            <span class="text-xs font-semibold shrink-0">{{ r.severity }}</span>
           </div>
           <p v-if="r.detail" class="text-xs mt-0.5 opacity-90 leading-relaxed">
             {{ r.detail }}

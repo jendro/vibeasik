@@ -106,7 +106,7 @@ const runSampleAudit = async () => {
 </script>
 
 <template>
-  <div class="w-full px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+  <div class="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
     <!-- Header Banner -->
     <div class="p-6 rounded-2xl bg-white dark:bg-slate-900/60 border border-neutral-200 dark:border-white/10 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
       <div class="space-y-1">

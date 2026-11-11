@@ -48,7 +48,7 @@ const filteredRoutes = computed(() => {
 
     <div v-if="filteredRoutes.length > 0" class="overflow-x-auto rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f]">
       <table class="w-full text-left text-xs">
-        <thead class="bg-neutral-50 dark:bg-neutral-800 text-neutral-500 uppercase text-xs tracking-wider border-b border-neutral-200 dark:border-white/[0.08]">
+        <thead class="bg-neutral-50 dark:bg-neutral-800 text-neutral-500 text-xs border-b border-neutral-200 dark:border-white/[0.08]">
           <tr>
             <th class="p-3 w-20">
               Method

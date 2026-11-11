@@ -309,7 +309,7 @@ const { getMethodColorClass } = useFormatters()
 
         <!-- Key Config Files Chips -->
         <div v-if="baseKnowledge.files_scope?.config_files?.length" class="space-y-1.5">
-          <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          <span class="text-xs font-semibold text-slate-500">
             File Konfigurasi Utama yang Terdeteksi:
           </span>
           <div class="flex flex-wrap gap-1.5">
@@ -352,19 +352,19 @@ const { getMethodColorClass } = useFormatters()
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
           <div class="p-3 rounded-lg border border-slate-100 dark:border-white/[0.08] bg-slate-50/50 dark:bg-slate-950/30">
-            <span class="text-xs uppercase font-semibold text-slate-400">Database Engine</span>
+            <span class="text-xs font-semibold text-slate-400">Database Engine</span>
             <p class="font-bold text-slate-800 dark:text-slate-200 mt-0.5">
               {{ baseKnowledge.environment_scope?.database_type || 'SQLite' }}
             </p>
           </div>
           <div class="p-3 rounded-lg border border-slate-100 dark:border-white/[0.08] bg-slate-50/50 dark:bg-slate-950/30">
-            <span class="text-xs uppercase font-semibold text-slate-400">Metode Autentikasi</span>
+            <span class="text-xs font-semibold text-slate-400">Metode Autentikasi</span>
             <p class="font-bold text-slate-800 dark:text-slate-200 mt-0.5">
               {{ baseKnowledge.environment_scope?.auth_methods?.join(', ') || 'Session / API Key' }}
             </p>
           </div>
           <div class="p-3 rounded-lg border border-slate-100 dark:border-white/[0.08] bg-slate-50/50 dark:bg-slate-950/30">
-            <span class="text-xs uppercase font-semibold text-slate-400">Layanan Pihak Ke-3</span>
+            <span class="text-xs font-semibold text-slate-400">Layanan Pihak Ke-3</span>
             <p class="font-bold text-slate-800 dark:text-slate-200 mt-0.5 truncate">
               {{ baseKnowledge.environment_scope?.third_party_services?.join(', ') || 'None' }}
             </p>

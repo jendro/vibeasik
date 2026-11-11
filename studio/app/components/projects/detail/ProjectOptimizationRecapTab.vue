@@ -46,7 +46,7 @@ const recap = computed(() => buildOptimizationRecap(todos.value))
       <section class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] p-4 sm:p-5">
         <div class="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <div class="text-xs uppercase font-semibold tracking-wider text-neutral-400">
+            <div class="text-xs font-semibold text-neutral-400">
               Optimasi selesai
             </div>
             <div class="text-4xl font-bold font-mono text-neutral-900 dark:text-white leading-none mt-1">

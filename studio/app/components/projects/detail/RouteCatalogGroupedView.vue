@@ -31,7 +31,7 @@ const handleDelete = (route: ComponentRoute) => emit('delete', route)
       <div class="p-3.5 bg-neutral-50/80 dark:bg-neutral-800 border-b border-neutral-200 dark:border-white/[0.08] flex items-center justify-between">
         <div class="flex items-center gap-2">
           <UIcon :name="isFrontend ? 'i-lucide-panels-top-left' : 'i-lucide-folder-git-2'" class="w-4 h-4 text-primary-500" />
-          <span class="font-bold text-xs text-neutral-900 dark:text-white uppercase tracking-wider">
+          <span class="font-semibold text-xs text-neutral-900 dark:text-white">
             {{ group.domain }}
           </span>
           <UBadge size="xs" color="neutral" variant="subtle" class="font-semibold">
@@ -43,7 +43,7 @@ const handleDelete = (route: ComponentRoute) => emit('delete', route)
       <!-- Table within Group -->
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs">
-          <thead class="bg-neutral-50/40 dark:bg-neutral-800/30 text-neutral-400 uppercase text-xs tracking-wider border-b border-neutral-100 dark:border-neutral-800/80">
+          <thead class="bg-neutral-50/40 dark:bg-neutral-800/30 text-neutral-400 text-xs border-b border-neutral-100 dark:border-neutral-800/80">
             <tr v-if="isFrontend">
               <th class="py-2.5 px-4 w-20">
                 Tipe

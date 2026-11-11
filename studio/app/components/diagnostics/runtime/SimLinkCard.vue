@@ -14,15 +14,13 @@ const emit = defineEmits<{
 const running = computed(() => props.session?.status === 'running')
 const openFindings = computed(() => (props.session?.findings || []).filter(f => f.status !== 'resolved' && f.status !== 'ignored').length)
 const target = computed(() => props.projectId ? `/runtime-test?project_id=${props.projectId}` : '/runtime-test')
-const scoreColor = (score: number) => score >= 90 ? 'text-emerald-600 dark:text-emerald-400' : score >= 70 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'
+const scoreColor = healthTone
 </script>
 
 <template>
   <section class="p-4 bg-white dark:bg-[#04111f] border border-neutral-200 dark:border-white/[0.08] rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3">
     <div class="flex items-start gap-3 min-w-0">
-      <span class="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shrink-0">
-        <UIcon name="i-lucide-laptop" class="w-5 h-5" />
-      </span>
+      <UIcon name="i-lucide-laptop" class="size-5 shrink-0 mt-0.5 text-neutral-400" />
       <div class="min-w-0 space-y-0.5">
         <div class="flex items-center gap-2 flex-wrap text-sm font-bold text-neutral-900 dark:text-white">
           Uji Runtime di Laptop
@@ -38,7 +36,7 @@ const scoreColor = (score: number) => score >= 90 ? 'text-emerald-600 dark:text-
       <UButton v-if="openFindings > 0" size="sm" color="warning" variant="soft" icon="i-lucide-list-filter" @click="emit('showFindings')">
         {{ openFindings }} temuan Runtime
       </UButton>
-      <UButton size="sm" color="primary" icon="i-lucide-arrow-right" trailing :to="target">
+      <UButton size="sm" color="neutral" variant="outline" icon="i-lucide-arrow-right" trailing :to="target">
         Buka Uji Runtime
       </UButton>
     </div>

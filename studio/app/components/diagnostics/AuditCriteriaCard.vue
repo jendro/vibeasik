@@ -54,7 +54,7 @@ const scopeBadgeClass = (scope: string) => {
         <!-- Deep Check Badge -->
         <span
           v-if="item.is_deep"
-          class="px-2 py-0.5 rounded text-xs font-mono font-bold tracking-wider uppercase bg-primary-50 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800 flex items-center gap-1 shrink-0"
+          class="px-2 py-0.5 rounded text-xs font-mono font-semibold bg-primary-50 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800 flex items-center gap-1 shrink-0"
           title="Kriteria ini hanya diuji saat Deep Check dijalankan"
         >
           <UIcon name="i-lucide-layers" class="w-3 h-3 text-primary-500" />
@@ -66,7 +66,7 @@ const scopeBadgeClass = (scope: string) => {
           {{ item.scope }}
         </span>
         <!-- Severity Badge -->
-        <span class="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider border" :class="severityBadgeClass(item.severity)">
+        <span class="px-2 py-0.5 rounded text-xs font-semibold border" :class="severityBadgeClass(item.severity)">
           {{ item.severity }}
         </span>
       </div>
@@ -74,7 +74,7 @@ const scopeBadgeClass = (scope: string) => {
 
     <!-- Rule Description -->
     <div class="space-y-1">
-      <div class="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
+      <div class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
         <UIcon name="i-lucide-check-circle" class="w-3.5 h-3.5 text-emerald-500" />
         <span>Standar / Aturan (Rule):</span>
       </div>
@@ -85,7 +85,7 @@ const scopeBadgeClass = (scope: string) => {
 
     <!-- Rationale / Dampak Risiko Sistem -->
     <div class="space-y-1 p-2.5 rounded-lg bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40">
-      <div class="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400 flex items-center gap-1">
+      <div class="text-xs font-semibold text-amber-800 dark:text-amber-400 flex items-center gap-1">
         <UIcon name="i-lucide-alert-triangle" class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
         <span>Rasional & Dampak Kerusakan Sistem:</span>
       </div>
@@ -96,7 +96,7 @@ const scopeBadgeClass = (scope: string) => {
 
     <!-- Inspection Check -->
     <div class="space-y-1 p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200/60 dark:border-neutral-700/60">
-      <div class="text-xs font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-300 flex items-center gap-1">
+      <div class="text-xs font-semibold text-neutral-600 dark:text-neutral-300 flex items-center gap-1">
         <UIcon name="i-lucide-search" class="w-3.5 h-3.5 text-neutral-500" />
         <span>Metode Pemeriksaan Otomatis (Inspection Check):</span>
       </div>
@@ -107,7 +107,7 @@ const scopeBadgeClass = (scope: string) => {
 
     <!-- Suggested Action / Solusi -->
     <div class="space-y-1 p-2.5 rounded-lg bg-sky-50/60 dark:bg-sky-950/20 border border-sky-200/60 dark:border-sky-900/40">
-      <div class="text-xs font-bold uppercase tracking-wider text-sky-800 dark:text-sky-300 flex items-center gap-1">
+      <div class="text-xs font-semibold text-sky-800 dark:text-sky-300 flex items-center gap-1">
         <UIcon name="i-lucide-wrench" class="w-3.5 h-3.5 text-sky-500" />
         <span>Saran Solusi & Remediasi:</span>
       </div>
@@ -118,16 +118,16 @@ const scopeBadgeClass = (scope: string) => {
 
     <!-- Code Example (Before vs After) if present -->
     <div v-if="item.example_code" class="mt-2 space-y-1.5 pt-1">
-      <div class="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+      <div class="text-xs font-semibold text-neutral-400 dark:text-neutral-500">
         Contoh Implementasi:
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs font-mono">
         <div class="p-2 rounded bg-rose-50/70 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40 space-y-1 overflow-x-auto">
-          <span class="text-xs font-bold text-rose-700 dark:text-rose-400 uppercase">❌ Sebelum (Smelly / Rentan):</span>
+          <span class="text-xs font-semibold text-rose-700 dark:text-rose-400">❌ Sebelum (Smelly / Rentan):</span>
           <pre class="text-rose-900 dark:text-rose-300 whitespace-pre-wrap leading-tight">{{ item.example_code.bad }}</pre>
         </div>
         <div class="p-2 rounded bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40 space-y-1 overflow-x-auto">
-          <span class="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase">✅ Sesudah (Solusi Bersih):</span>
+          <span class="text-xs font-semibold text-emerald-700 dark:text-emerald-400">✅ Sesudah (Solusi Bersih):</span>
           <pre class="text-emerald-900 dark:text-emerald-300 whitespace-pre-wrap leading-tight">{{ item.example_code.good }}</pre>
         </div>
       </div>

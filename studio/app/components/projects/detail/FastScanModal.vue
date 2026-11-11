@@ -82,7 +82,7 @@ const getCompRoleLabel = (role: string) => {
 
           <!-- Expandable Security Audit Table -->
           <div v-if="showSecurityAuditDetails && scanResult.security_audit?.records" class="mt-2 pt-2 border-t border-sky-200/70 dark:border-sky-900/40 space-y-1.5 text-xs">
-            <div class="text-xs uppercase font-bold text-sky-900 dark:text-sky-200 tracking-wider">
+            <div class="text-xs font-semibold text-sky-900 dark:text-sky-200">
               Daftar Kredensial yang Dialiaskan Sebelum Masuk ke LLM:
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 font-mono text-xs">

@@ -10,7 +10,7 @@ const copyToClipboard = (text: string, label = 'Copied!') => copyText(text, labe
 <template>
   <div class="space-y-4">
     <div v-if="scanResult.how_to_run.prerequisites && scanResult.how_to_run.prerequisites.length > 0" class="space-y-1.5">
-      <label class="block text-xs font-semibold text-neutral-500 uppercase tracking-wider">Prasyarat Runtime:</label>
+      <label class="block text-xs font-semibold text-neutral-500">Prasyarat Runtime:</label>
       <div class="flex flex-wrap gap-1.5">
         <span
           v-for="(p, pIdx) in scanResult.how_to_run.prerequisites"
@@ -24,7 +24,7 @@ const copyToClipboard = (text: string, label = 'Copied!') => copyText(text, labe
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
       <div class="p-3 rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-neutral-50/50 dark:bg-neutral-800/40 space-y-1.5">
-        <div class="flex items-center justify-between text-neutral-500 text-xs uppercase font-bold">
+        <div class="flex items-center justify-between text-neutral-500 text-xs font-semibold">
           <span class="flex items-center gap-1 text-sky-600 dark:text-sky-400">
             <UIcon name="i-lucide-terminal" class="w-3.5 h-3.5" />
             Dev Command
@@ -42,7 +42,7 @@ const copyToClipboard = (text: string, label = 'Copied!') => copyText(text, labe
       </div>
 
       <div class="p-3 rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-neutral-50/50 dark:bg-neutral-800/40 space-y-1.5">
-        <div class="flex items-center justify-between text-neutral-500 text-xs uppercase font-bold">
+        <div class="flex items-center justify-between text-neutral-500 text-xs font-semibold">
           <span class="flex items-center gap-1 text-blue-600 dark:text-blue-400">
             <UIcon name="i-lucide-download" class="w-3.5 h-3.5" />
             Install Dependencies
@@ -60,7 +60,7 @@ const copyToClipboard = (text: string, label = 'Copied!') => copyText(text, labe
       </div>
 
       <div class="p-3 rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-neutral-50/50 dark:bg-neutral-800/40 space-y-1.5">
-        <div class="flex items-center justify-between text-neutral-500 text-xs uppercase font-bold">
+        <div class="flex items-center justify-between text-neutral-500 text-xs font-semibold">
           <span class="flex items-center gap-1 text-amber-600 dark:text-amber-400">
             <UIcon name="i-lucide-hammer" class="w-3.5 h-3.5" />
             Build Command
@@ -78,7 +78,7 @@ const copyToClipboard = (text: string, label = 'Copied!') => copyText(text, labe
       </div>
 
       <div class="p-3 rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-neutral-50/50 dark:bg-neutral-800/40 space-y-1.5">
-        <div class="flex items-center justify-between text-neutral-500 text-xs uppercase font-bold">
+        <div class="flex items-center justify-between text-neutral-500 text-xs font-semibold">
           <span class="flex items-center gap-1 text-purple-600 dark:text-purple-400">
             <UIcon name="i-lucide-check-circle-2" class="w-3.5 h-3.5" />
             Test Command

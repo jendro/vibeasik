@@ -270,7 +270,7 @@ const handleSubmit = () => {
 
         <!-- Technical Details -->
         <div class="pt-2 border-t border-neutral-100 dark:border-white/[0.08] space-y-3">
-          <div class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+          <div class="text-xs font-semibold text-neutral-400">
             Detail Teknis (Opsional)
           </div>
 

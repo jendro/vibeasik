@@ -42,6 +42,13 @@ const tableCount = computed(() => {
 
 const hasFrontend = computed(() => (props.project.components || []).some(c => c.role?.startsWith('frontend')))
 
+const statItems = computed(() => stats.value.map(st => ({
+  label: st.label,
+  value: st.value,
+  hint: st.sub,
+  action: st.tab ? () => emit('switchTab', st.tab) : undefined
+})))
+
 const stats = computed(() => {
   const s = props.profile?.stats
   return [
@@ -74,29 +81,8 @@ const stats = computed(() => {
       @updated="emit('updated', $event)"
     />
 
-    <!-- Stats strip -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
-      <component
-        :is="s.tab ? 'button' : 'div'"
-        v-for="s in stats"
-        :key="s.label"
-        type="button"
-        class="text-left rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] p-3.5 transition-colors"
-        :class="s.tab ? 'hover:border-sky-400/60 cursor-pointer' : ''"
-        @click="s.tab && emit('switchTab', s.tab)"
-      >
-        <div class="flex items-center justify-between text-neutral-400">
-          <span class="text-xs uppercase font-semibold tracking-wider">{{ s.label }}</span>
-          <UIcon :name="s.icon" class="w-3.5 h-3.5" />
-        </div>
-        <div class="text-2xl font-bold text-neutral-900 dark:text-white mt-1 font-mono">
-          {{ s.value }}
-        </div>
-        <div class="text-xs text-neutral-500">
-          {{ s.sub }}
-        </div>
-      </component>
-    </div>
+    <!-- Angka utama proyek (klik untuk membuka tab terkait) -->
+    <AppStatStrip :items="statItems" />
 
     <!-- Purpose & maturity -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -110,7 +96,7 @@ const stats = computed(() => {
         </p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div class="rounded-lg bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200/70 dark:border-white/[0.08] p-3">
-            <div class="text-xs uppercase font-bold text-rose-500 mb-1">
+            <div class="text-xs font-semibold text-rose-500 mb-1">
               Masalah
             </div>
             <p class="text-neutral-700 dark:text-neutral-300 leading-relaxed">
@@ -118,7 +104,7 @@ const stats = computed(() => {
             </p>
           </div>
           <div class="rounded-lg bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200/70 dark:border-white/[0.08] p-3">
-            <div class="text-xs uppercase font-bold text-emerald-500 mb-1">
+            <div class="text-xs font-semibold text-emerald-500 mb-1">
               Solusi
             </div>
             <p class="text-neutral-700 dark:text-neutral-300 leading-relaxed">
@@ -127,7 +113,7 @@ const stats = computed(() => {
           </div>
         </div>
         <div v-if="profile.purpose.target_users?.length" class="space-y-1.5">
-          <div class="text-xs uppercase font-bold text-neutral-400">
+          <div class="text-xs font-semibold text-neutral-400">
             Target Pengguna
           </div>
           <div class="flex flex-wrap gap-1.5">

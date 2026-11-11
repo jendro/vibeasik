@@ -38,7 +38,7 @@ const { copyToClipboard } = useCopyToClipboard()
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
         <div class="p-3 rounded-lg bg-white/80 dark:bg-neutral-900/80 border border-amber-200/60 dark:border-amber-900/40">
-          <div class="text-xs uppercase font-bold text-neutral-400">
+          <div class="text-xs font-semibold text-neutral-400">
             Total Kunci Tersensor
           </div>
           <div class="text-lg font-bold font-mono text-amber-600 dark:text-amber-400 mt-0.5">
@@ -46,7 +46,7 @@ const { copyToClipboard } = useCopyToClipboard()
           </div>
         </div>
         <div class="p-3 rounded-lg bg-white/80 dark:bg-neutral-900/80 border border-amber-200/60 dark:border-amber-900/40">
-          <div class="text-xs uppercase font-bold text-neutral-400">
+          <div class="text-xs font-semibold text-neutral-400">
             Match Keyword Khusus (Pass 1)
           </div>
           <div class="text-lg font-bold font-mono text-purple-600 dark:text-purple-400 mt-0.5">
@@ -54,7 +54,7 @@ const { copyToClipboard } = useCopyToClipboard()
           </div>
         </div>
         <div class="p-3 rounded-lg bg-white/80 dark:bg-neutral-900/80 border border-amber-200/60 dark:border-amber-900/40">
-          <div class="text-xs uppercase font-bold text-neutral-400">
+          <div class="text-xs font-semibold text-neutral-400">
             Pola Ancaman Bawaan (Pass 2)
           </div>
           <div class="text-lg font-bold font-mono text-sky-600 dark:text-sky-400 mt-0.5">
@@ -69,7 +69,7 @@ const { copyToClipboard } = useCopyToClipboard()
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-key-round" class="w-4 h-4 text-amber-500" />
-          <span class="text-xs font-bold uppercase tracking-wider text-neutral-800 dark:text-neutral-200">
+          <span class="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
             Daftar Token & Kunci yang Dialias / Disensor Pada Komponen Ini
           </span>
         </div>
@@ -80,7 +80,7 @@ const { copyToClipboard } = useCopyToClipboard()
 
       <div v-if="scanResult.security_audit?.records && scanResult.security_audit.records.length > 0" class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-white/[0.08]">
         <table class="w-full text-left text-xs font-mono">
-          <thead class="bg-neutral-50 dark:bg-neutral-800 text-neutral-500 uppercase text-xs tracking-wider border-b border-neutral-200 dark:border-white/[0.08]">
+          <thead class="bg-neutral-50 dark:bg-neutral-800 text-neutral-500 text-xs border-b border-neutral-200 dark:border-white/[0.08]">
             <tr>
               <th class="p-2.5 w-1/4">
                 Alias Terkirim ke LLM

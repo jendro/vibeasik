@@ -84,7 +84,7 @@ const handleConvertToTodo = async () => {
       <div class="flex items-center gap-3 shrink-0">
         <!-- Visual Score -->
         <div class="flex flex-col items-center px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 min-w-20">
-          <span class="text-xs uppercase font-semibold text-slate-500">Kualitas UI</span>
+          <span class="text-xs font-semibold text-slate-500">Kualitas UI</span>
           <span class="text-lg font-black tracking-tight" :class="audit.visual_score >= 80 ? 'text-emerald-500' : 'text-amber-500'">
             {{ audit.visual_score }}<span class="text-xs font-normal text-slate-400">/100</span>
           </span>
@@ -92,7 +92,7 @@ const handleConvertToTodo = async () => {
 
         <!-- Data Hygiene Score -->
         <div class="flex flex-col items-center px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 min-w-20">
-          <span class="text-xs uppercase font-semibold text-slate-500">Integritas Data</span>
+          <span class="text-xs font-semibold text-slate-500">Integritas Data</span>
           <span class="text-lg font-black tracking-tight" :class="audit.data_hygiene_score >= 80 ? 'text-blue-500' : 'text-rose-500'">
             {{ audit.data_hygiene_score }}<span class="text-xs font-normal text-slate-400">/100</span>
           </span>
@@ -106,7 +106,7 @@ const handleConvertToTodo = async () => {
       <div class="p-4 rounded-xl border border-slate-200/80 dark:border-white/[0.08] bg-slate-50/50 dark:bg-slate-950/40 space-y-3">
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-database-zap" class="size-4 text-blue-500" />
-          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+          <h4 class="text-xs font-semibold text-slate-700 dark:text-slate-300">
             Pemeriksaan Integritas & Anomali Data
           </h4>
         </div>
@@ -140,7 +140,7 @@ const handleConvertToTodo = async () => {
       <div class="p-4 rounded-xl border border-slate-200/80 dark:border-white/[0.08] bg-slate-50/50 dark:bg-slate-950/40 space-y-3">
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-layout" class="size-4 text-amber-500" />
-          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+          <h4 class="text-xs font-semibold text-slate-700 dark:text-slate-300">
             Kualitas Visual & Kebersihan Desain
           </h4>
         </div>
@@ -172,7 +172,7 @@ const handleConvertToTodo = async () => {
     <div v-if="audit.suggested_fixes?.length" class="p-4 rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/30 dark:bg-emerald-950/20 space-y-2.5">
       <div class="flex items-center gap-2">
         <UIcon name="i-lucide-check-circle" class="size-4 text-emerald-600 dark:text-emerald-400" />
-        <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+        <h4 class="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
           Rekomendasi Perbaikan Kode Frontend
         </h4>
       </div>

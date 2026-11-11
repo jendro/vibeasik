@@ -145,7 +145,7 @@ const go = (id: string) => {
 </script>
 
 <template>
-  <div class="w-full px-4 sm:px-6 lg:px-8 pt-6 pb-20 space-y-6">
+  <div class="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20 space-y-6">
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 sm:p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-xs">
       <div class="flex items-center gap-3.5 min-w-0">
         <div class="size-11 shrink-0 rounded-xl bg-linear-to-br from-indigo-500 to-emerald-500 text-white flex items-center justify-center shadow-xs">

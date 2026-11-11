@@ -151,7 +151,7 @@ const { handleApprove, handleReject, handleSplit, handleUpdateStatus, handleDele
 </script>
 
 <template>
-  <div class="space-y-6 w-full px-4 sm:px-6 lg:px-8 pt-6 pb-16">
+  <div class="space-y-6 w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-16">
     <TodosTodoPageHeader
       v-model:autopilot-agent="autopilotAgent"
       :active-project="activeProject"
@@ -169,13 +169,6 @@ const { handleApprove, handleReject, handleSplit, handleUpdateStatus, handleDele
       @open-prompts="promptsOpen = true"
     />
 
-    <TodosTodoProjectBanner
-      :active-project="activeProject"
-      :active-project-id="activeProjectId"
-      :projects="projects"
-      :remaining-tasks-count="remainingTasksCount"
-      @switch-project="handleSwitchProject"
-    />
 
     <TodosTodoLiveBanners
       :autopilot-enabled="autopilotEnabled"

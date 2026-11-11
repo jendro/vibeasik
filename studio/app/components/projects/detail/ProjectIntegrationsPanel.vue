@@ -50,7 +50,7 @@ defineEmits<{
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-1">
       <div class="space-y-1.5">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-400">
+        <h3 class="text-xs font-semibold text-neutral-400">
           Layanan Eksternal ({{ profile.external_services.length }})
         </h3>
         <p v-if="!profile.external_services.length" class="text-xs text-neutral-400">
@@ -62,7 +62,7 @@ defineEmits<{
         </div>
       </div>
       <div class="space-y-1.5">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-400">
+        <h3 class="text-xs font-semibold text-neutral-400">
           Entitas Data ({{ profile.data_entities.length }})
         </h3>
         <p v-if="!profile.data_entities.length" class="text-xs text-neutral-400">

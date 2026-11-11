@@ -121,7 +121,7 @@ const handleSeverityChange = (val: string | number) => {
 </script>
 
 <template>
-  <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3 pb-3 border-b border-neutral-200 dark:border-white/[0.08]">
+  <div class="flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-3 pb-3 border-b border-neutral-200 dark:border-white/[0.08]">
     <!-- Category Tabs -->
     <div class="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1 shrink-0">
       <button
@@ -155,7 +155,7 @@ const handleSeverityChange = (val: string | number) => {
     </div>
 
     <!-- Filter Controls Row: Status, Severity, & Search Input sejajar di pojok kanan -->
-    <div class="flex items-center justify-end gap-2.5 shrink-0 ml-auto flex-wrap sm:flex-nowrap">
+    <div class="flex items-center gap-2 flex-wrap 2xl:justify-end 2xl:ml-auto">
       <!-- Satukan Serupa: temuan rule + ekosistem sama jadi satu temuan utama dengan sub temuan -->
       <UButton
         size="sm"

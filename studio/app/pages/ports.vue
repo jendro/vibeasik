@@ -150,7 +150,7 @@ const conflictPorts = computed(() => displayPortTable.value.filter(entry => entr
 </script>
 
 <template>
-  <div class="w-full px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+  <div class="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-neutral-200 dark:border-white/10">
       <div>

@@ -146,7 +146,7 @@ const tabs = computed<AppTabItem[]>(() => [
             :class="portActive ? 'bg-sky-400 animate-pulse' : 'bg-neutral-400'"
           />
           <span
-            class="text-xs uppercase font-semibold"
+            class="text-xs font-semibold"
             :class="portActive ? 'text-sky-600 dark:text-sky-400' : 'text-neutral-400'"
           >
             {{ portActive ? 'LISTENING' : 'OFFLINE' }}

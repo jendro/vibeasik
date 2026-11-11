@@ -24,7 +24,7 @@ const lists = computed(() => [
         <span class="font-normal text-neutral-500">· {{ fmtNum(report.totals.unique_ips) }} IP unik</span>
       </div>
       <table class="w-full text-xs">
-        <thead class="text-neutral-500 text-xs uppercase tracking-wide">
+        <thead class="text-neutral-500 text-xs">
           <tr>
             <th class="text-left font-semibold px-3 py-1.5">
               IP

@@ -47,7 +47,7 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
         <!-- Flow Context Summary Banner -->
         <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div class="space-y-0.5">
-            <div class="text-xs text-neutral-400 uppercase font-semibold">
+            <div class="text-xs text-neutral-400 font-semibold">
               Dipanggil dari Halaman:
             </div>
             <div class="font-bold text-neutral-900 dark:text-white flex items-center gap-1.5">
@@ -136,13 +136,13 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
         <div v-if="inspectorActiveTab === 'payload'" class="space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/[0.08] space-y-1">
-              <span class="text-xs uppercase font-bold text-neutral-400">Pemicu Event Frontend:</span>
+              <span class="text-xs font-semibold text-neutral-400">Pemicu Event Frontend:</span>
               <p class="font-semibold text-neutral-900 dark:text-white">
                 {{ inspectingFlow.trigger_event }}
               </p>
             </div>
             <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/[0.08] space-y-1">
-              <span class="text-xs uppercase font-bold text-neutral-400">Metode & Endpoint:</span>
+              <span class="text-xs font-semibold text-neutral-400">Metode & Endpoint:</span>
               <p class="font-mono font-bold text-sky-600 dark:text-sky-400">
                 {{ inspectingFlow.http_method }} {{ inspectingFlow.route_path }}
               </p>
@@ -150,28 +150,28 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
           </div>
 
           <div v-if="inspectingFlow.request_payload?.params" class="space-y-1">
-            <span class="text-xs uppercase font-bold text-neutral-400">Parameter URL (Path Params):</span>
+            <span class="text-xs font-semibold text-neutral-400">Parameter URL (Path Params):</span>
             <p class="p-2.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 font-mono text-xs text-neutral-800 dark:text-neutral-200">
               {{ inspectingFlow.request_payload.params }}
             </p>
           </div>
 
           <div v-if="inspectingFlow.request_payload?.query" class="space-y-1">
-            <span class="text-xs uppercase font-bold text-neutral-400">Query Parameters:</span>
+            <span class="text-xs font-semibold text-neutral-400">Query Parameters:</span>
             <p class="p-2.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 font-mono text-xs text-neutral-800 dark:text-neutral-200">
               {{ inspectingFlow.request_payload.query }}
             </p>
           </div>
 
           <div v-if="inspectingFlow.request_payload?.headers" class="space-y-1">
-            <span class="text-xs uppercase font-bold text-neutral-400">HTTP Headers:</span>
+            <span class="text-xs font-semibold text-neutral-400">HTTP Headers:</span>
             <p class="p-2.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 font-mono text-xs text-neutral-800 dark:text-neutral-200">
               {{ inspectingFlow.request_payload.headers }}
             </p>
           </div>
 
           <div v-if="inspectingFlow.request_payload?.body" class="space-y-1">
-            <span class="text-xs uppercase font-bold text-neutral-400">JSON Request Body:</span>
+            <span class="text-xs font-semibold text-neutral-400">JSON Request Body:</span>
             <pre class="p-3 rounded-xl bg-neutral-950 text-sky-400 font-mono text-xs overflow-x-auto border border-neutral-800 leading-relaxed">{{ inspectingFlow.request_payload.body }}</pre>
           </div>
         </div>
@@ -203,13 +203,13 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
         <div v-else-if="inspectorActiveTab === 'handler'" class="space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/[0.08] space-y-1">
-              <span class="text-xs uppercase font-bold text-neutral-400">Fungsi Handler Controller:</span>
+              <span class="text-xs font-semibold text-neutral-400">Fungsi Handler Controller:</span>
               <p class="font-mono font-bold text-purple-700 dark:text-purple-300 text-xs">
                 {{ inspectingFlow.handler_function }}
               </p>
             </div>
             <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/[0.08] space-y-1">
-              <span class="text-xs uppercase font-bold text-neutral-400">Guard / Middleware:</span>
+              <span class="text-xs font-semibold text-neutral-400">Guard / Middleware:</span>
               <p class="font-mono text-neutral-800 dark:text-neutral-200 text-xs">
                 {{ inspectingFlow.middleware }}
               </p>
@@ -217,7 +217,7 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
           </div>
 
           <div v-if="inspectingFlow.business_process?.length" class="space-y-2">
-            <span class="text-xs uppercase font-bold text-neutral-400">Tahapan Proses Logika Bisnis di Backend:</span>
+            <span class="text-xs font-semibold text-neutral-400">Tahapan Proses Logika Bisnis di Backend:</span>
             <ol class="space-y-2">
               <li
                 v-for="(step, sIdx) in inspectingFlow.business_process"
@@ -237,19 +237,19 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
         <div v-else-if="inspectorActiveTab === 'database'" class="space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/[0.08] space-y-1">
-              <span class="text-xs uppercase font-bold text-neutral-400">Database Engine:</span>
+              <span class="text-xs font-semibold text-neutral-400">Database Engine:</span>
               <p class="font-bold text-neutral-900 dark:text-white">
                 {{ inspectingFlow.database_operation?.engine || 'SQLite' }}
               </p>
             </div>
             <div class="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/[0.08] space-y-1">
-              <span class="text-xs uppercase font-bold text-neutral-400">Operasi:</span>
+              <span class="text-xs font-semibold text-neutral-400">Operasi:</span>
               <p class="font-mono font-bold text-amber-600 dark:text-amber-400">
                 {{ inspectingFlow.database_operation?.operation_type || 'SELECT' }}
               </p>
             </div>
             <div class="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/[0.08] space-y-1">
-              <span class="text-xs uppercase font-bold text-neutral-400">Tabel Terhubung:</span>
+              <span class="text-xs font-semibold text-neutral-400">Tabel Terhubung:</span>
               <p class="font-mono font-bold text-amber-700 dark:text-amber-300 truncate">
                 {{ inspectingFlow.database_operation?.target_tables?.join(', ') || '-' }}
               </p>
@@ -257,7 +257,7 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
           </div>
 
           <div v-if="inspectingFlow.database_operation?.stored_fields?.length" class="space-y-1">
-            <span class="text-xs uppercase font-bold text-neutral-400">Kolom Data yang Disimpan / Dimutasi:</span>
+            <span class="text-xs font-semibold text-neutral-400">Kolom Data yang Disimpan / Dimutasi:</span>
             <div class="flex flex-wrap gap-1.5 p-2 rounded-lg bg-neutral-100 dark:bg-neutral-800">
               <span
                 v-for="sf in inspectingFlow.database_operation.stored_fields"
@@ -270,7 +270,7 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
           </div>
 
           <div v-if="inspectingFlow.database_operation?.query_detail" class="space-y-1">
-            <span class="text-xs uppercase font-bold text-neutral-400">Query SQL / Eksekusi ORM:</span>
+            <span class="text-xs font-semibold text-neutral-400">Query SQL / Eksekusi ORM:</span>
             <pre class="p-3 rounded-xl bg-neutral-950 text-amber-300 font-mono text-xs overflow-x-auto border border-neutral-800 leading-relaxed">{{ inspectingFlow.database_operation.query_detail }}</pre>
           </div>
         </div>
@@ -279,13 +279,13 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
         <div v-else-if="inspectorActiveTab === 'response'" class="space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/[0.08] space-y-1">
-              <span class="text-xs uppercase font-bold text-neutral-400">Status Respon HTTP:</span>
+              <span class="text-xs font-semibold text-neutral-400">Status Respon HTTP:</span>
               <p class="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-sm">
                 HTTP {{ inspectingFlow.response_spec?.status_code || 200 }}
               </p>
             </div>
             <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/[0.08] space-y-1">
-              <span class="text-xs uppercase font-bold text-neutral-400">Tipe Data:</span>
+              <span class="text-xs font-semibold text-neutral-400">Tipe Data:</span>
               <p class="font-mono font-semibold text-neutral-800 dark:text-neutral-200 text-sm">
                 {{ inspectingFlow.response_spec?.data_type || 'JSON Object' }}
               </p>
@@ -293,14 +293,14 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
           </div>
 
           <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/[0.08] space-y-1">
-            <span class="text-xs uppercase font-bold text-neutral-400">Dampak pada Antarmuka (UI Reaction):</span>
+            <span class="text-xs font-semibold text-neutral-400">Dampak pada Antarmuka (UI Reaction):</span>
             <p class="font-semibold text-neutral-900 dark:text-white leading-relaxed">
               {{ inspectingFlow.ui_impact || 'Perbarui state reaktif dan render ulang komponen tampilan.' }}
             </p>
           </div>
 
           <div v-if="inspectingFlow.response_spec?.body_sample" class="space-y-1">
-            <span class="text-xs uppercase font-bold text-neutral-400">Contoh Payload Respon JSON:</span>
+            <span class="text-xs font-semibold text-neutral-400">Contoh Payload Respon JSON:</span>
             <pre class="p-3 rounded-xl bg-neutral-950 text-emerald-400 font-mono text-xs overflow-x-auto border border-neutral-800 leading-relaxed">{{ inspectingFlow.response_spec.body_sample }}</pre>
           </div>
         </div>

@@ -126,7 +126,7 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
             <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-neutral-100 dark:border-neutral-800/70">
               <div class="flex items-center gap-2">
                 <span
-                  class="px-2 py-0.5 rounded text-xs font-bold font-mono border uppercase shrink-0"
+                  class="px-2 py-0.5 rounded text-xs font-semibold font-mono border shrink-0"
                   :class="getMethodColorClass(r.http_method)"
                 >
                   {{ r.http_method }}

@@ -10,7 +10,7 @@ definePageMeta({
 // load balancer dan pemecahan service berdasarkan data nyata.
 const route = useRoute()
 const toast = useToast()
-const { projects, activeProjectId, fetchProjects, selectActiveProject } = useActiveProject()
+const { activeProjectId, fetchProjects, selectActiveProject } = useActiveProject()
 const { getMeta, listSources, updateSource, deleteSource, syncSource, getReport, getRecent } = useTraffic()
 
 const meta = ref<TrafficMeta | null>(null)
@@ -28,7 +28,6 @@ const autoRefresh = ref(true)
 let timer: ReturnType<typeof setInterval> | null = null
 
 const source = computed(() => sources.value.find(s => s.id === sourceId.value) || null)
-const projectItems = computed(() => [{ label: 'Semua proyek', value: 0 }, ...projects.value.map(p => ({ label: p.name, value: p.id }))])
 const sourceItems = computed(() => sources.value.map(s => ({ label: `${s.name}${s.enabled ? '' : ' (jeda)'}`, value: s.id })))
 const windowItems = computed(() => (meta.value?.windows || ['15m', '1h', '6h', '24h', '7d', '30d']).map(w => ({ label: trafficWindowLabel[w], value: w })))
 const intervalItems = computed(() => (meta.value?.sync_intervals || [5, 60, 300]).map(v => ({ label: trafficIntervalLabel(v), value: v })))
@@ -88,7 +87,6 @@ watch(activeProjectId, async () => {
   if (!sourceId.value) loadReport()
 })
 
-const handleProject = (v: number) => selectActiveProject(v || null)
 
 const handleCreated = async (src: TrafficSource) => {
   await loadSources()
@@ -174,29 +172,17 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="space-y-5 w-full px-4 sm:px-6 lg:px-8 pt-6 pb-16">
-    <!-- Header -->
-    <section class="p-5 bg-white dark:bg-[#04111f] border border-neutral-200 dark:border-white/[0.08] rounded-xl flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-      <div class="flex items-start gap-3 min-w-0">
-        <span class="p-2.5 rounded-xl bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800 shrink-0">
-          <UIcon name="i-lucide-activity" class="w-5 h-5" />
-        </span>
-        <div class="space-y-1 min-w-0">
-          <h1 class="text-lg font-bold text-neutral-900 dark:text-white">
-            Traffic Analyzer
-          </h1>
-          <p class="text-xs text-neutral-500 dark:text-neutral-400 max-w-3xl leading-relaxed">
-            Statistik request nyata dari aplikasi live: endpoint yang diakses, dari mana, seberapa cepat & seberapa sering gagal. Dari situ vibeasik menyarankan kapan perlu rate limiting, cache, load balancer, atau memecah BE menjadi service kecil.
-          </p>
-        </div>
-      </div>
-      <div class="flex items-center gap-2 flex-wrap shrink-0">
-        <USelect :model-value="activeProjectId ?? 0" :items="projectItems" size="sm" class="w-48" @update:model-value="v => handleProject(Number(v))" />
-        <UButton size="sm" color="primary" icon="i-lucide-plus" @click="showCreate = true">
-          Hubungkan Aplikasi Live
+  <div class="space-y-5 w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-16">
+    <AppPageHeader
+      title="Traffic Analyzer"
+      description="Statistik request nyata dari aplikasi live: endpoint yang diakses, asal, kecepatan, dan tingkat gagal — dasar saran rate limit, cache, load balancer, atau pemecahan service."
+    >
+      <template #actions>
+        <UButton size="sm" color="neutral" icon="i-lucide-plus" @click="showCreate = true">
+          Hubungkan aplikasi live
         </UButton>
-      </div>
-    </section>
+      </template>
+    </AppPageHeader>
 
     <!-- Belum ada sumber -->
     <section v-if="!sources.length" class="p-8 rounded-xl border border-dashed border-neutral-300 dark:border-neutral-700 text-center space-y-4">

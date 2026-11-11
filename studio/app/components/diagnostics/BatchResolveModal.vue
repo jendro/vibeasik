@@ -289,7 +289,7 @@ const { getSeverityBadgeColor } = useFormatters()
         <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] space-y-3">
           <div class="flex items-center justify-between">
             <div class="space-y-0.5">
-              <div class="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+              <div class="text-xs font-semibold text-neutral-400 dark:text-neutral-500">
                 Progress Penyelesaian Temuan
               </div>
               <div class="text-sm font-bold text-neutral-900 dark:text-white">
@@ -430,7 +430,7 @@ const { getSeverityBadgeColor } = useFormatters()
 
         <!-- Findings Queue List -->
         <div class="space-y-2">
-          <div class="flex items-center justify-between text-neutral-500 font-semibold text-xs uppercase tracking-wider">
+          <div class="flex items-center justify-between text-neutral-500 font-semibold text-xs">
             <span>Daftar Antrean Temuan ({{ totalCount }})</span>
             <span>Status Eksekusi</span>
           </div>
@@ -464,7 +464,7 @@ const { getSeverityBadgeColor } = useFormatters()
                   </span>
                   <span
                     v-if="finding.is_deep || finding.rule_id?.startsWith('DEEP-') || finding.title?.startsWith('[DEEP]')"
-                    class="px-1.5 py-0.5 rounded text-xs font-bold bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 shrink-0 uppercase"
+                    class="px-1.5 py-0.5 rounded text-xs font-semibold bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 shrink-0"
                   >
                     Deep Check
                   </span>
