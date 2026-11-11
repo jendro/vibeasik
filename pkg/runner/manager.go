@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/vibeasik/vibeasik/pkg/config"
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
@@ -90,7 +91,8 @@ func (m *Manager) Start(comp models.Component, port int, spec LaunchSpec) (*Stat
 
 	cmd := shellCommand(spec.Command)
 	cmd.Dir = comp.AbsolutePath
-	cmd.Env = append(os.Environ(), spec.Env...)
+	// Tanpa variabel dari .env engine (DB_*, kunci API): aplikasi memakai .env-nya sendiri.
+	cmd.Env = append(config.ChildEnviron(), spec.Env...)
 	cmd.WaitDelay = 3 * time.Second // jangan menggantung bila cucu proses masih memegang pipe output
 	setProcessGroup(cmd)
 

@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/joho/godotenv"
 )
@@ -30,12 +31,12 @@ var globalConfig *Config
 // LoadConfig loads environment variables from .env file or system environment
 func LoadConfig() *Config {
 	// 1. Try loading .env in current working directory
-	_ = godotenv.Load(".env")
+	loadEngineEnv(".env")
 
 	// 2. Fallback check home directory ~/.vibeasik/.env or ~/.projectmanager/.env
 	if home, err := os.UserHomeDir(); err == nil {
-		_ = godotenv.Load(home + "/.vibeasik/.env")
-		_ = godotenv.Load(home + "/.projectmanager/.env")
+		loadEngineEnv(home + "/.vibeasik/.env")
+		loadEngineEnv(home + "/.projectmanager/.env")
 	}
 
 	defaultDBPath := "data/projects.db"
@@ -120,4 +121,51 @@ func getEnvAsInt(key string, defaultVal int) int {
 		}
 	}
 	return defaultVal
+}
+
+// Variabel yang dimuat dari .env engine sendiri (DB_*, kunci API, ...). Aplikasi proyek yang dijalankan engine
+// tidak boleh mewarisinya: godotenv di aplikasi tidak menimpa variabel yang sudah ada, sehingga aplikasi akan
+// terhubung ke database engine alih-alih database development-nya sendiri.
+var (
+	engineEnvMu   sync.RWMutex
+	engineEnvKeys = map[string]bool{}
+)
+
+// loadEngineEnv sama seperti godotenv.Load (tidak menimpa variabel yang sudah ada), sambil mencatat kunci
+// yang ditambahkan dari berkas ini.
+func loadEngineEnv(path string) {
+	vals, err := godotenv.Read(path)
+	if err != nil {
+		return
+	}
+	engineEnvMu.Lock()
+	defer engineEnvMu.Unlock()
+	for k, v := range vals {
+		if _, exists := os.LookupEnv(k); exists {
+			continue
+		}
+		if os.Setenv(k, v) == nil {
+			engineEnvKeys[k] = true
+		}
+	}
+}
+
+// IsEngineEnvKey melaporkan apakah variabel berasal dari .env engine (bukan dari shell pengguna).
+func IsEngineEnvKey(key string) bool {
+	engineEnvMu.RLock()
+	defer engineEnvMu.RUnlock()
+	return engineEnvKeys[key]
+}
+
+// ChildEnviron adalah os.Environ() tanpa variabel dari .env engine, untuk proses aplikasi proyek.
+func ChildEnviron() []string {
+	env := os.Environ()
+	out := env[:0:0]
+	for _, kv := range env {
+		k, _, _ := strings.Cut(kv, "=")
+		if !IsEngineEnvKey(k) {
+			out = append(out, kv)
+		}
+	}
+	return out
 }
