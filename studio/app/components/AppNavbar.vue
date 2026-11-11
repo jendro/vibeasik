@@ -166,6 +166,8 @@ const accountMenu = computed(() => [
           <span class="hidden lg:inline font-mono">{{ props.apiConnected ? engineHost : 'Engine offline' }}</span>
         </button>
 
+        <NotificationBell />
+
         <UColorModeButton size="sm" class="hidden sm:inline-flex" />
 
         <UDropdownMenu v-if="isAuthenticated" :items="accountMenu" :content="{ align: 'end' }">

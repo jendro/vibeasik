@@ -34,7 +34,9 @@ const saveAlias = (mod: string) => {
 
 const supportsVision = (mod: string) => Boolean(props.item.vision?.[mod])
 const visionTitle = (mod: string) => {
-  const manual = props.item.vision_manual?.includes(mod) ? 'diatur manual' : 'tebakan dari nama model'
+  const manual = props.item.vision_manual?.includes(mod)
+    ? 'diatur manual'
+    : props.item.vision_tested?.includes(mod) ? 'hasil uji gambar otomatis' : 'tebakan dari nama model, belum diuji'
   return supportsVision(mod)
     ? `Mendukung gambar/vision (${manual}). Klik untuk menandai tidak mendukung.`
     : `Tidak mendukung gambar (${manual}). Klik untuk menandai mendukung vision.`

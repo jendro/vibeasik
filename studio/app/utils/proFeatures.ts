@@ -28,6 +28,8 @@ export const PRO_PAGES: Record<string, string> = {
   '/ai-hub': 'orchestrator',
   '/orchestrator': 'orchestrator',
   '/llm-algorithm': 'orchestrator',
+  '/llm-log': 'llm.router',
+  '/notifications': 'llm.router',
   '/queue': 'orchestrator',
   '/staff': 'staff',
   '/executives': 'staff',

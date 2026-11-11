@@ -68,6 +68,17 @@ func SetLLMContextProvider(fn func() (task, project string)) {
 	mu.Unlock()
 }
 
+// LLMContext mengembalikan label pekerjaan yang sedang memanggil LLM (kosong bila tidak diketahui).
+func LLMContext() (task, project string) {
+	mu.RLock()
+	fn := llmContext
+	mu.RUnlock()
+	if fn == nil {
+		return "", ""
+	}
+	return fn()
+}
+
 func getDB() *gorm.DB {
 	mu.RLock()
 	defer mu.RUnlock()

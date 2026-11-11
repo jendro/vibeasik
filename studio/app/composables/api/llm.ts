@@ -96,6 +96,31 @@ export const useLlmApi = () => {
 
   const resetLLMProvider = async (id: number) => await $fetch(`${apiBase}/api/llm/providers/${id}/reset`, { method: 'POST' })
 
+  // Log request LLM per model & kesehatan model (Pro).
+  const getLLMLog = async (query: { model?: string, host?: string, kind?: string, failed?: boolean, hours?: number, limit?: number } = {}) =>
+    await $fetch<{ logs: LLMRequestLog[] }>(`${apiBase}/api/llm/log`, { query: { ...query, failed: query.failed ? 1 : undefined } })
+
+  const getLLMModelHealth = async () => await $fetch<{ models: LLMModelHealth[] }>(`${apiBase}/api/llm/models/health`)
+
+  const resetLLMModelHealth = async (id: number) => await $fetch(`${apiBase}/api/llm/models/health/${id}/reset`, { method: 'POST' })
+
+  const runVisionAutoTest = async (body: { config_id?: number, model?: string, force?: boolean } = {}) =>
+    await $fetch<{ started?: boolean, results?: unknown[] }>(`${apiBase}/api/settings/llm/vision-autotest`, { method: 'POST', body })
+
+  // Notifikasi: request LLM yang gagal berulang, dieksekusi dari lokal (Pro).
+  const getNotifications = async (query: { status?: string, all?: boolean, limit?: number } = {}) =>
+    await $fetch<NotificationsResponse>(`${apiBase}/api/notifications`, { query: { ...query, all: query.all ? 1 : undefined } })
+
+  const getFailedLLMRequest = async (id: number) => await $fetch<LLMFailedDetail>(`${apiBase}/api/llm/failed/${id}`)
+
+  const answerFailedLLMRequest = async (id: number, answer: string) =>
+    await $fetch(`${apiBase}/api/llm/failed/${id}/answer`, { method: 'POST', body: { answer } })
+
+  const executeFailedLLMRequest = async (id: number, agentKey?: string) =>
+    await $fetch(`${apiBase}/api/llm/failed/${id}/execute`, { method: 'POST', body: { agent_key: agentKey } })
+
+  const dismissFailedLLMRequest = async (id: number) => await $fetch(`${apiBase}/api/llm/failed/${id}/dismiss`, { method: 'POST' })
+
   return {
     getLLMWeighing,
     getLLMSettings,
@@ -112,6 +137,15 @@ export const useLlmApi = () => {
     testLLMConnection,
     discoverLLMModels,
     getLLMPool,
-    resetLLMProvider
+    resetLLMProvider,
+    getLLMLog,
+    getLLMModelHealth,
+    resetLLMModelHealth,
+    runVisionAutoTest,
+    getNotifications,
+    getFailedLLMRequest,
+    answerFailedLLMRequest,
+    executeFailedLLMRequest,
+    dismissFailedLLMRequest
   }
 }

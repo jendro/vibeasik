@@ -220,6 +220,26 @@ export const GLOBAL_NAV_ITEMS: NavItem[] = [
     exact: false
   },
   {
+    // Log setiap request ke LLM luar per model: lama menunggu, gagal/berhasil, model lambat / tidak bisa.
+    id: 'llm-log',
+    group: 'Agent & AI',
+    to: '/llm-log',
+    label: 'Log LLM',
+    desc: 'Request per model & kesehatannya',
+    icon: 'i-lucide-activity',
+    exact: false
+  },
+  {
+    // Request LLM yang gagal berulang → dieksekusi dari lokal (agent CLI, MCP, atau ditempel manual).
+    id: 'notifications',
+    group: 'Agent & AI',
+    to: '/notifications',
+    label: 'Notifikasi',
+    desc: 'Request LLM gagal, eksekusi lokal',
+    icon: 'i-lucide-bell',
+    exact: false
+  },
+  {
     id: 'orchestrator',
     group: 'Agent & AI',
     to: '/orchestrator',

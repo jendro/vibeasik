@@ -41,18 +41,20 @@ func IsMaskedKey(key string) bool {
 
 // LLMConfig stores an individual AI configuration endpoint and its usable models
 type LLMConfig struct {
-	ID            uint      `gorm:"primaryKey" json:"id"`
-	Provider      string    `gorm:"size:64;index;not null" json:"provider"` // "system_one" or "standard_llm"
-	Name          string    `gorm:"size:255;not null" json:"name"`
-	URL           string    `gorm:"size:512;not null" json:"url"`
-	Key           string    `gorm:"size:512" json:"-"`       // Stored in raw in DB, never serialized directly in JSON
-	Models        string    `gorm:"type:text" json:"models"` // JSON serialized array of strings
-	SelectedModel string    `gorm:"size:255" json:"selected_model"`
-	IsActive      bool      `gorm:"default:false" json:"is_active"`
-	VisionJSON    string    `gorm:"type:text" json:"-"` // override dukungan gambar per model: {"model": true|false}
-	AliasJSON     string    `gorm:"type:text" json:"-"` // alias tampilan per model: {"model": "alias"}
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	ID            uint   `gorm:"primaryKey" json:"id"`
+	Provider      string `gorm:"size:64;index;not null" json:"provider"` // "system_one" or "standard_llm"
+	Name          string `gorm:"size:255;not null" json:"name"`
+	URL           string `gorm:"size:512;not null" json:"url"`
+	Key           string `gorm:"size:512" json:"-"`       // Stored in raw in DB, never serialized directly in JSON
+	Models        string `gorm:"type:text" json:"models"` // JSON serialized array of strings
+	SelectedModel string `gorm:"size:255" json:"selected_model"`
+	IsActive      bool   `gorm:"default:false" json:"is_active"`
+	VisionJSON    string `gorm:"type:text" json:"-"` // override dukungan gambar per model: {"model": true|false}
+	// VisionAutoJSON: hasil uji gambar otomatis per model ({"model": true|false}); kalah dari override manual.
+	VisionAutoJSON string    `gorm:"type:text" json:"-"`
+	AliasJSON      string    `gorm:"type:text" json:"-"` // alias tampilan per model: {"model": "alias"}
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 // LLMConfigDTO provides clean JSON serialization where keys are strictly masked and models are string slices
@@ -70,6 +72,8 @@ type LLMConfigDTO struct {
 	// Vision: dukungan gambar efektif per model; VisionManual: model yang nilainya diatur pengguna (bukan tebakan nama).
 	Vision       map[string]bool `json:"vision"`
 	VisionManual []string        `json:"vision_manual"`
+	// VisionTested: model yang dukungan gambarnya ditetapkan dari uji otomatis (bukan tebakan nama).
+	VisionTested []string `json:"vision_tested"`
 	// Aliases: nama tampilan per model (pemilih model & Kantor Agent); request tetap memakai nama asli.
 	Aliases   map[string]string `json:"aliases"`
 	CreatedAt time.Time         `json:"created_at"`
@@ -111,6 +115,7 @@ func (c *LLMConfig) ToDTO() LLMConfigDTO {
 		IsActive:      c.IsActive,
 		Vision:        c.visionMap(modelsList),
 		VisionManual:  c.visionManual(),
+		VisionTested:  c.visionTested(),
 		Aliases:       c.aliasMap(),
 		CreatedAt:     c.CreatedAt,
 		UpdatedAt:     c.UpdatedAt,

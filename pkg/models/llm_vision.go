@@ -45,12 +45,52 @@ func (c *LLMConfig) visionOverrides() map[string]bool {
 	return out
 }
 
-// ModelSupportsVision: override pengguna bila ada, selain itu tebakan dari nama model.
+func (c *LLMConfig) visionAuto() map[string]bool {
+	out := map[string]bool{}
+	if c.VisionAutoJSON != "" {
+		_ = json.Unmarshal([]byte(c.VisionAutoJSON), &out)
+	}
+	return out
+}
+
+// ModelSupportsVision: override pengguna bila ada, lalu hasil uji gambar otomatis, selain itu tebakan dari nama.
 func (c *LLMConfig) ModelSupportsVision(model string) bool {
 	if v, ok := c.visionOverrides()[model]; ok {
 		return v
 	}
+	if v, ok := c.visionAuto()[model]; ok {
+		return v
+	}
 	return GuessModelVision(model)
+}
+
+// ModelVisionManual melaporkan apakah dukungan gambar model ini diatur pengguna.
+func (c *LLMConfig) ModelVisionManual(model string) bool {
+	_, ok := c.visionOverrides()[model]
+	return ok
+}
+
+// ModelVisionTested mengembalikan hasil uji gambar otomatis (ok=false bila belum pernah lolos/gagal uji).
+func (c *LLMConfig) ModelVisionTested(model string) (vision, ok bool) {
+	vision, ok = c.visionAuto()[model]
+	return vision, ok
+}
+
+// SetModelVisionAuto menyimpan hasil uji gambar otomatis untuk satu model.
+func (c *LLMConfig) SetModelVisionAuto(model string, vision bool) {
+	o := c.visionAuto()
+	o[model] = vision
+	b, _ := json.Marshal(o)
+	c.VisionAutoJSON = string(b)
+}
+
+func (c *LLMConfig) visionTested() []string {
+	out := []string{}
+	for m := range c.visionAuto() {
+		out = append(out, m)
+	}
+	sort.Strings(out)
+	return out
 }
 
 // SetModelVision menyimpan override dukungan gambar untuk satu model.
