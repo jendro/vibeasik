@@ -601,9 +601,15 @@ func assessConsolidateMove(item *models.FolderMoveItem, projectID uint) bool {
 }
 
 func (s *organizerService) PreviewConsolidate(ctx context.Context, projectID uint, targetParentDir string) (*models.ConsolidatePreview, error) {
+	preview, _, err := s.buildConsolidatePreview(ctx, projectID, targetParentDir)
+	return preview, err
+}
+
+// buildConsolidatePreview menyusun preview beserta proyek yang dibacanya (dipakai ulang oleh Consolidate).
+func (s *organizerService) buildConsolidatePreview(ctx context.Context, projectID uint, targetParentDir string) (*models.ConsolidatePreview, *models.Project, error) {
 	p, err := s.projectRepo.FindByID(ctx, projectID)
 	if err != nil || p == nil {
-		return nil, fmt.Errorf("project not found (ID: %d)", projectID)
+		return nil, nil, fmt.Errorf("project not found (ID: %d)", projectID)
 	}
 
 	targetParentDir = s.resolveConsolidateParent(ctx, targetParentDir)
@@ -631,13 +637,18 @@ func (s *organizerService) PreviewConsolidate(ctx context.Context, projectID uin
 
 	var totalSize int64
 	if len(p.Components) > 0 {
-		totalSize = previewComponentMoves(preview, p, slug)
+		sources := groupConsolidateSources(p.Components)
+		if root := s.wholeRootSource(ctx, p, preview, sources); root != "" {
+			totalSize = previewWholeRootMove(preview, p, slug, root)
+		} else {
+			totalSize = previewComponentMoves(preview, p, slug, sources)
+		}
 	} else {
 		totalSize = previewStandaloneMove(preview, p, slug)
 	}
 
 	preview.TotalSizeBytes = totalSize
-	return preview, nil
+	return preview, p, nil
 }
 
 func (s *organizerService) resolveConsolidateParent(ctx context.Context, targetParentDir string) string {
@@ -714,10 +725,9 @@ func enclosingSourcePath(sources []consolidateSource, src consolidateSource) str
 }
 
 // previewComponentMoves menyusun item per folder sumber komponen dan mengembalikan total ukuran.
-func previewComponentMoves(preview *models.ConsolidatePreview, p *models.Project, slug string) int64 {
+func previewComponentMoves(preview *models.ConsolidatePreview, p *models.Project, slug string, sources []consolidateSource) int64 {
 	var totalSize int64
 	usedSubfolders := make(map[string]int)
-	sources := groupConsolidateSources(p.Components)
 	// targetOf menyimpan tujuan setiap folder sumber agar komponen bersarang (folder di dalam komponen lain)
 	// ikut pindah bersama induknya alih-alih dipindahkan dua kali.
 	targetOf := map[string]string{}
@@ -823,7 +833,7 @@ func moveVibeasikEntries(srcDir, dstDir string, entries []os.DirEntry) []string 
 }
 
 func (s *organizerService) Consolidate(ctx context.Context, projectID uint, targetParentDir string, apiBase string) (*models.ConsolidateResult, error) {
-	preview, err := s.PreviewConsolidate(ctx, projectID, targetParentDir)
+	preview, p, err := s.buildConsolidatePreview(ctx, projectID, targetParentDir)
 	if err != nil {
 		return nil, err
 	}
@@ -832,20 +842,21 @@ func (s *organizerService) Consolidate(ctx context.Context, projectID uint, targ
 		return nil, fmt.Errorf("tidak dapat menyatukan proyek karena terdapat konflik target atau folder sumber tidak ditemukan")
 	}
 
-	// Make sure target project directory exists
-	if err := os.MkdirAll(preview.ProjectTargetDir, 0755); err != nil {
-		return nil, fmt.Errorf("gagal membuat direktori proyek induk (%s): %w", preview.ProjectTargetDir, err)
+	// Pindah utuh: folder tujuan justru belum boleh ada, cukup induknya (dibuat saat memindahkan).
+	if !preview.WholeRoot {
+		if err := os.MkdirAll(preview.ProjectTargetDir, 0755); err != nil {
+			return nil, fmt.Errorf("gagal membuat direktori proyek induk (%s): %w", preview.ProjectTargetDir, err)
+		}
 	}
 
 	movedItems, movedCount, err := moveConsolidateItems(preview.Items)
 	if err != nil {
 		return nil, err
 	}
-	// Komponen bersarang baru ada di tujuannya setelah induknya pindah, jadi path disimpan setelah semua pemindahan.
-	for _, item := range movedItems {
-		if err := s.saveComponentPaths(ctx, item); err != nil {
-			return nil, err
-		}
+	// compDirs: folder komponen di lokasi barunya (lama -> baru), dipakai untuk artefak vibeasik & repo git.
+	compDirs, err := s.saveConsolidatedPaths(ctx, preview, p, movedItems)
+	if err != nil {
+		return nil, err
 	}
 
 	if err := s.projectRepo.UpdateFields(ctx, projectID, map[string]interface{}{
@@ -855,17 +866,28 @@ func (s *organizerService) Consolidate(ctx context.Context, projectID uint, targ
 		return nil, fmt.Errorf("folder sudah disatukan di %s tetapi root proyek gagal disimpan: %w", preview.ProjectTargetDir, err)
 	}
 
-	// Artefak vibeasik (peta kode, base knowledge, tautan AI) dipusatkan di root folder induk.
-	var compDirs []string
-	for _, item := range movedItems {
-		compDirs = append(compDirs, item.TargetPath)
+	var warnings []string
+	moves := itemPathMoves(movedItems)
+	if err := s.rebaseCodeMapPaths(ctx, projectID, moves); err != nil {
+		warnings = append(warnings, "Path peta kode gagal diperbarui (bangun ulang peta kode): "+err.Error())
 	}
-	warnings := relocateVibeasikDirs(preview.ProjectTargetDir, compDirs)
+	warnings = append(warnings, repairGitWorktrees(append(append([]pathMove{}, moves...), compDirs...), moves)...)
+
+	// Artefak vibeasik (peta kode, base knowledge, tautan AI) dipusatkan di root folder induk.
+	newDirs := make([]string, 0, len(compDirs))
+	for _, d := range compDirs {
+		newDirs = append(newDirs, d.to)
+	}
+	warnings = append(warnings, relocateVibeasikDirs(preview.ProjectTargetDir, newDirs)...)
 	linkedFiles, codeMapMarkdown, warnings := s.initUnifiedWorkspace(projectID, apiBase, warnings)
 
+	message := fmt.Sprintf("Proyek '%s' berhasil disatukan ke dalam %s; peta kode & tautan AI kini berada di root folder induk.", preview.ProjectName, preview.ProjectTargetDir)
+	if preview.WholeRoot {
+		message = fmt.Sprintf("Folder proyek '%s' dipindahkan utuh ke %s; path komponen, peta kode & tautan AI sudah mengikuti.", preview.ProjectName, preview.ProjectTargetDir)
+	}
 	return &models.ConsolidateResult{
 		Success:         true,
-		Message:         fmt.Sprintf("Proyek '%s' berhasil disatukan ke dalam %s; peta kode & tautan AI kini berada di root folder induk.", preview.ProjectName, preview.ProjectTargetDir),
+		Message:         message,
 		ProjectID:       preview.ProjectID,
 		ProjectName:     preview.ProjectName,
 		ProjectRoot:     preview.ProjectTargetDir,
@@ -876,6 +898,22 @@ func (s *organizerService) Consolidate(ctx context.Context, projectID uint, targ
 		CodeMapMarkdown: codeMapMarkdown,
 		Warnings:        warnings,
 	}, nil
+}
+
+// saveConsolidatedPaths menyimpan path komponen setelah pemindahan dan mengembalikan folder komponen (lama -> baru).
+func (s *organizerService) saveConsolidatedPaths(ctx context.Context, preview *models.ConsolidatePreview, p *models.Project, movedItems []models.FolderMoveItem) ([]pathMove, error) {
+	if preview.WholeRoot {
+		return s.saveWholeRootComponentPaths(ctx, p, movedItems[0].CurrentPath, movedItems[0].TargetPath)
+	}
+	// Komponen bersarang baru ada di tujuannya setelah induknya pindah, jadi path disimpan setelah semua pemindahan.
+	dirs := make([]pathMove, 0, len(movedItems))
+	for _, item := range movedItems {
+		if err := s.saveComponentPaths(ctx, item); err != nil {
+			return nil, err
+		}
+		dirs = append(dirs, pathMove{from: item.CurrentPath, to: item.TargetPath})
+	}
+	return dirs, nil
 }
 
 // moveConsolidateItems memindahkan item berstatus "pending" dan mengembalikan semua item (status diperbarui).

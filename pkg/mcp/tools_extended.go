@@ -254,7 +254,7 @@ func (s *Server) extendedToolsList() []Tool {
 		},
 		{
 			Name:        "preview_consolidate_project",
-			Description: "Previews consolidating a project's scattered components into one parent directory (read-only): planned moves, components sharing a folder, recovery of components already moved, warnings, and where the code map will live.",
+			Description: "Previews consolidating a project's scattered components into one parent directory (read-only): planned moves, components sharing a folder, recovery of components already moved, warnings, and where the code map will live. A project that already lives in one folder of its own (whole_root=true) gets a single item that moves the entire root, files outside component folders included.",
 			InputSchema: ToolSchema{
 				Type: "object",
 				Properties: map[string]interface{}{
@@ -268,6 +268,7 @@ func (s *Server) extendedToolsList() []Tool {
 		{
 			Name: "consolidate_project",
 			Description: "Satukan Folder: MOVES a project's scattered component folders into one parent directory, updates their paths, rewrites .vibeasik.json and keeps vibeasik artifacts (.vibeasik/ code map) at the parent root. " +
+				"A project already in one folder is relocated as a whole under target_parent_dir; code map paths are rebased and git worktrees repaired. " +
 				"Moves files on disk, so call preview_consolidate_project first, show the plan to the user, and pass confirm=true only after they agree.",
 			InputSchema: ToolSchema{
 				Type: "object",

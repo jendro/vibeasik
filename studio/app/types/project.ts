@@ -271,6 +271,8 @@ export interface ConsolidatePreview {
   has_conflict: boolean
   can_consolidate: boolean
   total_size_bytes?: number
+  /** Proyek sudah di satu folder: seluruh root dipindahkan lewat satu item. */
+  whole_root?: boolean
 }
 
 export interface ConsolidateResult {

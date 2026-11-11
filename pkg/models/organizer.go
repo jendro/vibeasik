@@ -72,6 +72,8 @@ type ConsolidatePreview struct {
 	HasConflict      bool             `json:"has_conflict"`
 	CanConsolidate   bool             `json:"can_consolidate"`
 	TotalSizeBytes   int64            `json:"total_size_bytes"`
+	// WholeRoot: proyek sudah berada di satu folder, sehingga folder root dipindahkan utuh lewat satu item.
+	WholeRoot bool `json:"whole_root,omitempty"`
 }
 
 // ConsolidatePayload contains options for consolidating a project
