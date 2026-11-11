@@ -113,7 +113,7 @@ func NewServer(db *gorm.DB) *Server {
 		AllowOrigins:  corsOrigins(),
 		AllowMethods:  "GET,POST,PUT,DELETE,OPTIONS",
 		AllowHeaders:  "Origin, Content-Type, Accept, Authorization, Idempotency-Key, X-Idempotency-Key, " + headerMCPSession + ", " + headerExecToken + ", " + localauth.Header,
-		ExposeHeaders: headerMCPSession,
+		ExposeHeaders: headerMCPSession + ", X-Todo-Status-Counts",
 	}))
 
 	repos := repository.NewRepositories(db)

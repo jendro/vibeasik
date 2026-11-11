@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -14,6 +15,11 @@ import (
 )
 
 func (s *Server) getTodos(c *fiber.Ctx) error {
+	// Hasil dibatasi (paging), jadi jumlah per status untuk rekap dikirim terpisah di header:
+	// tanpa ini Studio menghitung "selesai" & capaian hanya dari baris yang termuat.
+	if counts := todoStatusCounts(s.db, c); counts != "" {
+		c.Set("X-Todo-Status-Counts", counts)
+	}
 	query := buildTodoFilterQuery(s.db.Model(&models.Todo{}), c)
 
 	var todos []models.Todo
@@ -492,4 +498,26 @@ func validateTodoUpdates(u map[string]interface{}) string {
 	return firstProblem(maxLen("title", title, maxLabel), maxLen("description", desc, maxText),
 		oneOf("status", status, todoStatuses...), oneOf("priority", priority, todoPriorities...),
 		oneOf("level", level, models.TodoLevelGlobal, models.TodoLevelProject, models.TodoLevelComponent))
+}
+
+// todoStatusCounts menghitung todo induk (bukan sub todo gabungan) per status dengan filter yang sama
+// tanpa batas halaman. Hasil berupa JSON {"pending":n,...}; "" bila gagal.
+func todoStatusCounts(db *gorm.DB, c *fiber.Ctx) string {
+	q := applyTodoEntityFilters(applyTodoStringFilters(db.Model(&models.Todo{}), c), c)
+	var rows []struct {
+		Status string
+		N      int
+	}
+	if err := q.Where("parent_id IS NULL OR parent_id = 0").Select("status, count(*) as n").Group("status").Scan(&rows).Error; err != nil {
+		return ""
+	}
+	out := make(map[string]int, len(rows))
+	for _, r := range rows {
+		out[r.Status] += r.N
+	}
+	b, err := json.Marshal(out)
+	if err != nil {
+		return ""
+	}
+	return string(b)
 }

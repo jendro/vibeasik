@@ -5,7 +5,7 @@ definePageMeta({
   fluid: true
 })
 
-const { getTodos, getGuidelines } = useApi()
+const { getTodos, getGuidelines, lastTodoStatusCounts } = useApi()
 
 const {
   activeProjectId,
@@ -190,6 +190,7 @@ const { handleApprove, handleReject, handleSplit, handleUpdateStatus, handleDele
     <!-- Stats Header Cards (Rekap Atas: Sisa tugas belum selesai & status rincian proyek aktif) -->
     <TodosTodoStatsHeader
       :todos="workTodos"
+      :counts="lastTodoStatusCounts"
       :project-name="activeProject?.name"
       @filter-status="setStatus"
     />
@@ -229,7 +230,7 @@ const { handleApprove, handleReject, handleSplit, handleUpdateStatus, handleDele
       v-model:order-by="selectedOrderBy"
       v-model:search="searchQuery"
       :filtered-count="filteredTodos.length"
-      :total-count="workTodos.length"
+      :total-count="lastTodoStatusCounts ? Object.values(lastTodoStatusCounts).reduce((a, b) => a + b, 0) : workTodos.length"
     />
 
     <!-- Loading State Skeleton -->
@@ -237,7 +238,7 @@ const { handleApprove, handleReject, handleSplit, handleUpdateStatus, handleDele
       <div
         v-for="i in 3"
         :key="i"
-        class="p-4 rounded-xl border border-neutral-200/80 dark:border-white/10 bg-white/60 dark:bg-slate-900/40 animate-pulse space-y-3"
+        class="p-4 rounded-xl border border-neutral-200/80 dark:border-white/10 bg-white/60 dark:bg-[#04111f] animate-pulse space-y-3"
       >
         <div class="flex items-center justify-between">
           <div class="h-4 w-48 bg-neutral-200 dark:bg-neutral-800 rounded" />
@@ -271,7 +272,7 @@ const { handleApprove, handleReject, handleSplit, handleUpdateStatus, handleDele
     <!-- Empty State -->
     <div
       v-else
-      class="p-12 text-center rounded-2xl border border-dashed border-neutral-300 dark:border-white/10 bg-white/40 dark:bg-slate-900/40 space-y-3"
+      class="p-12 text-center rounded-xl border border-dashed border-neutral-300 dark:border-white/10 bg-white/40 dark:bg-[#04111f] space-y-3"
     >
       <UIcon name="i-lucide-clipboard-check" class="w-10 h-10 mx-auto text-sky-500" />
       <h3 class="text-sm font-bold text-neutral-800 dark:text-neutral-200">

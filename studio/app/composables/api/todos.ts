@@ -4,6 +4,17 @@ import { useApiBase } from './base'
 export const useTodosApi = () => {
   const apiBase = useApiBase()
 
+  const lastTodoStatusCounts = useState<Record<string, number> | null>('todo-status-counts', () => null)
+  const parseStatusCounts = (raw: string | null): Record<string, number> | null => {
+    if (!raw) return null
+    try {
+      const v = JSON.parse(raw)
+      return v && typeof v === 'object' ? v as Record<string, number> : null
+    } catch {
+      return null
+    }
+  }
+
   const getTodos = async (params?: { project_id?: number, component_id?: number, level?: string, category?: string, status?: string, source?: string, is_ai_suggestion?: boolean, limit?: number, offset?: number }): Promise<Todo[]> => {
     const query = new URLSearchParams()
     if (params?.project_id) query.append('project_id', String(params.project_id))
@@ -16,7 +27,10 @@ export const useTodosApi = () => {
     if (params?.limit) query.append('limit', String(params.limit))
     if (params?.offset !== undefined) query.append('offset', String(params.offset))
     const url = `${apiBase}/api/todos${query.toString() ? '?' + query.toString() : ''}`
-    return await $fetch<Todo[]>(url)
+    const res = await $fetch.raw<Todo[]>(url)
+    // Jumlah per status tanpa batas halaman (header engine); dipakai rekap agar tidak hanya menghitung baris termuat.
+    lastTodoStatusCounts.value = parseStatusCounts(res.headers.get('X-Todo-Status-Counts'))
+    return res._data || []
   }
 
   const getTodo = async (id: number): Promise<Todo> => {
@@ -103,6 +117,7 @@ export const useTodosApi = () => {
 
   return {
     getTodos,
+    lastTodoStatusCounts,
     getTodo,
     createTodo,
     updateTodo,

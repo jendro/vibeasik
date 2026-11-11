@@ -4,6 +4,8 @@ import type { Todo } from '~/types'
 const props = defineProps<{
   todos: Todo[]
   projectName?: string
+  // Jumlah per status dari engine (tanpa batas halaman). Bila ada, dipakai menggantikan hitungan baris termuat.
+  counts?: Record<string, number> | null
 }>()
 
 const emit = defineEmits<{
@@ -11,6 +13,23 @@ const emit = defineEmits<{
 }>()
 
 const stats = computed(() => {
+  const c = props.counts
+  if (c) {
+    const n = (k: string) => c[k] || 0
+    const total = Object.values(c).reduce((a, b) => a + b, 0)
+    const completedCount = n('completed')
+    const rejectedCount = n('rejected')
+    return {
+      total,
+      remainingCount: total - completedCount - rejectedCount,
+      inProgressCount: n('in_progress'),
+      pendingCount: n('pending'),
+      suggestedCount: n('suggested'),
+      completedCount,
+      rejectedCount,
+      completionPercent: total > 0 ? Math.round((completedCount / total) * 100) : 0
+    }
+  }
   const total = props.todos.length
   const completedCount = props.todos.filter(t => t.status === 'completed').length
   const rejectedCount = props.todos.filter(t => t.status === 'rejected').length
@@ -38,7 +57,7 @@ const stats = computed(() => {
   <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
     <!-- 1. Hero Card: Sisa Tugas Harus Dikerjakan -->
     <div
-      class="p-3.5 rounded-xl border border-amber-300 dark:border-amber-700/80 bg-amber-50/70 dark:bg-amber-950/30 shadow-2xs cursor-pointer hover:border-amber-400 dark:hover:border-amber-600 transition-colors"
+      class="p-3.5 rounded-xl border border-amber-300 dark:border-amber-700/80 bg-amber-50/70 dark:bg-amber-950/30 cursor-pointer hover:border-amber-400 dark:hover:border-amber-600 transition-colors"
       title="Klik untuk memfilter semua tugas yang belum selesai"
       @click="emit('filterStatus', 'uncompleted')"
     >
@@ -61,7 +80,7 @@ const stats = computed(() => {
 
     <!-- 2. Sedang Dikerjakan (In Progress) -->
     <div
-      class="p-3.5 rounded-xl border border-sky-200/80 dark:border-sky-900/40 bg-sky-50/50 dark:bg-sky-950/20 shadow-2xs cursor-pointer hover:border-sky-300 dark:hover:border-sky-800 transition-colors"
+      class="p-3.5 rounded-xl border border-sky-200/80 dark:border-sky-900/40 bg-sky-50/50 dark:bg-sky-950/20 cursor-pointer hover:border-sky-300 dark:hover:border-sky-800 transition-colors"
       title="Klik untuk melihat tugas yang sedang berjalan"
       @click="emit('filterStatus', 'in_progress')"
     >
@@ -79,7 +98,7 @@ const stats = computed(() => {
 
     <!-- 3. Menunggu (Pending) -->
     <div
-      class="p-3.5 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 shadow-2xs cursor-pointer hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors"
+      class="p-3.5 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] cursor-pointer hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors"
       title="Klik untuk melihat tugas pending"
       @click="emit('filterStatus', 'pending')"
     >
@@ -97,7 +116,7 @@ const stats = computed(() => {
 
     <!-- 4. Saran AI (Menunggu Approval) -->
     <div
-      class="p-3.5 rounded-xl border border-violet-200/60 dark:border-violet-900/40 bg-violet-50/50 dark:bg-violet-950/20 shadow-2xs cursor-pointer hover:border-violet-300 dark:hover:border-violet-800 transition-colors"
+      class="p-3.5 rounded-xl border border-violet-200/60 dark:border-violet-900/40 bg-violet-50/50 dark:bg-violet-950/20 cursor-pointer hover:border-violet-300 dark:hover:border-violet-800 transition-colors"
       title="Klik untuk melihat rekomendasi AI yang menunggu persetujuan"
       @click="emit('filterStatus', 'suggested')"
     >
@@ -115,7 +134,7 @@ const stats = computed(() => {
 
     <!-- 5. Telah Selesai -->
     <div
-      class="p-3.5 rounded-xl border border-sky-200/70 dark:border-sky-900/40 bg-sky-50/40 dark:bg-sky-950/20 shadow-2xs cursor-pointer hover:border-sky-300 dark:hover:border-sky-800 transition-colors"
+      class="p-3.5 rounded-xl border border-sky-200/70 dark:border-sky-900/40 bg-sky-50/40 dark:bg-sky-950/20 cursor-pointer hover:border-sky-300 dark:hover:border-sky-800 transition-colors"
       title="Klik untuk melihat tugas yang sudah diselesaikan"
       @click="emit('filterStatus', 'completed')"
     >
@@ -132,7 +151,7 @@ const stats = computed(() => {
     </div>
 
     <!-- 6. Total & Persentase Progres Proyek -->
-    <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 shadow-2xs">
+    <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f]">
       <div class="flex items-center gap-1.5 text-xs font-semibold text-neutral-600 dark:text-neutral-400">
         <UIcon name="i-lucide-pie-chart" class="w-3.5 h-3.5 text-blue-500" />
         <span>Capaian</span>
