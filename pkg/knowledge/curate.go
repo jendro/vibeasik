@@ -21,7 +21,8 @@ import (
 //  3. promosikan pengetahuan pribadi yang terbukti berguna (✓≥3, utilitas ≥0.75) ke pustaka bersama
 //  4. pangkas node asli yang terbukti merugikan; patokan berkas yang sering keliru ditandai perlu ditinjau
 //  5. hitung ulang tautan (3 tetangga terdekat) & klaster konsep
-//  6. buang catatan pemakaian > 30 hari
+//  6. tutup pemakaian yang tidak akan pernah dinilai sebagai netral (SettleStale)
+//  7. buang catatan pemakaian > 30 hari
 
 // Report merangkum satu putaran kurasi.
 type Report struct {
@@ -32,6 +33,7 @@ type Report struct {
 	Flagged  int    `json:"flagged"`
 	Links    int    `json:"links"`
 	Clusters int    `json:"clusters"`
+	Settled  int    `json:"settled"`
 	Nodes    int    `json:"nodes"`
 	Took     string `json:"took"`
 }
@@ -93,6 +95,7 @@ func Curate(db *gorm.DB) Report {
 	r.Nodes = ix.n
 	r.Links = relink(db, ix)
 	r.Clusters = recluster(db, ix)
+	r.Settled = SettleStale(db, time.Now())
 	db.Where("created_at < ?", time.Now().Add(-useRetention)).Delete(&models.KnowledgeUse{})
 	r.Took = time.Since(began).Round(time.Millisecond).String()
 	return r

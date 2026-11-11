@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
@@ -269,5 +270,70 @@ func TestEmployeeSyncSkipsExecutiveBoard(t *testing.T) {
 	db.Where("source = ?", models.KnowledgeSrcEmployee).Find(&nodes)
 	if len(nodes) != 1 || nodes[0].OwnerName != "Rani" || nodes[0].Kind != models.KnowledgeKindProcedure {
 		t.Fatalf("hanya keahlian umum pegawai non-eksekutif yang dicerminkan (fakta proyek milik dewan), dapat %+v", nodes)
+	}
+}
+
+func TestSettleStaleClosesOnlyUsesThatWillNeverBeScored(t *testing.T) {
+	db := testDB(t)
+	if err := db.AutoMigrate(&models.Todo{}); err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now()
+	node := mustLearn(t, db, Note{Title: "Tutup stream", Content: "Selalu batalkan StreamSubscription di dispose.", Kind: models.KnowledgeKindRule, Domain: "flutter"})
+	score, old, fresh := 60, now.Add(-48*time.Hour), now.Add(-time.Hour)
+	todos := []models.Todo{
+		{Title: "selesai, dinilai, dikerjakan ulang", Status: models.TodoStatusCompleted, Score: &score, CompletedAt: &old},
+		{Title: "selesai, baru saja dinilai", Status: models.TodoStatusCompleted, Score: &score, CompletedAt: &fresh},
+		{Title: "selesai, belum dinilai", Status: models.TodoStatusCompleted, CompletedAt: &old},
+		{Title: "masih dikerjakan", Status: models.TodoStatusInProgress, Score: &score, CompletedAt: &old},
+	}
+	if err := db.Create(&todos).Error; err != nil {
+		t.Fatal(err)
+	}
+	todoCtx := func(i int) string { return fmt.Sprintf("todo:%d", todos[i].ID) }
+	want := map[string]string{
+		todoCtx(0):         models.KnowledgeOutcomeNeutral,
+		todoCtx(1):         "",
+		todoCtx(2):         "",
+		todoCtx(3):         "",
+		"todo:999999":      models.KnowledgeOutcomeNeutral, // todo sudah dihapus
+		"audit:1:lama.go":  models.KnowledgeOutcomeNeutral,
+		"plan:1":           models.KnowledgeOutcomeNeutral,
+		"audit:1:baru.go":  "",
+		"todo:bukan-angka": "",
+	}
+	for ctx := range want {
+		at := now.Add(-8 * 24 * time.Hour)
+		if ctx == "audit:1:baru.go" {
+			at = now.Add(-24 * time.Hour)
+		}
+		if err := db.Create(&models.KnowledgeUse{NodeID: node.ID, Context: ctx, CreatedAt: at}).Error; err != nil {
+			t.Fatal(err)
+		}
+	}
+	done := models.KnowledgeUse{NodeID: node.ID, Context: "audit:1:lama.go", Outcome: models.KnowledgeOutcomeHelpful, CreatedAt: now.Add(-9 * 24 * time.Hour)}
+	db.Create(&done)
+
+	if n := SettleStale(db, now); n != 4 {
+		t.Fatalf("harus menutup 4 pemakaian tanpa hasil, dapat %d", n)
+	}
+	var uses []models.KnowledgeUse
+	db.Where("id <> ?", done.ID).Find(&uses)
+	for _, u := range uses {
+		if u.Outcome != want[u.Context] {
+			t.Errorf("%s: hasil %q, seharusnya %q", u.Context, u.Outcome, want[u.Context])
+		}
+	}
+	db.First(&done, done.ID)
+	if done.Outcome != models.KnowledgeOutcomeHelpful {
+		t.Errorf("pemakaian yang sudah dinilai tidak boleh berubah, dapat %q", done.Outcome)
+	}
+	var after models.KnowledgeNode
+	db.First(&after, node.ID)
+	if after.Helpful != node.Helpful || after.Harmful != node.Harmful {
+		t.Errorf("penutupan netral tidak boleh mengubah bukti node: ✓%d ✗%d", after.Helpful, after.Harmful)
+	}
+	if n := SettleStale(db, now); n != 0 {
+		t.Fatalf("putaran kedua tidak boleh menutup apa pun, dapat %d", n)
 	}
 }
