@@ -588,6 +588,63 @@ type TodoQAGate struct {
 	CreatedAt    time.Time               `json:"created_at"`
 }
 
+// Fase konsultasi agent coding dengan pegawai pendamping.
+const (
+	ConsultPlan   = "plan"   // sebelum mengedit: rencana & berkas target
+	ConsultStuck  = "stuck"  // di tengah pengerjaan: macet atau ragu
+	ConsultReview = "review" // sebelum melapor: pegawai meninjau diff
+)
+
+// Putusan pegawai atas satu konsultasi.
+const (
+	ConsultProceed = "proceed" // lanjut
+	ConsultRevise  = "revise"  // ubah dulu sesuai butir arahan
+	ConsultStop    = "stop"    // berhenti: salah arah / perlu keputusan pengguna
+)
+
+// Seberapa jauh hasil kerja mengikuti arahan (dinilai QA gate dari diff).
+const (
+	ConsultFollowedYes     = "yes"
+	ConsultFollowedPartial = "partial"
+	ConsultFollowedNo      = "no"
+)
+
+// EmployeeConsult adalah satu konsultasi agent coding dengan pegawai yang mendampingi todo: agent mengetik,
+// pegawai menjawab dengan model, pengetahuan, dan riwayatnya sendiri. QA gate lalu menilai apakah arahan itu
+// diikuti dan berguna; pemilik bisa menambah penilaiannya sendiri.
+type EmployeeConsult struct {
+	ID           uint     `gorm:"primaryKey" json:"id"`
+	TodoID       uint     `gorm:"index" json:"todo_id"`
+	TodoTitle    string   `gorm:"size:512" json:"todo_title"`
+	ProjectName  string   `gorm:"size:255" json:"project_name,omitempty"`
+	EmployeeID   uint     `gorm:"index" json:"employee_id"`
+	EmployeeName string   `gorm:"size:128" json:"employee_name"`
+	Cycle        int      `json:"cycle"` // siklus pengerjaan todo (rework_count) saat konsultasi
+	Phase        string   `gorm:"size:16;index" json:"phase"`
+	Question     string   `gorm:"type:text" json:"question"`
+	Verdict      string   `gorm:"size:16" json:"verdict"`
+	Advice       string   `gorm:"type:text" json:"advice"`
+	Points       []string `gorm:"type:text;serializer:json" json:"points"`
+	Risks        []string `gorm:"type:text;serializer:json" json:"risks"`
+	Agent        string   `gorm:"size:128" json:"agent"`
+	Model        string   `gorm:"size:160" json:"model"`
+	Branch       string   `gorm:"size:255" json:"branch,omitempty"`
+	DiffLines    int      `json:"diff_lines,omitempty"`
+	StepsFailed  int      `json:"steps_failed,omitempty"` // langkah pegangan yang gagal saat fase review
+	// Penilaian QA gate: apakah diff mengikuti arahan, dan apakah arahan itu benar & berguna.
+	Followed   string     `gorm:"size:16;index" json:"followed,omitempty"`
+	Helpful    *bool      `json:"helpful,omitempty"`
+	JudgeNote  string     `gorm:"type:text" json:"judge_note,omitempty"`
+	GateScore  *int       `json:"gate_score,omitempty"`
+	GatePassed *bool      `json:"gate_passed,omitempty"`
+	JudgedBy   string     `gorm:"size:128" json:"judged_by,omitempty"`
+	JudgedAt   *time.Time `json:"judged_at,omitempty"`
+	// Penilaian pemilik: 1 = arahan bagus, -1 = arahan buruk, 0 = belum dinilai.
+	OwnerRating int       `json:"owner_rating"`
+	OwnerNote   string    `gorm:"type:text" json:"owner_note,omitempty"`
+	CreatedAt   time.Time `gorm:"index" json:"created_at"`
+}
+
 // QCFieldScore adalah nilai satu bidang panel QC: level 0–4 sesuai deskripsi level bidang + catatan konkret.
 type QCFieldScore struct {
 	Level int    `json:"level"`

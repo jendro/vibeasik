@@ -87,6 +87,13 @@ export const useStaffApi = () => {
   const revisitAction = async (id: number, action: 'reopen' | 'dismiss', note = ''): Promise<EmployeeRevisit> =>
     await $fetch<EmployeeRevisit>(`${apiBase}/api/staff/revisits/${id}/${action}`, { method: 'POST', body: { note } })
 
+  // Konsultasi agent coding dengan pegawai pendamping todo, beserta ringkasan mutu arahannya
+  const getConsults = async (query: { todo_id?: number, employee_id?: number, phase?: string, state?: string, limit?: number } = {}): Promise<ConsultOverview> =>
+    await $fetch<ConsultOverview>(`${apiBase}/api/staff/consults`, { query })
+
+  const rateConsult = async (id: number, rating: -1 | 0 | 1, note = ''): Promise<EmployeeConsult> =>
+    await $fetch<EmployeeConsult>(`${apiBase}/api/staff/consults/${id}/rate`, { method: 'POST', body: { rating, note } })
+
   const getConversations = async (query: { employee_id?: number, limit?: number } = {}): Promise<ConversationOverview> =>
     await $fetch<ConversationOverview>(`${apiBase}/api/staff/conversations`, { query })
 
@@ -197,6 +204,8 @@ export const useStaffApi = () => {
     getRevisits,
     processRevisits,
     revisitAction,
+    getConsults,
+    rateConsult,
     getConversations,
     startConversation,
     assignTodoEmployee,

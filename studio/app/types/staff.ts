@@ -594,6 +594,71 @@ export interface RevisitOverview {
   counts: Partial<Record<RevisitStatus, number>>
 }
 
+export type ConsultPhase = 'plan' | 'stuck' | 'review'
+export type ConsultVerdict = 'proceed' | 'revise' | 'stop'
+export type ConsultFollowed = 'yes' | 'partial' | 'no'
+
+/** Satu konsultasi agent coding dengan pegawai pendamping todo (GET /api/staff/consults). */
+export interface EmployeeConsult {
+  id: number
+  todo_id: number
+  todo_title: string
+  project_name?: string
+  employee_id: number
+  employee_name: string
+  cycle: number
+  phase: ConsultPhase
+  question: string
+  verdict: ConsultVerdict
+  advice: string
+  points: string[] | null
+  risks: string[] | null
+  agent: string
+  model: string
+  branch?: string
+  diff_lines?: number
+  steps_failed?: number
+  /** Penilaian QA gate: apakah diff mengikuti arahan, dan apakah arahan itu berguna */
+  followed?: ConsultFollowed | ''
+  helpful?: boolean | null
+  judge_note?: string
+  gate_score?: number | null
+  gate_passed?: boolean | null
+  judged_by?: string
+  judged_at?: string
+  /** Penilaian pemilik: 1 bagus, -1 buruk, 0 belum dinilai */
+  owner_rating: number
+  owner_note?: string
+  created_at: string
+}
+
+export interface ConsultStat {
+  employee_id?: number
+  employee_name?: string
+  total: number
+  todos: number
+  judged: number
+  followed: number
+  helpful: number
+  unhelpful: number
+  owner_up: number
+  owner_down: number
+  /** Persen arahan berguna dari yang sudah dinilai; -1 = belum ada penilaian */
+  quality: number
+}
+
+export interface ConsultOverview {
+  consults: EmployeeConsult[]
+  overview: {
+    summary: ConsultStat
+    employees: ConsultStat[]
+    with_score: number
+    with_todos: number
+    without_score: number
+    without_todos: number
+  }
+}
+
 export interface RevisitReport {
   queued: number
   woken: number
