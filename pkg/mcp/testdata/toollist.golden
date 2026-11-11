@@ -37,6 +37,7 @@ vibeasik_assign_port
 vibeasik_check_ports
 vibeasik_cloud_security_audit
 vibeasik_code_map_build
+vibeasik_code_map_cost
 vibeasik_code_map_export
 vibeasik_code_map_file
 vibeasik_code_map_overview

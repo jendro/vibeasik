@@ -71,6 +71,8 @@ func (s *Server) setupRoutes() {
 	api.Get("/projects/:id/code-map/search", s.searchCodeMap)
 	api.Get("/projects/:id/code-map/file", s.getCodeMapFile)
 	api.Post("/projects/:id/code-map/export", s.exportCodeMap)
+	api.Get("/projects/:id/process-cost", s.getProcessCost)
+	api.Get("/projects/:id/owner-recap", s.getOwnerRecap)
 	api.Post("/projects/:id/link-workspace", s.linkProjectWorkspace)
 	api.Post("/projects/:id/init-vibeasik", s.initProject)
 	api.Get("/projects/:id/consolidate-preview", s.previewConsolidateProject)

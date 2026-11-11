@@ -123,6 +123,7 @@ func migrateDatabaseSchema(db *gorm.DB) error {
 		&models.OrchestratorSettings{},
 		&models.CodeMap{},
 		&models.CodeMapEntry{},
+		&models.ProcessCostSnapshot{},
 		&models.PlanningSession{},
 		&models.PlannerSettings{},
 		&models.AuditFeedback{},

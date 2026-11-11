@@ -267,7 +267,7 @@ func TestDispatchTablesLocked(t *testing.T) {
 		cm = append(cm, n)
 	}
 	sort.Strings(cm)
-	if w := "vibeasik_code_map_build,vibeasik_code_map_export,vibeasik_code_map_file,vibeasik_code_map_overview,vibeasik_code_map_routes,vibeasik_code_map_search,vibeasik_code_map_status"; strings.Join(cm, ",") != w {
+	if w := "vibeasik_code_map_build,vibeasik_code_map_cost,vibeasik_code_map_export,vibeasik_code_map_file,vibeasik_code_map_overview,vibeasik_code_map_routes,vibeasik_code_map_search,vibeasik_code_map_status"; strings.Join(cm, ",") != w {
 		t.Errorf("tabel codemap berubah: %v", cm)
 	}
 }

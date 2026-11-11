@@ -12,7 +12,7 @@ const profileEnv = "VIBEASIK_MCP_PROFILE"
 var todoCoreTools = []string{
 	"get_current_project", "link_project_workspace", "list_todos", "create_todo", "update_todo", "delete_todo",
 	"get_latest_diagnostic", "vibeasik_knowledge_recall", "vibeasik_code_map_search", "vibeasik_code_map_file",
-	"vibeasik_code_map_overview", "vibeasik_code_map_routes", "vibeasik_paging_plan", "vibeasik_check_ports",
+	"vibeasik_code_map_overview", "vibeasik_code_map_routes", "vibeasik_code_map_cost", "vibeasik_paging_plan", "vibeasik_check_ports",
 	"vibeasik_run_component", "vibeasik_run_status", "vibeasik_report_activity",
 }
 

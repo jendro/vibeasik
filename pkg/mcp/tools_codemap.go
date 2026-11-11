@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/vibeasik/vibeasik/pkg/codemap"
+	"github.com/vibeasik/vibeasik/pkg/insight"
 	"github.com/vibeasik/vibeasik/pkg/models"
 	"github.com/vibeasik/vibeasik/pkg/routemap"
 	"github.com/vibeasik/vibeasik/pkg/workspace"
@@ -79,6 +80,18 @@ func (s *Server) codeMapToolsList() []Tool {
 			})},
 		},
 		{
+			Name: "vibeasik_code_map_cost",
+			Description: "Process cost per Go route or function, computed statically from the AST: tick formula T(n) (1 tick = one executed statement; n = number of data rows), Big-O class, T(1), and the database query count Q(n) — a query inside a data loop yields Q(n) = n + 1 and is flagged N+1. Sorted most expensive first as data grows. " +
+				"Use it before and after touching a handler to prove the change did not raise its growth class (e.g. O(n) → O(n²)) or introduce an N+1 query, and to find the routes worth optimising. Worst case per branch; all collections share one size n; recursion is flagged and its formula is a lower bound.",
+			InputSchema: ToolSchema{Type: "object", Properties: projectProps(map[string]interface{}{
+				"kind":       prop("string", "'routes' (default) or 'funcs'"),
+				"q":          prop("string", "Substring filter: route path/handler, or function name/file"),
+				"class":      prop("string", "Growth class filter: constant, linear, linearithmic, quadratic, cubic, polynomial"),
+				"n_plus_one": prop("boolean", "Only entries with a query inside a data loop"),
+				"limit":      prop("integer", "Max entries (default 20, max 200)"),
+			})},
+		},
+		{
 			Name:        "vibeasik_code_map_export",
 			Description: "Writes the code map into the repository as .vibeasik/CODEMAP.md (readable map for agents without MCP) and .vibeasik/codemap.jsonl (one chunk per file for grep/RAG).",
 			InputSchema: ToolSchema{Type: "object", Properties: projectProps(nil)},
@@ -114,6 +127,7 @@ var codeMapToolHandlers = map[string]codeMapHandler{
 	"vibeasik_code_map_build":    (*Server).codeMapBuild,
 	"vibeasik_code_map_export":   (*Server).codeMapExport,
 	"vibeasik_code_map_routes":   codeMapRoutes,
+	"vibeasik_code_map_cost":     codeMapCost,
 	"vibeasik_code_map_status": func(s *Server, pid uint, _ map[string]interface{}) (*ToolCallResult, error) {
 		return s.codeMapStatus(pid)
 	},
@@ -235,6 +249,51 @@ func codeMapRoutes(s *Server, pid uint, args map[string]interface{}) (*ToolCallR
 	}
 	if total == 0 {
 		b.WriteString("Tidak ada rute cocok. Proyek tanpa backend Go, atau filter terlalu sempit (path = substring, function = nama fungsi/berkas).\n")
+	}
+	return &ToolCallResult{Content: []ToolContent{{Type: "text", Text: b.String()}}}, nil
+}
+
+// codeMapCost: rumus tick T(n), Big-O, dan query Q(n) tiap rute/fungsi — untuk membuktikan perubahan dengan angka.
+func codeMapCost(s *Server, pid uint, args map[string]interface{}) (*ToolCallResult, error) {
+	limit := int(argUint(args, "limit"))
+	if limit <= 0 {
+		limit = 20
+	}
+	q := insight.CostQuery{Limit: limit}
+	q.Kind, _ = args["kind"].(string)
+	q.Search, _ = args["q"].(string)
+	q.Class, _ = args["class"].(string)
+	q.NPlusOne, _ = args["n_plus_one"].(bool)
+	page, err := insight.ProcessCost(s.db, pid, q, time.Now())
+	if err != nil {
+		return nil, err
+	}
+	var b strings.Builder
+	sum := page.Summary
+	if !sum.Supported {
+		b.WriteString("Tidak ada rute backend Go yang bisa dihitung di proyek ini.\n")
+		return &ToolCallResult{Content: []ToolContent{{Type: "text", Text: b.String()}}}, nil
+	}
+	fmt.Fprintf(&b, "%d rute, %d fungsi — rute N+1 query: %d — kelas rute: %v\n", sum.Routes, sum.Funcs, sum.NPlusOneRoutes, sum.RouteClasses)
+	fmt.Fprintf(&b, "%d %s cocok (ditampilkan %d), urut dari yang termahal saat data tumbuh:\n", page.Total, page.Kind, len(page.Routes)+len(page.Funcs))
+	line := func(title, where string, c routemap.Cost) {
+		flags := ""
+		if c.NPlusOne {
+			flags += " [N+1 QUERY]"
+		}
+		if c.Recursive {
+			flags += " [rekursif: batas bawah]"
+		}
+		if c.Unbounded {
+			flags += " [loop tanpa batas]"
+		}
+		fmt.Fprintf(&b, "\n%s\n  T(n) = %s → %s, T(1) = %d tick; Q(n) = %s%s\n  %s\n", title, c.Formula, c.BigO, c.Ticks1, c.QueryFormula, flags, where)
+	}
+	for _, r := range page.Routes {
+		line(r.Method+" "+r.Path, "handler "+r.Handler+" ("+r.HandlerDecl+")", r.Cost)
+	}
+	for _, f := range page.Funcs {
+		line(f.Name, fmt.Sprintf("%s:%d — dijangkau %d rute", f.File, f.Line, f.Routes), f.Cost)
 	}
 	return &ToolCallResult{Content: []ToolContent{{Type: "text", Text: b.String()}}}, nil
 }

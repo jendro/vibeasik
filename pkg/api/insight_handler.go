@@ -1,0 +1,38 @@
+package api
+
+import (
+	"time"
+
+	"github.com/gofiber/fiber/v2"
+
+	"github.com/vibeasik/vibeasik/pkg/insight"
+)
+
+// getProcessCost: rumus tick T(n), Big-O, dan jumlah query Q(n) tiap rute/fungsi backend Go proyek.
+func (s *Server) getProcessCost(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil || id <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
+	}
+	page, err := insight.ProcessCost(s.db, uint(id), insight.CostQuery{
+		Kind: c.Query("kind"), Search: c.Query("q"), Class: c.Query("class"),
+		NPlusOne: c.Query("n_plus_one") == "1", Limit: c.QueryInt("limit"), Offset: c.QueryInt("offset"),
+	}, time.Now())
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(page)
+}
+
+// getOwnerRecap: rekap kemajuan proyek untuk pemilik (todo, bug ditutup, perbaikan algoritma, kesehatan kode).
+func (s *Server) getOwnerRecap(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil || id <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
+	}
+	recap, err := insight.BuildOwnerRecap(s.db, uint(id), c.QueryInt("days"), time.Now())
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(recap)
+}
