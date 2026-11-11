@@ -64,6 +64,12 @@ var serveCmd = &cobra.Command{
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
+		// Taksiran heuristik semua todo dihitung ulang di latar agar engine (dan proses MCP) cepat siap.
+		go func() {
+			if c, i := database.RefreshTodoEstimates(db); c+i > 0 {
+				log.Printf("[Database] taksiran heuristik diperbarui: %d kerumitan, %d dampak", c, i)
+			}
+		}()
 
 		registry.Edition = Edition
 		// Akun vibeasik (diaktifkan di PersistentPreRun): entitlement diperbarui berkala selama serve.

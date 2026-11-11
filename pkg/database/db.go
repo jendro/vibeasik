@@ -484,10 +484,26 @@ func ensureDefaultTodos(db *gorm.DB) {
 		log.Printf("[Database] memori todo diisi untuk %d todo", n)
 	}
 
-	// Backfill kerumitan (logika, koding, cakupan, risiko) agar orkestrator bisa memilih agent. Taksiran heuristik
-	// dihitung ulang tiap start supaya ikut perbaikan estimator; penilaian LLM/manual tidak disentuh.
+	// Todo tanpa taksiran kerumitan/dampak diisi sekarang (cepat: hanya yang kosong). Penghitungan ulang taksiran
+	// heuristik untuk semua todo berat (regex per todo), jadi hanya `vibeasik serve` yang menjalankannya di latar
+	// lewat RefreshTodoEstimates — proses singkat seperti `vibeasik mcp` tidak boleh tertahan puluhan detik.
+	refreshTodoEstimates(db, false)
+}
+
+// RefreshTodoEstimates menghitung ulang taksiran heuristik kerumitan (logika, koding, cakupan, risiko) dan dampak
+// (7 dimensi → skor 0–100) semua todo agar ikut perbaikan estimator; penilaian LLM/manual tidak disentuh.
+// Dipanggil `vibeasik serve` di latar setiap start. Mengembalikan jumlah todo yang kerumitan & dampaknya berubah.
+func RefreshTodoEstimates(db *gorm.DB) (complexity, impact int) {
+	return refreshTodoEstimates(db, true)
+}
+
+func refreshTodoEstimates(db *gorm.DB, all bool) (complexity, impact int) {
 	var unrated []models.Todo
-	db.Where("complexity_level = '' OR complexity_level IS NULL OR complexity_source = ?", models.ComplexitySourceHeuristic).Find(&unrated)
+	q := db.Where("complexity_level = '' OR complexity_level IS NULL")
+	if all {
+		q = q.Or("complexity_source = ?", models.ComplexitySourceHeuristic)
+	}
+	q.Find(&unrated)
 	for i := range unrated {
 		c := models.EstimateComplexity(&unrated[i])
 		if c == unrated[i].TodoComplexity {
@@ -498,16 +514,22 @@ func ensureDefaultTodos(db *gorm.DB) {
 			"complexity_risk": c.ComplexityRisk, "complexity_score": c.ComplexityScore, "complexity_level": c.ComplexityLevel,
 			"complexity_note": c.ComplexityNote, "complexity_source": c.ComplexitySource,
 		})
+		complexity++
 	}
 
-	// Backfill dampak (7 dimensi → skor 0–100) dengan aturan yang sama: taksiran heuristik selalu diperbarui.
 	var noImpact []models.Todo
-	db.Where("impact_source = '' OR impact_source IS NULL OR impact_source = ?", models.ComplexitySourceHeuristic).Find(&noImpact)
+	q = db.Where("impact_source = '' OR impact_source IS NULL")
+	if all {
+		q = q.Or("impact_source = ?", models.ComplexitySourceHeuristic)
+	}
+	q.Find(&noImpact)
 	for i := range noImpact {
 		imp := models.EstimateImpact(&noImpact[i])
 		if imp == noImpact[i].TodoImpact {
 			continue
 		}
 		db.Model(&models.Todo{}).Where("id = ?", noImpact[i].ID).Updates(imp.Columns())
+		impact++
 	}
+	return complexity, impact
 }
