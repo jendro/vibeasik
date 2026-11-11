@@ -174,10 +174,11 @@ const { getMethodColorClass } = useFormatters()
           size="xs"
           color="primary"
           variant="solid"
-          icon="i-lucide-message-square-code"
-          @click="emit('switchTab', 'ai_chat')"
+          icon="i-lucide-handshake"
+          title="Ajukan fitur, perubahan, atau rombak desain ke dewan proyek"
+          to="/client-room"
         >
-          Diskusi Ide & Chat TODO
+          Minta fitur di Ruang Klien
         </UButton>
       </div>
     </div>

@@ -1,10 +1,10 @@
 import type { ComputedRef } from 'vue'
-import type { AIReviewResponse, Diagnostic, Finding, ProjectComponent } from '~/types'
+import type { Diagnostic, Finding, ProjectComponent } from '~/types'
 
-// Diagnostik kode & AI Advisor untuk satu aplikasi.
+// Diagnostik kode untuk satu aplikasi.
 export function useAppAnalysis(comp: ComputedRef<ProjectComponent | null>) {
   const toast = useToast()
-  const { diagnoseComponent, aiReviewComponent } = useApi()
+  const { diagnoseComponent } = useApi()
 
   // Diagnostics state
   const diagnosing = ref(false)
@@ -37,37 +37,11 @@ export function useAppAnalysis(comp: ComputedRef<ProjectComponent | null>) {
     }
   }
 
-  // AI Advisor state
-  const reviewing = ref(false)
-  const customAiQuery = ref('')
-  const componentAiReview = ref<AIReviewResponse | null>(null)
-
-  const handleRunComponentAiReview = async () => {
-    if (!comp.value) return
-    reviewing.value = true
-    try {
-      const res = await aiReviewComponent(comp.value.id, customAiQuery.value)
-      componentAiReview.value = res
-    } catch (err: any) {
-      toast.add({
-        title: 'AI Review Gagal',
-        description: `AI review aplikasi gagal: ${err.message}`,
-        icon: 'i-lucide-alert-circle',
-        color: 'error'
-      })
-    } finally {
-      reviewing.value = false
-    }
-  }
-
   const resetAnalysis = () => {
     componentDiagnostic.value = null
-    componentAiReview.value = null
-    customAiQuery.value = ''
   }
 
   return {
-    diagnosing, componentDiagnostic, parsedFindings, handleRunComponentDiagnostics,
-    reviewing, customAiQuery, componentAiReview, handleRunComponentAiReview, resetAnalysis
+    diagnosing, componentDiagnostic, parsedFindings, handleRunComponentDiagnostics, resetAnalysis
   }
 }

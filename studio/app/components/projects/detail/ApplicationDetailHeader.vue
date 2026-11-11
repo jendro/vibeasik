@@ -70,11 +70,6 @@ const tabs = computed<AppTabItem[]>(() => [
     badgeColor: 'warning'
   },
   {
-    id: 'ai',
-    label: 'AI Advisor & Optimasi',
-    icon: 'i-lucide-sparkles'
-  },
-  {
     id: 'mcp',
     label: 'Agent MCP Hub',
     icon: 'i-lucide-cpu'
@@ -188,28 +183,40 @@ const tabs = computed<AppTabItem[]>(() => [
     </div>
 
     <!-- Navigation Tabs -->
-    <div class="flex items-center gap-1.5 pt-2 border-t border-neutral-100 dark:border-white/[0.08] text-xs font-medium overflow-x-auto pb-0.5">
-      <button
-        v-for="t in tabs"
-        :key="t.id"
-        type="button"
-        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors cursor-pointer shrink-0 text-xs"
-        :class="activeTab === t.id
-          ? 'bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 font-semibold'
-          : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'"
-        @click="activeTab = t.id"
-      >
-        <UIcon :name="t.icon" class="w-3.5 h-3.5" />
-        <span>{{ t.label }}</span>
-        <UBadge
-          v-if="t.badge !== undefined && (typeof t.badge === 'string' ? !!t.badge : t.badge > 0)"
-          size="xs"
-          :color="activeTab === t.id ? 'success' : t.badgeColor || 'neutral'"
-          variant="subtle"
+    <div class="flex items-center gap-2 pt-2 border-t border-neutral-100 dark:border-white/[0.08] text-xs font-medium">
+      <div class="flex-1 min-w-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+        <button
+          v-for="t in tabs"
+          :key="t.id"
+          type="button"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors cursor-pointer shrink-0 text-xs"
+          :class="activeTab === t.id
+            ? 'bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 font-semibold'
+            : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'"
+          @click="activeTab = t.id"
         >
-          {{ t.badge }}
-        </UBadge>
-      </button>
+          <UIcon :name="t.icon" class="w-3.5 h-3.5" />
+          <span>{{ t.label }}</span>
+          <UBadge
+            v-if="t.badge !== undefined && (typeof t.badge === 'string' ? !!t.badge : t.badge > 0)"
+            size="xs"
+            :color="activeTab === t.id ? 'success' : t.badgeColor || 'neutral'"
+            variant="subtle"
+          >
+            {{ t.badge }}
+          </UBadge>
+        </button>
+      </div>
+      <!-- Satu pintu permintaan: fitur & rombak desain aplikasi ini diajukan ke dewan proyek di Ruang Klien -->
+      <NuxtLink
+        :to="{ path: '/client-room', query: isFrontend ? { app: String(comp.id), kind: 'design' } : { app: String(comp.id) } }"
+        :title="isFrontend ? 'Minta dewan proyek merombak desain atau menambah fitur aplikasi ini' : 'Minta dewan proyek menambah atau mengubah fitur aplikasi ini'"
+        class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors text-xs text-sky-700 dark:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-950/50"
+      >
+        <UIcon name="i-lucide-handshake" class="w-3.5 h-3.5" />
+        <span>{{ isFrontend ? 'Minta fitur / rombak desain' : 'Minta fitur / perubahan' }}</span>
+        <UIcon name="i-lucide-arrow-up-right" class="w-3 h-3 opacity-70" />
+      </NuxtLink>
     </div>
   </div>
 </template>

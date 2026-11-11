@@ -26,11 +26,13 @@ const project = ref<Project | null>(null)
 const loading = ref(true)
 // Legacy tab ids keep old links (?tab=topology / ?tab=base_knowledge) working
 const TAB_ALIASES: Record<string, string> = { topology: 'apps', base_knowledge: 'technical' }
-const VALID_TABS = ['overview', 'apps', 'technical', 'synergy', 'ai_chat', 'visual_audit', 'recap', 'cost']
+const VALID_TABS = ['overview', 'apps', 'technical', 'synergy', 'visual_audit', 'recap', 'cost']
+// Tab "Kaji Ide & TODO" dilebur ke Ruang Klien (satu pintu permintaan); tautan lama diarahkan ke sana.
+const CLIENT_ROOM_TABS = ['ai_chat']
 // Tab yang datanya dari route Pro (engine Community menjawab 402): tampilkan kartu kunci, jangan panggil API-nya.
 const TAB_FEATURE: Record<string, string> = {
   overview: 'audit.ai_review', technical: 'audit.ai_review', synergy: 'audit.ai_review',
-  ai_chat: 'audit.ai_review', visual_audit: 'runtime_sim'
+  visual_audit: 'runtime_sim'
 }
 const { load: loadEdition, isLocked } = useEdition()
 const lockedFeature = computed(() => {
@@ -42,6 +44,11 @@ const normalizeTab = (tab: unknown) => {
   return VALID_TABS.includes(t) ? t : 'overview'
 }
 const activeTab = ref(normalizeTab(route.query.tab))
+const openClientRoom = () => navigateTo('/client-room', { replace: true })
+const switchTab = (tab: string) => {
+  if (CLIENT_ROOM_TABS.includes(tab)) return navigateTo('/client-room')
+  activeTab.value = tab
+}
 
 // Profil proyek + cache Base Knowledge (state & API di composable)
 const {
@@ -51,10 +58,11 @@ const {
 } = useProjectProfile(projectId, project)
 
 watch(() => route.query.tab, (newTab) => {
+  if (typeof newTab === 'string' && CLIENT_ROOM_TABS.includes(newTab)) return openClientRoom()
   if (newTab) {
     activeTab.value = normalizeTab(newTab)
   }
-})
+}, { immediate: true })
 
 watch(activeTab, (newTab) => {
   if (route.query.tab !== newTab) {
@@ -291,7 +299,7 @@ const handleCreateDirOnDisk = async (comp: ProjectComponent) => {
       <InsightOwnerRecapPanel
         v-else-if="activeTab === 'recap'"
         :project="project"
-        @switch-tab="activeTab = $event"
+        @switch-tab="switchTab"
       />
 
       <InsightProcessCostTab
@@ -309,7 +317,7 @@ const handleCreateDirOnDisk = async (comp: ProjectComponent) => {
         :active-ports-count="activePortsCount"
         @generate="handleGenerateProfile"
         @updated="handleProfileUpdated"
-        @switch-tab="activeTab = $event"
+        @switch-tab="switchTab"
       />
 
       <ProjectsDetailComponentTopologyTab
@@ -328,7 +336,7 @@ const handleCreateDirOnDisk = async (comp: ProjectComponent) => {
         @edit="openEditComponentModal"
         @delete="compToDelete = $event"
         @open-add-modal="openAddComponentModal"
-        @switch-tab="activeTab = $event"
+        @switch-tab="switchTab"
       />
 
       <ProjectsDetailBaseKnowledgeTab
@@ -338,7 +346,7 @@ const handleCreateDirOnDisk = async (comp: ProjectComponent) => {
         :loading-data="loadingBaseKnowledge"
         @load="loadProjectBaseKnowledge(false)"
         @refresh="loadProjectBaseKnowledge(true)"
-        @switch-tab="activeTab = $event"
+        @switch-tab="switchTab"
       />
 
       <ProjectsDetailProjectSynergyTab
@@ -350,13 +358,7 @@ const handleCreateDirOnDisk = async (comp: ProjectComponent) => {
         @check-ports="checkActivePorts"
         @open-add-modal="openAddComponentModal"
         @open-detail="handleOpenAppDetail"
-        @switch-tab="activeTab = $event"
-      />
-
-      <ProjectsDetailProjectChatTab
-        v-else-if="activeTab === 'ai_chat'"
-        :project="project"
-        :cached-base-knowledge="cachedBaseKnowledge"
+        @switch-tab="switchTab"
       />
 
       <ProjectsDetailVisualAuditTab

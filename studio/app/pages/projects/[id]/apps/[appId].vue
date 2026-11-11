@@ -15,7 +15,11 @@ const appId = computed(() => Number(route.params.appId))
 
 const project = ref<Project | null>(null)
 const loading = ref(true)
-const activeTab = ref<'blueprint' | 'fast_scan' | 'diagnostics' | 'ai' | 'mcp'>('blueprint')
+// Tab "AI Advisor" dilebur ke Ruang Klien: permintaan & saran untuk aplikasi ini diajukan ke dewan proyek.
+const APP_TABS = ['blueprint', 'fast_scan', 'diagnostics', 'mcp'] as const
+type AppTab = typeof APP_TABS[number]
+const activeTab = ref<AppTab>('blueprint')
+const clientRoomLink = computed(() => ({ path: '/client-room', query: { app: String(appId.value) } }))
 
 const comp = computed<ProjectComponent | null>(() => {
   return project.value?.components?.find(c => c.id === appId.value) ?? null
@@ -62,8 +66,7 @@ const {
 
 // Diagnostik kode & AI Advisor
 const {
-  diagnosing, componentDiagnostic, parsedFindings, handleRunComponentDiagnostics,
-  reviewing, customAiQuery, componentAiReview, handleRunComponentAiReview, resetAnalysis
+  diagnosing, componentDiagnostic, parsedFindings, handleRunComponentDiagnostics, resetAnalysis
 } = useAppAnalysis(comp)
 
 // Dialog ubah/tambah aplikasi + hapus + buat folder
@@ -96,18 +99,17 @@ const loadData = async (quiet = false) => {
   }
 }
 
+const applyTabQuery = (tab: unknown) => {
+  if (tab === 'ai') return navigateTo(clientRoomLink.value, { replace: true })
+  if (typeof tab === 'string' && (APP_TABS as readonly string[]).includes(tab)) activeTab.value = tab as AppTab
+}
+
 onMounted(() => {
-  if (route.query.tab && ['blueprint', 'fast_scan', 'diagnostics', 'ai', 'mcp'].includes(route.query.tab as string)) {
-    activeTab.value = route.query.tab as any
-  }
+  applyTabQuery(route.query.tab)
   loadData()
 })
 
-watch(() => route.query.tab, (newTab) => {
-  if (newTab && ['blueprint', 'fast_scan', 'diagnostics', 'ai', 'mcp'].includes(newTab as string)) {
-    activeTab.value = newTab as any
-  }
-})
+watch(() => route.query.tab, applyTabQuery)
 
 watch(activeTab, (newTab) => {
   if (route.query.tab !== newTab) {
@@ -239,23 +241,9 @@ watch(() => route.params.appId, () => {
         @run="handleRunComponentDiagnostics"
       />
 
-
-      <!-- TAB 3: AI ADVISOR & OPTIMASI -->
-      <ProjectsDetailAppDetailAiAdvisorTab
-        v-else-if="activeTab === 'ai'"
-        v-model:query="customAiQuery"
-        :comp="comp"
-        :loading="loading"
-        :reviewing="reviewing"
-        :component-ai-review="componentAiReview"
-        @run="handleRunComponentAiReview"
-      />
-
-
       <!-- TAB 4: AGENT MCP HUB -->
       <ProjectsDetailAppDetailMcpTab v-else-if="activeTab === 'mcp'" :comp="comp" />
     </div>
-
 
     <!-- Right Sidebar: Full ke atas sampai batas navbar dan fixed -->
     <ProjectsDetailApplicationDetailSidebar

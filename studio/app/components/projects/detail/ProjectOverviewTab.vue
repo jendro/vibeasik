@@ -46,7 +46,7 @@ const statItems = computed(() => stats.value.map(st => ({
   label: st.label,
   value: st.value,
   hint: st.sub,
-  action: st.tab ? () => emit('switchTab', st.tab) : undefined
+  action: st.tab ? () => emit('switchTab', st.tab) : ('to' in st && st.to ? () => navigateTo(st.to) : undefined)
 })))
 
 const stats = computed(() => {
@@ -60,7 +60,7 @@ const stats = computed(() => {
       : { label: 'Halaman', value: '—', sub: 'tak ada app frontend', icon: 'i-lucide-panels-top-left', tab: 'apps' },
     { label: 'Endpoint API', value: s?.endpoints ?? 0, sub: `${s?.domains ?? 0} domain`, icon: 'i-lucide-route', tab: 'technical' },
     { label: 'Entitas Data', value: tableCount.value, sub: 'tabel / model', icon: 'i-lucide-database', tab: 'synergy' },
-    { label: 'TODO Terbuka', value: s?.open_todos ?? 0, sub: `${s?.done_todos ?? 0} selesai`, icon: 'i-lucide-list-todo', tab: 'ai_chat' }
+    { label: 'TODO Terbuka', value: s?.open_todos ?? 0, sub: `${s?.done_todos ?? 0} selesai`, icon: 'i-lucide-list-todo', tab: '', to: '/todos' }
   ]
 })
 </script>

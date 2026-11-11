@@ -205,7 +205,7 @@ export interface AgentRecap {
 }
 
 /** Jenis permintaan klien di Ruang Klien; menentukan cara dewan menanggapi & menyusun todo. */
-export type ClientRequestKind = 'bug' | 'question' | 'feature' | 'change' | 'other'
+export type ClientRequestKind = 'bug' | 'question' | 'feature' | 'change' | 'design' | 'other'
 /** Penerima pesan Ruang Klien; 'auto' = gerbang Jev memilih penanggung jawab. */
 export type ClientRecipient = 'auto' | 'all' | 'ceo' | 'cto' | 'product_owner' | 'cmo'
 /** Cara penanggung jawab ditentukan: dipilih klien, gerbang Jev, atau aturan lokal. */
@@ -255,6 +255,9 @@ export interface ExecutiveChatRequestDTO {
   kind?: ClientRequestKind
   model?: string
   auto_save_todos?: boolean
+  /** Fokus opsional: aplikasi (komponen proyek) & halaman/rute yang ditunjuk klien. */
+  component_id?: number
+  page?: string
 }
 
 export interface ExecutiveChatResponseDTO {
