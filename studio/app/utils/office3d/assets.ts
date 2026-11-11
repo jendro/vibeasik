@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { applyOfficeTheme } from './theme'
 
 /**
  * Aset 3D opsional untuk Kantor Agent. Setiap perabot prosedural ditandai `userData.prop` (lihat `PROP_NAMES`);
@@ -9,10 +10,14 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
  * Contoh assets.json:
  *   { "models": { "desk": { "url": "/office3d/desk.glb" }, "tree": { "url": "/office3d/tree.glb", "rotation": 90 } } }
  * Opsi per model: `scale` (abaikan auto-fit), `rotation` (derajat, sumbu Y), `offset` [x, y, z] meter, `fit` (default true).
+ *
+ * Manifest yang sama boleh memuat `theme` untuk mengubah suasana (warna langit, kekuatan lampu, jam senja) tanpa
+ * mengubah kode — lihat `OfficeTheme`. Contoh: { "theme": { "sky": { "night": "#0b1030" }, "lamp": { "interiorNight": 22 } } }
  */
 export const PROP_NAMES = [
   'desk', 'chair', 'plant', 'sofa', 'bookshelf', 'server_rack', 'tree', 'bush', 'bench', 'lamp_post',
-  'round_table', 'cafe_chair', 'counter', 'meeting_table', 'coffee_machine', 'car', 'flipchart', 'fridge', 'tv'
+  'round_table', 'cafe_chair', 'counter', 'meeting_table', 'coffee_machine', 'car', 'flipchart', 'fridge', 'tv',
+  'floor_lamp', 'desk_lamp', 'rug', 'water_cooler', 'lantern'
 ] as const
 export type PropName = typeof PROP_NAMES[number]
 
@@ -21,14 +26,19 @@ interface LoadedAsset { scene: THREE.Object3D, spec: AssetSpec }
 
 export const ASSET_MANIFEST_URL = '/office3d/assets.json'
 
-/** Muat semua model yang terdaftar; manifest yang tidak ada / model yang gagal dimuat dilewati (perabot prosedural tetap). */
+/**
+ * Muat semua model yang terdaftar; manifest yang tidak ada / model yang gagal dimuat dilewati (perabot prosedural tetap).
+ * Kunci `theme` di manifest langsung diterapkan ke tema scene.
+ */
 export async function loadOfficeAssets(): Promise<Map<string, LoadedAsset>> {
   const out = new Map<string, LoadedAsset>()
   let models: Record<string, AssetSpec>
   try {
     const res = await fetch(ASSET_MANIFEST_URL, { cache: 'no-cache' })
     if (!res.ok) return out
-    models = (await res.json())?.models ?? {}
+    const manifest = await res.json()
+    applyOfficeTheme(manifest?.theme)
+    models = manifest?.models ?? {}
   } catch {
     return out
   }

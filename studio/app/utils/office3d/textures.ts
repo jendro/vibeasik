@@ -55,6 +55,43 @@ export function tileTexture() {
   return texture
 }
 
+/** Titik cahaya lembut (putih, memudar ke tepi) untuk genangan cahaya lampu di lantai. */
+export function glowTexture() {
+  const { texture } = canvasTexture(128, 128, (ctx) => {
+    const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64)
+    g.addColorStop(0, 'rgba(255,255,255,1)')
+    g.addColorStop(0.35, 'rgba(255,255,255,0.5)')
+    g.addColorStop(1, 'rgba(255,255,255,0)')
+    ctx.fillStyle = g
+    ctx.fillRect(0, 0, 128, 128)
+  })
+  return texture
+}
+
+/** Serat kayu halus untuk lantai parket (putih, diberi warna lewat material). */
+export function woodTexture() {
+  const { texture } = canvasTexture(128, 128, (ctx) => {
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, 128, 128)
+    let r = 11
+    for (let row = 0; row < 4; row++) {
+      r = (r * 1103515245 + 12345) >>> 0
+      const off = r % 128
+      ctx.fillStyle = `rgba(0,0,0,${0.03 + (row % 2) * 0.03})`
+      ctx.fillRect(0, row * 32, 128, 32)
+      ctx.strokeStyle = 'rgba(0,0,0,0.14)'
+      ctx.lineWidth = 2
+      ctx.strokeRect(-2, row * 32, 132, 32)
+      ctx.beginPath()
+      ctx.moveTo(off, row * 32)
+      ctx.lineTo(off, row * 32 + 32)
+      ctx.stroke()
+    }
+  })
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping
+  return texture
+}
+
 export interface ScreenState { active: boolean, burning: boolean, project: string, seed: number }
 
 /** Layar monitor: mati, kode berjalan + nama proyek, atau terbakar saat gagal. */

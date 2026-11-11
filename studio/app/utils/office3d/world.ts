@@ -5,7 +5,9 @@ import {
   PM_DESK, PM_PODIUM, ROAD_W, ROAD_X, ROOMS, ZONES, type Room, type Spot
 } from '~/utils/officeLayout'
 import type { PropName } from './assets'
-import { canvasTexture, drawScreen, textTexture, tileTexture } from './textures'
+import { bakeByMaterial } from './bake'
+import { createLightMaterials, createLighting, type LightMaterials, type SkyState } from './lighting'
+import { canvasTexture, drawScreen, textTexture, tileTexture, woodTexture } from './textures'
 
 /** 1 unit logis denah = 1 cm. */
 export const S = 0.01
@@ -25,6 +27,11 @@ const winCenters = (len: number) => {
 }
 
 export const toWorld = (x: number, y: number, f = 0, h = 0) => new THREE.Vector3(x * S, f * FH + h, y * S)
+
+/** Titik papan info ruang (nama + jumlah orang) di scene: di dinding utara di atas jendela, atau di atas partisi koridor untuk ruang selatan. */
+export const roomSignAnchor = (r: Room) => r.rect.y < CORRIDOR_Y
+  ? toWorld(r.rect.x + r.rect.w / 2, r.rect.y, r.f, WALL_H - 0.3)
+  : toWorld(r.rect.x + r.rect.w / 2, r.rect.y, r.f, PART_H + 0.3)
 
 export interface DeskView {
   key: string
@@ -52,7 +59,10 @@ export interface World {
   hemi: THREE.HemisphereLight
   /** Layar TV Papan Keputusan di Ruang Eksekutif (digambar ulang dari data rapat). */
   decisionBoard: { ctx: CanvasRenderingContext2D, texture: THREE.CanvasTexture }
-  setTime: (date: Date, busyFloors: boolean[]) => void
+  /** Atur matahari/bulan, lampu, dan jendela menurut waktu; mengembalikan warna langit & seberapa malam. */
+  setTime: (date: Date, busyFloors: boolean[]) => SkyState
+  /** Lampu mengikuti area yang sedang dilihat: lantai gedung, atau null untuk taman/peta luar. */
+  setFloor: (floor: number | null) => void
   update: (t: number) => void
   dispose: () => void
 }
@@ -121,6 +131,11 @@ class Kit {
     return mesh
   }
 
+  /** Gabungkan mesh statis di `group` per material (lihat `bakeByMaterial`): dipanggil setelah grup selesai disusun. */
+  bake<T extends THREE.Object3D>(group: T): T {
+    return bakeByMaterial(group, g => this.owned.push(g))
+  }
+
   dispose() {
     this.mats.forEach(m => m.dispose())
     this.geos.forEach(g => g.dispose())
@@ -143,6 +158,7 @@ const WOOD_DARK = '#7a5232'
 
 /** Material & daftar yang dipakai bersama oleh pembangun bagian dunia (dispose lewat `Kit`). */
 interface WorldState {
+  lights: LightMaterials
   lampMat: THREE.MeshStandardMaterial
   windowMats: THREE.MeshStandardMaterial[]
   ledMats: THREE.MeshStandardMaterial[]
@@ -152,6 +168,7 @@ interface WorldState {
   meetingGlow: THREE.MeshStandardMaterial
   counterGlow: THREE.MeshStandardMaterial
   tileRepeat: (rx: number, ry: number) => THREE.Texture
+  woodRepeat: (rx: number, ry: number) => THREE.Texture
   decisionBoard?: World['decisionBoard']
 }
 
@@ -160,19 +177,35 @@ const D = MAP_D * S
 const WEST_WINS = winCenters(BUILDING_D).filter(c => Math.abs(c - CORRIDOR_Y) > 110)
 
 function createWorldState(k: Kit): WorldState {
-  const lampMat = k.own(new THREE.MeshStandardMaterial({ color: '#fef3c7', emissive: '#fde68a', emissiveIntensity: 0.2 }))
-  const tiles = k.own(tileTexture())
-  const tileRepeat = (rx: number, ry: number) => {
-    const t = k.own(tiles.clone())
+  const lights = createLightMaterials(o => k.own(o))
+  const repeater = (base: THREE.Texture) => (rx: number, ry: number) => {
+    const t = k.own(base.clone())
     t.repeat.set(rx, ry)
     t.needsUpdate = true
     return t
   }
+  const tileRepeat = repeater(k.own(tileTexture()))
+  const woodRepeat = repeater(k.own(woodTexture()))
   const glowStrip = (color: string) => k.own(new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.15 }))
   const meetingGlow = glowStrip('#a855f7')
   const counterGlow = glowStrip('#6366f1')
-  return { lampMat, windowMats: [], ledMats: [], cars: [], desks: [], cafeLaptops: [], meetingGlow, counterGlow, tileRepeat }
+  return {
+    lights, lampMat: lights.lamp, windowMats: lights.windows, ledMats: [], cars: [], desks: [], cafeLaptops: [], meetingGlow, counterGlow,
+    tileRepeat, woodRepeat
+  }
 }
+
+/** Genangan cahaya di lantai/tanah di bawah lampu (hanya tampak saat gelap; lihat `LightMaterials.pool`). */
+function createGlow(k: Kit, st: WorldState) {
+  const pool = (parent: THREE.Object3D, x: number, y: number, r = 1.5, h = 0.02) => {
+    const m = k.plane(parent, r * 2, r * 2, st.lights.pool, x * S, h, y * S)
+    m.receiveShadow = false
+    m.renderOrder = 2
+    return m
+  }
+  return { pool }
+}
+type Glow = ReturnType<typeof createGlow>
 
 function createLabel(k: Kit) {
   const label = (parent: THREE.Object3D, text: string, x: number, y: number, h: number, height = 0.32, opts: Parameters<typeof textTexture>[1] = {}, flat = true) => {
@@ -189,8 +222,39 @@ function createLabel(k: Kit) {
 }
 
 /** Meja kerja, kursi, monitor, rak, papan tulis, TV: perabot ruang kerja. */
-function createOfficeProps(k: Kit, st: WorldState) {
+function createOfficeProps(k: Kit, st: WorldState, { pool }: Glow) {
   const { ledMats } = st
+  const metal = () => k.m('#334155', { metalness: 0.5, roughness: 0.45 })
+  /** Lampu berdiri di sudut ruang: kapnya menyala dan memberi genangan cahaya saat malam. */
+  const floorLamp = (parent: THREE.Object3D, x: number, y: number) => {
+    const g = prop('floor_lamp', parent, x, y)
+    k.cyl(g, 0.14, 0.16, 0.03, metal(), 0, 0.015, 0, 16)
+    k.cyl(g, 0.018, 0.018, 1.5, metal(), 0, 0.78, 0, 8)
+    k.cyl(g, 0.12, 0.2, 0.28, st.lights.bulb, 0, 1.62, 0, 16).castShadow = false
+    pool(parent, x, y, 1.6)
+    return k.bake(g)
+  }
+  /** Lampu meja kecil di sisi kiri meja kerja. */
+  const deskLamp = (parent: THREE.Object3D, x: number, y: number, yaw: number, h = 0.745) => {
+    const g = prop('desk_lamp', parent, x, y, yaw, h)
+    k.cyl(g, 0.05, 0.06, 0.016, metal(), 0, 0.008, 0, 12)
+    k.box(g, 0.014, 0.25, 0.014, metal(), 0, 0.13, 0.025, false).rotation.x = 0.22
+    k.cyl(g, 0.028, 0.06, 0.07, st.lights.bulb, 0, 0.255, 0.075, 12).castShadow = false
+    return k.bake(g)
+  }
+  const rug = (parent: THREE.Object3D, x: number, y: number, w: number, d: number, color: string, edge = '#f8fafc') => {
+    const g = prop('rug', parent, x, y)
+    k.plane(g, w, d, k.m(edge, { roughness: 1 }), 0, 0.006, 0)
+    k.plane(g, w - 0.16, d - 0.16, k.m(color, { roughness: 1 }), 0, 0.008, 0)
+    return k.bake(g)
+  }
+  const waterCooler = (parent: THREE.Object3D, x: number, y: number, yaw: number) => {
+    const g = prop('water_cooler', parent, x, y, yaw)
+    k.box(g, 0.32, 0.95, 0.32, k.m('#f1f5f9', { roughness: 0.4 }), 0, 0.475, 0)
+    k.cyl(g, 0.12, 0.13, 0.36, k.m('#7dd3fc', { transparent: true, opacity: 0.7, roughness: 0.1 }), 0, 1.13, 0, 14)
+    k.box(g, 0.2, 0.1, 0.02, k.m('#0ea5e9'), 0, 0.72, 0.165, false)
+    return k.bake(g)
+  }
   const desk = (parent: THREE.Object3D, x: number, y: number, yaw: number, w = 1.0, leader = false) => {
     const g = prop('desk', parent, x, y, yaw)
     const top = k.m(leader ? '#8b5a2b' : WOOD)
@@ -198,7 +262,7 @@ function createOfficeProps(k: Kit, st: WorldState) {
     for (const sx of [-1, 1]) k.box(g, 0.05, 0.7, 0.55, k.m(leader ? '#5b3a1e' : WOOD_DARK), sx * (w / 2 - 0.04), 0.35, 0)
     k.box(g, w - 0.1, 0.35, 0.03, k.m(leader ? '#5b3a1e' : WOOD_DARK), 0, 0.5, -0.27)
     if (leader) k.box(g, w + 0.02, 0.02, 0.62, k.m('#f59e0b', { metalness: 0.6, roughness: 0.3 }), 0, 0.745, 0)
-    return g
+    return k.bake(g)
   }
   const chair = (parent: THREE.Object3D, x: number, y: number, yaw: number, mat?: THREE.Material, tall = false) => {
     const g = prop('chair', parent, x, y, yaw)
@@ -208,7 +272,7 @@ function createOfficeProps(k: Kit, st: WorldState) {
     k.cyl(g, 0.03, 0.03, 0.4, k.m('#334155'), 0, 0.22, 0)
     k.box(g, 0.5, 0.04, 0.08, k.m('#1f2937'), 0, 0.03, 0)
     k.box(g, 0.08, 0.04, 0.5, k.m('#1f2937'), 0, 0.03, 0)
-    return g
+    return k.bake(g)
   }
   const monitor = (parent: THREE.Object3D, x: number, y: number, yaw: number, h = 0.745) => {
     const g = new THREE.Group()
@@ -242,7 +306,7 @@ function createOfficeProps(k: Kit, st: WorldState) {
         i++
       }
     }
-    return g
+    return k.bake(g)
   }
   const serverRack = (parent: THREE.Object3D, x: number, y: number, yaw: number) => {
     const g = prop('server_rack', parent, x, y, yaw)
@@ -250,13 +314,13 @@ function createOfficeProps(k: Kit, st: WorldState) {
     const led = k.own(new THREE.MeshStandardMaterial({ color: '#22c55e', emissive: '#22c55e', emissiveIntensity: 1 }))
     ledMats.push(led)
     for (let i = 0; i < 7; i++) k.box(g, 0.45, 0.02, 0.01, i % 3 ? led : k.m('#38bdf8', { emissive: '#38bdf8', emissiveIntensity: 0.8 }), 0, 0.3 + i * 0.2, 0.405, false)
-    return g
+    return k.bake(g)
   }
   const tv = (parent: THREE.Object3D, x: number, y: number, yaw: number, h = 1.3, w = 1.4) => {
     const g = prop('tv', parent, x, y, yaw, h)
     k.box(g, w, w * 0.58, 0.05, k.m('#0f172a', { roughness: 0.2 }), 0, 0, 0)
     k.box(g, w - 0.08, w * 0.58 - 0.08, 0.01, k.m('#1d4ed8', { emissive: '#1e40af', emissiveIntensity: 0.6 }), 0, 0, 0.03, false)
-    return g
+    return k.bake(g)
   }
   const whiteboard = (parent: THREE.Object3D, x: number, y: number, yaw: number, w = 1.6, h = 1.3) => {
     const g = new THREE.Group()
@@ -267,9 +331,9 @@ function createOfficeProps(k: Kit, st: WorldState) {
     const ink = ['#2563eb', '#dc2626', '#16a34a']
     for (let i = 0; i < 4; i++) k.box(g, w * (0.3 + (i % 3) * 0.15), 0.03, 0.01, k.m(ink[i % 3]!), -w * 0.2 + (i % 2) * 0.1, 0.25 - i * 0.16, 0.025, false)
     for (let i = 0; i < 3; i++) k.box(g, 0.14, 0.14, 0.01, k.m(['#fde047', '#f9a8d4', '#86efac'][i]!), w * 0.3, 0.25 - i * 0.2, 0.025, false)
-    return g
+    return k.bake(g)
   }
-  return { desk, chair, monitor, bookshelf, serverRack, tv, whiteboard }
+  return { desk, chair, monitor, bookshelf, serverRack, tv, whiteboard, floorLamp, deskLamp, rug, waterCooler }
 }
 
 /** Perabot ruang santai: tanaman, sofa, bangku, meja bundar, kursi kafe, konter, mesin kopi, kulkas. */
@@ -280,7 +344,7 @@ function createLoungeProps(k: Kit) {
     const leaf = k.m('#3f9d4a')
     k.ball(g, 0.24 * s, leaf, 0, 0.52 * s, 0)
     k.ball(g, 0.17 * s, k.m('#58b45e'), 0.1 * s, 0.72 * s, 0.05 * s)
-    return g
+    return k.bake(g)
   }
   const sofa = (parent: THREE.Object3D, x: number, y: number, yaw: number, w = 1.6, color = '#f97316') => {
     const g = prop('sofa', parent, x, y, yaw)
@@ -288,7 +352,7 @@ function createLoungeProps(k: Kit) {
     k.box(g, w, 0.4, 0.75, c, 0, 0.2, 0)
     k.box(g, w, 0.45, 0.18, c, 0, 0.6, -0.3)
     for (const sx of [-1, 1]) k.box(g, 0.16, 0.25, 0.75, c, sx * (w / 2 - 0.08), 0.52, 0)
-    return g
+    return k.bake(g)
   }
   const bench = (parent: THREE.Object3D, x: number, y: number, yaw: number, w = 1.5) => {
     const g = prop('bench', parent, x, y, yaw)
@@ -296,14 +360,14 @@ function createLoungeProps(k: Kit) {
     for (let i = 0; i < 3; i++) k.box(g, w, 0.04, 0.12, wood, 0, 0.44, -0.15 + i * 0.14)
     k.box(g, w, 0.3, 0.04, wood, 0, 0.72, -0.24)
     for (const sx of [-1, 1]) k.box(g, 0.06, 0.44, 0.42, k.m('#374151'), sx * (w / 2 - 0.1), 0.22, -0.02)
-    return g
+    return k.bake(g)
   }
   const roundTable = (parent: THREE.Object3D, x: number, y: number, r = 0.45, h = 0.74) => {
     const g = prop('round_table', parent, x, y)
     k.cyl(g, r, r, 0.05, k.m('#f5f5f4'), 0, h, 0, 24)
     k.cyl(g, 0.05, 0.05, h, k.m('#57534e'), 0, h / 2, 0, 8)
     k.cyl(g, 0.25, 0.25, 0.03, k.m('#57534e'), 0, 0.015, 0, 16)
-    return g
+    return k.bake(g)
   }
   const cafeChair = (parent: THREE.Object3D, x: number, y: number, yaw: number) => {
     const g = prop('cafe_chair', parent, x, y, yaw)
@@ -311,32 +375,32 @@ function createLoungeProps(k: Kit) {
     k.box(g, 0.4, 0.05, 0.4, c, 0, 0.45, 0)
     k.box(g, 0.4, 0.4, 0.04, c, 0, 0.68, -0.19)
     for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) k.box(g, 0.03, 0.45, 0.03, k.m('#1f2937'), sx! * 0.17, 0.22, sz! * 0.17)
-    return g
+    return k.bake(g)
   }
   const counter = (parent: THREE.Object3D, x: number, y: number, yaw: number, w: number, glow: THREE.Material) => {
     const g = prop('counter', parent, x, y, yaw)
     k.box(g, w, 1.0, 0.55, k.m('#e2e8f0'), 0, 0.5, 0)
     k.box(g, w + 0.06, 0.05, 0.62, k.m('#475569'), 0, 1.02, 0)
     k.box(g, w - 0.1, 0.06, 0.01, glow, 0, 0.75, 0.28, false)
-    return g
+    return k.bake(g)
   }
   const coffeeMachine = (parent: THREE.Object3D, x: number, y: number, yaw: number, h = 1.0) => {
     const g = prop('coffee_machine', parent, x, y, yaw, 0)
     k.box(g, 0.4, 0.5, 0.35, k.m('#18181b', { metalness: 0.5, roughness: 0.3 }), 0, h + 0.25, 0)
     k.box(g, 0.12, 0.08, 0.02, k.m('#ef4444', { emissive: '#ef4444', emissiveIntensity: 0.6 }), 0, h + 0.38, 0.18, false)
-    return g
+    return k.bake(g)
   }
   const fridge = (parent: THREE.Object3D, x: number, y: number, yaw: number) => {
     const g = prop('fridge', parent, x, y, yaw)
     k.box(g, 0.7, 1.85, 0.65, k.m('#e5e7eb', { metalness: 0.3, roughness: 0.4 }), 0, 0.925, 0)
     k.box(g, 0.03, 0.6, 0.03, k.m('#64748b'), 0.28, 1.1, 0.34)
-    return g
+    return k.bake(g)
   }
   return { plant, sofa, bench, roundTable, cafeChair, counter, coffeeMachine, fridge }
 }
 
 /** Perabot luar ruangan: pohon, semak, tiang lampu, mobil. */
-function createOutdoorProps(k: Kit, st: WorldState) {
+function createOutdoorProps(k: Kit, st: WorldState, { pool }: Glow) {
   const { lampMat, cars } = st
   const tree = (parent: THREE.Object3D, x: number, y: number, s = 1) => {
     const g = prop('tree', parent, x, y)
@@ -344,21 +408,39 @@ function createOutdoorProps(k: Kit, st: WorldState) {
     k.ball(g, 0.75 * s, k.m('#3d8b3d'), 0, 1.6 * s, 0)
     k.ball(g, 0.55 * s, k.m('#4fa34f'), 0.3 * s, 2.0 * s, 0.15 * s)
     k.ball(g, 0.45 * s, k.m('#2f7a35'), -0.35 * s, 1.85 * s, -0.1 * s)
-    return g
+    return k.bake(g)
   }
   const bush = (parent: THREE.Object3D, x: number, y: number, s = 1, flower?: string) => {
     const g = prop('bush', parent, x, y)
     k.ball(g, 0.35 * s, k.m('#4a9a44'), 0, 0.25 * s, 0)
     k.ball(g, 0.28 * s, k.m('#5aae52'), 0.25 * s, 0.22 * s, 0.1 * s)
     if (flower) for (let i = 0; i < 4; i++) k.ball(g, 0.06, k.m(flower), Math.cos(i * 1.6) * 0.3 * s, 0.45 * s, Math.sin(i * 1.6) * 0.25 * s, 0)
-    return g
+    return k.bake(g)
   }
   const lampPost = (parent: THREE.Object3D, x: number, y: number) => {
     const g = prop('lamp_post', parent, x, y)
     k.cyl(g, 0.05, 0.07, 3.2, k.m('#334155', { metalness: 0.5 }), 0, 1.6, 0, 8)
-    k.ball(g, 0.18, lampMat, 0, 3.3, 0)
-    return g
+    k.ball(g, 0.18, lampMat, 0, 3.3, 0).castShadow = false
+    pool(parent, x, y, 2.6, 0.03)
+    return k.bake(g)
   }
+  /** Lentera pendek di tepi jalan setapak taman. */
+  const lantern = (parent: THREE.Object3D, x: number, y: number) => {
+    const g = prop('lantern', parent, x, y)
+    k.cyl(g, 0.04, 0.06, 0.5, k.m('#44403c'), 0, 0.25, 0, 8)
+    k.box(g, 0.16, 0.2, 0.16, st.lights.string, 0, 0.6, 0, false)
+    k.box(g, 0.22, 0.04, 0.22, k.m('#44403c'), 0, 0.72, 0, false)
+    pool(parent, x, y, 1.1, 0.03)
+    return k.bake(g)
+  }
+  /** Untaian lampu hias dari (x0, y0) ke (x1, y1) setinggi `h` meter, melengkung di tengah. */
+  const stringLights = (parent: THREE.Object3D, x0: number, y0: number, x1: number, y1: number, h: number, n = 9, sag = 0.25) => {
+    for (let i = 0; i <= n; i++) {
+      const u = i / n
+      k.ball(parent, 0.055, st.lights.string, (x0 + (x1 - x0) * u) * S, h - Math.sin(u * Math.PI) * sag, (y0 + (y1 - y0) * u) * S, 0).castShadow = false
+    }
+  }
+
   const car = (parent: THREE.Object3D, color: string) => {
     const g = new THREE.Group()
     g.userData.prop = 'car'
@@ -373,10 +455,10 @@ function createOutdoorProps(k: Kit, st: WorldState) {
     k.box(g, 0.2, 0.08, 0.02, lampMat, -0.28, 0.45, 1.0, false)
     k.box(g, 0.2, 0.08, 0.02, lampMat, 0.28, 0.45, 1.0, false)
     cars.push(g)
-    return g
+    return k.bake(g)
   }
 
-  return { tree, bush, lampPost, car }
+  return { tree, bush, lampPost, car, lantern, stringLights }
 }
 
 /** Dinding, partisi kaca, dinding berjendela. */
@@ -412,6 +494,7 @@ function createWalls(k: Kit) {
     top.position.y = PART_H - 0.04
     g.add(top)
     wall(top, axis, at, from, to, 0.04, k.m('#64748b'), gaps, 0.06)
+    for (const part of [g, glassG, top]) k.bake(part)
   }
 
   const windowWall = (parent: THREE.Object3D, axis: 'x' | 'z', at: number, from: number, to: number, h: number, mat: THREE.Material, glassMat: THREE.Material, wins: number[], doors: Array<[number, number]> = [], t = 0.1) => {
@@ -420,6 +503,7 @@ function createWalls(k: Kit) {
       b.position.y = y
       parent.add(b)
       wall(b, axis, at, from, to, bh, mat, gaps, t)
+      k.bake(b)
     }
     band(0, WIN_Y0, doors)
     band(WIN_Y0, WIN_H, [...doors, ...wins.map(c => [c, WIN_W] as [number, number])])
@@ -439,7 +523,7 @@ function createWalls(k: Kit) {
 }
 
 type Props = ReturnType<typeof createOfficeProps> & ReturnType<typeof createLoungeProps> & ReturnType<typeof createOutdoorProps> & ReturnType<typeof createWalls>
-type Ctx = Props & { k: Kit, st: WorldState, label: ReturnType<typeof createLabel> }
+type Ctx = Props & Glow & { k: Kit, st: WorldState, label: ReturnType<typeof createLabel> }
 
 // ---------- Tanah, jalan, taman, halaman ----------
 
@@ -492,6 +576,8 @@ function buildGarden(c: Ctx, ground: THREE.Group) {
   benchAt(GARDEN_SPOTS[4]!, GARDEN_SPOTS[5]!)
   lampPost(ground, 960, 1000)
   lampPost(ground, 180, 1210)
+  for (const [x, y] of [[870, 960], [970, 1110], [870, 1310], [300, 1145], [500, 1235], [700, 1145]] as const) c.lantern(ground, x, y)
+  c.pool(ground, 420, 1240, 2.4, 0.07)
   // Gazebo kecil
   const gazebo = new THREE.Group()
   gazebo.position.set(9.0, 0, 13.6)
@@ -503,6 +589,7 @@ function buildGarden(c: Ctx, ground: THREE.Group) {
   cone.castShadow = true
   gazebo.add(cone)
   k.cyl(gazebo, 1.2, 1.2, 0.1, k.m('#d6d3d1'), 0, 0.05, 0, 6)
+  k.bake(gazebo)
   label(ground, '🌳 TAMAN', 560, 900, 0.03, 0.5, { color: '#14532d' })
   return water
 }
@@ -536,6 +623,13 @@ function buildCafe(c: Ctx, ground: THREE.Group) {
     cafeLaptops.push(lap)
   })
   for (const x of [C.x + 20, C.x + C.w - 20]) plant(cafe, x, C.y + C.h - 20, 1.1)
+  // Lampu hias: di tepi kanopi dan di antara dua tiang depan
+  c.stringLights(cafe, C.x + 10, C.y + 112, C.x + C.w - 10, C.y + 112, 2.55, 11, 0.12)
+  for (const x of [C.x + 12, C.x + C.w - 12]) k.cyl(cafe, 0.035, 0.05, 2.5, k.m('#44403c'), x * S, 1.25, (C.y + C.h - 12) * S, 8)
+  c.stringLights(cafe, C.x + 12, C.y + C.h - 12, C.x + C.w - 12, C.y + C.h - 12, 2.45, 11, 0.4)
+  for (const x of [C.x + 12, C.x + C.w - 12]) c.stringLights(cafe, x, C.y + 112, x, C.y + C.h - 12, 2.5, 6, 0.3)
+  c.pool(cafe, C.x + C.w / 2, C.y + C.h / 2 + 30, 3.4, 0.12)
+  k.bake(cafe)
 }
 
 function buildLlmTower(c: Ctx, ground: THREE.Group) {
@@ -561,6 +655,7 @@ function buildLlmTower(c: Ctx, ground: THREE.Group) {
   const beacon = k.own(new THREE.MeshStandardMaterial({ color: '#ef4444', emissive: '#ef4444', emissiveIntensity: 1 }))
   ledMats.push(beacon)
   k.ball(tower, 0.12, beacon, 0, towerH + 2.25, 0)
+  k.bake(tower)
   for (const sx of [-1, 1]) plant(ground, T.x + T.w / 2 + sx * 150, T.y + T.h + 40, 1.2)
 }
 
@@ -576,14 +671,18 @@ function buildFrontYard(c: Ctx, ground: THREE.Group) {
 
 // ---------- Lantai dalam gedung ----------
 
+/** Ruang berlantai parket (warna kayu); ruang lain berubin dengan warna ruangnya. */
+const WOOD_FLOORS: Record<string, string> = {
+  library: '#dcc19a', lounge: '#d9c4a5', executive: '#e3c79b', meeting: '#d6bfa3', pm: '#dcc6a4', pantry: '#e2c9a6'
+}
+
 function buildRoomFloors(c: Ctx, g: THREE.Group, f: number) {
-  const { k, label, st } = c
-  const { tileRepeat } = st
+  const { k, st } = c
   for (const r of ROOMS.filter(r => r.f === f && r.floor)) {
-    const mat = k.own(new THREE.MeshStandardMaterial({ color: new THREE.Color().setStyle(r.floor, THREE.SRGBColorSpace), roughness: 0.85, map: tileRepeat(r.rect.w / 50, r.rect.h / 50) }))
+    const wood = WOOD_FLOORS[r.key]
+    const map = wood ? st.woodRepeat(r.rect.w / 160, r.rect.h / 160) : st.tileRepeat(r.rect.w / 50, r.rect.h / 50)
+    const mat = k.own(new THREE.MeshStandardMaterial({ color: new THREE.Color().setStyle(wood ?? r.floor, THREE.SRGBColorSpace), roughness: wood ? 0.7 : 0.85, map }))
     k.plane(g, r.rect.w * S, r.rect.h * S, mat, (r.rect.x + r.rect.w / 2) * S, 0.004, (r.rect.y + r.rect.h / 2) * S)
-    const isNorth = r.rect.y < CORRIDOR_Y
-    label(g, r.label, r.rect.x + r.rect.w / 2, isNorth ? r.rect.y + r.rect.h - 22 : r.rect.y + 26, 0.008, 0.26, { color: 'rgba(51,65,85,0.75)' })
   }
 }
 
@@ -598,6 +697,10 @@ function buildExteriorWalls(c: Ctx, g: THREE.Group, f: number) {
   windowWall(g, 'z', 0, 0, BUILDING_D, WALL_H, extWall, win, WEST_WINS, [[CORRIDOR_Y, 110]])
   wall(g, 'x', BUILDING_D, 0, BUILDING_W, LOW_WALL, extWall, f === 0 ? [[GARDEN_DOOR.x, 130]] : [])
   wall(g, 'z', BUILDING_W, 0, BUILDING_D, LOW_WALL, extWall, f === 0 ? [[DOOR.y, 150]] : [])
+  // Strip lampu di atas jendela dinding utara & barat
+  const led = WIN_Y0 + WIN_H + 0.22
+  k.box(g, BUILDING_W * S - 0.3, 0.06, 0.03, st.lights.bulb, (BUILDING_W / 2) * S, led, 0.07, false).receiveShadow = false
+  k.box(g, 0.03, 0.06, BUILDING_D * S - 0.3, st.lights.bulb, 0.07, led, (BUILDING_D / 2) * S, false).receiveShadow = false
 }
 
 function buildCore(c: Ctx, g: THREE.Group, f: number) {
@@ -615,6 +718,9 @@ function buildCore(c: Ctx, g: THREE.Group, f: number) {
   k.box(g, 1.2, 2.2, 0.08, k.m('#e2e8f0'), 0.7, 1.1, 6.4)
   k.box(g, 0.7, 1.9, 0.04, k.m('#64748b'), 0.7, 0.95, 6.36)
   label(g, '🚻 WC', 70, 700, 0.01, 0.24, { color: '#475569' })
+  c.waterCooler(g, 30, CORRIDOR_Y + 75, FACE_E)
+  // Karpet koridor
+  k.plane(g, (BUILDING_W - CORE_W - 40) * S, 0.42, k.m('#7c8aa5', { roughness: 1 }), ((BUILDING_W + CORE_W) / 2) * S, 0.006, CORRIDOR_Y * S)
 }
 
 function buildPartitions(c: Ctx, g: THREE.Group, f: number) {
@@ -661,6 +767,7 @@ function furnishDesk(c: Ctx, g: THREE.Group, z: (typeof ZONES)[number], s: Spot,
   chair(g, s.x - dx * 4, s.y - dy * 4, fwd, chairMat, leader)
   desk(g, s.x + dx * 58, s.y + dy * 58, fwd, leader ? 1.25 : 1.0, leader)
   const mon = monitor(g, s.x + dx * 70, s.y + dy * 70, fwd + Math.PI)
+  c.deskLamp(g, s.x + dx * 66 - Math.cos(fwd) * (leader ? 48 : 38), s.y + dy * 66 + Math.sin(fwd) * (leader ? 48 : 38), fwd + Math.PI)
   const plate = makeNamePlate(c, g, s, dx, fwd)
   st.desks.push({
     key: `${z.key}-${i}`, division: z.key, index: i, spot: s, leader, chairMat,
@@ -677,14 +784,17 @@ function furnishDesks(c: Ctx, g: THREE.Group, f: number) {
 
 type RoomFurnisher = (c: Ctx, g: THREE.Group, r: Room) => void
 
-const furnishBusiness: RoomFurnisher = ({ bookshelf, whiteboard, plant }, g, { rect: { x, y, w, h } }) => {
+const furnishBusiness: RoomFurnisher = ({ bookshelf, whiteboard, plant, floorLamp }, g, { rect: { x, y, w, h } }) => {
   bookshelf(g, x + 120, y + 25, FACE_S, 1.4, 1.6)
   whiteboard(g, x + 380, y + 8, FACE_S)
   plant(g, x + w - 30, y + 30)
   plant(g, x + 30, y + h - 30, 0.9)
+  floorLamp(g, x + w - 35, y + h - 35)
+  floorLamp(g, x + 35, y + 60)
 }
 
-const furnishPantry: RoomFurnisher = ({ k, counter, coffeeMachine, fridge, plant }, g, { rect: { x, y, w, h } }) => {
+const furnishPantry: RoomFurnisher = (c, g, { rect: { x, y, w, h } }) => {
+  const { k, counter, coffeeMachine, fridge, plant } = c
   counter(g, x + w / 2 - 20, y + 40, FACE_S, 1.8, k.m('#f59e0b'))
   coffeeMachine(g, x + w / 2 - 70, y + 38, FACE_S)
   fridge(g, x + w - 40, y + 45, FACE_S)
@@ -693,17 +803,21 @@ const furnishPantry: RoomFurnisher = ({ k, counter, coffeeMachine, fridge, plant
   g.add(bar)
   k.box(bar, 2.0, 0.05, 0.5, k.m(WOOD), 0, 1.02, 0)
   for (const sx of [-0.85, 0.85]) k.box(bar, 0.06, 1.0, 0.4, k.m('#334155'), sx, 0.5, 0)
+  k.bake(bar)
   plant(g, x + 25, y + h - 25, 0.8)
+  c.floorLamp(g, x + 30, y + 40)
+  c.waterCooler(g, x + w - 95, y + 30, FACE_S)
 }
 
-const furnishLobby: RoomFurnisher = ({ k, st, label, counter, bookshelf, sofa, plant }, g, { rect: { x, y, w, h } }) => {
+const furnishLobby: RoomFurnisher = ({ st, label, counter, bookshelf, sofa, plant, rug, floorLamp }, g, { rect: { x, y, w, h } }) => {
   const cx = (COUNTER_SLOTS[0]!.x + COUNTER_SLOTS[COUNTER_SLOTS.length - 1]!.x) / 2
   counter(g, cx, COUNTER_SLOTS[0]!.y - 55, FACE_S, 2.6, st.counterGlow)
   label(g, '📨 LOKET LLM', cx, COUNTER_SLOTS[0]!.y - 82, 1.25, 0.24, { color: '#ffffff', bg: '#4f46e5' }, false)
   bookshelf(g, cx, y + 18, FACE_S, 2.4, 1.5)
   sofa(g, x + 70, y + h - 70, FACE_E, 1.4, '#6366f1')
   plant(g, x + w - 25, y + h - 25, 1.1)
-  k.plane(g, 2.2, 1.2, k.m('#4f46e5', { roughness: 1 }), (x + w / 2) * S, 0.006, (y + h - 75) * S)
+  rug(g, x + w / 2, y + h - 75, 2.2, 1.2, '#4f46e5', '#c7d2fe')
+  floorLamp(g, x + 30, y + h - 150)
 }
 
 /** Dua meja baca panjang di perpustakaan, masing-masing di antara dua kursi. */
@@ -718,10 +832,14 @@ function libraryTables(k: Kit, g: THREE.Group) {
     k.box(t, (s1.x - s0.x) * S + 0.7, 0.05, 0.7, k.m(WOOD), 0, 0.74, 0)
     for (const sx of [-1, 1]) k.box(t, 0.06, 0.72, 0.6, k.m(WOOD_DARK), sx * ((s1.x - s0.x) * S / 2 + 0.25), 0.36, 0)
     k.cyl(t, 0.05, 0.08, 0.35, k.m('#16a34a'), 0, 0.93, 0, 10)
+    k.bake(t)
   }
 }
 
-const furnishLibrary: RoomFurnisher = ({ k, bookshelf, chair, plant }, g, { rect: { x, y, w, h } }) => {
+const furnishLibrary: RoomFurnisher = ({ k, bookshelf, chair, plant, floorLamp, rug }, g, { rect: { x, y, w, h } }) => {
+  rug(g, x + w / 2 - 10, y + 205, 4.4, 1.9, '#7c5c3e', '#e7d7bd')
+  floorLamp(g, x + 30, y + 40)
+  floorLamp(g, x + w - 35, y + h - 60)
   bookshelf(g, x + 110, y + h - 20, FACE_N, 1.6)
   bookshelf(g, x + 290, y + h - 20, FACE_N, 1.6)
   bookshelf(g, x + 470, y + h - 20, FACE_N, 1.6)
@@ -730,7 +848,11 @@ const furnishLibrary: RoomFurnisher = ({ k, bookshelf, chair, plant }, g, { rect
   plant(g, x + w - 30, y + 30)
 }
 
-const furnishLounge: RoomFurnisher = ({ k, label, sofa, tv, plant }, g, { rect: { x, y, w, h } }) => {
+const furnishLounge: RoomFurnisher = ({ k, label, sofa, tv, plant, floorLamp, rug }, g, { rect: { x, y, w, h } }) => {
+  rug(g, x + 160, y + 220, 2.6, 2.4, '#0c4a6e', '#bae6fd')
+  floorLamp(g, x + 300, y + 130)
+  floorLamp(g, x + w - 40, y + h - 40)
+  floorLamp(g, x + 330, y + h - 40)
   sofa(g, x + 160, y + 140, FACE_S, 1.8, '#0ea5e9')
   sofa(g, x + 160, y + 300, FACE_N, 1.8, '#0ea5e9')
   k.box(g, 1.0, 0.4, 0.6, k.m(WOOD), (x + 160) * S, 0.2, (y + 220) * S)
@@ -741,25 +863,33 @@ const furnishLounge: RoomFurnisher = ({ k, label, sofa, tv, plant }, g, { rect: 
   label(g, '🌳 PINTU TAMAN', GARDEN_DOOR.x, y + h - 40, 0.01, 0.2, { color: '#166534' })
 }
 
-const furnishProduct: RoomFurnisher = ({ whiteboard, plant }, g, { rect: { x, y, w, h } }) => {
+const furnishProduct: RoomFurnisher = ({ whiteboard, plant, floorLamp }, g, { rect: { x, y, w, h } }) => {
   whiteboard(g, x + w / 2, y + 8, FACE_S, 2.2)
+  floorLamp(g, x + 35, y + h - 35)
+  floorLamp(g, x + w - 35, y + 60)
   plant(g, x + 30, y + 30)
   plant(g, x + w - 30, y + h - 30, 0.9)
 }
 
-const furnishQuality: RoomFurnisher = ({ whiteboard, plant }, g, { rect: { x, y, w } }) => {
+const furnishQuality: RoomFurnisher = ({ whiteboard, plant, floorLamp }, g, { rect: { x, y, w, h } }) => {
   whiteboard(g, x + w / 2, y + 8, FACE_S, 2.2)
+  floorLamp(g, x + 35, y + h - 35)
+  floorLamp(g, x + w - 35, y + h - 35)
   plant(g, x + w - 30, y + 30)
 }
 
-const furnishEngineering: RoomFurnisher = ({ whiteboard, plant }, g, { rect: { x, y, w, h } }) => {
+const furnishEngineering: RoomFurnisher = ({ whiteboard, plant, floorLamp }, g, { rect: { x, y, w, h } }) => {
   whiteboard(g, x + 12, y + h / 2, FACE_E, 2.2)
+  floorLamp(g, x + 35, y + h - 35)
+  floorLamp(g, x + w / 2 + 30, y + h - 35)
+  floorLamp(g, x + 35, y + 35)
   plant(g, x + w - 30, y + h - 30)
   plant(g, x + w - 30, y + 30, 0.8)
 }
 
-const furnishPlatform: RoomFurnisher = ({ serverRack, plant }, g, { rect: { x, y, w, h } }) => {
+const furnishPlatform: RoomFurnisher = ({ serverRack, plant, floorLamp }, g, { rect: { x, y, w, h } }) => {
   for (const yy of [y + 70, y + 170, y + 270]) serverRack(g, x + w - 45, yy, FACE_W)
+  floorLamp(g, x + 35, y + 35)
   plant(g, x + 30, y + h - 30)
 }
 
@@ -780,8 +910,11 @@ function buildDecisionBoardScreen(c: Ctx, g: THREE.Group, r: Room) {
 }
 
 const furnishExecutive: RoomFurnisher = (c, g, r) => {
-  const { bookshelf, plant, sofa } = c
+  const { bookshelf, plant, sofa, floorLamp, rug } = c
   const { x, y, w, h } = r.rect
+  rug(g, x + w / 2, y + h - 75, 3.2, 1.5, '#7f1d1d', '#fcd34d')
+  floorLamp(g, x + 150, y + h - 45)
+  floorLamp(g, x + w - 150, y + h - 45)
   bookshelf(g, x + 75, y + 22, FACE_S, 1.0, 1.9)
   bookshelf(g, x + w - 75, y + 22, FACE_S, 1.0, 1.9)
   buildDecisionBoardScreen(c, g, r)
@@ -801,10 +934,14 @@ function meetingTable(c: Ctx, g: THREE.Group) {
   k.box(t, len, 0.06, 0.95, k.m('#5b3a1e', { roughness: 0.4 }), 0, 0.74, 0)
   k.box(t, len - 0.2, 0.02, 0.1, st.meetingGlow, 0, 0.775, 0, false)
   for (const sx of [-1, 1]) k.box(t, 0.1, 0.72, 0.7, k.m('#3f2a17'), sx * (len / 2 - 0.3), 0.36, 0)
+  k.bake(t)
 }
 
 const furnishMeeting: RoomFurnisher = (c, g, { rect: { x, y, w, h } }) => {
   const { k, chair, tv, plant } = c
+  c.rug(g, MEETING_TABLE.x, MEETING_TABLE.y - 20, 4.4, 2.3, '#4c1d95', '#ddd6fe')
+  c.floorLamp(g, x + 35, y + h - 35)
+  c.floorLamp(g, x + w - 110, y + 35)
   meetingTable(c, g)
   MEETING_SEATS.forEach(s => chair(g, s.x, s.y - 4, FACE_S, k.m('#7e22ce'), true))
   const fc = prop('flipchart', g, PM_PODIUM.x - 30, PM_PODIUM.y - 70, FACE_S + 0.4)
@@ -814,7 +951,10 @@ const furnishMeeting: RoomFurnisher = (c, g, { rect: { x, y, w, h } }) => {
   plant(g, x + w - 30, y + h - 30)
 }
 
-const furnishPm: RoomFurnisher = ({ k, chair, desk, monitor, whiteboard, bookshelf, plant }, g, { rect: { x, y, w, h } }) => {
+const furnishPm: RoomFurnisher = ({ k, chair, desk, monitor, whiteboard, bookshelf, plant, floorLamp, deskLamp, rug }, g, { rect: { x, y, w, h } }) => {
+  rug(g, PM_DESK.x, PM_DESK.y + 30, 3.0, 2.2, '#1e3a8a', '#bfdbfe')
+  floorLamp(g, x + w - 35, y + 40)
+  deskLamp(g, PM_DESK.x - 52, PM_DESK.y + 66, FACE_N)
   chair(g, PM_DESK.x, PM_DESK.y - 4, FACE_S, k.m('#1e293b'), true)
   desk(g, PM_DESK.x, PM_DESK.y + 58, FACE_S, 1.4, true)
   drawScreen(monitor(g, PM_DESK.x, PM_DESK.y + 70, FACE_N).ctx, { active: true, burning: false, project: 'Roadmap', seed: 7 })
@@ -823,7 +963,10 @@ const furnishPm: RoomFurnisher = ({ k, chair, desk, monitor, whiteboard, bookshe
   plant(g, x + 30, y + h - 30, 1.1)
 }
 
-const furnishTerrace: RoomFurnisher = ({ k, bush, roundTable, bench }, g, { rect: { x, y, w, h } }) => {
+const furnishTerrace: RoomFurnisher = ({ k, bush, roundTable, bench, lantern, stringLights }, g, { rect: { x, y, w, h } }) => {
+  lantern(g, x + 120, y + h - 60)
+  lantern(g, x + w - 120, y + 60)
+  stringLights(g, x + 20, y + 20, x + w - 20, y + 20, 2.3, 12, 0.35)
   k.plane(g, w * S, h * S, k.m('#a16207', { roughness: 0.9 }), (x + w / 2) * S, 0.006, (y + h / 2) * S)
   for (const [px, py] of [[x + 40, y + 40], [x + w - 40, y + 40], [x + 40, y + h - 40], [x + w - 40, y + h - 40], [x + w / 2, y + h - 40]] as const) bush(g, px, py, 1.1, '#f472b6')
   roundTable(g, x + 200, y + 200, 0.5)
@@ -863,7 +1006,8 @@ function buildFloor(c: Ctx, root: THREE.Group, f: number, corridorFloor: THREE.M
   buildExteriorWalls(c, g, f)
   buildCore(c, g, f)
   furnish(c, g, f, buildPartitions(c, g, f))
-  return g
+  // Dinding, lantai, genangan cahaya, dan perabot lepas di lantai ini digabung per material.
+  return k.bake(g)
 }
 
 // ---------- Fasad luar & atap ----------
@@ -875,6 +1019,11 @@ function buildGroundFloorEntrances(c: Ctx, g: THREE.Group, O: number) {
   k.box(g, 0.9, 0.1, 2.2, k.m('#64748b'), BUILDING_W * S + 0.45, 2.55, DOOR.y * S)
   label(g, 'vibeasik', BUILDING_W + O + 6, DOOR.y, 2.95, 0.5, { color: '#ffffff', bg: '#0ea5e9' }, false).rotation.y = Math.PI / 2
   k.box(g, 1.2, 2.2, 0.06, k.m('#14532d', { roughness: 0.3 }), GARDEN_DOOR.x * S, 1.1, (BUILDING_D + O) * S + 0.04)
+  // Lampu teras di atas kedua pintu
+  k.box(g, 0.12, 0.08, 1.2, c.st.lights.bulb, BUILDING_W * S + 0.5, 2.46, DOOR.y * S, false)
+  k.box(g, 1.0, 0.08, 0.12, c.st.lights.bulb, GARDEN_DOOR.x * S, 2.4, (BUILDING_D + O) * S + 0.12, false)
+  c.pool(g, BUILDING_W + 110, DOOR.y, 2.4, 0.03)
+  c.pool(g, GARDEN_DOOR.x, BUILDING_D + 90, 1.8, 0.03)
 }
 
 /** Fasad berjendela kaca tepat di luar dinding dalam, sehingga isi lantai (dan pegawainya) terlihat dari luar. */
@@ -901,6 +1050,8 @@ function buildFacade(c: Ctx, shells: THREE.Group[], root: THREE.Group, f: number
   for (const at of [-O, BUILDING_D + O]) wall(cornice, 'x', at, -O - 6, BUILDING_W + O + 6, 0.18, k.m('#94a3b8'), [], 0.12)
   for (const at of [-O, BUILDING_W + O]) wall(cornice, 'z', at, -O, BUILDING_D + O, 0.18, k.m('#94a3b8'), [], 0.12)
   if (f === 0) buildGroundFloorEntrances(c, g, O)
+  k.bake(cornice)
+  k.bake(g)
 }
 
 function buildRoof(c: Ctx, roof: THREE.Group) {
@@ -919,46 +1070,42 @@ function buildRoof(c: Ctx, roof: THREE.Group) {
   k.box(roof, 1.2, 0.8, 1.0, k.m('#cbd5e1'), 9.5, 0.6, 3.4)
   k.box(roof, 1.4, 1.2, 1.4, k.m('#94a3b8'), 0.7, 0.8, 4.2)
   label(roof, 'VIBEASIK HQ', 600, 620, 0.22, 0.9, { color: '#ffffff' })
+  k.bake(roof)
 }
 
 // ---------- Cahaya & animasi ----------
 
-function createLights(root: THREE.Group) {
-  const hemi = new THREE.HemisphereLight('#dbeafe', '#6b8f5e', 1.4)
-  const sun = new THREE.DirectionalLight('#fff7e6', 2.4)
-  sun.castShadow = true
-  sun.shadow.mapSize.set(2048, 2048)
-  const sc = sun.shadow.camera
-  sc.left = -15; sc.right = 15; sc.top = 12; sc.bottom = -12; sc.near = 1; sc.far = 60
-  sun.shadow.bias = -0.0005
-  sun.shadow.normalBias = 0.02
-  sun.target.position.set(W / 2, 0, D / 2)
-  root.add(hemi, sun, sun.target)
-  return { hemi, sun }
+/** Jumlah lampu ruangan per lantai (lihat `createLighting`: makin sedikit makin ringan di GPU terpadu). */
+const INTERIOR_LIGHTS = 5
+const LIGHT_H = 2.35
+
+/** Satu lampu di tengah tiap ruang; sisanya dibagi rata di koridor. */
+function interiorLightSpots() {
+  return Array.from({ length: FLOORS }, (_, f) => {
+    const spots = ROOMS.filter(r => r.f === f && r.kind !== 'garden' && r.kind !== 'outside')
+      .map(r => new THREE.Vector3((r.rect.x + r.rect.w / 2) * S, LIGHT_H, (r.rect.y + r.rect.h / 2) * S))
+      .slice(0, INTERIOR_LIGHTS)
+    const extra = INTERIOR_LIGHTS - spots.length
+    for (let i = 0; i < extra; i++) spots.push(new THREE.Vector3((CORE_W + ((BUILDING_W - CORE_W) * (i + 0.5)) / extra) * S, LIGHT_H, CORRIDOR_Y * S))
+    return spots
+  })
 }
 
-function createSetTime(st: WorldState, sun: THREE.DirectionalLight, hemi: THREE.HemisphereLight) {
-  return (date: Date, busyFloors: boolean[]) => {
-    const hour = date.getHours() + date.getMinutes() / 60
-    const day = Math.max(0, Math.sin(((hour - 6) / 12) * Math.PI))
-    const night = hour < 6 || hour >= 18
-    const az = ((hour - 6) / 12) * Math.PI
-    sun.position.set(W / 2 + Math.cos(az) * 18, 6 + day * 16, D / 2 - 8 + Math.sin(az) * 2)
-    sun.intensity = night ? 0.5 : 0.9 + day * 1.8
-    sun.color.set(night ? '#a5b4fc' : day < 0.35 ? '#fdba74' : '#fff7e6')
-    hemi.intensity = night ? 0.9 : 1.1 + day * 0.5
-    hemi.color.set(night ? '#64748b' : '#dbeafe')
-    st.lampMat.emissiveIntensity = night ? 1.6 : 0.1
-    st.windowMats.forEach((m, i) => {
-      if (i === 0) { m.emissiveIntensity = night ? 0.9 : 0.25; return } // gedung LLM
-      const busy = busyFloors[i - 1] ?? false
-      m.emissiveIntensity = night ? (busy ? 1.1 : 0.35) : busy ? 0.25 : 0
-    })
-  }
+/** Lampu luar: kafe, taman, pintu depan, plaza gedung Model LLM. */
+function outdoorLightSpots() {
+  const C = CAFE_RECT
+  const T = LLM_TOWER
+  return [
+    { at: new THREE.Vector3((C.x + C.w / 2) * S, 2.7, (C.y + C.h / 2 + 30) * S), power: 1.15 },
+    { at: new THREE.Vector3(6.6, 2.9, 12.4), power: 0.9 },
+    { at: new THREE.Vector3((BUILDING_W + 120) * S, 2.8, CORRIDOR_Y * S), power: 1 },
+    { at: new THREE.Vector3((T.x + T.w / 2) * S, 3, (T.y + T.h + 110) * S), color: '#a5b4fc', power: 0.9 }
+  ]
 }
 
-function createUpdate(st: WorldState, water: THREE.Mesh) {
+function createUpdate(st: WorldState, water: THREE.Mesh, lighting: { update: (t: number) => void }) {
   return (t: number) => {
+    lighting.update(t)
     st.cars.forEach((c, i) => {
       const dir = c.rotation.y ? -1 : 1
       const speed = 2.2 + i * 0.6
@@ -979,9 +1126,10 @@ export function buildWorld(): World {
   const roof = new THREE.Group()
   root.add(ground, roof)
   const st = createWorldState(k)
+  const glow = createGlow(k, st)
   const c: Ctx = {
     k, st, label: createLabel(k),
-    ...createOfficeProps(k, st), ...createLoungeProps(k), ...createOutdoorProps(k, st), ...createWalls(k)
+    ...glow, ...createOfficeProps(k, st, glow), ...createLoungeProps(k), ...createOutdoorProps(k, st, glow), ...createWalls(k)
   }
 
   buildRoads(c, ground)
@@ -989,18 +1137,21 @@ export function buildWorld(): World {
   buildCafe(c, ground)
   buildLlmTower(c, ground)
   buildFrontYard(c, ground)
+  k.bake(ground)
 
   const corridorFloor = k.m('#d4d4d8', { map: st.tileRepeat(BUILDING_W / 60, BUILDING_D / 60) })
   for (let f = 0; f < FLOORS; f++) floors.push(buildFloor(c, root, f, corridorFloor))
   for (let f = 0; f < FLOORS; f++) buildFacade(c, shells, root, f)
   buildRoof(c, roof)
 
-  const { hemi, sun } = createLights(root)
+  const lighting = createLighting(root, st.lights, {
+    width: W, depth: D, floorHeight: FH, interior: interiorLightSpots(), outdoor: outdoorLightSpots()
+  }, o => k.own(o))
   return {
     root, ground, floors, shells, roof, desks: st.desks, cafeLaptops: st.cafeLaptops,
-    meetingGlow: st.meetingGlow, counterGlow: st.counterGlow, sun, hemi,
+    meetingGlow: st.meetingGlow, counterGlow: st.counterGlow, sun: lighting.sun, hemi: lighting.hemi,
     decisionBoard: st.decisionBoard!,
-    setTime: createSetTime(st, sun, hemi), update: createUpdate(st, water),
+    setTime: lighting.setTime, setFloor: lighting.setFloor, update: createUpdate(st, water, lighting),
     dispose: () => k.dispose()
   }
 }
