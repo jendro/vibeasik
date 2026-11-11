@@ -1,6 +1,6 @@
 .PHONY: hooks build studio release test vet fmt
 
-VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+VERSION ?= $(shell git describe --tags --match 'v[0-9]*' --always --dirty 2>/dev/null || echo dev)
 
 hooks:
 	git config core.hooksPath .githooks

@@ -4,7 +4,7 @@ import { execSync } from 'node:child_process'
 // Versi build Studio (tampil di sidebar di bawah judul): STUDIO_BUILD_VERSION dari Makefile, selain itu git describe.
 const gitDescribe = () => {
   try {
-    return execSync('git describe --tags --always --dirty', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
+    return execSync('git describe --tags --match "v[0-9]*" --always --dirty', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
   } catch {
     return 'unknown'
   }
