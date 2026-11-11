@@ -153,10 +153,23 @@ func TestRouteCostFormulas(t *testing.T) {
 func TestLoopBounds(t *testing.T) {
 	root := writeTree(t, map[string]string{"go.mod": "module demo\n\ngo 1.22\n", "main.go": `package main
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"sync"
+
+	"github.com/gofiber/fiber/v2"
+)
 
 func main() {
 	app := fiber.New()
+	app.Get("/once", func(c *fiber.Ctx) error {
+		var o sync.Once
+		items := []int{}
+		o.Do(func() {
+			for range items {
+			}
+		})
+		return nil
+	})
 	app.Get("/spin", func(c *fiber.Ctx) error {
 		for {
 			if ready() {
@@ -168,9 +181,76 @@ func main() {
 }
 
 func ready() bool { return true }
+
 `})
+	// Callback Do (sync.Once, singleflight) berjalan sekali: satu loop di dalamnya tetap O(n), bukan O(n²).
+	if once := routeCost(t, Costs(Analyze(root)), "/once"); once.BigO != "O(n)" {
+		t.Errorf("/once: %s (%s), mau O(n)", once.BigO, once.Formula)
+	}
 	got := routeCost(t, Costs(Analyze(root)), "/spin")
 	if !got.Unbounded || got.BigO != "O(n)" {
 		t.Errorf("/spin: unbounded=%v %s, mau unbounded O(n)", got.Unbounded, got.BigO)
+	}
+}
+
+func TestHotspotsPointAtSourceFunction(t *testing.T) {
+	root := writeTree(t, map[string]string{"go.mod": "module demo\n\ngo 1.22\n", "main.go": `package main
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
+)
+
+var db *gorm.DB
+
+type Item struct{ ID uint }
+
+func main() {
+	app := fiber.New()
+	app.Get("/a", listA)
+	app.Get("/b", listB)
+	app.Get("/c", plain)
+}
+
+func listA(c *fiber.Ctx) error { return c.JSON(enrich()) }
+func listB(c *fiber.Ctx) error { return c.JSON(enrich()) }
+func plain(c *fiber.Ctx) error { return c.JSON(loadOne(1)) }
+
+// enrich: loop atas data yang memanggil fungsi ber-query → sumber N+1 walau query-nya di fungsi lain.
+func enrich() []Item {
+	var items []Item
+	db.Find(&items)
+	for i := range items {
+		items[i] = loadOne(items[i].ID)
+		for j := range items {
+			_ = j
+		}
+	}
+	return items
+}
+
+func loadOne(id uint) Item {
+	var it Item
+	db.First(&it, id)
+	return it
+}
+`})
+	hs := Hotspots(Analyze(root))
+	kinds := map[string]Hotspot{}
+	for _, h := range hs {
+		if h.Func.Name != "main.enrich" {
+			t.Errorf("sumber harus main.enrich, bukan %s (%s)", h.Func.Name, h.Kind)
+		}
+		kinds[h.Kind] = h
+	}
+	n1, ok := kinds["nplus1"]
+	if !ok || n1.Via != "main.loadOne" || n1.RouteCount != 2 || len(n1.Routes) != 2 || n1.Routes[0] != "GET /a" {
+		t.Errorf("hotspot N+1: %+v", n1)
+	}
+	if g, ok := kinds["growth"]; !ok || g.Func.BigO != "O(n²)" || g.Func.End <= g.Func.Line {
+		t.Errorf("hotspot pertumbuhan: %+v", g)
+	}
+	if len(hs) != 2 {
+		t.Errorf("handler pemanggil tidak boleh ikut dilaporkan: %d hotspot", len(hs))
 	}
 }

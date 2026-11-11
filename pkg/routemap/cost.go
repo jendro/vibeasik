@@ -245,8 +245,9 @@ var (
 		"Limit": true, "Offset": true, "Group": true, "Having": true, "Unscoped": true, "Scopes": true, "Clauses": true,
 		"Omit": true, "Distinct": true, "WithContext": true, "Session": true, "Debug": true,
 	}
-	// Pustaka yang menjalankan callback sekali per elemen.
-	iterCallbackRe = regexp.MustCompile(`^(?:Map|Filter|ForEach|Each|Reduce|Walk|WalkDir|Range|IndexFunc|ContainsFunc|DeleteFunc|Any|All|Find|FilterMap|FlatMap|GroupBy|KeyBy|Reject|Uniq|UniqBy|Times|Do)$`)
+	// Pustaka yang menjalankan callback sekali per elemen. `Do` sengaja tidak termasuk: singleflight.Do, sync.Once.Do,
+	// dan retry.Do menjalankan callback-nya sekali, bukan per data.
+	iterCallbackRe = regexp.MustCompile(`^(?:Map|Filter|ForEach|Each|Reduce|Walk|WalkDir|Range|IndexFunc|ContainsFunc|DeleteFunc|Any|All|Find|FilterMap|FlatMap|GroupBy|KeyBy|Reject|Uniq|UniqBy|Times)$`)
 	sortFuncs      = map[string]bool{
 		"sort.Slice": true, "sort.SliceStable": true, "sort.Sort": true, "sort.Stable": true, "sort.Strings": true,
 		"sort.Ints": true, "sort.Float64s": true, "slices.Sort": true, "slices.SortFunc": true, "slices.SortStableFunc": true,
@@ -614,6 +615,7 @@ type Cost struct {
 	LoopDepth    int           `json:"loop_depth"`          // kedalaman loop atas data
 	Growth       []GrowthPoint `json:"growth"`
 	rank         float64
+	qDegree      int // pangkat n tertinggi pada Q(n)
 }
 
 var growthSizes = []int64{1, 10, 100, 1000, 10000}
@@ -628,6 +630,7 @@ func (c cst) export() Cost {
 	out.Queries1 = int64(c.queries.eval(1))
 	if qt, qc := c.queries.lead(); qc > 0 && qt.N >= 1 {
 		out.NPlusOne = true
+		out.qDegree = qt.N
 	}
 	for _, n := range growthSizes {
 		out.Growth = append(out.Growth, GrowthPoint{N: n, Ticks: c.ticks.eval(float64(n)), Queries: c.queries.eval(float64(n))})
@@ -642,7 +645,8 @@ type FuncCost struct {
 	Name   string `json:"name"`
 	File   string `json:"file"`
 	Line   int    `json:"line"`
-	Routes int    `json:"routes"` // jumlah rute yang menjangkau fungsi ini
+	End    int    `json:"end"`
+	Routes int    `json:"routes"` // jumlah rute yang menjangkau fungsi ini (lewat handler atau middleware lokalnya)
 	Cost
 }
 
@@ -708,11 +712,8 @@ func Costs(graphs []*Graph) *CostReport {
 			}
 		}
 		reach := map[string]int{}
-		for _, rt := range g.Routes {
-			if rt.handlerKey == "" {
-				continue
-			}
-			for k := range g.reachableFrom(rt.handlerKey) {
+		for _, keys := range g.routeReach() {
+			for k := range keys {
 				reach[k]++
 			}
 		}
@@ -721,7 +722,7 @@ func Costs(graphs []*Graph) *CostReport {
 			if !ok {
 				continue
 			}
-			rep.Funcs = append(rep.Funcs, FuncCost{Module: g.Module, Name: ref.Name, File: ref.File, Line: ref.Line, Routes: reach[k], Cost: fc})
+			rep.Funcs = append(rep.Funcs, FuncCost{Module: g.Module, Name: ref.Name, File: ref.File, Line: ref.Line, End: ref.End, Routes: reach[k], Cost: fc})
 		}
 	}
 	sort.SliceStable(rep.Routes, func(i, j int) bool {
@@ -767,4 +768,130 @@ func (g *Graph) reachableFrom(key string) map[string]bool {
 		}
 	}
 	return seen
+}
+
+// routeReach: untuk tiap rute, fungsi lokal yang dijangkau handler dan middleware lokal di rantainya.
+func (g *Graph) routeReach() map[*Route]map[string]bool {
+	byPos := make(map[string]string, len(g.funcs))
+	for k, f := range g.funcs {
+		byPos[f.Pos] = k
+	}
+	out := make(map[*Route]map[string]bool, len(g.Routes))
+	for _, rt := range g.Routes {
+		seen := map[string]bool{}
+		if rt.handlerKey != "" {
+			seen = g.reachableFrom(rt.handlerKey)
+		}
+		for _, mw := range rt.Chain {
+			if k, ok := byPos[mw.Decl]; ok && mw.Decl != "" && !seen[k] {
+				for r := range g.reachableFrom(k) {
+					seen[r] = true
+				}
+			}
+		}
+		out[rt] = seen
+	}
+	return out
+}
+
+// Hotspot = fungsi tempat biaya sebuah rute BERASAL: pangkatnya lebih tinggi daripada semua fungsi yang
+// dipanggilnya, jadi loop yang menaikkan pangkat ada di badan fungsi ini. Satu sumber dilaporkan sekali walau
+// dijangkau banyak rute, supaya laporan menunjuk tempat perbaikan, bukan daftar rute yang terdampak.
+type Hotspot struct {
+	Kind       string   `json:"kind"` // nplus1 = query dikalikan loop data; growth = tick O(n²) ke atas
+	Func       FuncCost `json:"func"`
+	Via        string   `json:"via,omitempty"` // fungsi terpanggil yang membawa query/loop; kosong = di badan fungsi ini sendiri
+	Routes     []string `json:"routes"`        // contoh rute terdampak (maks. 3)
+	RouteCount int      `json:"route_count"`
+}
+
+const hotspotRouteSamples = 3
+
+// Hotspots mencari sumber N+1 query dan pertumbuhan O(n²) ke atas pada fungsi yang dijangkau rute, urut dari
+// yang termahal. Rute yang tidak terjangkau dari main (kode mati) tidak dihitung.
+func Hotspots(graphs []*Graph) []Hotspot {
+	var out []Hotspot
+	for _, g := range graphs {
+		routesOf := map[string][]string{}
+		for rt, keys := range g.routeReach() {
+			if rt.Unreachable {
+				continue
+			}
+			label := rt.Method + " " + rt.Path
+			for k := range keys {
+				routesOf[k] = append(routesOf[k], label)
+			}
+		}
+		for k, fc := range g.funcCosts {
+			routes := uniqueSorted(routesOf[k])
+			if len(routes) == 0 {
+				continue
+			}
+			ref, ok := g.ref(k)
+			if !ok {
+				continue
+			}
+			maxQ, maxT, viaQ, viaT := 0, 0, "", ""
+			var bestQ, bestT float64
+			for _, c := range g.callees[k] {
+				if c == k {
+					continue
+				}
+				cc, ok := g.funcCosts[c]
+				if !ok {
+					continue
+				}
+				if cc.qDegree > maxQ {
+					maxQ = cc.qDegree
+				}
+				if cc.Degree > maxT {
+					maxT = cc.Degree
+				}
+				name := shortName(g, c)
+				if q := float64(cc.Queries1); q > bestQ {
+					bestQ, viaQ = q, name
+				}
+				if cc.Degree >= 1 && cc.rank > bestT {
+					bestT, viaT = cc.rank, name
+				}
+			}
+			fn := FuncCost{Module: g.Module, Name: ref.Name, File: ref.File, Line: ref.Line, End: ref.End, Routes: len(routes), Cost: fc}
+			sample := routes
+			if len(sample) > hotspotRouteSamples {
+				sample = sample[:hotspotRouteSamples]
+			}
+			if fc.qDegree >= 1 && fc.qDegree > maxQ {
+				out = append(out, Hotspot{Kind: "nplus1", Func: fn, Via: viaQ, Routes: sample, RouteCount: len(routes)})
+			}
+			if fc.Degree >= 2 && fc.Degree > maxT {
+				out = append(out, Hotspot{Kind: "growth", Func: fn, Via: viaT, Routes: sample, RouteCount: len(routes)})
+			}
+		}
+	}
+	sort.SliceStable(out, func(i, j int) bool {
+		a, b := out[i], out[j]
+		if a.Func.rank != b.Func.rank {
+			return a.Func.rank > b.Func.rank
+		}
+		return a.Kind+a.Func.File+a.Func.Name < b.Kind+b.Func.File+b.Func.Name
+	})
+	return out
+}
+
+func shortName(g *Graph, key string) string {
+	if r, ok := g.ref(key); ok {
+		return r.Name
+	}
+	return key
+}
+
+func uniqueSorted(in []string) []string {
+	sort.Strings(in)
+	out := in[:0]
+	for i, s := range in {
+		if i == 0 || s != in[i-1] {
+			out = append(out, s)
+		}
+	}
+	return out
 }
