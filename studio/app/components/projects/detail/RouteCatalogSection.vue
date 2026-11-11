@@ -262,7 +262,7 @@ defineExpose({
 
 <template>
   <div class="space-y-4">
-    <RouteCatalogHeader
+    <ProjectsDetailRouteCatalogHeader
       v-model:search-query="searchQuery"
       v-model:selected-domain="selectedDomain"
       v-model:selected-method="selectedMethod"
@@ -326,7 +326,7 @@ defineExpose({
       </UButton>
     </div>
 
-    <RouteCatalogGroupedView
+    <ProjectsDetailRouteCatalogGroupedView
       v-else-if="viewMode === 'grouped'"
       :grouped-routes="groupedRoutes"
       :is-frontend="isFrontend"
@@ -338,7 +338,7 @@ defineExpose({
       @delete="handleDelete"
     />
 
-    <RouteCatalogTableView
+    <ProjectsDetailRouteCatalogTableView
       v-else
       :filtered-routes="filteredRoutes"
       :is-frontend="isFrontend"
@@ -350,7 +350,7 @@ defineExpose({
       @delete="handleDelete"
     />
 
-    <RouteCatalogEditModal
+    <ProjectsDetailRouteCatalogEditModal
       ref="editModal"
       :component-id="comp?.id"
       :is-frontend="isFrontend"

@@ -194,19 +194,19 @@ const getCompRoleLabel = (role: string) => {
         </div>
 
         <!-- TAB CONTENT 0: ARSITEKTUR & PATTERN -->
-        <FastScanModalArchitecture
+        <ProjectsDetailFastScanModalArchitecture
           v-if="activeScanTab === 'architecture'"
           :scan-result="scanResult"
         />
 
         <!-- TAB CONTENT 1: CARA MENJALANKAN (HOW TO RUN) -->
-        <FastScanModalHowToRun
+        <ProjectsDetailFastScanModalHowToRun
           v-if="activeScanTab === 'how_to_run'"
           :scan-result="scanResult"
         />
 
         <!-- TAB CONTENT: DATABASE, AUTH & ENV -->
-        <FastScanModalEnvDatabase
+        <ProjectsDetailFastScanModalEnvDatabase
           v-if="activeScanTab === 'env_database'"
           :scan-result="scanResult"
           :saving-scan-changes="savingScanChanges"
@@ -214,31 +214,31 @@ const getCompRoleLabel = (role: string) => {
         />
 
         <!-- TAB CONTENT: ROUTER & API -->
-        <FastScanModalRoutes
+        <ProjectsDetailFastScanModalRoutes
           v-if="activeScanTab === 'routes'"
           :scan-result="scanResult"
         />
 
         <!-- TAB CONTENT: SENSORED KEYS & SECURITY VAULT -->
-        <FastScanModalCensoredKeys
+        <ProjectsDetailFastScanModalCensoredKeys
           v-if="activeScanTab === 'censored_keys'"
           :scan-result="scanResult"
         />
 
         <!-- TAB CONTENT 2: STRUKTUR FOLDER -->
-        <FastScanModalStructure
+        <ProjectsDetailFastScanModalStructure
           v-if="activeScanTab === 'structure'"
           :scan-result="scanResult"
         />
 
         <!-- TAB CONTENT 3: ANALISIS AI -->
-        <FastScanModalAnalysis
+        <ProjectsDetailFastScanModalAnalysis
           v-if="activeScanTab === 'analysis'"
           :scan-result="scanResult"
         />
 
         <!-- TAB CONTENT 4: DIRECTORY TREE -->
-        <FastScanModalTree
+        <ProjectsDetailFastScanModalTree
           v-if="activeScanTab === 'tree'"
           :scan-result="scanResult"
         />

@@ -159,10 +159,10 @@ const downloadSynergyJson = () => {
 
 <template>
   <div class="space-y-6">
-    <ProjectSynergyHeader
+    <ProjectsDetailProjectSynergyHeader
       :synergy-map="synergyMap"
       :loading="loading"
-      :generating-llm="generatingLLM"
+      :generating-l-l-m="generatingLLM"
       :job-label="synergyJob.label.value"
       @generate="handleGenerateWithLLM"
       @refresh="loadSynergyData"
@@ -170,7 +170,7 @@ const downloadSynergyJson = () => {
       @copy="copySummaryMarkdown"
     />
 
-    <ProjectSynergyToolbar
+    <ProjectsDetailProjectSynergyToolbar
       v-model:active-view="activeView"
       v-model:search-query="searchQuery"
       v-model:filter-method="filterMethod"
@@ -208,7 +208,7 @@ const downloadSynergyJson = () => {
       </div>
     </div>
 
-    <ProjectSynergyPipelineView
+    <ProjectsDetailProjectSynergyPipelineView
       v-else-if="activeView === 'pipeline'"
       :filtered-pages="filteredPages"
       :collapsed-pages="collapsedPages"
@@ -216,14 +216,14 @@ const downloadSynergyJson = () => {
       @inspect="openInspector"
     />
 
-    <ProjectSynergyMatrixView
+    <ProjectsDetailProjectSynergyMatrixView
       v-else-if="activeView === 'matrix'"
       :matrix-rows="matrixRows"
       @inspect="openInspector"
     />
 
-    <ProjectSynergyTopologyView v-else-if="activeView === 'topology'" :synergy-map="synergyMap" />
+    <ProjectsDetailProjectSynergyTopologyView v-else-if="activeView === 'topology'" :synergy-map="synergyMap" />
 
-    <ProjectSynergyInspector ref="inspector" :project="project" />
+    <ProjectsDetailProjectSynergyInspector ref="inspector" :project="project" />
   </div>
 </template>

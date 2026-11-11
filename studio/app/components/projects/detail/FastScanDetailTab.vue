@@ -173,19 +173,19 @@ const subTabs = computed(() => [
       />
 
       <!-- SUB-TAB 1: ARSITEKTUR & PATTERN -->
-      <FastScanDetailArchitecture
+      <ProjectsDetailFastScanDetailArchitecture
         v-if="activeSubTab === 'architecture'"
         :scan-result="scanResult"
       />
 
       <!-- SUB-TAB 2: CARA MENJALANKAN (HOW TO RUN) -->
-      <FastScanDetailHowToRun
+      <ProjectsDetailFastScanDetailHowToRun
         v-if="activeSubTab === 'how_to_run'"
         :scan-result="scanResult"
       />
 
       <!-- SUB-TAB 3: DATABASE & ENV -->
-      <FastScanDetailEnvDatabase
+      <ProjectsDetailFastScanDetailEnvDatabase
         v-if="activeSubTab === 'env_database'"
         :scan-result="scanResult"
         :saving-scan-changes="savingScanChanges"
@@ -193,31 +193,31 @@ const subTabs = computed(() => [
       />
 
       <!-- SUB-TAB 4: ROUTER & API -->
-      <FastScanDetailRoutes
+      <ProjectsDetailFastScanDetailRoutes
         v-if="activeSubTab === 'routes'"
         :scan-result="scanResult"
       />
 
       <!-- SUB-TAB 5: SENSORED KEYS & SECURITY VAULT -->
-      <FastScanDetailCensoredKeys
+      <ProjectsDetailFastScanDetailCensoredKeys
         v-if="activeSubTab === 'censored_keys'"
         :scan-result="scanResult"
       />
 
       <!-- SUB-TAB 6: STRUKTUR FOLDER -->
-      <FastScanDetailStructure
+      <ProjectsDetailFastScanDetailStructure
         v-if="activeSubTab === 'structure'"
         :scan-result="scanResult"
       />
 
       <!-- SUB-TAB 7: ANALISIS AI LENGKAP -->
-      <FastScanDetailAnalysis
+      <ProjectsDetailFastScanDetailAnalysis
         v-if="activeSubTab === 'analysis'"
         :scan-result="scanResult"
       />
 
       <!-- SUB-TAB 8: TREE FILESYSTEM -->
-      <FastScanDetailTree
+      <ProjectsDetailFastScanDetailTree
         v-if="activeSubTab === 'tree'"
         :scan-result="scanResult"
       />
