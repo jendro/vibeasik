@@ -10,13 +10,19 @@ const (
 	RuntimeSimCancelled = "cancelled"
 )
 
-// RuntimeSimOptions mengatur satu sesi Simulasi Runtime.
+// RuntimeSimOptions mengatur satu sesi Simulasi Runtime. Batas & nilai teknis (jumlah endpoint, halaman,
+// nilai contoh parameter, batas tunggu boot) ditentukan otomatis; field-nya hanya override opsional (0/"" = otomatis).
 type RuntimeSimOptions struct {
-	KeepRunning    bool `json:"keep_running"`     // biarkan aplikasi tetap menyala setelah simulasi selesai
-	MaxRoutes      int  `json:"max_routes"`       // batas rute yang diuji per komponen (default 80)
-	BootTimeoutSec int  `json:"boot_timeout_sec"` // batas tunggu port siap per komponen (default 90 detik)
+	KeepRunning bool `json:"keep_running"` // biarkan aplikasi tetap menyala setelah simulasi selesai
+	// SkipComponentIDs: komponen yang tidak dicentang di checklist. Kosong = semua komponen yang bisa dijalankan.
+	// Backend yang dibutuhkan frontend tercentang tetap ikut dinyalakan.
+	SkipComponentIDs []uint `json:"skip_component_ids,omitempty"`
 
-	// Endpoint dengan parameter (:id, {id}, [id]) diisi nilai contoh ini untuk request GET (default "1").
+	MaxRoutes      int `json:"max_routes,omitempty"`       // override batas rute per komponen (otomatis: semua, maks. 300)
+	BootTimeoutSec int `json:"boot_timeout_sec,omitempty"` // override batas tunggu tetap (otomatis: menyesuaikan aktivitas log)
+
+	// ParamValue memaksa satu nilai untuk semua parameter rute (:id, {id}, [id]). Kosong = otomatis: nilai
+	// diambil dari data nyata respons endpoint daftar (mis. id pertama /api/users), lalu tebakan per nama parameter.
 	ParamValue string `json:"param_value,omitempty"`
 	// TestMutations ikut mengirim POST/PUT/PATCH berbody `{}` (1x, id dinamis diisi id yang tidak ada) untuk
 	// menguji validasi & penanganan error. Bisa mengubah data: hanya untuk database development.
@@ -28,8 +34,41 @@ type RuntimeSimOptions struct {
 	Auth *RuntimeSimAuth `json:"auth,omitempty"` // login dulu agar endpoint & halaman terproteksi ikut diuji
 
 	SkipPages bool     `json:"skip_pages,omitempty"` // lewati uji halaman frontend (kecepatan & screenshot)
-	MaxPages  int      `json:"max_pages,omitempty"`  // batas halaman per frontend (default 20)
+	MaxPages  int      `json:"max_pages,omitempty"`  // override batas halaman per frontend (otomatis: semua, maks. 60)
 	Viewports []string `json:"viewports,omitempty"`  // mobile, tablet, desktop (default semuanya)
+}
+
+// RuntimeSimPortConflict menjelaskan port komponen yang bentrok beserta port pengganti yang disarankan.
+type RuntimeSimPortConflict struct {
+	Port          int    `json:"port"`
+	Kind          string `json:"kind"` // busy (dipakai proses lain), duplicate (sama dengan komponen lain), reserved (milik vibeasik)
+	Message       string `json:"message"`
+	SuggestedPort int    `json:"suggested_port,omitempty"`
+}
+
+// RuntimeSimPlanComponent adalah satu baris checklist Uji Runtime: bisa dijalankan atau tidak, port, dan cakupannya.
+type RuntimeSimPlanComponent struct {
+	ComponentID uint                    `json:"component_id"`
+	Name        string                  `json:"name"`
+	Role        string                  `json:"role"`
+	DevCommand  string                  `json:"dev_command,omitempty"`
+	Runnable    bool                    `json:"runnable"`
+	Reason      string                  `json:"reason,omitempty"` // alasan tidak bisa dijalankan
+	Running     bool                    `json:"running"`          // sudah berjalan (dipakai apa adanya)
+	Port        int                     `json:"port,omitempty"`
+	Endpoints   int                     `json:"endpoints"` // endpoint API yang akan diuji
+	Pages       int                     `json:"pages"`     // halaman frontend yang akan dibuka di browser
+	Dynamic     int                     `json:"dynamic"`   // rute berparameter (nilai diisi otomatis)
+	NeededBy    []string                `json:"needed_by,omitempty"`
+	Conflict    *RuntimeSimPortConflict `json:"conflict,omitempty"`
+}
+
+// RuntimeSimPlan adalah pratinjau Uji Runtime: checklist komponen dan pengaturan otomatis yang akan dipakai.
+type RuntimeSimPlan struct {
+	ProjectID  uint                      `json:"project_id"`
+	Components []RuntimeSimPlanComponent `json:"components"`
+	Conflicts  int                       `json:"conflicts"`
+	Auto       []string                  `json:"auto"` // penjelasan singkat pengaturan otomatis
 }
 
 // RuntimeSimAuth adalah akun uji untuk login sebelum menguji endpoint & halaman yang butuh login.

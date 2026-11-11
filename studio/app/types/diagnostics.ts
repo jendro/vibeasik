@@ -159,6 +159,9 @@ export interface RuntimeSimAuth {
 
 export interface RuntimeSimOptions {
   keep_running?: boolean
+  // Komponen yang tidak dicentang; kosong = semua yang bisa dijalankan.
+  skip_component_ids?: number[]
+  // Override opsional (UI tidak mengisinya): kosong/0 = ditentukan otomatis oleh engine.
   max_routes?: number
   boot_timeout_sec?: number
   param_value?: string
@@ -171,8 +174,40 @@ export interface RuntimeSimOptions {
   viewports?: RuntimeSimViewport[]
 }
 
+export interface RuntimeSimPortConflict {
+  port: number
+  kind: 'busy' | 'duplicate' | 'reserved'
+  message: string
+  suggested_port?: number
+}
+
+export interface RuntimeSimPlanComponent {
+  component_id: number
+  name: string
+  role: string
+  dev_command?: string
+  runnable: boolean
+  reason?: string
+  running: boolean
+  port?: number
+  endpoints: number
+  pages: number
+  dynamic: number
+  needed_by?: string[]
+  conflict?: RuntimeSimPortConflict
+}
+
+export interface RuntimeSimPlan {
+  project_id: number
+  components: RuntimeSimPlanComponent[]
+  conflicts: number
+  auto: string[]
+}
+
 export interface RuntimeTestProfileResponse {
   options: RuntimeSimOptions | null
+  // Akun uji terakhir (tanpa password) — tetap tersimpan walau login dimatikan.
+  saved_auth?: RuntimeSimAuth | null
   default_skip_patterns: string[]
 }
 

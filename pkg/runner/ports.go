@@ -185,7 +185,6 @@ func Allocate(db *gorm.DB, comp *models.Component, reassign bool) (int, error) {
 	return chosen, nil
 }
 
-
 // Assign sets a user-chosen run port after checking it is not owned by vibeasik or another component.
 func Assign(db *gorm.DB, comp *models.Component, port int) error {
 	allocMu.Lock()
@@ -220,4 +219,25 @@ func EnsureUniquePorts(db *gorm.DB, projectID uint) ([]models.Component, error) 
 		return EnsureAllProjectPorts(db)
 	}
 	return EnsureProjectPorts(db, projectID)
+}
+
+// SuggestPort memilih port pengganti yang bebas untuk comp tanpa menyimpannya (untuk saran "perbarui port").
+// avoid berisi port lain yang tidak boleh dipilih (mis. port yang sudah disarankan untuk komponen lain).
+func SuggestPort(db *gorm.DB, comp models.Component, avoid map[int]bool) (int, error) {
+	slot, err := ensureComponentSlot(db, &comp)
+	if err != nil {
+		return 0, err
+	}
+	planned := PlannedPort(db, comp)
+
+	allocMu.Lock()
+	defer allocMu.Unlock()
+	claimed, err := claimedPorts(db, comp.ID)
+	if err != nil {
+		return 0, err
+	}
+	for p := range avoid {
+		claimed[p] = 0
+	}
+	return chooseRunPort(comp, true, planned, slot, claimed)
 }

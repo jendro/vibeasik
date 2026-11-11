@@ -53,6 +53,11 @@ export const useDiagnosticsApi = () => {
     return await $fetch<RuntimeTestProfileResponse>(`${apiBase}/api/projects/${projectId}/runtime-test/profile`)
   }
 
+  // Pratinjau Uji Runtime: checklist komponen, tabrakan port + saran port, dan pengaturan otomatis.
+  const getRuntimeSimPlan = async (projectId: number): Promise<RuntimeSimPlan> => {
+    return await $fetch<RuntimeSimPlan>(`${apiBase}/api/projects/${projectId}/runtime-sim/plan`)
+  }
+
   const getLatestProjectDiagnostic = async (projectId: number): Promise<DiagnosticReportResponse> => {
     return await $fetch<DiagnosticReportResponse>(`${apiBase}/api/projects/${projectId}/diagnostics/latest`)
   }
@@ -215,6 +220,7 @@ export const useDiagnosticsApi = () => {
     getRuntimeSimDownloadUrl,
     getRuntimeSimShotUrl,
     getRuntimeTestProfile,
+    getRuntimeSimPlan,
     getLatestProjectDiagnostic,
     listProjectDiagnostics,
     resolveDiagnosticIssue,
