@@ -23,6 +23,7 @@ var ProCatalog = []CatalogRoute{
 	{"POST", "/projects/:id/synergy-map/generate", "audit.ai_review"},
 	{"POST", "/projects/:id/diagnostics/resolve-issue", "audit.ai_review"},
 	{"POST", "/projects/:id/diagnostics/resolve-group", "audit.ai_review"},
+	{"GET", "/projects/:id/diagnostics/jobs/:job", "audit.ai_review"},
 	{"POST", "/projects/:id/diagnostics/resolve-all", "audit.ai_review"},
 	{"POST", "/projects/:id/ai-review", "audit.ai_review"},
 	{"POST", "/components/:id/routes/enrich", "audit.ai_review"},

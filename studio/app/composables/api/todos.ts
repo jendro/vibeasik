@@ -1,5 +1,6 @@
 // Domain API "todos" — dipecah dari useApi.ts tanpa mengubah kontrak HTTP.
 import { useApiBase } from './base'
+import { pollDiagJob } from './diagJob'
 
 export const useTodosApi = () => {
   const apiBase = useApiBase()
@@ -94,7 +95,8 @@ export const useTodosApi = () => {
   /** Satukan Serupa laporan audit: semua todo satu kelompok temuan → satu todo gabungan (tanpa batas sub todo). */
 
   const groupTodos = async (todoIds: number[]): Promise<TodoMergeGroup> => {
-    return await $fetch<TodoMergeGroup>(`${apiBase}/api/todos/group`, { method: 'POST', body: { todo_ids: todoIds } })
+    const accepted = await $fetch<DiagJobAccepted | TodoMergeGroup>(`${apiBase}/api/todos/group`, { method: 'POST', body: { todo_ids: todoIds } })
+    return await pollDiagJob<TodoMergeGroup>(apiBase, accepted)
   }
 
   /** Pecah todo gabungan yang belum dikerjakan kembali menjadi todo biasa. */

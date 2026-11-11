@@ -1,5 +1,6 @@
 // Domain API "diagnostics" — dipecah dari useApi.ts tanpa mengubah kontrak HTTP.
 import { useApiBase } from './base'
+import { pollDiagJob } from './diagJob'
 
 export const useDiagnosticsApi = () => {
   const apiBase = useApiBase()
@@ -10,10 +11,13 @@ export const useDiagnosticsApi = () => {
     })
   }
 
+  // Deep Check berjalan di antrean engine: tunggu job selesai, lalu ambil laporan lengkapnya.
   const runDeepCheck = async (projectId: number): Promise<DeepCheckLatestResponse> => {
-    return await $fetch<DeepCheckLatestResponse>(`${apiBase}/api/projects/${projectId}/deep-check`, {
+    const accepted = await $fetch<DiagJobAccepted>(`${apiBase}/api/projects/${projectId}/deep-check`, {
       method: 'POST'
     })
+    await pollDiagJob<unknown>(apiBase, accepted, projectId, 20 * 60_000)
+    return await getLatestDeepCheck(projectId)
   }
 
   const getLatestDeepCheck = async (projectId: number): Promise<DeepCheckLatestResponse> => {
@@ -69,19 +73,21 @@ export const useDiagnosticsApi = () => {
   }
 
   const resolveDiagnosticIssue = async (projectId: number, finding: Finding, createTodo = true): Promise<ResolutionResponse> => {
-    return await $fetch<ResolutionResponse>(`${apiBase}/api/projects/${projectId}/diagnostics/resolve-issue`, {
+    const accepted = await $fetch<DiagJobAccepted | ResolutionResponse>(`${apiBase}/api/projects/${projectId}/diagnostics/resolve-issue`, {
       method: 'POST',
       body: { finding, create_todo: createTodo }
     })
+    return await pollDiagJob<ResolutionResponse>(apiBase, accepted, projectId)
   }
 
   /** Selesaikan Grup (Satukan Serupa): semua temuan satu kelompok → satu panggilan LLM, satu todo. */
 
   const resolveDiagnosticGroup = async (projectId: number, findings: Finding[]): Promise<ResolutionResponse> => {
-    return await $fetch<ResolutionResponse>(`${apiBase}/api/projects/${projectId}/diagnostics/resolve-group`, {
+    const accepted = await $fetch<DiagJobAccepted | ResolutionResponse>(`${apiBase}/api/projects/${projectId}/diagnostics/resolve-group`, {
       method: 'POST',
       body: { findings, create_todo: true }
     })
+    return await pollDiagJob<ResolutionResponse>(apiBase, accepted, projectId)
   }
 
   const resolveAllDiagnosticIssues = async (projectId: number): Promise<{ success: boolean, project_id: number, resolved: number, resolutions: ResolutionResponse[] }> => {
@@ -120,18 +126,21 @@ export const useDiagnosticsApi = () => {
   }
 
   const verifyDiagnosticFinding = async (projectId: number, finding: Finding): Promise<FindingVerification> => {
-    return await $fetch<FindingVerification>(`${apiBase}/api/projects/${projectId}/diagnostics/verify-finding`, {
+    const accepted = await $fetch<DiagJobAccepted | FindingVerification>(`${apiBase}/api/projects/${projectId}/diagnostics/verify-finding`, {
       method: 'POST',
       body: { finding }
     })
+    return await pollDiagJob<FindingVerification>(apiBase, accepted, projectId)
   }
 
   // verdict kosong = cabut vonis
   const recordFindingFeedback = async (projectId: number, finding: Finding, input: { verdict: AuditVerdict | '', reason?: string, rule_advice?: string, source?: string, model?: string }): Promise<{ success: boolean, feedback: AuditFeedback | null, findings: Finding[], score: number }> => {
-    return await $fetch<{ success: boolean, feedback: AuditFeedback | null, findings: Finding[], score: number }>(`${apiBase}/api/projects/${projectId}/diagnostics/finding-feedback`, {
+    type FeedbackResult = { success: boolean, feedback: AuditFeedback | null, findings: Finding[], score: number }
+    const accepted = await $fetch<DiagJobAccepted | FeedbackResult>(`${apiBase}/api/projects/${projectId}/diagnostics/finding-feedback`, {
       method: 'POST',
       body: { ...input, finding }
     })
+    return await pollDiagJob<FeedbackResult>(apiBase, accepted, projectId)
   }
 
   const getAuditLearning = async (projectId?: number): Promise<AuditLearningResponse> => {

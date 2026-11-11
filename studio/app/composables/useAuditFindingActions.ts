@@ -59,15 +59,18 @@ export function useAuditFindingActions(ctx: {
         })
         return
       }
+      const fallback = !merged && res.generated_via === 'heuristic_engine'
       toast.add({
         title: merged
           ? (res.todo_outcome === 'merged' ? `Digabung ke TODO #${res.created_todo?.id}` : `Sudah Terwakili TODO #${res.created_todo?.id}`)
-          : 'Solusi AI Dihasilkan & Tersimpan di TODO',
+          : fallback ? 'Rencana Bawaan vibeasik Tersimpan di TODO' : `Solusi AI (${res.model_used}) Tersimpan di TODO`,
         description: merged
           ? `Temuan '${finding.title}' memiliki rule & berkas yang sama dengan todo audit yang masih terbuka, jadi tidak dibuat todo baru.`
-          : `Rencana aksi & langkah perbaikan '${finding.title}' tersimpan lengkap di daftar TODO untuk dieksekusi agent.`,
-        icon: merged ? 'i-lucide-merge' : 'i-lucide-sparkles',
-        color: 'success'
+          : fallback
+            ? `LLM tidak menjawab, jadi '${finding.title}' memakai rencana perbaikan bawaan vibeasik. Agent coding tetap memeriksa kodenya saat mengerjakan todo.`
+            : `Rencana aksi & langkah perbaikan '${finding.title}' tersimpan lengkap di daftar TODO untuk dieksekusi agent.`,
+        icon: merged ? 'i-lucide-merge' : fallback ? 'i-lucide-book-open' : 'i-lucide-sparkles',
+        color: fallback ? 'warning' : 'success'
       })
     } catch (err: any) {
       toast.add({

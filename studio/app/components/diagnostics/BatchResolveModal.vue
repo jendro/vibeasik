@@ -52,6 +52,15 @@ const itemStates = ref<Record<string, ItemState>>({})
 const outcomeLabel = (outcome?: string) =>
   outcome === 'merged' ? 'Digabung' : outcome === 'represented' ? 'Sudah terwakili' : outcome === 'rejected' ? 'Pernah ditolak' : 'Selesai'
 
+// Sumber solusi: jawaban LLM, todo audit yang sudah ada (tanpa LLM), atau rencana bawaan vibeasik saat LLM tidak menjawab.
+const sourceLabel = (res?: ResolutionResponse) => {
+  if (!res) return ''
+  if (res.generated_via === 'external_llm') return `LLM · ${res.model_used}`
+  if (res.generated_via === 'audit_merge' || res.generated_via === 'reject_guard') return 'tanpa LLM · todo lama'
+  if (res.generated_via === 'heuristic_engine') return 'rencana bawaan vibeasik (LLM tidak menjawab)'
+  return res.model_used || ''
+}
+
 const getFindingKey = (f: Finding) => f.id || `${f.rule_id || f.title}_${f.target_file || ''}_${f.line || 0}`
 
 const groupOf = computed(() => {
@@ -494,6 +503,14 @@ const { getSeverityBadgeColor } = useFormatters()
                     <span v-if="itemStates[getFindingKey(finding)]?.todoId" class="font-mono">
                       (TODO #{{ itemStates[getFindingKey(finding)]?.todoId }})
                     </span>
+                  </span>
+                  <span
+                    v-if="sourceLabel(itemStates[getFindingKey(finding)]?.resolution)"
+                    class="text-[11px] max-w-48 truncate"
+                    :class="itemStates[getFindingKey(finding)]?.resolution?.generated_via === 'heuristic_engine' ? 'text-amber-600 dark:text-amber-400' : 'text-neutral-500'"
+                    :title="sourceLabel(itemStates[getFindingKey(finding)]?.resolution)"
+                  >
+                    {{ sourceLabel(itemStates[getFindingKey(finding)]?.resolution) }}
                   </span>
                   <UButton
                     size="xs"

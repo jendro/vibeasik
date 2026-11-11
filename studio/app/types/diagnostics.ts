@@ -83,6 +83,25 @@ export interface ResolutionResponse {
   score?: number
 }
 
+/** Jawaban 202 engine untuk pekerjaan diag yang berjalan di antrean (mis. Selesaikan temuan via LLM). */
+export interface DiagJobAccepted {
+  status: 'processing'
+  project_id: number
+  job_id: string
+  poll: string
+}
+
+export interface DiagJobState<T = unknown> {
+  job_id: string
+  project_id: number
+  kind: string
+  status: 'processing' | 'done' | 'error'
+  result?: T
+  error?: string
+  created_at: string
+  finished_at?: string
+}
+
 export interface SecurityStatus {
   global_sanitizer_active: boolean
   double_security_active?: boolean
