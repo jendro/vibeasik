@@ -108,10 +108,10 @@ onUnmounted(() => {
     @click.self="emit('update:open', false)"
   >
     <div
-      class="w-full max-w-3xl h-full bg-white dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-800 shadow-2xl flex flex-col duration-200 overflow-hidden"
+      class="w-full max-w-3xl h-full bg-white dark:bg-[#04111f] border-l border-neutral-200 dark:border-white/[0.08] shadow-2xl flex flex-col duration-200 overflow-hidden"
     >
       <!-- Top Header -->
-      <div class="p-5 border-b border-neutral-200 dark:border-neutral-800 flex items-start justify-between gap-4 bg-white dark:bg-neutral-900 shrink-0">
+      <div class="p-5 border-b border-neutral-200 dark:border-white/[0.08] flex items-start justify-between gap-4 bg-white dark:bg-[#04111f] shrink-0">
         <div class="flex items-start gap-3 min-w-0">
           <span class="p-2.5 rounded-xl bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-400 border border-violet-200 dark:border-violet-800 shrink-0 mt-0.5">
             <UIcon name="i-lucide-list-checks" class="w-5 h-5" />
@@ -142,7 +142,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Search and Filter Bar -->
-      <div class="p-4 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/60 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+      <div class="p-4 border-b border-neutral-200 dark:border-white/[0.08] bg-neutral-50/70 dark:bg-neutral-900/60 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
         <!-- Search Input -->
         <div class="relative flex-1">
           <UIcon name="i-lucide-search" class="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -195,14 +195,14 @@ onUnmounted(() => {
       </div>
 
       <!-- Categories Tabs (Horizontal Scrollable) -->
-      <div class="px-4 py-2.5 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex gap-1.5 overflow-x-auto scrollbar-thin shrink-0 text-xs">
+      <div class="px-4 py-2.5 border-b border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] flex gap-1.5 overflow-x-auto scrollbar-thin shrink-0 text-xs">
         <button
           v-for="cat in categoriesWithCounts"
           :key="cat.id"
           type="button"
           class="px-3 py-1.5 rounded-lg whitespace-nowrap transition-all flex items-center gap-1.5 font-medium shrink-0 cursor-pointer text-xs"
           :class="activeTab === cat.id
-            ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-xs font-semibold'
+            ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 font-semibold'
             : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'"
           @click="activeTab = cat.id"
         >
@@ -249,7 +249,7 @@ onUnmounted(() => {
           <!-- Empty State -->
           <div
             v-if="filteredCriteria.length === 0"
-            class="p-10 text-center rounded-2xl border border-dashed border-neutral-300 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-800/20 space-y-2"
+            class="p-10 text-center rounded-xl border border-dashed border-neutral-300 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-800/20 space-y-2"
           >
             <UIcon name="i-lucide-filter-x" class="w-8 h-8 text-neutral-400 mx-auto" />
             <h4 class="text-sm font-bold text-neutral-800 dark:text-neutral-200">
@@ -273,7 +273,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Drawer Footer -->
-      <div class="p-4 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-900/80 flex items-center justify-between text-xs shrink-0">
+      <div class="p-4 border-t border-neutral-200 dark:border-white/[0.08] bg-neutral-50/80 dark:bg-neutral-900/80 flex items-center justify-between text-xs shrink-0">
         <span class="text-neutral-500 dark:text-neutral-400">
           Standar disinkronkan dengan <code class="font-mono bg-neutral-200/60 dark:bg-neutral-800 px-1 py-0.5 rounded text-xs">vibeasik/guidelines/*.json</code>
         </span>

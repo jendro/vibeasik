@@ -18,8 +18,8 @@ const lists = computed(() => [
 
 <template>
   <div class="space-y-4">
-    <div class="rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-x-auto">
-      <div class="px-3 py-2 text-xs font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-1.5 border-b border-neutral-100 dark:border-neutral-800">
+    <div class="rounded-xl border border-neutral-200 dark:border-white/[0.08] overflow-x-auto">
+      <div class="px-3 py-2 text-xs font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-1.5 border-b border-neutral-100 dark:border-white/[0.08]">
         <UIcon name="i-lucide-map-pin" class="w-4 h-4 text-neutral-400" /> IP teratas
         <span class="font-normal text-neutral-500">· {{ fmtNum(report.totals.unique_ips) }} IP unik</span>
       </div>
@@ -68,13 +68,13 @@ const lists = computed(() => [
           </tr>
         </tbody>
       </table>
-      <p v-if="report.gran !== 'm'" class="px-3 py-2 text-xs text-neutral-500 border-t border-neutral-100 dark:border-neutral-800">
+      <p v-if="report.gran !== 'm'" class="px-3 py-2 text-xs text-neutral-500 border-t border-neutral-100 dark:border-white/[0.08]">
         Puncak per menit hanya tersedia untuk jendela ≤ 24 jam (rangkuman per menit disimpan 48 jam).
       </p>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-      <div v-for="l in lists" :key="l.title" class="rounded-xl border border-neutral-200 dark:border-neutral-800 p-3">
+      <div v-for="l in lists" :key="l.title" class="rounded-xl border border-neutral-200 dark:border-white/[0.08] p-3">
         <div class="text-xs font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-1.5 mb-2">
           <UIcon :name="l.icon" class="w-4 h-4 text-neutral-400" /> {{ l.title }}
         </div>
@@ -95,7 +95,7 @@ const lists = computed(() => [
       </div>
     </div>
 
-    <div v-if="report.not_found.length" class="rounded-xl border border-neutral-200 dark:border-neutral-800 p-3">
+    <div v-if="report.not_found.length" class="rounded-xl border border-neutral-200 dark:border-white/[0.08] p-3">
       <div class="text-xs font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-1.5 mb-2">
         <UIcon name="i-lucide-file-question" class="w-4 h-4 text-neutral-400" /> Path 404 teratas
         <span class="font-normal text-neutral-500">· path pemindai (.env, wp-, .git) = target bot pencari celah</span>

@@ -161,14 +161,14 @@ const getCategoryColor = (cat: string) => {
 
 <template>
   <div
-    class="p-4 rounded-xl border transition-all bg-white dark:bg-neutral-900"
+    class="p-4 rounded-xl border transition-all bg-white dark:bg-[#04111f]"
     :class="[
-      isIgnored ? 'opacity-70 border-neutral-200 dark:border-neutral-800'
+      isIgnored ? 'opacity-70 border-neutral-200 dark:border-white/[0.08]'
       : finding.severity === 'CRITICAL'
         ? 'border-rose-200 dark:border-rose-900/60 hover:border-rose-300 dark:hover:border-rose-800'
         : finding.severity === 'WARNING'
           ? 'border-amber-200 dark:border-amber-900/60 hover:border-amber-300 dark:hover:border-amber-800'
-          : 'border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'
+          : 'border-neutral-200 dark:border-white/[0.08] hover:border-neutral-300 dark:hover:border-neutral-700'
     ]"
   >
     <!-- Card Summary (Calm & Clean Default State) -->
@@ -206,7 +206,7 @@ const getCategoryColor = (cat: string) => {
             color="primary"
             variant="solid"
             icon="i-lucide-layers"
-            class="font-mono text-xs font-bold tracking-wider uppercase px-1.5 py-0 shadow-2xs"
+            class="font-mono text-xs font-bold tracking-wider uppercase px-1.5 py-0"
             title="Temuan ini dideteksi khusus melalui Deep Check"
           >
             DEEP
@@ -344,7 +344,7 @@ const getCategoryColor = (cat: string) => {
     <!-- Progressive Disclosure: In-Depth Solution, Steps & Code Context -->
     <div
       v-if="expanded"
-      class="mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-800 space-y-4 duration-150"
+      class="mt-4 pt-4 border-t border-neutral-100 dark:border-white/[0.08] space-y-4 duration-150"
     >
       <!-- Alasan vonis pembelajaran audit -->
       <div
@@ -421,7 +421,7 @@ const getCategoryColor = (cat: string) => {
             <div
               v-for="(step, idx) in finding.action_steps"
               :key="idx"
-              class="flex items-start gap-2.5 p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/30 border border-neutral-200/80 dark:border-neutral-800 text-xs text-neutral-800 dark:text-neutral-200 leading-relaxed"
+              class="flex items-start gap-2.5 p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/30 border border-neutral-200/80 dark:border-white/[0.08] text-xs text-neutral-800 dark:text-neutral-200 leading-relaxed"
             >
               <span class="w-5 h-5 rounded-full bg-primary-100 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5 border border-primary-200 dark:border-primary-800">
                 {{ idx + 1 }}
@@ -481,7 +481,7 @@ const getCategoryColor = (cat: string) => {
           <span class="text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
             Saran Perbaikan:
           </span>
-          <div class="p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200 dark:border-neutral-800 text-xs text-neutral-700 dark:text-neutral-300 font-mono leading-relaxed">
+          <div class="p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200 dark:border-white/[0.08] text-xs text-neutral-700 dark:text-neutral-300 font-mono leading-relaxed">
             {{ finding.suggestion }}
           </div>
         </div>

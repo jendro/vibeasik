@@ -36,7 +36,7 @@ const sourceLabel = computed(() => ({ llm: 'Dinilai LLM', manual: 'Dinilai manua
             <div class="h-full rounded-full bg-linear-to-r from-emerald-400 via-amber-400 to-rose-500" :style="{ width: `${(d.value / 5) * 100}%` }" />
           </div>
         </div>
-        <p class="pt-1.5 border-t border-neutral-100 dark:border-neutral-800 text-xs text-neutral-500">
+        <p class="pt-1.5 border-t border-neutral-100 dark:border-white/[0.08] text-xs text-neutral-500">
           {{ sourceLabel }}<template v-if="todo.complexity_note">
             — {{ todo.complexity_note }}
           </template>

@@ -172,7 +172,7 @@ const savePasted = async () => {
 
     <!-- Two ways to fill the profile -->
     <div v-if="showGuide" class="grid grid-cols-1 xl:grid-cols-2 gap-3 px-4 pb-4">
-      <section class="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/70 p-3.5 space-y-2.5">
+      <section class="rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] p-3.5 space-y-2.5">
         <div class="flex items-center gap-2 font-bold text-neutral-900 dark:text-white">
           <span class="w-5 h-5 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-400 flex items-center justify-center text-xs">1</span>
           LLM bawaan vibeasik
@@ -185,7 +185,7 @@ const savePasted = async () => {
         </UButton>
       </section>
 
-      <section class="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/70 p-3.5 space-y-2.5">
+      <section class="rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] p-3.5 space-y-2.5">
         <div class="flex items-center gap-2 font-bold text-neutral-900 dark:text-white">
           <span class="w-5 h-5 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-400 flex items-center justify-center text-xs">2</span>
           AI agent Anda via MCP

@@ -153,10 +153,10 @@ onUnmounted(() => {
     @click.self="emit('update:open', false)"
   >
     <div
-      class="w-full max-w-4xl h-full bg-white dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-800 shadow-2xl flex flex-col duration-200 overflow-hidden"
+      class="w-full max-w-4xl h-full bg-white dark:bg-[#04111f] border-l border-neutral-200 dark:border-white/[0.08] shadow-2xl flex flex-col duration-200 overflow-hidden"
     >
       <!-- Top Header -->
-      <div class="p-5 border-b border-neutral-200 dark:border-neutral-800 flex items-start justify-between gap-4 bg-white dark:bg-neutral-900 shrink-0">
+      <div class="p-5 border-b border-neutral-200 dark:border-white/[0.08] flex items-start justify-between gap-4 bg-white dark:bg-[#04111f] shrink-0">
         <div class="flex items-start gap-3 min-w-0">
           <span class="p-2.5 rounded-xl bg-primary-100 dark:bg-primary-950/60 text-primary-700 dark:text-primary-400 border border-primary-200 dark:border-primary-800 shrink-0 mt-0.5">
             <UIcon name="i-lucide-activity" class="w-5 h-5" />
@@ -207,7 +207,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Quick Metrics Ribbon -->
-      <div class="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 bg-neutral-50/70 dark:bg-neutral-900/60 border-b border-neutral-200 dark:border-neutral-800 shrink-0">
+      <div class="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 bg-neutral-50/70 dark:bg-neutral-900/60 border-b border-neutral-200 dark:border-white/[0.08] shrink-0">
         <div class="p-2.5 rounded-lg bg-white dark:bg-neutral-800/80 border border-neutral-200 dark:border-neutral-700/80">
           <div class="text-xs uppercase font-bold text-neutral-500">
             Rata-rata Latensi
@@ -255,7 +255,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Filter & Search Controls -->
-      <div class="p-3.5 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex flex-wrap items-center gap-2.5 shrink-0">
+      <div class="p-3.5 border-b border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] flex flex-wrap items-center gap-2.5 shrink-0">
         <!-- Search Input -->
         <div class="relative flex-1 min-w-[200px]">
           <UIcon name="i-lucide-search" class="w-3.5 h-3.5 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -335,7 +335,7 @@ onUnmounted(() => {
         <!-- Empty State -->
         <div
           v-if="filteredList.length === 0"
-          class="p-12 text-center rounded-2xl border border-dashed border-neutral-200 dark:border-neutral-800 space-y-2"
+          class="p-12 text-center rounded-xl border border-dashed border-neutral-200 dark:border-white/[0.08] space-y-2"
         >
           <UIcon name="i-lucide-search-x" class="w-8 h-8 text-neutral-400 mx-auto" />
           <h4 class="text-sm font-bold text-neutral-800 dark:text-neutral-200">
@@ -350,7 +350,7 @@ onUnmounted(() => {
         <div
           v-for="(sim, idx) in filteredList"
           :key="`${sim.method}_${sim.path}_${idx}`"
-          class="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/90 shadow-2xs space-y-2.5 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors"
+          class="p-3.5 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-neutral-900/90 space-y-2.5 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors"
         >
           <!-- Header: Method + Path + Latency Pill -->
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -445,7 +445,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Drawer Footer -->
-      <div class="p-4 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-900/80 flex items-center justify-between gap-3 text-xs shrink-0 flex-wrap">
+      <div class="p-4 border-t border-neutral-200 dark:border-white/[0.08] bg-neutral-50/80 dark:bg-neutral-900/80 flex items-center justify-between gap-3 text-xs shrink-0 flex-wrap">
         <div class="flex items-center gap-2 min-w-0">
           <span class="text-neutral-500 dark:text-neutral-400">
             Disimulasikan menggunakan <strong class="text-neutral-700 dark:text-neutral-300">Vibeasik Deep Check Engine</strong>

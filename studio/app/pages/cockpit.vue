@@ -374,7 +374,7 @@ const confirmDelete = async () => {
 <template>
   <div class="space-y-8">
     <!-- Hero / Header Section -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-neutral-200 dark:border-neutral-800">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-neutral-200 dark:border-white/[0.08]">
       <div>
         <h1 class="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white flex items-center gap-2.5">
           Local Projects Cockpit
@@ -445,10 +445,10 @@ const confirmDelete = async () => {
 
     <!-- Projects Grid -->
     <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div v-for="i in 4" :key="i" class="h-56 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 animate-pulse" />
+      <div v-for="i in 4" :key="i" class="h-56 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] animate-pulse" />
     </div>
 
-    <div v-else-if="filteredProjects.length === 0" class="text-center py-16 px-4 rounded-xl border border-dashed border-neutral-300 dark:border-neutral-800 bg-white/50 dark:bg-neutral-900/50">
+    <div v-else-if="filteredProjects.length === 0" class="text-center py-16 px-4 rounded-xl border border-dashed border-neutral-300 dark:border-white/[0.08] bg-white/50 dark:bg-neutral-900/50">
       <div class="w-12 h-12 mx-auto rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-400 mb-3">
         <UIcon name="i-lucide-folder-search" class="w-6 h-6" />
       </div>

@@ -20,11 +20,11 @@ const dismissAiNotice = () => emit('dismissAiNotice')
   <!-- Autopilot Live Progress Banner -->
   <div
     v-if="autopilotEnabled"
-    class="p-3.5 rounded-xl border border-emerald-300 dark:border-emerald-800/80 bg-linear-to-r from-emerald-50/90 via-teal-50/70 to-emerald-50/90 dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-emerald-950/40 text-xs shadow-xs transition-all"
+    class="p-3.5 rounded-xl border border-emerald-300 dark:border-emerald-800/80 bg-linear-to-r from-emerald-50/90 via-teal-50/70 to-emerald-50/90 dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-emerald-950/40 text-xs transition-all"
   >
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div class="flex items-center gap-3">
-        <div class="relative size-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+        <div class="relative size-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
           <UIcon name="i-lucide-bot" class="w-4 h-4" />
           <span class="absolute -top-1 -right-1 flex h-2.5 w-2.5">
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -73,7 +73,7 @@ const dismissAiNotice = () => emit('dismissAiNotice')
   <!-- AI Suggestion Result Alert Banner -->
   <div
     v-if="aiNotice"
-    class="p-3.5 rounded-xl border text-xs flex items-center justify-between gap-3 shadow-2xs transition-all"
+    class="p-3.5 rounded-xl border text-xs flex items-center justify-between gap-3 transition-all"
     :class="{
       'border-emerald-300 dark:border-emerald-800/80 bg-emerald-50/90 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200': aiNotice.type === 'success',
       'border-blue-300 dark:border-blue-800/80 bg-blue-50/90 dark:bg-blue-950/30 text-blue-900 dark:text-blue-200': aiNotice.type === 'info',

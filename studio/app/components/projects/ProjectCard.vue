@@ -77,14 +77,14 @@ const handleCardRefreshSummary = () => {
 
 <template>
   <div
-    class="group relative rounded-xl border p-5 shadow-xs transition-all flex flex-col justify-between"
+    class="group relative rounded-xl border p-5 transition-all flex flex-col justify-between"
     :class="project.status === 'deprecated'
       ? 'border-dashed border-amber-500/40 bg-neutral-50/50 dark:bg-neutral-900/30 opacity-75 hover:opacity-100'
       : project.status === 'hold'
         ? 'border-dashed border-amber-500/50 bg-amber-50/20 dark:bg-amber-950/10 hover:border-amber-500/60'
         : project.status === 'done'
           ? 'border-emerald-500/30 bg-emerald-50/20 dark:bg-emerald-950/10 hover:border-emerald-500/50'
-          : 'border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 hover:border-sky-500/30 dark:hover:border-sky-500/40'"
+          : 'border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] hover:border-sky-500/30 dark:hover:border-sky-500/40'"
   >
     <div>
       <!-- Header: Title, Health Score & Top Badges -->
@@ -280,8 +280,8 @@ const handleCardRefreshSummary = () => {
             :key="comp.id"
             class="flex items-center justify-between text-xs px-2.5 py-1.5 rounded-lg border font-mono transition-all"
             :class="currentlyCheckingCompId === comp.id
-              ? 'bg-sky-50 dark:bg-sky-950/40 border-sky-400 dark:border-sky-500/50 shadow-xs'
-              : 'bg-neutral-50 dark:bg-neutral-800/40 border-neutral-100 dark:border-neutral-800'"
+              ? 'bg-sky-50 dark:bg-sky-950/40 border-sky-400 dark:border-sky-500/50'
+              : 'bg-neutral-50 dark:bg-neutral-800/40 border-neutral-100 dark:border-white/[0.08]'"
           >
             <div class="flex items-center gap-2 truncate">
               <UBadge size="xs" :color="getRoleBadgeColor(comp.role)" variant="subtle">
@@ -332,7 +332,7 @@ const handleCardRefreshSummary = () => {
     </div>
 
     <!-- Action Buttons Footer -->
-    <div class="mt-5 pt-3 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between gap-2">
+    <div class="mt-5 pt-3 border-t border-neutral-100 dark:border-white/[0.08] flex items-center justify-between gap-2">
       <div class="flex items-center gap-1.5 flex-wrap">
         <UButton
           :to="`/projects/${project.id}`"

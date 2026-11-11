@@ -160,14 +160,14 @@ const getRoleLabel = (role: string) => roleLabel(role, { mobile: 'Mobile App', o
     title="Tambah Project Baru"
     description="Cukup masukkan nama dan pilih folder aplikasi. Stack framework, port, dan deskripsi akan dikenali otomatis oleh LLM."
     :ui="{
-      content: 'sm:max-w-4xl lg:max-w-5xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-2xl divide-y divide-neutral-200 dark:divide-neutral-800',
+      content: 'sm:max-w-4xl lg:max-w-5xl bg-white dark:bg-[#04111f] border border-neutral-200 dark:border-white/[0.08] shadow-2xl divide-y divide-neutral-200 dark:divide-neutral-800',
       overlay: 'bg-neutral-900/50 backdrop-blur-xs'
     }"
   >
     <template #body>
       <div class="space-y-6 max-h-[78vh] overflow-y-auto pr-1.5 py-1">
         <!-- Step 1: Identitas Project -->
-        <div class="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/60">
+        <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-neutral-50/70 dark:bg-neutral-900/60">
           <div class="space-y-1.5">
             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
               Nama Project <span class="text-rose-500">*</span>
@@ -189,7 +189,7 @@ const getRoleLabel = (role: string) => roleLabel(role, { mobile: 'Mobile App', o
 
         <!-- Step 2: App Folders (Topology: Cukup Pilih Folder) -->
         <div class="space-y-3">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-neutral-200 dark:border-neutral-800">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-neutral-200 dark:border-white/[0.08]">
             <div>
               <h3 class="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
                 <UIcon name="i-lucide-folder-git-2" class="w-4 h-4 text-sky-500 dark:text-sky-400" />
@@ -217,7 +217,7 @@ const getRoleLabel = (role: string) => roleLabel(role, { mobile: 'Mobile App', o
           <!-- Empty Components State -->
           <div
             v-if="projectComponents.length === 0"
-            class="p-8 text-center rounded-xl border border-dashed border-neutral-300 dark:border-neutral-700 bg-neutral-50/60 dark:bg-neutral-900/40 space-y-3.5"
+            class="p-8 text-center rounded-xl border border-dashed border-neutral-300 dark:border-neutral-700 bg-neutral-50/60 dark:bg-[#04111f] space-y-3.5"
           >
             <div class="w-12 h-12 mx-auto rounded-full bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 flex items-center justify-center border border-sky-200 dark:border-sky-800/40">
               <UIcon name="i-lucide-folder-plus" class="w-6 h-6" />
@@ -248,7 +248,7 @@ const getRoleLabel = (role: string) => roleLabel(role, { mobile: 'Mobile App', o
             <div
               v-for="(comp, idx) in projectComponents"
               :key="idx"
-              class="rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800/60 p-4 shadow-xs space-y-3 transition-all hover:border-neutral-300 dark:hover:border-neutral-600"
+              class="rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800/60 p-4 space-y-3 transition-all hover:border-neutral-300 dark:hover:border-neutral-600"
             >
               <!-- Comp Card Header -->
               <div class="flex items-center justify-between gap-3 pb-2 border-b border-neutral-200 dark:border-neutral-700/80">
@@ -271,7 +271,7 @@ const getRoleLabel = (role: string) => roleLabel(role, { mobile: 'Mobile App', o
                 <div class="flex items-center gap-2 shrink-0">
                   <select
                     v-model="comp.role"
-                    class="px-2.5 py-1 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs text-neutral-800 dark:text-neutral-200 focus:outline-none focus:border-primary-500"
+                    class="px-2.5 py-1 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-[#04111f] text-xs text-neutral-800 dark:text-neutral-200 focus:outline-none focus:border-primary-500"
                   >
                     <option value="backend">
                       Backend (BE)

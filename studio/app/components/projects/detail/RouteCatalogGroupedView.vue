@@ -25,10 +25,10 @@ const handleDelete = (route: ComponentRoute) => emit('delete', route)
     <div
       v-for="group in groupedRoutes"
       :key="group.domain"
-      class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 shadow-xs overflow-hidden"
+      class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] overflow-hidden"
     >
       <!-- Group Header -->
-      <div class="p-3.5 bg-neutral-50/80 dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+      <div class="p-3.5 bg-neutral-50/80 dark:bg-neutral-800 border-b border-neutral-200 dark:border-white/[0.08] flex items-center justify-between">
         <div class="flex items-center gap-2">
           <UIcon :name="isFrontend ? 'i-lucide-panels-top-left' : 'i-lucide-folder-git-2'" class="w-4 h-4 text-primary-500" />
           <span class="font-bold text-xs text-neutral-900 dark:text-white uppercase tracking-wider">

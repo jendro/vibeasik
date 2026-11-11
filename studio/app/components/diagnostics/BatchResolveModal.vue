@@ -274,7 +274,7 @@ const { getSeverityBadgeColor } = useFormatters()
                 class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all border"
                 :class="[
                   batchSize === opt.value
-                    ? 'bg-primary-600 text-white border-primary-600 shadow-xs'
+                    ? 'bg-primary-600 text-white border-primary-600'
                     : 'bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:border-neutral-300'
                 ]"
                 @click="batchSize = opt.value"
@@ -286,7 +286,7 @@ const { getSeverityBadgeColor } = useFormatters()
         </div>
 
         <!-- Progress Overview & Metrics -->
-        <div class="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 space-y-3">
+        <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] space-y-3">
           <div class="flex items-center justify-between">
             <div class="space-y-0.5">
               <div class="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
@@ -323,7 +323,7 @@ const { getSeverityBadgeColor } = useFormatters()
           </div>
 
           <!-- Action Buttons / Semi-Manual Controls -->
-          <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-neutral-100 dark:border-white/[0.08]">
             <div class="flex items-center gap-2">
               <!-- Mode 1: Step-by-Step Single Batch -->
               <UButton
@@ -400,7 +400,7 @@ const { getSeverityBadgeColor } = useFormatters()
         </div>
 
         <!-- Audit ulang: temuan baru yang muncul setelah todo dibuat ikut diselesaikan sekaligus -->
-        <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-900/60 space-y-2.5">
+        <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-neutral-50/60 dark:bg-neutral-900/60 space-y-2.5">
           <UCheckbox
             v-model="autoSweep"
             :disabled="sweepBusy"
@@ -409,7 +409,7 @@ const { getSeverityBadgeColor } = useFormatters()
           />
           <div
             v-if="sweepBusy || (!isExecuting && pendingCount === 0)"
-            class="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-neutral-200/80 dark:border-neutral-800"
+            class="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-neutral-200/80 dark:border-white/[0.08]"
           >
             <span class="text-neutral-600 dark:text-neutral-400">
               {{ sweepBusy ? 'Audit ulang & penyelesaian sedang berjalan di antrean.' : 'Audit ulang bisa memunculkan temuan lain yang belum punya todo.' }}
@@ -435,11 +435,11 @@ const { getSeverityBadgeColor } = useFormatters()
             <span>Status Eksekusi</span>
           </div>
 
-          <div class="max-h-64 overflow-y-auto space-y-2 pr-1 rounded-xl border border-neutral-200 dark:border-neutral-800 p-2 bg-neutral-50/50 dark:bg-neutral-900/50">
+          <div class="max-h-64 overflow-y-auto space-y-2 pr-1 rounded-xl border border-neutral-200 dark:border-white/[0.08] p-2 bg-neutral-50/50 dark:bg-neutral-900/50">
             <div
               v-for="finding in findings"
               :key="getFindingKey(finding)"
-              class="p-2.5 rounded-lg border bg-white dark:bg-neutral-900 flex items-center justify-between gap-3 transition-colors"
+              class="p-2.5 rounded-lg border bg-white dark:bg-[#04111f] flex items-center justify-between gap-3 transition-colors"
               :class="[
                 itemStates[getFindingKey(finding)]?.status === 'processing'
                   ? 'border-primary-400 dark:border-primary-600 ring-1 ring-primary-400/30'
@@ -447,7 +447,7 @@ const { getSeverityBadgeColor } = useFormatters()
                     ? 'border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/20'
                     : itemStates[getFindingKey(finding)]?.status === 'error'
                       ? 'border-rose-200 dark:border-rose-900/40 bg-rose-50/20'
-                      : 'border-neutral-200 dark:border-neutral-800'
+                      : 'border-neutral-200 dark:border-white/[0.08]'
               ]"
             >
               <!-- Info Title & Target -->

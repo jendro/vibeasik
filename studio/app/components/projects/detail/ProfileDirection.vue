@@ -30,7 +30,7 @@ const severityClass: Record<ProfileRisk['severity'], string> = {
 </script>
 
 <template>
-  <section class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 p-4 sm:p-5 shadow-xs space-y-5">
+  <section class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] p-4 sm:p-5 space-y-5">
     <div>
       <h2 class="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
         <UIcon name="i-lucide-compass" class="w-4 h-4 text-sky-500" />
@@ -45,7 +45,7 @@ const severityClass: Record<ProfileRisk['severity'], string> = {
       <div
         v-for="h in horizons"
         :key="h.key"
-        class="rounded-lg border border-neutral-200/80 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40 p-3 space-y-2"
+        class="rounded-lg border border-neutral-200/80 dark:border-white/[0.08] bg-neutral-50/50 dark:bg-[#04111f] p-3 space-y-2"
       >
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
@@ -63,7 +63,7 @@ const severityClass: Record<ProfileRisk['severity'], string> = {
         <div
           v-for="r in byHorizon[h.key]"
           :key="r.title"
-          class="rounded-md bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 p-2.5 space-y-1"
+          class="rounded-md bg-white dark:bg-[#04111f] border border-neutral-200/80 dark:border-white/[0.08] p-2.5 space-y-1"
         >
           <div class="text-xs font-semibold text-neutral-900 dark:text-white leading-snug">
             {{ r.title }}
@@ -118,7 +118,7 @@ const severityClass: Record<ProfileRisk['severity'], string> = {
           <li
             v-for="q in openQuestions"
             :key="q"
-            class="rounded-md border border-neutral-200/80 dark:border-neutral-800 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-300"
+            class="rounded-md border border-neutral-200/80 dark:border-white/[0.08] px-3 py-2 text-xs text-neutral-600 dark:text-neutral-300"
           >
             {{ q }}
           </li>

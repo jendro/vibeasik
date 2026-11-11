@@ -26,7 +26,7 @@ const categoryMeta = computed(() => todoCategoryMeta(props.todo))
 
 <template>
   <div
-    class="p-4 rounded-xl border bg-white dark:bg-slate-900/40 transition-all shadow-2xs space-y-3"
+    class="p-4 rounded-xl border bg-white dark:bg-[#04111f] transition-all space-y-3"
     :class="[
       todo.status === 'suggested'
         ? 'border-amber-300/80 dark:border-amber-900/60 ring-1 ring-amber-400/20'

@@ -71,7 +71,7 @@ const goToOrganizer = () => {
     <template #content>
       <div class="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
         <!-- Header Info & Actions -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-neutral-100 dark:border-neutral-800">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-neutral-100 dark:border-white/[0.08]">
           <div>
             <h3 class="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
               <UIcon name="i-lucide-copy" class="w-5 h-5 text-sky-500" />
@@ -107,7 +107,7 @@ const goToOrganizer = () => {
 
         <!-- Metrics Overview -->
         <div v-if="scanResult" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40">
+          <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-neutral-50/50 dark:bg-[#04111f]">
             <div class="text-xs text-neutral-500">
               Total Proyek Diteliti
             </div>
@@ -115,7 +115,7 @@ const goToOrganizer = () => {
               {{ scanResult.total_projects }}
             </div>
           </div>
-          <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40">
+          <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-neutral-50/50 dark:bg-[#04111f]">
             <div class="text-xs text-neutral-500">
               Pasangan Kemiripan Terdeteksi
             </div>
@@ -126,7 +126,7 @@ const goToOrganizer = () => {
               </UBadge>
             </div>
           </div>
-          <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40">
+          <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-neutral-50/50 dark:bg-[#04111f]">
             <div class="text-xs text-neutral-500">
               Klaster Proyek Bersaudara
             </div>
@@ -137,7 +137,7 @@ const goToOrganizer = () => {
         </div>
 
         <!-- Tabs Navigation -->
-        <div class="flex items-center gap-2 border-b border-neutral-200 dark:border-neutral-800 text-xs">
+        <div class="flex items-center gap-2 border-b border-neutral-200 dark:border-white/[0.08] text-xs">
           <button
             type="button"
             class="pb-2 font-semibold transition-colors flex items-center gap-1.5"
@@ -172,7 +172,7 @@ const goToOrganizer = () => {
 
         <!-- Tab 1: Matches List -->
         <div v-else-if="activeTab === 'matches'" class="space-y-4">
-          <div v-if="!scanResult?.matches?.length" class="text-center py-12 border border-dashed border-neutral-300 dark:border-neutral-800 rounded-xl">
+          <div v-if="!scanResult?.matches?.length" class="text-center py-12 border border-dashed border-neutral-300 dark:border-white/[0.08] rounded-xl">
             <UIcon name="i-lucide-check-circle-2" class="w-8 h-8 mx-auto text-emerald-500 mb-2" />
             <p class="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
               Tidak ada duplikat atau bentrok folder terdeteksi
@@ -185,7 +185,7 @@ const goToOrganizer = () => {
           <div
             v-for="(match, idx) in (scanResult?.matches || [])"
             :key="idx"
-            class="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/60 shadow-2xs space-y-3.5"
+            class="p-4 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-neutral-900/60 space-y-3.5"
           >
             <!-- Card Header: Score & Badges -->
             <div class="flex items-start justify-between gap-3">
@@ -273,7 +273,7 @@ const goToOrganizer = () => {
 
         <!-- Tab 2: Clusters -->
         <div v-else class="space-y-4">
-          <div v-if="!scanResult?.suggested_groups?.length" class="text-center py-12 border border-dashed border-neutral-300 dark:border-neutral-800 rounded-xl">
+          <div v-if="!scanResult?.suggested_groups?.length" class="text-center py-12 border border-dashed border-neutral-300 dark:border-white/[0.08] rounded-xl">
             <p class="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
               Tidak ada klaster aplikasi terpecah ditemukan
             </p>
@@ -282,7 +282,7 @@ const goToOrganizer = () => {
           <div
             v-for="(cluster, cIdx) in (scanResult?.suggested_groups || [])"
             :key="cIdx"
-            class="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/60 shadow-2xs space-y-3"
+            class="p-4 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-neutral-900/60 space-y-3"
           >
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
@@ -325,7 +325,7 @@ const goToOrganizer = () => {
         </div>
 
         <!-- Footer Dismiss -->
-        <div class="flex justify-end pt-3 border-t border-neutral-100 dark:border-neutral-800">
+        <div class="flex justify-end pt-3 border-t border-neutral-100 dark:border-white/[0.08]">
           <UButton color="neutral" variant="outline" size="sm" @click="open = false">
             Tutup
           </UButton>

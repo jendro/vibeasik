@@ -24,9 +24,9 @@ watch(searchQuery, () => {
 </script>
 
 <template>
-  <div class="border border-neutral-200 dark:border-neutral-800 rounded-lg bg-neutral-50 dark:bg-neutral-950 overflow-hidden">
+  <div class="border border-neutral-200 dark:border-white/[0.08] rounded-lg bg-neutral-50 dark:bg-neutral-950 overflow-hidden">
     <!-- Explorer Toolbar -->
-    <div class="p-2.5 bg-neutral-100/90 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between gap-2 text-xs">
+    <div class="p-2.5 bg-neutral-100/90 dark:bg-[#04111f] border-b border-neutral-200 dark:border-white/[0.08] flex items-center justify-between gap-2 text-xs">
       <div class="flex items-center gap-1.5 min-w-0 font-mono text-xs text-neutral-700 dark:text-neutral-300">
         <UIcon name="i-lucide-folder" class="w-4 h-4 text-neutral-500 dark:text-neutral-400 shrink-0" />
         <span class="truncate" :title="browsingPath">{{ browsingPath }}</span>
@@ -56,7 +56,7 @@ watch(searchQuery, () => {
     </div>
 
     <!-- Search within folder -->
-    <div class="p-2.5 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/60">
+    <div class="p-2.5 border-b border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-neutral-900/60">
       <UInput
         v-model="searchQuery"
         icon="i-lucide-search"

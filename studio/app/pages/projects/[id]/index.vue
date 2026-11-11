@@ -266,8 +266,8 @@ const handleCreateDirOnDisk = async (comp: ProjectComponent) => {
 
 <template>
   <div v-if="loading" class="p-4 sm:p-6 lg:p-8 space-y-6">
-    <div class="h-28 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 animate-pulse" />
-    <div class="h-96 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 animate-pulse" />
+    <div class="h-28 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] animate-pulse" />
+    <div class="h-96 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] animate-pulse" />
   </div>
 
   <div v-else-if="project" class="flex-1 flex flex-col lg:flex-row items-stretch w-full min-h-[calc(100vh-4rem)] relative">

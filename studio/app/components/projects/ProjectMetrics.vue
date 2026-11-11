@@ -16,7 +16,7 @@ defineProps<{
 
 <template>
   <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 shadow-xs">
+    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f]">
       <div class="flex items-center justify-between text-neutral-500 dark:text-neutral-400 text-xs font-medium">
         <span>Total Proyek</span>
         <UIcon name="i-lucide-box" class="w-4 h-4 text-sky-500" />
@@ -29,7 +29,7 @@ defineProps<{
       </div>
     </div>
 
-    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 shadow-xs">
+    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f]">
       <div class="flex items-center justify-between text-neutral-500 dark:text-neutral-400 text-xs font-medium">
         <span>Multi-FE</span>
         <UIcon name="i-lucide-layers" class="w-4 h-4 text-purple-500" />
@@ -42,7 +42,7 @@ defineProps<{
       </div>
     </div>
 
-    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 shadow-xs">
+    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f]">
       <div class="flex items-center justify-between text-neutral-500 dark:text-neutral-400 text-xs font-medium">
         <span>Bundles</span>
         <UIcon name="i-lucide-cpu" class="w-4 h-4 text-blue-500" />
@@ -55,7 +55,7 @@ defineProps<{
       </div>
     </div>
 
-    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 shadow-xs">
+    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f]">
       <div class="flex items-center justify-between text-neutral-500 dark:text-neutral-400 text-xs font-medium">
         <span>Monorepo</span>
         <UIcon name="i-lucide-git-fork" class="w-4 h-4 text-amber-500" />
@@ -68,7 +68,7 @@ defineProps<{
       </div>
     </div>
 
-    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 shadow-xs">
+    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f]">
       <div class="flex items-center justify-between text-neutral-500 dark:text-neutral-400 text-xs font-medium">
         <span>Deprecated / Non-Aktif</span>
         <UIcon name="i-lucide-archive" class="w-4 h-4 text-amber-500" />
@@ -81,7 +81,7 @@ defineProps<{
       </div>
     </div>
 
-    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 shadow-xs">
+    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f]">
       <div class="flex items-center justify-between text-neutral-500 dark:text-neutral-400 text-xs font-medium">
         <span>Skor Kesehatan</span>
         <UIcon name="i-lucide-activity" class="w-4 h-4 text-sky-400" />

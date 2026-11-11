@@ -16,7 +16,7 @@ const cards = computed(() => [
 
 <template>
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-    <section v-for="c in cards" :key="c.key" class="p-4 sm:p-5 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-xs">
+    <section v-for="c in cards" :key="c.key" class="p-4 sm:p-5 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f]">
       <div class="flex items-center gap-2 mb-3">
         <UIcon :name="c.icon" class="size-4 shrink-0" :class="c.tone" />
         <h3 class="text-sm font-semibold text-neutral-800 dark:text-neutral-100">

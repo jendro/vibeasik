@@ -120,7 +120,7 @@ const handleConsolidate = async () => {
 
       <div v-else-if="preview" class="space-y-4">
         <!-- Target Directory Input Box -->
-        <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-slate-900/60 space-y-2">
+        <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-neutral-50/50 dark:bg-slate-900/60 space-y-2">
           <label class="text-xs font-semibold text-neutral-700 dark:text-neutral-300 flex items-center justify-between">
             <span class="flex items-center gap-1.5">
               <UIcon name="i-lucide-folder" class="w-3.5 h-3.5 text-primary-500" />
@@ -185,7 +185,7 @@ const handleConsolidate = async () => {
                 ? 'border-rose-500/40 bg-rose-50/30 dark:bg-rose-950/10'
                 : item.status === 'already_in_place'
                   ? 'border-emerald-500/40 bg-emerald-50/20 dark:bg-emerald-950/10'
-                  : 'border-neutral-200 dark:border-neutral-800 bg-white dark:bg-slate-900/40'"
+                  : 'border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f]'"
             >
               <div class="flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2 flex-wrap">

@@ -29,7 +29,7 @@ const recap = computed(() => buildOptimizationRecap(todos.value))
 
 <template>
   <div class="space-y-5">
-    <div v-if="loading" class="h-48 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 animate-pulse" />
+    <div v-if="loading" class="h-48 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] animate-pulse" />
 
     <div v-else-if="failed" class="rounded-xl border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/30 p-4 text-sm text-rose-800 dark:text-rose-200 flex items-center justify-between gap-3">
       <span>{{ failed }}</span>
@@ -43,7 +43,7 @@ const recap = computed(() => buildOptimizationRecap(todos.value))
     </div>
 
     <template v-else>
-      <section class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 p-4 sm:p-5 shadow-xs">
+      <section class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] p-4 sm:p-5">
         <div class="flex flex-wrap items-end justify-between gap-4">
           <div>
             <div class="text-xs uppercase font-semibold tracking-wider text-neutral-400">
@@ -66,7 +66,7 @@ const recap = computed(() => buildOptimizationRecap(todos.value))
         <article
           v-for="c in recap.categories"
           :key="c.category"
-          class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 p-4 shadow-xs space-y-3"
+          class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] p-4 space-y-3"
         >
           <header class="flex items-center justify-between gap-3">
             <h3 class="text-sm font-bold text-neutral-900 dark:text-white">

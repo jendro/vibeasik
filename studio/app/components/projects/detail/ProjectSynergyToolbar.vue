@@ -23,7 +23,7 @@ const resetFilters = () => emit('reset')
         type="button"
         class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
         :class="activeView === 'pipeline'
-          ? 'bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-2xs font-bold'
+          ? 'bg-white dark:bg-[#04111f] text-sky-600 dark:text-sky-400 font-bold'
           : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'"
         @click="activeView = 'pipeline'"
       >
@@ -35,7 +35,7 @@ const resetFilters = () => emit('reset')
         type="button"
         class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
         :class="activeView === 'matrix'
-          ? 'bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-2xs font-bold'
+          ? 'bg-white dark:bg-[#04111f] text-sky-600 dark:text-sky-400 font-bold'
           : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'"
         @click="activeView = 'matrix'"
       >
@@ -50,7 +50,7 @@ const resetFilters = () => emit('reset')
         type="button"
         class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
         :class="activeView === 'topology'
-          ? 'bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-2xs font-bold'
+          ? 'bg-white dark:bg-[#04111f] text-sky-600 dark:text-sky-400 font-bold'
           : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'"
         @click="activeView = 'topology'"
       >
@@ -69,7 +69,7 @@ const resetFilters = () => emit('reset')
   </div>
 
   <!-- Filter & Search Bar -->
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3.5 rounded-xl border border-neutral-200/80 dark:border-neutral-800 bg-white dark:bg-slate-900">
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3.5 rounded-xl border border-neutral-200/80 dark:border-white/[0.08] bg-white dark:bg-[#04111f]">
     <div class="flex flex-wrap items-center gap-2 flex-1">
       <!-- Search Input -->
       <UInput

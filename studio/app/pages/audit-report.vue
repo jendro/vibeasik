@@ -240,7 +240,7 @@ onMounted(async () => {
     <!-- Empty State -->
     <div
       v-else
-      class="p-12 text-center rounded-2xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 space-y-3"
+      class="p-12 text-center rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-3"
     >
       <div class="w-12 h-12 rounded-full bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 flex items-center justify-center mx-auto">
         <UIcon name="i-lucide-shield-check" class="w-6 h-6" />

@@ -8,7 +8,7 @@ const { copyToClipboard } = useCopyToClipboard()
 
 <template>
   <div class="space-y-3">
-    <div class="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-900 text-neutral-200 shadow-2xs">
+    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-neutral-900 text-neutral-200">
       <div class="flex items-center justify-between text-xs font-mono text-neutral-400 mb-2">
         <span>Directory Tree Snapshot</span>
         <button

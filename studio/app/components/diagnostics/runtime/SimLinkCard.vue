@@ -18,7 +18,7 @@ const scoreColor = (score: number) => score >= 90 ? 'text-emerald-600 dark:text-
 </script>
 
 <template>
-  <section class="p-4 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+  <section class="p-4 bg-white dark:bg-[#04111f] border border-neutral-200 dark:border-white/[0.08] rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3">
     <div class="flex items-start gap-3 min-w-0">
       <span class="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shrink-0">
         <UIcon name="i-lucide-laptop" class="w-5 h-5" />

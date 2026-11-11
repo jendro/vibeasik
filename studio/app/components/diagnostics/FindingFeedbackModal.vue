@@ -113,7 +113,7 @@ const save = async () => {
     <template #body>
       <div v-if="finding" class="space-y-4 text-xs">
         <!-- Ringkasan temuan -->
-        <div class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 space-y-1.5">
+        <div class="p-3 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-neutral-50 dark:bg-neutral-900/60 space-y-1.5">
           <div class="flex flex-wrap items-center gap-2">
             <span v-if="finding.rule_id" class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
               {{ finding.rule_id }}
@@ -175,7 +175,7 @@ const save = async () => {
             class="text-left p-3 rounded-xl border transition-colors"
             :class="verdict === opt.value
               ? 'border-primary-400 dark:border-primary-600 bg-primary-50/70 dark:bg-primary-950/30'
-              : 'border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'"
+              : 'border-neutral-200 dark:border-white/[0.08] hover:border-neutral-300 dark:hover:border-neutral-700'"
             @click="verdict = opt.value"
           >
             <span class="flex items-center gap-1.5 font-bold text-neutral-900 dark:text-white">

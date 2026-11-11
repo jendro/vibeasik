@@ -18,7 +18,7 @@
         <strong>Tidak secara membabi buta.</strong> Mesin diagnostik Vibeasik menerapkan pendekatan <strong>Selective Targeted Traversal</strong> (Penelusuran Selektif Berbasis Whitelist &amp; Pruning Direktori).
       </p>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 text-xs">
-        <div class="p-3 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-1.5">
+        <div class="p-3 rounded-lg bg-white dark:bg-[#04111f] border border-neutral-200 dark:border-white/[0.08] space-y-1.5">
           <div class="flex items-center gap-1.5 font-bold text-rose-700 dark:text-rose-400">
             <UIcon name="i-lucide-folder-x" class="w-4 h-4" />
             <span>Dilewati Otomatis (Pruning):</span>
@@ -27,7 +27,7 @@
             Folder non-sumber langsung diabaikan tanpa dibuka: <code class="font-mono bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded">node_modules/</code>, <code class="font-mono bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded">vendor/</code>, <code class="font-mono bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded">.git/</code>, <code class="font-mono bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded">.nuxt/</code>, <code class="font-mono bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded">dist/</code>, <code class="font-mono bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded">build/</code>, <code class="font-mono bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded">bin/</code>, <code class="font-mono bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded">tmp/</code>. File tes (<code class="font-mono bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded">*_test.go</code>, <code class="font-mono bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded">.test.ts</code>), mock, dan minified bundle (<code class="font-mono bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded">.min.js</code>) juga dilewati.
           </p>
         </div>
-        <div class="p-3 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-1.5">
+        <div class="p-3 rounded-lg bg-white dark:bg-[#04111f] border border-neutral-200 dark:border-white/[0.08] space-y-1.5">
           <div class="flex items-center gap-1.5 font-bold text-emerald-700 dark:text-emerald-400">
             <UIcon name="i-lucide-file-code" class="w-4 h-4" />
             <span>Dipindai Mendalam (Line-by-Line):</span>
@@ -58,7 +58,7 @@
 
       <div class="space-y-3 text-xs">
         <!-- Layer 1 -->
-        <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 space-y-2">
+        <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] space-y-2">
           <div class="flex items-center justify-between">
             <span class="font-bold text-neutral-900 dark:text-white flex items-center gap-2">
               <span class="w-5 h-5 rounded-full bg-violet-100 dark:bg-violet-950 text-violet-700 dark:text-violet-300 font-mono text-xs flex items-center justify-center font-bold">1</span>
@@ -78,7 +78,7 @@
         </div>
 
         <!-- Layer 2 -->
-        <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 space-y-2">
+        <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] space-y-2">
           <div class="flex items-center justify-between">
             <span class="font-bold text-neutral-900 dark:text-white flex items-center gap-2">
               <span class="w-5 h-5 rounded-full bg-violet-100 dark:bg-violet-950 text-violet-700 dark:text-violet-300 font-mono text-xs flex items-center justify-center font-bold">2</span>
@@ -98,7 +98,7 @@
         </div>
 
         <!-- Layer 3 -->
-        <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 space-y-2">
+        <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] space-y-2">
           <div class="flex items-center justify-between">
             <span class="font-bold text-neutral-900 dark:text-white flex items-center gap-2">
               <span class="w-5 h-5 rounded-full bg-violet-100 dark:bg-violet-950 text-violet-700 dark:text-violet-300 font-mono text-xs flex items-center justify-center font-bold">3</span>
@@ -177,7 +177,7 @@
         </div>
 
         <!-- Layer 4 -->
-        <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 space-y-2">
+        <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] space-y-2">
           <div class="flex items-center justify-between">
             <span class="font-bold text-neutral-900 dark:text-white flex items-center gap-2">
               <span class="w-5 h-5 rounded-full bg-violet-100 dark:bg-violet-950 text-violet-700 dark:text-violet-300 font-mono text-xs flex items-center justify-center font-bold">4</span>
@@ -208,9 +208,9 @@
         </h3>
       </div>
 
-      <div class="border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden bg-white dark:bg-neutral-900">
+      <div class="border border-neutral-200 dark:border-white/[0.08] rounded-xl overflow-hidden bg-white dark:bg-[#04111f]">
         <table class="w-full text-xs text-left">
-          <thead class="bg-neutral-100 dark:bg-neutral-800/80 text-neutral-700 dark:text-neutral-300 font-bold border-b border-neutral-200 dark:border-neutral-800">
+          <thead class="bg-neutral-100 dark:bg-neutral-800/80 text-neutral-700 dark:text-neutral-300 font-bold border-b border-neutral-200 dark:border-white/[0.08]">
             <tr>
               <th class="p-2.5">
                 Target / Pola Berkas
@@ -320,7 +320,7 @@
         Untuk memastikan tidak ada berkas penting yang terlewat dan hasil diagnosis mencapai tingkat akurasi 100%:
       </p>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-        <div class="p-3 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-1">
+        <div class="p-3 rounded-lg bg-white dark:bg-[#04111f] border border-neutral-200 dark:border-white/[0.08] space-y-1">
           <span class="font-bold text-neutral-900 dark:text-white flex items-center gap-1.5">
             <span class="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-mono text-xs flex items-center justify-center font-bold">1</span>
             Partisi Komponen Modular (Hindari Monolith Raksasa)
@@ -330,7 +330,7 @@
           </p>
         </div>
 
-        <div class="p-3 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-1">
+        <div class="p-3 rounded-lg bg-white dark:bg-[#04111f] border border-neutral-200 dark:border-white/[0.08] space-y-1">
           <span class="font-bold text-neutral-900 dark:text-white flex items-center gap-1.5">
             <span class="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-mono text-xs flex items-center justify-center font-bold">2</span>
             Sinergi Multi-Engine (Static + Fast Scan AI + REA)
@@ -340,7 +340,7 @@
           </p>
         </div>
 
-        <div class="p-3 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-1">
+        <div class="p-3 rounded-lg bg-white dark:bg-[#04111f] border border-neutral-200 dark:border-white/[0.08] space-y-1">
           <span class="font-bold text-neutral-900 dark:text-white flex items-center gap-1.5">
             <span class="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-mono text-xs flex items-center justify-center font-bold">3</span>
             Manfaatkan Kurasi Stateful (Resolve &amp; Ignore)
@@ -350,7 +350,7 @@
           </p>
         </div>
 
-        <div class="p-3 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-1">
+        <div class="p-3 rounded-lg bg-white dark:bg-[#04111f] border border-neutral-200 dark:border-white/[0.08] space-y-1">
           <span class="font-bold text-neutral-900 dark:text-white flex items-center gap-1.5">
             <span class="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-mono text-xs flex items-center justify-center font-bold">4</span>
             Higiene Path &amp; Konfigurasi Berkas

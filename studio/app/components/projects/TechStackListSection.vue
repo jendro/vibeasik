@@ -174,9 +174,9 @@ const techItems: TechVersionItem[] = [
 </script>
 
 <template>
-  <div class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 p-5 shadow-xs space-y-4">
+  <div class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] p-5 space-y-4">
     <!-- Section Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-neutral-100 dark:border-neutral-800">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-neutral-100 dark:border-white/[0.08]">
       <div>
         <h2 class="text-sm sm:text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
           <div class="p-1.5 rounded-lg bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 border border-sky-200/60 dark:border-sky-800/60">
@@ -206,7 +206,7 @@ const techItems: TechVersionItem[] = [
         v-for="item in techItems"
         :key="item.id"
         :to="item.adapterId ? `/adapters` : '#'"
-        class="group p-3 rounded-xl border border-neutral-200/80 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-800/30 hover:bg-white dark:hover:bg-slate-800/60 hover:border-neutral-300 dark:hover:border-neutral-700 transition-all flex flex-col justify-between space-y-2 cursor-pointer shadow-2xs"
+        class="group p-3 rounded-xl border border-neutral-200/80 dark:border-white/[0.08] bg-neutral-50/50 dark:bg-neutral-800/30 hover:bg-white dark:hover:bg-slate-800/60 hover:border-neutral-300 dark:hover:border-neutral-700 transition-all flex flex-col justify-between space-y-2 cursor-pointer"
       >
         <div class="space-y-2">
           <!-- Logo & Status Badge -->

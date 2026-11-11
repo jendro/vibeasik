@@ -186,13 +186,13 @@ const downloadSynergyJson = () => {
 
     <!-- Loading Skeleton -->
     <div v-if="loading && !synergyMap" class="space-y-4">
-      <div v-for="i in 3" :key="i" class="h-44 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-800/40 animate-pulse" />
+      <div v-for="i in 3" :key="i" class="h-44 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-neutral-100 dark:bg-neutral-800/40 animate-pulse" />
     </div>
 
     <!-- EMPTY STATE -->
     <div
       v-else-if="!filteredPages || filteredPages.length === 0"
-      class="p-12 text-center rounded-2xl border border-dashed border-neutral-200 dark:border-neutral-800 bg-white dark:bg-slate-900/40 space-y-3"
+      class="p-12 text-center rounded-xl border border-dashed border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] space-y-3"
     >
       <UIcon name="i-lucide-search-x" class="w-10 h-10 text-neutral-400 mx-auto" />
       <div class="text-sm font-semibold text-neutral-700 dark:text-neutral-300">

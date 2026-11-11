@@ -129,7 +129,7 @@ const quickRoutes = ['/', '/dashboard', '/login', '/admin', '/products', '/setti
 <template>
   <div class="space-y-6">
     <!-- Top Control Bar -->
-    <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-xs space-y-4">
+    <div class="p-5 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-slate-900/60 space-y-4">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
           <h2 class="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
@@ -162,7 +162,7 @@ const quickRoutes = ['/', '/dashboard', '/login', '/admin', '/products', '/setti
           <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Target Komponen</label>
           <select
             v-model="selectedCompId"
-            class="w-full text-xs rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            class="w-full text-xs rounded-lg border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-[#04111f] px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
             <option v-for="c in frontendComponents" :key="c.id" :value="c.id">
               {{ c.name }} (:{{ c.port }})
@@ -236,7 +236,7 @@ const quickRoutes = ['/', '/dashboard', '/login', '/admin', '/products', '/setti
 
     <!-- Live Captured Preview Screen Card -->
     <div v-if="latestCapture || latestAudit" class="space-y-4">
-      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950 overflow-hidden shadow-lg">
+      <div class="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-950 overflow-hidden shadow-lg">
         <!-- macOS Style Header Dots -->
         <div class="px-4 py-2.5 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-xs text-slate-400">
           <div class="flex items-center gap-2">
@@ -284,9 +284,9 @@ const quickRoutes = ['/', '/dashboard', '/login', '/admin', '/products', '/setti
     <!-- Empty State (No capture yet) -->
     <div
       v-else
-      class="py-16 text-center flex flex-col items-center justify-center p-8 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/30"
+      class="py-16 text-center flex flex-col items-center justify-center p-8 rounded-xl border border-dashed border-slate-200 dark:border-white/[0.08] bg-white/50 dark:bg-slate-900/30"
     >
-      <div class="size-14 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-3">
+      <div class="size-14 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-3">
         <UIcon name="i-lucide-scan-eye" class="size-7" />
       </div>
       <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">

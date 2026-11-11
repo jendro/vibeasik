@@ -94,7 +94,7 @@ const showAutoRun = false
       </UButton>
 
       <!-- Toggle Kerjakan Otomatis (Autopilot) -->
-      <div v-if="showAutoRun" class="flex items-center gap-1 p-0.5 rounded-xl bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200 dark:border-white/10 shadow-2xs">
+      <div v-if="showAutoRun" class="flex items-center gap-1 p-0.5 rounded-xl bg-neutral-100 dark:bg-neutral-800/80 border border-neutral-200 dark:border-white/10">
         <div class="flex items-center gap-2 px-2.5 py-1">
           <span class="relative flex h-2 w-2">
             <span v-if="autopilotEnabled" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -126,7 +126,7 @@ const showAutoRun = false
           />
           <template #content>
             <div class="p-3.5 w-72 space-y-3 text-xs">
-              <div class="flex items-center justify-between pb-1.5 border-b border-neutral-100 dark:border-neutral-800">
+              <div class="flex items-center justify-between pb-1.5 border-b border-neutral-100 dark:border-white/[0.08]">
                 <span class="font-bold text-neutral-900 dark:text-white flex items-center gap-1.5">
                   <UIcon name="i-lucide-bot" class="w-4 h-4 text-sky-500" />
                   <span>Konfigurasi Autopilot</span>

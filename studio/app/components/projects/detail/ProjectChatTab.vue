@@ -309,9 +309,9 @@ const getPriorityBadgeClass = (priority: string) => {
 </script>
 
 <template>
-  <div class="flex flex-col h-[calc(100vh-13rem)] min-h-[580px] rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-xs overflow-hidden">
+  <div class="flex flex-col h-[calc(100vh-13rem)] min-h-[580px] rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-slate-900/60 overflow-hidden">
     <!-- Chat Header Bar -->
-    <div class="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/80">
+    <div class="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-slate-200 dark:border-white/[0.08] bg-slate-50/70 dark:bg-slate-900/80">
       <div class="flex items-center gap-2.5">
         <div class="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
           <UIcon name="i-lucide-bot" class="size-4.5" />
@@ -360,7 +360,7 @@ const getPriorityBadgeClass = (priority: string) => {
         v-if="!loadingHistory && messages.length === 0"
         class="h-full flex flex-col items-center justify-center text-center p-6 space-y-4 max-w-lg mx-auto"
       >
-        <div class="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-500 border border-indigo-200/60 dark:border-indigo-900">
+        <div class="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-500 border border-indigo-200/60 dark:border-indigo-900">
           <UIcon name="i-lucide-sparkles" class="size-8" />
         </div>
         <div class="space-y-1.5">
@@ -398,7 +398,7 @@ const getPriorityBadgeClass = (priority: string) => {
         <!-- User Message -->
         <div
           v-if="msg.role === 'user'"
-          class="max-w-[85%] sm:max-w-[75%] p-3.5 rounded-2xl rounded-br-xs bg-indigo-600 text-white text-xs leading-relaxed shadow-xs"
+          class="max-w-[85%] sm:max-w-[75%] p-3.5 rounded-xl rounded-br-xs bg-indigo-600 text-white text-xs leading-relaxed"
         >
           <p class="whitespace-pre-wrap">
             {{ msg.content }}
@@ -414,8 +414,8 @@ const getPriorityBadgeClass = (priority: string) => {
           class="w-full max-w-[95%] sm:max-w-[90%] space-y-4"
         >
           <!-- Analysis Bubble -->
-          <div class="p-4 sm:p-5 rounded-2xl rounded-tl-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs leading-relaxed space-y-3 shadow-xs">
-            <div class="flex items-center justify-between gap-2 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+          <div class="p-4 sm:p-5 rounded-xl rounded-tl-xs bg-slate-50 dark:bg-[#04111f] border border-slate-200 dark:border-white/[0.08] text-slate-800 dark:text-slate-200 text-xs leading-relaxed space-y-3">
+            <div class="flex items-center justify-between gap-2 pb-2 border-b border-slate-200/80 dark:border-white/[0.08]">
               <span class="font-bold flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 text-xs">
                 <UIcon name="i-lucide-cpu" class="size-4" />
                 Kajian & Analisis Dampak Arsitektur
@@ -459,10 +459,10 @@ const getPriorityBadgeClass = (priority: string) => {
               <div
                 v-for="(todo, tIdx) in msg.todos"
                 :key="tIdx"
-                class="p-4 rounded-xl border bg-white dark:bg-slate-950/70 space-y-3 shadow-xs transition-all"
+                class="p-4 rounded-xl border bg-white dark:bg-slate-950/70 space-y-3 transition-all"
                 :class="addedTodos[`${msg.id}_${tIdx}`]
                   ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/20 dark:bg-emerald-950/10'
-                  : 'border-slate-200 dark:border-slate-800'"
+                  : 'border-slate-200 dark:border-white/[0.08]'"
               >
                 <!-- Title & Meta Badges -->
                 <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
@@ -547,7 +547,7 @@ const getPriorityBadgeClass = (priority: string) => {
     </div>
 
     <!-- Input Footer -->
-    <div class="p-3 sm:p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/60 space-y-2">
+    <div class="p-3 sm:p-4 border-t border-slate-200 dark:border-white/[0.08] bg-slate-50/50 dark:bg-slate-900/60 space-y-2">
       <!-- Quick Chips if messages exist -->
       <div v-if="messages.length > 0" class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
         <span class="text-xs uppercase font-semibold text-slate-400 shrink-0">Ide Cepat:</span>
@@ -568,7 +568,7 @@ const getPriorityBadgeClass = (priority: string) => {
             v-model="inputPrompt"
             rows="2"
             placeholder="Tuliskan ide atau request fitur baru (misal: 'Saya mau nambah fitur login dengan Google OAuth dan sistem wallet')..."
-            class="w-full text-xs p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 resize-none"
+            class="w-full text-xs p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#04111f] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 resize-none"
             :disabled="sending"
             @keydown.enter.exact.prevent="handleSendMessage()"
           />

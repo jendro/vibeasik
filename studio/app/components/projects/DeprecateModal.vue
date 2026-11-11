@@ -76,7 +76,7 @@ const handleSubmit = async () => {
           />
         </div>
 
-        <div class="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100 dark:border-white/[0.08]">
           <UButton
             color="neutral"
             variant="outline"

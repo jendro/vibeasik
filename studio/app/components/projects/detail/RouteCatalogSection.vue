@@ -286,7 +286,7 @@ defineExpose({
     <!-- Empty State: Belum Ada Data di Database -->
     <div
       v-if="routes.length === 0 && !loading"
-      class="p-8 text-center rounded-xl border border-dashed border-neutral-200 dark:border-neutral-800 bg-white/50 dark:bg-neutral-900/50 space-y-3"
+      class="p-8 text-center rounded-xl border border-dashed border-neutral-200 dark:border-white/[0.08] bg-white/50 dark:bg-neutral-900/50 space-y-3"
     >
       <div class="w-12 h-12 mx-auto rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-400">
         <UIcon :name="isFrontend ? 'i-lucide-panels-top-left' : 'i-lucide-route-off'" class="w-6 h-6" />
@@ -315,7 +315,7 @@ defineExpose({
     <!-- Filter Zero State: Pencarian Tidak Cocok -->
     <div
       v-else-if="filteredRoutes.length === 0 && routes.length > 0"
-      class="p-8 text-center rounded-xl border border-dashed border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 text-xs text-neutral-400 space-y-2"
+      class="p-8 text-center rounded-xl border border-dashed border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] text-xs text-neutral-400 space-y-2"
     >
       <UIcon name="i-lucide-search-x" class="w-6 h-6 mx-auto text-neutral-400" />
       <div>

@@ -112,7 +112,7 @@ const projectLatestScanDate = computed(() => {
     <template #content>
       <!-- PROJECT LEVEL POPOVER -->
       <div v-if="isProjectLevel" class="p-3.5 w-80 sm:w-88 space-y-3 text-xs">
-        <div class="flex items-start justify-between gap-2 pb-2 border-b border-neutral-100 dark:border-neutral-800">
+        <div class="flex items-start justify-between gap-2 pb-2 border-b border-neutral-100 dark:border-white/[0.08]">
           <div class="flex items-center gap-2">
             <div class="p-1.5 rounded-lg bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400">
               <UIcon name="i-lucide-play-circle" class="w-4 h-4" />
@@ -138,13 +138,13 @@ const projectLatestScanDate = computed(() => {
 
         <div v-if="projectScannedCount > 0" class="space-y-2">
           <div class="grid grid-cols-2 gap-2 text-xs">
-            <div class="p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-neutral-800">
+            <div class="p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-white/[0.08]">
               <span class="text-neutral-400 block text-xs">Total Rute Terpetakan</span>
               <span class="font-bold text-neutral-900 dark:text-white font-mono text-sm">
                 {{ projectTotalRoutes }} rute
               </span>
             </div>
-            <div class="p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-neutral-800">
+            <div class="p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-white/[0.08]">
               <span class="text-neutral-400 block text-xs">Scan Terakhir</span>
               <span class="font-bold text-neutral-800 dark:text-neutral-200 text-xs truncate block" :title="formatDate(projectLatestScanDate)">
                 {{ projectLatestScanDate ? formatDate(projectLatestScanDate) : 'Baru saja' }}
@@ -171,7 +171,7 @@ const projectLatestScanDate = computed(() => {
       <!-- COMPONENT / FOLDER LEVEL POPOVER -->
       <div v-else class="p-3.5 w-76 sm:w-84 space-y-3 text-xs">
         <!-- Header -->
-        <div class="flex items-start justify-between gap-2 pb-2 border-b border-neutral-100 dark:border-neutral-800">
+        <div class="flex items-start justify-between gap-2 pb-2 border-b border-neutral-100 dark:border-white/[0.08]">
           <div class="flex items-center gap-2 min-w-0">
             <div class="p-1.5 rounded-lg bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 shrink-0">
               <UIcon name="i-lucide-scan-text" class="w-4 h-4" />
@@ -207,13 +207,13 @@ const projectLatestScanDate = computed(() => {
 
           <!-- Quick Stats Grid -->
           <div class="grid grid-cols-2 gap-1.5 text-xs">
-            <div class="p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-neutral-800">
+            <div class="p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-white/[0.08]">
               <span class="text-neutral-400 block text-xs">Rute / Endpoint</span>
               <span class="font-bold font-mono text-neutral-900 dark:text-white">
                 {{ parsedScan.routes?.length || 0 }} rute
               </span>
             </div>
-            <div class="p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-neutral-800">
+            <div class="p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-white/[0.08]">
               <span class="text-neutral-400 block text-xs">Arsitektur</span>
               <span class="font-bold text-neutral-900 dark:text-white truncate block" :title="parsedScan.architecture?.design_pattern || 'MVC Clean'">
                 {{ parsedScan.architecture?.design_pattern || 'Standar Modul' }}

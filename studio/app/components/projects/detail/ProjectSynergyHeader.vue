@@ -20,7 +20,7 @@ const copySummaryMarkdown = () => emit('copy')
 </script>
 
 <template>
-  <div class="p-5 sm:p-6 rounded-2xl border border-neutral-200/80 dark:border-neutral-800 bg-white dark:bg-slate-900 shadow-xs space-y-4">
+  <div class="p-5 sm:p-6 rounded-xl border border-neutral-200/80 dark:border-white/[0.08] bg-white dark:bg-[#04111f] space-y-4">
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
       <div class="space-y-1">
         <div class="flex items-center gap-2.5">

@@ -7,7 +7,7 @@ defineProps<{ synergyMap: ProjectSynergyMap | null }>()
 <template>
   <div class="space-y-5">
     <!-- Backend Nodes Summary -->
-    <div class="p-5 rounded-2xl border border-neutral-200/80 dark:border-neutral-800 bg-white dark:bg-slate-900 shadow-xs space-y-3">
+    <div class="p-5 rounded-xl border border-neutral-200/80 dark:border-white/[0.08] bg-white dark:bg-[#04111f] space-y-3">
       <h3 class="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
         <UIcon name="i-lucide-server" class="w-4 h-4 text-purple-500" />
         <span>Servis & Node Komponen Backend</span>
@@ -20,7 +20,7 @@ defineProps<{ synergyMap: ProjectSynergyMap | null }>()
         <div
           v-for="be in synergyMap?.backend_nodes || []"
           :key="be.component_name"
-          class="p-4 rounded-xl bg-neutral-50/70 dark:bg-neutral-800/40 border border-neutral-200/70 dark:border-neutral-800 space-y-2"
+          class="p-4 rounded-xl bg-neutral-50/70 dark:bg-neutral-800/40 border border-neutral-200/70 dark:border-white/[0.08] space-y-2"
         >
           <div class="flex items-center justify-between">
             <span class="font-bold text-xs text-neutral-900 dark:text-white">{{ be.component_name }}</span>
@@ -41,7 +41,7 @@ defineProps<{ synergyMap: ProjectSynergyMap | null }>()
     </div>
 
     <!-- Database Map Grid -->
-    <div class="p-5 rounded-2xl border border-neutral-200/80 dark:border-neutral-800 bg-white dark:bg-slate-900 shadow-xs space-y-3">
+    <div class="p-5 rounded-xl border border-neutral-200/80 dark:border-white/[0.08] bg-white dark:bg-[#04111f] space-y-3">
       <h3 class="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
         <UIcon name="i-lucide-database" class="w-4 h-4 text-amber-500" />
         <span>Katalog Tabel Basis Data & Kolom Kunci</span>
@@ -54,7 +54,7 @@ defineProps<{ synergyMap: ProjectSynergyMap | null }>()
         <div
           v-for="tbl in synergyMap?.database_map || []"
           :key="tbl.table_name"
-          class="p-4 rounded-xl bg-neutral-50/70 dark:bg-neutral-800/40 border border-neutral-200/70 dark:border-neutral-800 space-y-2"
+          class="p-4 rounded-xl bg-neutral-50/70 dark:bg-neutral-800/40 border border-neutral-200/70 dark:border-white/[0.08] space-y-2"
         >
           <div class="flex items-center justify-between pb-1 border-b border-neutral-200/60 dark:border-neutral-700/60">
             <span class="font-mono font-bold text-xs text-amber-700 dark:text-amber-400">
@@ -70,7 +70,7 @@ defineProps<{ synergyMap: ProjectSynergyMap | null }>()
               <span
                 v-for="f in tbl.fields"
                 :key="f"
-                class="px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 border border-neutral-200/80 dark:border-neutral-700 font-mono text-xs text-neutral-700 dark:text-neutral-300"
+                class="px-1.5 py-0.5 rounded bg-white dark:bg-[#04111f] border border-neutral-200/80 dark:border-neutral-700 font-mono text-xs text-neutral-700 dark:text-neutral-300"
               >
                 {{ f }}
               </span>

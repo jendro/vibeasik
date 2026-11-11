@@ -62,9 +62,9 @@ const handleConvertToTodo = async () => {
 </script>
 
 <template>
-  <div class="space-y-5 p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 shadow-sm">
+  <div class="space-y-5 p-5 sm:p-6 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] shadow-sm">
     <!-- Header with 2 Metric Scores -->
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-white/[0.08]">
       <div>
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-sparkles" class="size-5 text-amber-500" />
@@ -103,7 +103,7 @@ const handleConvertToTodo = async () => {
     <!-- 2 Column Breakdown: Data Hygiene & Visual UI/UX -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <!-- Data Issues Card -->
-      <div class="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 space-y-3">
+      <div class="p-4 rounded-xl border border-slate-200/80 dark:border-white/[0.08] bg-slate-50/50 dark:bg-slate-950/40 space-y-3">
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-database-zap" class="size-4 text-blue-500" />
           <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
@@ -118,7 +118,7 @@ const handleConvertToTodo = async () => {
             class="p-2.5 rounded-lg border text-xs"
             :class="item.severity === 'error'
               ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-200'
-              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'"
+              : 'bg-white dark:bg-[#04111f] border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-300'"
           >
             <div class="flex items-center justify-between gap-1 mb-1">
               <span class="font-semibold">{{ item.title }}</span>
@@ -137,7 +137,7 @@ const handleConvertToTodo = async () => {
       </div>
 
       <!-- Visual Issues Card -->
-      <div class="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 space-y-3">
+      <div class="p-4 rounded-xl border border-slate-200/80 dark:border-white/[0.08] bg-slate-50/50 dark:bg-slate-950/40 space-y-3">
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-layout" class="size-4 text-amber-500" />
           <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
@@ -149,7 +149,7 @@ const handleConvertToTodo = async () => {
           <div
             v-for="(item, idx) in audit.visual_issues"
             :key="idx"
-            class="p-2.5 rounded-lg border text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
+            class="p-2.5 rounded-lg border text-xs bg-white dark:bg-[#04111f] border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-300"
           >
             <div class="flex items-center justify-between gap-1 mb-1">
               <span class="font-semibold">{{ item.title }}</span>
@@ -184,7 +184,7 @@ const handleConvertToTodo = async () => {
     </div>
 
     <!-- Action Bar: Copy Prompt & Convert to Todo -->
-    <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+    <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-white/[0.08]">
       <span class="text-xs text-slate-400">
         Diaudit pada: {{ new Date(audit.audited_at).toLocaleTimeString() }}
       </span>

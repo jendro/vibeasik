@@ -96,7 +96,7 @@ const targetUrl = computed(() => {
 
 <template>
   <div
-    class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 p-4.5 sm:p-5 shadow-xs flex flex-col justify-between space-y-4 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors"
+    class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] p-4.5 sm:p-5 flex flex-col justify-between space-y-4 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors"
   >
     <div class="space-y-3">
       <!-- Component Header: Judul (fokus utama) di kiri, Logo / Badge BE, FE, mobile di pojok kanan atas -->
@@ -180,7 +180,7 @@ const targetUrl = computed(() => {
       </div>
 
       <!-- Dev Command Box -->
-      <div v-if="comp.dev_command" class="p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-neutral-800 text-xs font-mono space-y-1">
+      <div v-if="comp.dev_command" class="p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-white/[0.08] text-xs font-mono space-y-1">
         <div class="flex items-center justify-between text-neutral-400 text-xs uppercase">
           <span>Dev Command</span>
           <button
@@ -217,7 +217,7 @@ const targetUrl = computed(() => {
     </div>
 
     <!-- Component Actions Footer -->
-    <div class="pt-3 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between gap-2">
+    <div class="pt-3 border-t border-neutral-100 dark:border-white/[0.08] flex items-center justify-between gap-2">
       <div class="flex items-center gap-1.5">
         <UButton
           :to="targetUrl"

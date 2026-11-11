@@ -40,7 +40,7 @@ const subTabs = computed(() => [
     <!-- State Kosong: Belum Pernah Di-Scan -->
     <div
       v-if="!scanResult"
-      class="p-10 text-center rounded-xl border border-dashed border-neutral-200 dark:border-neutral-800 bg-white/50 dark:bg-neutral-900/50 space-y-4"
+      class="p-10 text-center rounded-xl border border-dashed border-neutral-200 dark:border-white/[0.08] bg-white/50 dark:bg-neutral-900/50 space-y-4"
     >
       <div class="w-12 h-12 mx-auto rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-400">
         <UIcon name="i-lucide-scan" class="w-6 h-6 text-primary-500" />
@@ -69,7 +69,7 @@ const subTabs = computed(() => [
     <!-- State Berisi: Tampilkan Detail Fast Scan Lengkap -->
     <div v-else class="space-y-6">
       <!-- Top Action & Info Bar -->
-      <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 shadow-2xs space-y-3.5">
+      <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-3.5">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800/80 flex items-center justify-center text-sky-600 dark:text-sky-400 shrink-0">
@@ -148,7 +148,7 @@ const subTabs = computed(() => [
       </div>
 
       <!-- Navigation Sub-Tabs -->
-      <div class="flex items-center gap-1.5 border-b border-neutral-200 dark:border-neutral-800 pb-2 text-xs font-medium overflow-x-auto">
+      <div class="flex items-center gap-1.5 border-b border-neutral-200 dark:border-white/[0.08] pb-2 text-xs font-medium overflow-x-auto">
         <button
           v-for="st in subTabs"
           :key="st.id"

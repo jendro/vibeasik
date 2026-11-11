@@ -118,7 +118,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="p-2.5 rounded-lg border border-neutral-100 dark:border-neutral-800 text-xs space-y-2">
+  <div class="p-2.5 rounded-lg border border-neutral-100 dark:border-white/[0.08] text-xs space-y-2">
     <!-- flex-wrap: di kartu sempit tombol turun ke baris baru, bukan menimpa label status -->
     <div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5">
       <div class="flex items-center gap-2 whitespace-nowrap">

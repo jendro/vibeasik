@@ -57,7 +57,7 @@ const sections = computed(() => [
 </script>
 
 <template>
-  <div class="rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-2xs text-xs">
+  <div class="rounded-xl bg-white dark:bg-[#04111f] border border-neutral-200 dark:border-white/[0.08] text-xs">
     <div class="flex flex-wrap items-center justify-between gap-3 p-3.5">
       <div class="flex items-center gap-2.5 min-w-0 flex-1 basis-60">
         <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :class="scanResult ? 'bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400'">
@@ -111,7 +111,7 @@ const sections = computed(() => [
       <div
         v-for="s in sections"
         :key="s.title"
-        class="rounded-lg bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-100 dark:border-neutral-800 p-3 space-y-1.5"
+        class="rounded-lg bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-100 dark:border-white/[0.08] p-3 space-y-1.5"
       >
         <div class="font-semibold text-neutral-800 dark:text-neutral-100 flex items-center gap-1.5">
           <UIcon :name="s.icon" class="w-3.5 h-3.5 text-sky-500" />{{ s.title }}

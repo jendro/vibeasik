@@ -8,7 +8,7 @@ const statusCls = (s: number) => s >= 500 ? 'text-rose-600 dark:text-rose-400' :
 </script>
 
 <template>
-  <div class="rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-x-auto">
+  <div class="rounded-xl border border-neutral-200 dark:border-white/[0.08] overflow-x-auto">
     <table class="w-full text-xs font-mono">
       <thead class="bg-neutral-50 dark:bg-neutral-800/60 text-neutral-500 text-xs uppercase tracking-wide font-sans">
         <tr>

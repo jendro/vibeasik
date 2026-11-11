@@ -59,7 +59,7 @@ const perEffort = computed(() => impactPerEffort(props.todo).toFixed(0))
           </div>
         </div>
 
-        <div class="pt-1.5 border-t border-neutral-100 dark:border-neutral-800 text-xs text-neutral-500 space-y-0.5">
+        <div class="pt-1.5 border-t border-neutral-100 dark:border-white/[0.08] text-xs text-neutral-500 space-y-0.5">
           <div v-if="todo.complexity_score > 0" class="flex justify-between">
             <span title="Skor dampak dibagi skor kerumitan: makin tinggi makin layak dikerjakan dulu">Dampak per usaha</span>
             <span class="font-mono">{{ perEffort }}</span>

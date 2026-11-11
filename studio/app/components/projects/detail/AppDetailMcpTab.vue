@@ -23,7 +23,7 @@ const mcpConfigJson = computed(() => {
 
 <template>
   <div class="space-y-6">
-    <div class="p-5 sm:p-6 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 shadow-xs space-y-4">
+    <div class="p-5 sm:p-6 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-4">
       <div>
         <h4 class="font-bold text-neutral-900 dark:text-white text-sm flex items-center gap-2">
           <UIcon name="i-lucide-cpu" class="w-4 h-4 text-sky-400" />
@@ -58,7 +58,7 @@ const mcpConfigJson = computed(() => {
       </div>
 
       <!-- Agent Usage Guidance -->
-      <div class="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200 dark:border-neutral-800 text-xs space-y-2">
+      <div class="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200 dark:border-white/[0.08] text-xs space-y-2">
         <div class="font-bold text-neutral-900 dark:text-white">
           Cara Menggunakan:
         </div>

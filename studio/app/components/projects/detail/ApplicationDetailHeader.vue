@@ -83,7 +83,7 @@ const tabs = computed<AppTabItem[]>(() => [
 </script>
 
 <template>
-  <div class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 p-4 sm:p-5 shadow-xs space-y-3.5">
+  <div class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] p-4 sm:p-5 space-y-3.5">
     <!-- Top Action Row: Back to Project (left) & Actions (right) -->
     <div class="flex items-center justify-between text-xs pb-2 border-b border-neutral-100 dark:border-neutral-800/80">
       <NuxtLink
@@ -188,7 +188,7 @@ const tabs = computed<AppTabItem[]>(() => [
     </div>
 
     <!-- Navigation Tabs -->
-    <div class="flex items-center gap-1.5 pt-2 border-t border-neutral-100 dark:border-neutral-800 text-xs font-medium overflow-x-auto pb-0.5">
+    <div class="flex items-center gap-1.5 pt-2 border-t border-neutral-100 dark:border-white/[0.08] text-xs font-medium overflow-x-auto pb-0.5">
       <button
         v-for="t in tabs"
         :key="t.id"

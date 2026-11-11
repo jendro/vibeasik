@@ -36,7 +36,7 @@ const methodCls: Record<string, string> = {
 <template>
   <div class="space-y-3">
     <div class="flex flex-wrap items-center gap-2">
-      <div class="flex rounded-lg border border-neutral-200 dark:border-neutral-800 p-0.5">
+      <div class="flex rounded-lg border border-neutral-200 dark:border-white/[0.08] p-0.5">
         <UButton size="xs" :variant="view === 'routes' ? 'soft' : 'ghost'" :color="view === 'routes' ? 'primary' : 'neutral'" @click="view = 'routes'">
           Endpoint · {{ routes.length }}
         </UButton>
@@ -50,7 +50,7 @@ const methodCls: Record<string, string> = {
       </template>
     </div>
 
-    <div v-if="view === 'routes'" class="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800">
+    <div v-if="view === 'routes'" class="overflow-x-auto rounded-xl border border-neutral-200 dark:border-white/[0.08]">
       <table class="w-full text-xs">
         <thead class="bg-neutral-50 dark:bg-neutral-800/60 text-neutral-500 text-xs uppercase tracking-wide">
           <tr>
@@ -127,7 +127,7 @@ const methodCls: Record<string, string> = {
           </tr>
         </tbody>
       </table>
-      <div v-if="rows.length > limit" class="p-2 text-center border-t border-neutral-100 dark:border-neutral-800">
+      <div v-if="rows.length > limit" class="p-2 text-center border-t border-neutral-100 dark:border-white/[0.08]">
         <UButton size="xs" color="neutral" variant="ghost" @click="limit += 50">
           Tampilkan lebih banyak ({{ rows.length - limit }} lagi)
         </UButton>
@@ -138,7 +138,7 @@ const methodCls: Record<string, string> = {
       <p class="text-xs text-neutral-500 leading-relaxed">
         Kelompok = segmen pertama rute (setelah /api & /vN). Kelompok yang porsi waktunya jauh di atas porsi request-nya adalah kandidat dipisah jadi service/worker sendiri.
       </p>
-      <div v-for="g in groups" :key="g.group" class="rounded-xl border border-neutral-200 dark:border-neutral-800 p-3">
+      <div v-for="g in groups" :key="g.group" class="rounded-xl border border-neutral-200 dark:border-white/[0.08] p-3">
         <div class="flex flex-wrap items-baseline justify-between gap-2">
           <span class="font-mono text-sm font-semibold text-neutral-900 dark:text-white">{{ g.group }}</span>
           <span class="text-xs text-neutral-500">{{ g.routes }} rute · {{ fmtNum(g.count) }} request · p95 {{ fmtMs(g.p95) }} · 5xx {{ fmtPct(g.err_rate) }}</span>

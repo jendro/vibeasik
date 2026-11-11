@@ -36,7 +36,7 @@ const removeDynamicMeta = (key: string) => {
 
 <template>
   <div class="space-y-4">
-    <div class="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-800 text-xs">
+    <div class="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-white/[0.08] text-xs">
       <div class="flex items-center gap-2 text-neutral-600 dark:text-neutral-300">
         <UIcon name="i-lucide-database-zap" class="w-4 h-4 text-sky-600 dark:text-sky-400" />
         <span class="font-medium">Informasi diekstrak dari .env, file konfigurasi, manifest, dan arsitektur kode.</span>
@@ -54,7 +54,7 @@ const removeDynamicMeta = (key: string) => {
     </div>
 
     <!-- Database Section -->
-    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 space-y-3">
+    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-database" class="w-4 h-4 text-primary-600 dark:text-primary-400" />
@@ -98,7 +98,7 @@ const removeDynamicMeta = (key: string) => {
     </div>
 
     <!-- Login & Auth -->
-    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 space-y-3">
+    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-3">
       <div class="flex items-center gap-2">
         <UIcon name="i-lucide-key-round" class="w-4 h-4 text-sky-600 dark:text-sky-400" />
         <span class="text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">Mekanisme Login & Autentikasi</span>
@@ -133,7 +133,7 @@ const removeDynamicMeta = (key: string) => {
         </div>
       </div>
 
-      <div v-if="scanResult.extracted_env?.login_and_access_guide" class="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800 space-y-1.5 text-xs">
+      <div v-if="scanResult.extracted_env?.login_and_access_guide" class="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/[0.08] space-y-1.5 text-xs">
         <div class="flex items-center gap-1 text-xs font-bold text-neutral-600 dark:text-neutral-300">
           <UIcon name="i-lucide-info" class="w-3.5 h-3.5 text-primary-500" />
           <span>Petunjuk Akses / Kredensial Default / Cara Login:</span>
@@ -145,7 +145,7 @@ const removeDynamicMeta = (key: string) => {
     </div>
 
     <!-- Dynamic Custom Metadata Manager -->
-    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 space-y-3">
+    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-tag" class="w-4 h-4 text-purple-600 dark:text-purple-400" />
@@ -161,7 +161,7 @@ const removeDynamicMeta = (key: string) => {
         <div
           v-for="(val, key) in scanResult.extracted_env.dynamic_metadata"
           :key="key"
-          class="flex items-center justify-between gap-2 p-2.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-800/40 text-xs"
+          class="flex items-center justify-between gap-2 p-2.5 rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-neutral-50/70 dark:bg-neutral-800/40 text-xs"
         >
           <div class="min-w-0 flex-1">
             <div class="font-bold text-neutral-800 dark:text-neutral-200 truncate">
@@ -183,7 +183,7 @@ const removeDynamicMeta = (key: string) => {
       </div>
 
       <!-- Add Form Inline -->
-      <div class="pt-2 border-t border-neutral-100 dark:border-neutral-800 flex flex-wrap sm:flex-nowrap items-center gap-2 text-xs">
+      <div class="pt-2 border-t border-neutral-100 dark:border-white/[0.08] flex flex-wrap sm:flex-nowrap items-center gap-2 text-xs">
         <input
           v-model="newMetaKey"
           type="text"

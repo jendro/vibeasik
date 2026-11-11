@@ -40,7 +40,7 @@ const statusOptions = [
           :key="s.id"
           class="px-2.5 py-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1"
           :class="selectedStatus === s.id
-            ? 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-xs font-semibold'
+            ? 'bg-white dark:bg-[#04111f] text-neutral-900 dark:text-white font-semibold'
             : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'"
           @click="selectedStatus = s.id"
         >
@@ -59,7 +59,7 @@ const statusOptions = [
           :key="t.id"
           class="px-3 py-1.5 rounded-md transition-all cursor-pointer"
           :class="selectedType === t.id
-            ? 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-xs font-semibold'
+            ? 'bg-white dark:bg-[#04111f] text-neutral-900 dark:text-white font-semibold'
             : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'"
           @click="selectedType = t.id"
         >

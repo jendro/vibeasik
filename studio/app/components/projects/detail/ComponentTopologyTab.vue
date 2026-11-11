@@ -63,7 +63,7 @@ const addItems = computed<DropdownMenuItem[]>(() => [
     <!-- Empty State -->
     <div
       v-if="!project.components || project.components.length === 0"
-      class="p-12 text-center rounded-xl border border-dashed border-neutral-300 dark:border-neutral-800 bg-white/50 dark:bg-neutral-900/50 space-y-3"
+      class="p-12 text-center rounded-xl border border-dashed border-neutral-300 dark:border-white/[0.08] bg-white/50 dark:bg-neutral-900/50 space-y-3"
     >
       <div class="w-10 h-10 mx-auto rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-400">
         <UIcon name="i-lucide-layers" class="w-5 h-5" />

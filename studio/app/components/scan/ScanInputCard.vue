@@ -20,7 +20,7 @@ const handleEnter = () => {
 </script>
 
 <template>
-  <div class="p-6 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 shadow-xs space-y-4">
+  <div class="p-6 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-4">
     <div class="space-y-2">
       <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-500">
         Direktori Filesystem Laptop

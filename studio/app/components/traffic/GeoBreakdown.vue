@@ -35,7 +35,7 @@ const share = (kv: TrafficKV) => Math.min(100, kv.share * 100)
 </script>
 
 <template>
-  <section class="rounded-xl border border-neutral-200 dark:border-neutral-800 p-3 space-y-3" aria-label="Lokasi dan jenis jaringan pengunjung">
+  <section class="rounded-xl border border-neutral-200 dark:border-white/[0.08] p-3 space-y-3" aria-label="Lokasi dan jenis jaringan pengunjung">
     <div class="text-xs font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-1.5">
       <UIcon name="i-lucide-map-pinned" class="w-4 h-4 text-neutral-400" /> Lokasi &amp; jenis jaringan
       <span class="font-normal text-neutral-500">· dibaca offline di mesin ini, IP tidak dikirim ke pihak lain</span>
@@ -65,7 +65,7 @@ const share = (kv: TrafficKV) => Math.min(100, kv.share * 100)
     </div>
 
     <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-3">
-      <div class="rounded-xl border border-neutral-200 dark:border-neutral-800 p-3">
+      <div class="rounded-xl border border-neutral-200 dark:border-white/[0.08] p-3">
         <div class="text-xs font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-1.5 mb-2">
           <UIcon name="i-lucide-building-2" class="w-4 h-4 text-neutral-400" /> Kota
         </div>
@@ -85,7 +85,7 @@ const share = (kv: TrafficKV) => Math.min(100, kv.share * 100)
         </p>
       </div>
 
-      <div class="rounded-xl border border-neutral-200 dark:border-neutral-800 p-3">
+      <div class="rounded-xl border border-neutral-200 dark:border-white/[0.08] p-3">
         <div class="text-xs font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-1.5 mb-2">
           <UIcon name="i-lucide-network" class="w-4 h-4 text-neutral-400" /> ISP / organisasi
         </div>
@@ -107,7 +107,7 @@ const share = (kv: TrafficKV) => Math.min(100, kv.share * 100)
         </p>
       </div>
 
-      <div class="rounded-xl border border-neutral-200 dark:border-neutral-800 p-3">
+      <div class="rounded-xl border border-neutral-200 dark:border-white/[0.08] p-3">
         <div class="text-xs font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-1.5 mb-2">
           <UIcon name="i-lucide-signal" class="w-4 h-4 text-neutral-400" /> Jenis jaringan
         </div>

@@ -8,7 +8,7 @@ const { copyToClipboard } = useCopyToClipboard()
 
 <template>
   <div class="space-y-4">
-    <div class="p-4 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 space-y-3 shadow-2xs">
+    <div class="p-4 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 space-y-3">
       <div class="flex flex-wrap items-center justify-between gap-2">
         <div class="flex items-center gap-2.5">
           <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-300 dark:border-amber-700 flex items-center justify-center text-amber-600 dark:text-amber-400">
@@ -29,7 +29,7 @@ const { copyToClipboard } = useCopyToClipboard()
 
         <NuxtLink
           to="/settings?tab=censored_keys"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-neutral-800 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300 hover:bg-amber-100/50 dark:hover:bg-neutral-700 transition-colors shadow-xs"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-neutral-800 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300 hover:bg-amber-100/50 dark:hover:bg-neutral-700 transition-colors"
         >
           <UIcon name="i-lucide-sliders" class="w-3.5 h-3.5" />
           <span>Buka Security Vault Settings</span>
@@ -65,7 +65,7 @@ const { copyToClipboard } = useCopyToClipboard()
     </div>
 
     <!-- Redacted Secrets Table -->
-    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 space-y-3 shadow-2xs">
+    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-key-round" class="w-4 h-4 text-amber-500" />
@@ -78,9 +78,9 @@ const { copyToClipboard } = useCopyToClipboard()
         </span>
       </div>
 
-      <div v-if="scanResult.security_audit?.records && scanResult.security_audit.records.length > 0" class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
+      <div v-if="scanResult.security_audit?.records && scanResult.security_audit.records.length > 0" class="overflow-x-auto rounded-lg border border-neutral-200 dark:border-white/[0.08]">
         <table class="w-full text-left text-xs font-mono">
-          <thead class="bg-neutral-50 dark:bg-neutral-800 text-neutral-500 uppercase text-xs tracking-wider border-b border-neutral-200 dark:border-neutral-800">
+          <thead class="bg-neutral-50 dark:bg-neutral-800 text-neutral-500 uppercase text-xs tracking-wider border-b border-neutral-200 dark:border-white/[0.08]">
             <tr>
               <th class="p-2.5 w-1/4">
                 Alias Terkirim ke LLM
@@ -127,7 +127,7 @@ const { copyToClipboard } = useCopyToClipboard()
         </table>
       </div>
 
-      <div v-else class="p-6 text-center text-xs text-neutral-500 italic bg-neutral-50/50 dark:bg-neutral-800/30 rounded-lg border border-dashed border-neutral-200 dark:border-neutral-800">
+      <div v-else class="p-6 text-center text-xs text-neutral-500 italic bg-neutral-50/50 dark:bg-neutral-800/30 rounded-lg border border-dashed border-neutral-200 dark:border-white/[0.08]">
         Tidak ada kredensial atau string rahasia terdeteksi pada scan komponen ini (Aman dan bersih).
       </div>
     </div>

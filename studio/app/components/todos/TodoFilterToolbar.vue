@@ -23,14 +23,14 @@ const toggleUncompletedStatus = () => {
 </script>
 
 <template>
-  <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 shadow-2xs space-y-3">
+  <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-3">
     <!-- Row 1: Level Tabs (Dikhususkan untuk Proyek Aktif) -->
     <div class="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-100 dark:border-white/10 pb-3">
       <div class="flex flex-wrap gap-1 text-xs">
         <button
           type="button"
           class="px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer"
-          :class="selectedLevel === 'all' ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-xs' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'"
+          :class="selectedLevel === 'all' ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'"
           @click="setLevel('all')"
         >
           Semua Tingkat Proyek
@@ -38,7 +38,7 @@ const toggleUncompletedStatus = () => {
         <button
           type="button"
           class="px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
-          :class="selectedLevel === 'project' ? 'bg-blue-600 text-white shadow-xs' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'"
+          :class="selectedLevel === 'project' ? 'bg-blue-600 text-white' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'"
           @click="setLevel('project')"
         >
           <UIcon name="i-lucide-folder-kanban" class="w-3.5 h-3.5" />
@@ -47,7 +47,7 @@ const toggleUncompletedStatus = () => {
         <button
           type="button"
           class="px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
-          :class="selectedLevel === 'component' ? 'bg-sky-600 text-white shadow-xs' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'"
+          :class="selectedLevel === 'component' ? 'bg-sky-600 text-white' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'"
           @click="setLevel('component')"
         >
           <UIcon name="i-lucide-layers" class="w-3.5 h-3.5" />
@@ -61,7 +61,7 @@ const toggleUncompletedStatus = () => {
           type="button"
           class="px-2.5 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 border cursor-pointer"
           :class="selectedStatus === 'uncompleted'
-            ? 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/60 dark:text-amber-200 dark:border-amber-800 shadow-2xs font-semibold'
+            ? 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/60 dark:text-amber-200 dark:border-amber-800 font-semibold'
             : 'border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-neutral-800/80 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700'"
           title="Klik untuk menyembunyikan atau menampilkan tugas yang sudah selesai"
           @click="toggleUncompletedStatus"

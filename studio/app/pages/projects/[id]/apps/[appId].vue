@@ -123,8 +123,8 @@ watch(() => route.params.appId, () => {
 
 <template>
   <div v-if="loading" class="p-4 sm:p-6 lg:p-8 space-y-6">
-    <div class="h-28 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 animate-pulse" />
-    <div class="h-96 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 animate-pulse" />
+    <div class="h-28 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] animate-pulse" />
+    <div class="h-96 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] animate-pulse" />
   </div>
 
   <div v-else-if="project && comp" class="flex-1 flex flex-col lg:flex-row items-stretch w-full min-h-[calc(100vh-4rem)] relative">
@@ -160,7 +160,7 @@ watch(() => route.params.appId, () => {
           <!-- Grid Info Arsitektur & Lingkungan -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Card 1: Cara Menjalankan -->
-            <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 space-y-2.5 text-xs shadow-2xs">
+            <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-2.5 text-xs">
               <h4 class="font-bold text-neutral-900 dark:text-white flex items-center gap-2">
                 <UIcon name="i-lucide-terminal" class="w-4 h-4 text-sky-400" />
                 <span>Instruksi Menjalankan</span>
@@ -182,7 +182,7 @@ watch(() => route.params.appId, () => {
             </div>
 
             <!-- Card 2: Database & Lingkungan -->
-            <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 space-y-2.5 text-xs shadow-2xs">
+            <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-2.5 text-xs">
               <h4 class="font-bold text-neutral-900 dark:text-white flex items-center gap-2">
                 <UIcon name="i-lucide-database" class="w-4 h-4 text-blue-500" />
                 <span>Database & Environment</span>

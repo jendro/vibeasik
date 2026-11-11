@@ -83,9 +83,9 @@ const mcpTools = ['vibeasik_code_map_search', 'vibeasik_code_map_file', 'vibeasi
 
 <template>
   <div class="w-full px-4 sm:px-6 lg:px-8 pt-6 pb-20 space-y-6">
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 sm:p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-xs">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 sm:p-6 rounded-xl bg-white dark:bg-[#04111f] border border-neutral-200 dark:border-white/[0.08]">
       <div class="flex items-center gap-3.5 min-w-0">
-        <div class="size-11 shrink-0 rounded-xl bg-linear-to-br from-sky-500 to-violet-600 text-white flex items-center justify-center shadow-xs">
+        <div class="size-11 shrink-0 rounded-xl bg-neutral-900 dark:bg-white/10 text-white flex items-center justify-center">
           <UIcon name="i-lucide-map" class="size-5.5" />
         </div>
         <div class="min-w-0">
@@ -125,7 +125,7 @@ const mcpTools = ['vibeasik_code_map_search', 'vibeasik_code_map_file', 'vibeasi
       </div>
     </div>
 
-    <UAlert v-if="!activeProjectId" color="neutral" variant="subtle" icon="i-lucide-folder-search" title="Pilih proyek aktif" description="Pilih proyek di sidebar untuk melihat peta kodenya." />
+    <UAlert v-if="!activeProjectId" color="neutral" variant="subtle" icon="i-lucide-folder-search" title="Pilih proyek aktif" description="Pilih proyek lewat pemilih proyek di navbar atas untuk melihat peta kodenya." />
     <UAlert v-if="error" color="error" variant="subtle" icon="i-lucide-alert-circle" title="Peta kode tidak bisa dimuat" :description="error" />
 
     <div v-if="loading && !overview" class="py-16 flex flex-col items-center gap-2 text-neutral-500 text-sm">
@@ -135,7 +135,7 @@ const mcpTools = ['vibeasik_code_map_search', 'vibeasik_code_map_file', 'vibeasi
 
     <template v-if="overview && activeProjectId">
       <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
-        <div v-for="s in stats" :key="s.label" class="p-3.5 sm:p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-xs hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
+        <div v-for="s in stats" :key="s.label" class="p-3.5 sm:p-4 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
           <div class="flex items-center gap-1.5 text-xs font-medium text-neutral-500 dark:text-neutral-400">
             <UIcon :name="s.icon" class="size-3.5 text-neutral-400 dark:text-neutral-500" />
             {{ s.label }}
@@ -150,7 +150,7 @@ const mcpTools = ['vibeasik_code_map_search', 'vibeasik_code_map_file', 'vibeasi
       <CodeMapInsights :overview="overview" @open="openPath = $event" />
       <CodeMapTree :overview="overview" @open="openPath = $event" />
 
-      <section class="p-4 sm:p-5 rounded-2xl border border-dashed border-neutral-300 dark:border-neutral-700/80 bg-neutral-50/50 dark:bg-neutral-900/40 text-xs text-neutral-600 dark:text-neutral-300 space-y-2.5">
+      <section class="p-4 sm:p-5 rounded-xl border border-dashed border-neutral-300 dark:border-neutral-700/80 bg-neutral-50/50 dark:bg-[#04111f] text-xs text-neutral-600 dark:text-neutral-300 space-y-2.5">
         <h3 class="font-semibold text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
           <UIcon name="i-lucide-bot" class="size-4 text-violet-500" /> Cara agent memakai peta ini
         </h3>

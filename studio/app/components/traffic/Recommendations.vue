@@ -68,7 +68,7 @@ const makeTodo = async (r: TrafficRecommendation) => {
     </div>
 
     <div class="space-y-2">
-      <div v-for="r in visible" :key="r.id" class="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+      <div v-for="r in visible" :key="r.id" class="rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f]">
         <button type="button" class="w-full text-left p-3 flex items-start gap-3 cursor-pointer" @click="toggle(r.id)">
           <span class="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border text-xs font-semibold" :class="sevMeta[r.severity].cls">
             <UIcon :name="sevMeta[r.severity].icon" class="w-3 h-3" />{{ sevMeta[r.severity].label }}

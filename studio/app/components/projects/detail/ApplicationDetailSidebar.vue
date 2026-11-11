@@ -229,7 +229,7 @@ const techInfo = computed(() => {
         </span>
       </div>
 
-      <div v-if="otherComponents.length === 0" class="p-3 text-center rounded-lg border border-dashed border-neutral-200 dark:border-neutral-800 text-xs text-neutral-400">
+      <div v-if="otherComponents.length === 0" class="p-3 text-center rounded-lg border border-dashed border-neutral-200 dark:border-white/[0.08] text-xs text-neutral-400">
         Hanya 1 aplikasi dalam proyek ini.
       </div>
 
@@ -238,7 +238,7 @@ const techInfo = computed(() => {
           v-for="oc in otherComponents"
           :key="oc.id"
           :to="`/projects/${project.id}/apps/${oc.id}`"
-          class="flex items-center justify-between p-2 rounded-lg border border-neutral-200 dark:border-neutral-700/60 bg-white dark:bg-neutral-900 hover:border-sky-400 dark:hover:border-sky-600 transition-colors text-xs"
+          class="flex items-center justify-between p-2 rounded-lg border border-neutral-200 dark:border-neutral-700/60 bg-white dark:bg-[#04111f] hover:border-sky-400 dark:hover:border-sky-600 transition-colors text-xs"
         >
           <div class="min-w-0 pr-2">
             <div class="font-semibold text-neutral-900 dark:text-white truncate">{{ oc.name }}</div>

@@ -129,8 +129,8 @@ const handleExecuteMerge = async () => {
 
         <!-- Mode 1: Confirmation Review when a target is selected -->
         <div v-if="selectedTarget" class="space-y-3.5 duration-200">
-          <div class="p-4 rounded-xl border-2 border-primary-500/40 bg-white dark:bg-slate-900/80 shadow-xs space-y-3">
-            <div class="flex items-center justify-between pb-2.5 border-b border-neutral-100 dark:border-neutral-800">
+          <div class="p-4 rounded-xl border-2 border-primary-500/40 bg-white dark:bg-slate-900/80 space-y-3">
+            <div class="flex items-center justify-between pb-2.5 border-b border-neutral-100 dark:border-white/[0.08]">
               <div class="flex items-center gap-2">
                 <UIcon name="i-lucide-arrow-right-circle" class="w-4 h-4 text-primary-500" />
                 <span class="text-xs font-semibold text-neutral-900 dark:text-white uppercase tracking-wider">
@@ -180,7 +180,7 @@ const handleExecuteMerge = async () => {
             </div>
 
             <!-- List of services to be transferred -->
-            <div class="pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-1.5">
+            <div class="pt-2 border-t border-neutral-100 dark:border-white/[0.08] space-y-1.5">
               <span class="text-xs font-medium text-neutral-500">
                 Aplikasi yang akan dipindahkan ke target:
               </span>
@@ -254,7 +254,7 @@ const handleExecuteMerge = async () => {
           <div class="space-y-2 max-h-[360px] overflow-y-auto pr-1">
             <div
               v-if="availableTargetProjects.length === 0"
-              class="text-center py-10 px-4 rounded-xl border border-dashed border-neutral-300 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/30"
+              class="text-center py-10 px-4 rounded-xl border border-dashed border-neutral-300 dark:border-white/[0.08] bg-neutral-50/50 dark:bg-neutral-900/30"
             >
               <UIcon name="i-lucide-search-x" class="w-7 h-7 mx-auto text-neutral-400 mb-1.5" />
               <p class="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
@@ -341,7 +341,7 @@ const handleExecuteMerge = async () => {
           </div>
 
           <!-- Modal Footer Info -->
-          <div class="flex items-center justify-between pt-2 border-t border-neutral-100 dark:border-neutral-800 text-xs">
+          <div class="flex items-center justify-between pt-2 border-t border-neutral-100 dark:border-white/[0.08] text-xs">
             <span class="text-neutral-500 text-xs">
               Klik "Pilih Target" untuk melihat ringkasan sebelum konfirmasi
             </span>

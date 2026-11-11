@@ -23,7 +23,7 @@ const handleEnrichWithLLM = () => emit('enrich')
 </script>
 
 <template>
-  <div class="p-5 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 shadow-xs space-y-4">
+  <div class="p-5 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-4">
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
       <div>
         <div class="flex flex-wrap items-center gap-2.5">
@@ -123,7 +123,7 @@ const handleEnrichWithLLM = () => emit('enrich')
           <span class="hidden md:inline text-xs">Method:</span>
           <select
             v-model="selectedMethod"
-            class="px-2 py-1 rounded-md border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 text-xs font-mono font-bold text-neutral-700 dark:text-neutral-300"
+            class="px-2 py-1 rounded-md border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] text-xs font-mono font-bold text-neutral-700 dark:text-neutral-300"
           >
             <option value="ALL">
               Semua Method ({{ routesCount }})
@@ -135,11 +135,11 @@ const handleEnrichWithLLM = () => emit('enrich')
         </div>
 
         <!-- View Mode Toggle -->
-        <div class="flex items-center p-0.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-100/80 dark:bg-neutral-800/60 text-xs">
+        <div class="flex items-center p-0.5 rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-neutral-100/80 dark:bg-neutral-800/60 text-xs">
           <button
             type="button"
             class="px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-colors cursor-pointer text-xs"
-            :class="viewMode === 'grouped' ? 'bg-white dark:bg-neutral-900 font-bold text-neutral-900 dark:text-white shadow-2xs' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'"
+            :class="viewMode === 'grouped' ? 'bg-white dark:bg-[#04111f] font-bold text-neutral-900 dark:text-white' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'"
             @click="viewMode = 'grouped'"
           >
             <UIcon name="i-lucide-layers" class="w-3.5 h-3.5" />
@@ -148,7 +148,7 @@ const handleEnrichWithLLM = () => emit('enrich')
           <button
             type="button"
             class="px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-colors cursor-pointer text-xs"
-            :class="viewMode === 'table' ? 'bg-white dark:bg-neutral-900 font-bold text-neutral-900 dark:text-white shadow-2xs' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'"
+            :class="viewMode === 'table' ? 'bg-white dark:bg-[#04111f] font-bold text-neutral-900 dark:text-white' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'"
             @click="viewMode = 'table'"
           >
             <UIcon name="i-lucide-table" class="w-3.5 h-3.5" />

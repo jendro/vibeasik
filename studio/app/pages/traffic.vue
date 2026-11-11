@@ -176,7 +176,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="space-y-5 w-full px-4 sm:px-6 lg:px-8 pt-6 pb-16">
     <!-- Header -->
-    <section class="p-5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    <section class="p-5 bg-white dark:bg-[#04111f] border border-neutral-200 dark:border-white/[0.08] rounded-xl flex flex-col lg:flex-row lg:items-center justify-between gap-4">
       <div class="flex items-start gap-3 min-w-0">
         <span class="p-2.5 rounded-xl bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800 shrink-0">
           <UIcon name="i-lucide-activity" class="w-5 h-5" />
@@ -199,7 +199,7 @@ onBeforeUnmount(() => {
     </section>
 
     <!-- Belum ada sumber -->
-    <section v-if="!sources.length" class="p-8 rounded-2xl border border-dashed border-neutral-300 dark:border-neutral-700 text-center space-y-4">
+    <section v-if="!sources.length" class="p-8 rounded-xl border border-dashed border-neutral-300 dark:border-neutral-700 text-center space-y-4">
       <UIcon name="i-lucide-radar" class="w-10 h-10 text-neutral-400 mx-auto" />
       <div class="space-y-1">
         <h2 class="text-sm font-bold text-neutral-900 dark:text-white">
@@ -216,7 +216,7 @@ onBeforeUnmount(() => {
 
     <template v-else>
       <!-- Sumber & kontrol -->
-      <section class="p-4 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl space-y-3">
+      <section class="p-4 bg-white dark:bg-[#04111f] border border-neutral-200 dark:border-white/[0.08] rounded-xl space-y-3">
         <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
           <div class="flex flex-wrap items-center gap-2">
             <USelect :model-value="sourceId ?? undefined" :items="sourceItems" size="sm" class="w-56" icon="i-lucide-server" @update:model-value="v => sourceId = Number(v)" />
@@ -289,7 +289,7 @@ onBeforeUnmount(() => {
       <template v-if="report && t">
         <!-- KPI -->
         <section class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-          <div class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+          <div class="p-3 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f]">
             <div class="text-xs text-neutral-500">
               Request
             </div>
@@ -300,7 +300,7 @@ onBeforeUnmount(() => {
               {{ t.rps_avg }} req/dtk rata²
             </div>
           </div>
-          <div class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+          <div class="p-3 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f]">
             <div class="text-xs text-neutral-500">
               Puncak
             </div>
@@ -311,7 +311,7 @@ onBeforeUnmount(() => {
               {{ t.peak_at ? new Date(t.peak_at * 1000).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '–' }}
             </div>
           </div>
-          <div class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+          <div class="p-3 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f]">
             <div class="text-xs text-neutral-500">
               Latensi p95
             </div>
@@ -322,7 +322,7 @@ onBeforeUnmount(() => {
               p50 {{ fmtMs(t.p50) }} · p99 {{ fmtMs(t.p99) }}
             </div>
           </div>
-          <div class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+          <div class="p-3 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f]">
             <div class="text-xs text-neutral-500">
               Error server (5xx)
             </div>
@@ -333,7 +333,7 @@ onBeforeUnmount(() => {
               4xx {{ fmtPct(t.client_err_rate) }}
             </div>
           </div>
-          <div class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+          <div class="p-3 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f]">
             <div class="text-xs text-neutral-500" title="Perkiraan request yang diproses bersamaan (Little's law)">
               Request bersamaan
             </div>
@@ -344,7 +344,7 @@ onBeforeUnmount(() => {
               rata² {{ t.concurrency_avg }} · {{ fmtPct(t.read_share) }} baca
             </div>
           </div>
-          <div class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+          <div class="p-3 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f]">
             <div class="text-xs text-neutral-500">
               Pengunjung
             </div>
@@ -359,7 +359,7 @@ onBeforeUnmount(() => {
 
         <!-- Grafik -->
         <section class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <div class="p-4 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 space-y-2 min-w-0">
+          <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] space-y-2 min-w-0">
             <div class="flex items-center justify-between gap-2">
               <h3 class="text-xs font-bold text-neutral-800 dark:text-neutral-100">
                 Request per {{ report.step_sec >= 3600 ? `${report.step_sec / 3600} jam` : `${report.step_sec / 60} menit` }}
@@ -371,7 +371,7 @@ onBeforeUnmount(() => {
             </div>
             <TrafficSeriesChart :points="report.series" mode="volume" :step-sec="report.step_sec" />
           </div>
-          <div class="p-4 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 space-y-2 min-w-0">
+          <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] space-y-2 min-w-0">
             <h3 class="text-xs font-bold text-neutral-800 dark:text-neutral-100">
               Latensi p95
             </h3>
@@ -380,8 +380,8 @@ onBeforeUnmount(() => {
         </section>
 
         <!-- Tab -->
-        <section class="p-4 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 space-y-4">
-          <div class="flex flex-wrap gap-1 border-b border-neutral-100 dark:border-neutral-800 pb-2">
+        <section class="p-4 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] space-y-4">
+          <div class="flex flex-wrap gap-1 border-b border-neutral-100 dark:border-white/[0.08] pb-2">
             <UButton
               v-for="tb in tabs"
               :key="tb.value"

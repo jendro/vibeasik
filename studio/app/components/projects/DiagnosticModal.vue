@@ -79,7 +79,7 @@ watch(open, (isOpen) => {
     <template #body>
       <div v-if="diagnostic" class="space-y-5">
         <!-- Overall Project Header -->
-        <div class="flex items-center justify-between pb-3 border-b border-neutral-200 dark:border-neutral-800">
+        <div class="flex items-center justify-between pb-3 border-b border-neutral-200 dark:border-white/[0.08]">
           <div>
             <div class="flex items-center gap-2">
               <h3 class="text-base font-bold text-neutral-900 dark:text-white">
@@ -120,7 +120,7 @@ watch(open, (isOpen) => {
               class="flex items-center justify-between p-2.5 rounded-lg border text-left transition-all cursor-pointer"
               :class="selectedAppId === 'all'
                 ? 'border-sky-500 bg-sky-50/50 dark:bg-sky-950/30 text-sky-950 dark:text-sky-100'
-                : 'border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'"
+                : 'border-neutral-200 dark:border-white/[0.08] bg-neutral-50/50 dark:bg-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'"
               @click="selectedAppId = 'all'"
             >
               <div class="flex items-center gap-2 min-w-0 truncate">
@@ -140,7 +140,7 @@ watch(open, (isOpen) => {
               class="flex items-center justify-between p-2.5 rounded-lg border text-left transition-all cursor-pointer font-mono"
               :class="selectedAppId === comp.id
                 ? 'border-sky-500 bg-sky-50/50 dark:bg-sky-950/30 text-sky-950 dark:text-sky-100'
-                : 'border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'"
+                : 'border-neutral-200 dark:border-white/[0.08] bg-neutral-50/50 dark:bg-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'"
               @click="selectedAppId = comp.id"
             >
               <div class="flex items-center gap-2 min-w-0 truncate">
@@ -189,7 +189,7 @@ watch(open, (isOpen) => {
 
           <div
             v-if="filteredFindings.length === 0"
-            class="p-6 text-center rounded-xl border border-dashed border-neutral-200 dark:border-neutral-800 text-xs text-neutral-500"
+            class="p-6 text-center rounded-xl border border-dashed border-neutral-200 dark:border-white/[0.08] text-xs text-neutral-500"
           >
             <UIcon name="i-lucide-check-circle" class="w-6 h-6 mx-auto text-emerald-500 mb-1" />
             <div>Tidak ada masalah atau peringatan terdeteksi pada bagian ini. Kondisi kode optimal.</div>
@@ -203,7 +203,7 @@ watch(open, (isOpen) => {
               ? 'border-rose-200 dark:border-rose-900/60 bg-rose-50/50 dark:bg-rose-950/20'
               : finding.severity === 'WARNING'
                 ? 'border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20'
-                : 'border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/40'"
+                : 'border-neutral-200 dark:border-white/[0.08] bg-neutral-50 dark:bg-neutral-800/40'"
           >
             <div class="flex items-center justify-between gap-2">
               <span class="font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-1.5 truncate">

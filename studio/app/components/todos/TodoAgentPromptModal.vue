@@ -77,14 +77,14 @@ const copy = async () => {
             {{ target.hint }}
           </p>
 
-          <pre class="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 text-xs leading-relaxed font-mono whitespace-pre-wrap break-words text-neutral-800 dark:text-neutral-200 select-all">{{ prompt }}</pre>
+          <pre class="p-4 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-neutral-50 dark:bg-[#04111f] text-xs leading-relaxed font-mono whitespace-pre-wrap break-words text-neutral-800 dark:text-neutral-200 select-all">{{ prompt }}</pre>
 
           <p v-if="!target.subagents" class="text-xs text-neutral-500">
             Mode worker butuh engine <code>vibeasik serve</code> menyala dan minimal satu profil agent aktif di Orkestrator; tanpa itu agent akan berhenti dan melapor.
           </p>
         </template>
 
-        <div class="flex justify-end gap-2 pt-3 border-t border-neutral-100 dark:border-neutral-800">
+        <div class="flex justify-end gap-2 pt-3 border-t border-neutral-100 dark:border-white/[0.08]">
           <UButton color="neutral" variant="ghost" label="Tutup" @click="emit('update:open', false)" />
           <UButton
             color="primary"

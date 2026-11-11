@@ -17,8 +17,8 @@ const emit = defineEmits<{
     <div
       class="p-4 rounded-xl border transition-all cursor-pointer"
       :class="activeCategory === 'deep'
-        ? 'border-sky-500 bg-sky-50/50 dark:bg-sky-950/30 ring-1 ring-sky-500 shadow-xs'
-        : 'border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-300 dark:hover:border-neutral-700'"
+        ? 'border-sky-500 bg-sky-50/50 dark:bg-sky-950/30 ring-1 ring-sky-500'
+        : 'border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] hover:border-neutral-300 dark:hover:border-neutral-700'"
       @click="emit('selectCategory', activeCategory === 'deep' ? 'all' : 'deep')"
     >
       <div class="flex items-center justify-between pb-2">
@@ -42,8 +42,8 @@ const emit = defineEmits<{
     <div
       class="p-4 rounded-xl border transition-all cursor-pointer"
       :class="activeCategory === 'query'
-        ? 'border-violet-500 bg-violet-50/50 dark:bg-violet-950/30 ring-1 ring-violet-500 shadow-xs'
-        : 'border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-300 dark:hover:border-neutral-700'"
+        ? 'border-violet-500 bg-violet-50/50 dark:bg-violet-950/30 ring-1 ring-violet-500'
+        : 'border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] hover:border-neutral-300 dark:hover:border-neutral-700'"
       @click="emit('selectCategory', activeCategory === 'query' ? 'all' : 'query')"
     >
       <div class="flex items-center justify-between pb-2">
@@ -67,8 +67,8 @@ const emit = defineEmits<{
     <div
       class="p-4 rounded-xl border transition-all cursor-pointer"
       :class="activeCategory === 'router'
-        ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/30 ring-1 ring-blue-500 shadow-xs'
-        : 'border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-300 dark:hover:border-neutral-700'"
+        ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/30 ring-1 ring-blue-500'
+        : 'border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] hover:border-neutral-300 dark:hover:border-neutral-700'"
       @click="emit('selectCategory', activeCategory === 'router' ? 'all' : 'router')"
     >
       <div class="flex items-center justify-between pb-2">
@@ -92,8 +92,8 @@ const emit = defineEmits<{
     <div
       class="p-4 rounded-xl border transition-all cursor-pointer"
       :class="activeCategory === 'code_smell'
-        ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-950/30 ring-1 ring-amber-500 shadow-xs'
-        : 'border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-300 dark:hover:border-neutral-700'"
+        ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-950/30 ring-1 ring-amber-500'
+        : 'border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] hover:border-neutral-300 dark:hover:border-neutral-700'"
       @click="emit('selectCategory', activeCategory === 'code_smell' ? 'all' : 'code_smell')"
     >
       <div class="flex items-center justify-between pb-2">
@@ -117,8 +117,8 @@ const emit = defineEmits<{
     <div
       class="p-4 rounded-xl border transition-all cursor-pointer"
       :class="activeCategory === 'security'
-        ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/30 ring-1 ring-rose-500 shadow-xs'
-        : 'border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-300 dark:hover:border-neutral-700'"
+        ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/30 ring-1 ring-rose-500'
+        : 'border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] hover:border-neutral-300 dark:hover:border-neutral-700'"
       @click="emit('selectCategory', activeCategory === 'security' ? 'all' : 'security')"
     >
       <div class="flex items-center justify-between pb-2">
@@ -142,8 +142,8 @@ const emit = defineEmits<{
     <div
       class="p-4 rounded-xl border transition-all cursor-pointer"
       :class="activeCategory === 'ui'
-        ? 'border-pink-500 bg-pink-50/50 dark:bg-pink-950/30 ring-1 ring-pink-500 shadow-xs'
-        : 'border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-300 dark:hover:border-neutral-700'"
+        ? 'border-pink-500 bg-pink-50/50 dark:bg-pink-950/30 ring-1 ring-pink-500'
+        : 'border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] hover:border-neutral-300 dark:hover:border-neutral-700'"
       @click="emit('selectCategory', activeCategory === 'ui' ? 'all' : 'ui')"
     >
       <div class="flex items-center justify-between pb-2">

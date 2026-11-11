@@ -20,7 +20,7 @@ const actionLabel: Record<string, string> = {
       <UIcon name="i-lucide-map" class="w-3.5 h-3.5 text-emerald-500" />
       <span>Peta Penempatan Logika (sesuai Peta Layer Proyek):</span>
     </div>
-    <div class="overflow-x-auto rounded-lg border border-neutral-200/80 dark:border-neutral-800">
+    <div class="overflow-x-auto rounded-lg border border-neutral-200/80 dark:border-white/[0.08]">
       <table class="w-full text-xs">
         <thead class="bg-neutral-50 dark:bg-neutral-800/40 text-neutral-500 text-left">
           <tr>
@@ -45,7 +45,7 @@ const actionLabel: Record<string, string> = {
           <tr
             v-for="(step, idx) in plan"
             :key="idx"
-            class="border-t border-neutral-100 dark:border-neutral-800 align-top text-neutral-800 dark:text-neutral-200"
+            class="border-t border-neutral-100 dark:border-white/[0.08] align-top text-neutral-800 dark:text-neutral-200"
           >
             <td class="px-2.5 py-1.5 font-mono">
               {{ step.symbol || '-' }}

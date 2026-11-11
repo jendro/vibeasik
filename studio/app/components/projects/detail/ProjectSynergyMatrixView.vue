@@ -14,8 +14,8 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
 
 <template>
   <div class="space-y-4">
-    <div class="rounded-2xl border border-neutral-200/80 dark:border-neutral-800 bg-white dark:bg-slate-900 shadow-xs overflow-hidden">
-      <div class="p-3.5 sm:p-4 bg-neutral-50/60 dark:bg-neutral-800/40 border-b border-neutral-200/70 dark:border-neutral-800 flex flex-wrap items-center justify-between gap-2">
+    <div class="rounded-xl border border-neutral-200/80 dark:border-white/[0.08] bg-white dark:bg-[#04111f] overflow-hidden">
+      <div class="p-3.5 sm:p-4 bg-neutral-50/60 dark:bg-neutral-800/40 border-b border-neutral-200/70 dark:border-white/[0.08] flex flex-wrap items-center justify-between gap-2">
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-table-properties" class="w-4 h-4 text-sky-500" />
           <span class="text-xs font-bold text-neutral-800 dark:text-neutral-200">
@@ -29,7 +29,7 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
 
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs">
-          <thead class="bg-neutral-50 dark:bg-neutral-800/80 text-neutral-500 dark:text-neutral-400 font-mono text-xs border-b border-neutral-200 dark:border-neutral-800">
+          <thead class="bg-neutral-50 dark:bg-neutral-800/80 text-neutral-500 dark:text-neutral-400 font-mono text-xs border-b border-neutral-200 dark:border-white/[0.08]">
             <tr>
               <th class="py-2.5 px-3 min-w-[200px]">
                 Halaman FE & Navigasi

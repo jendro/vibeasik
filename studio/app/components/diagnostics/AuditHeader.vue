@@ -41,7 +41,7 @@ const { formatDateTime } = useFormatters()
 </script>
 
 <template>
-  <div class="p-6 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-xs space-y-5">
+  <div class="p-6 bg-white dark:bg-[#04111f] border border-neutral-200 dark:border-white/[0.08] rounded-xl space-y-5">
     <!-- Top Row: Title on the left, Health Score on the right -->
     <div class="flex items-start justify-between gap-4">
       <div class="flex items-start gap-3.5 min-w-0">

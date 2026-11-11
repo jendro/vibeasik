@@ -11,7 +11,7 @@ defineEmits<{
 </script>
 
 <template>
-  <section class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 p-4 sm:p-5 shadow-xs space-y-4">
+  <section class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] p-4 sm:p-5 space-y-4">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
       <div>
         <h2 class="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
@@ -31,7 +31,7 @@ defineEmits<{
       <div
         v-for="(it, idx) in profile.integrations"
         :key="idx"
-        class="rounded-lg border border-neutral-200/80 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40 px-3 py-2.5 text-xs space-y-1"
+        class="rounded-lg border border-neutral-200/80 dark:border-white/[0.08] bg-neutral-50/50 dark:bg-[#04111f] px-3 py-2.5 text-xs space-y-1"
       >
         <div class="flex items-center gap-1.5 font-semibold text-neutral-900 dark:text-white flex-wrap">
           <span>{{ it.from }}</span>

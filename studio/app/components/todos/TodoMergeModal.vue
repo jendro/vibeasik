@@ -85,7 +85,7 @@ const submit = async () => {
         </p>
 
         <div v-else class="space-y-2">
-          <div v-for="(g, i) in groups" :key="i" class="p-2.5 rounded-lg border border-neutral-200 dark:border-neutral-800 text-xs space-y-1.5">
+          <div v-for="(g, i) in groups" :key="i" class="p-2.5 rounded-lg border border-neutral-200 dark:border-white/[0.08] text-xs space-y-1.5">
             <div class="flex items-start justify-between gap-2">
               <span class="font-semibold text-neutral-900 dark:text-white">{{ g.title }}</span>
               <UBadge v-if="g.joined" size="xs" color="info" variant="subtle">
@@ -104,7 +104,7 @@ const submit = async () => {
           </div>
         </div>
 
-        <div class="flex justify-end gap-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
+        <div class="flex justify-end gap-2 pt-2 border-t border-neutral-100 dark:border-white/[0.08]">
           <UButton color="neutral" variant="ghost" label="Batal" @click="emit('update:open', false)" />
           <UButton
             color="primary"

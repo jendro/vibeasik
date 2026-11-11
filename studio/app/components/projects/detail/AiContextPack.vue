@@ -82,7 +82,7 @@ const copyPack = async () => {
 </script>
 
 <template>
-  <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 shadow-2xs space-y-3">
+  <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-3">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div>
         <h3 class="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">

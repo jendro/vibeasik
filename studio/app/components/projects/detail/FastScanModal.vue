@@ -118,7 +118,7 @@ const getCompRoleLabel = (role: string) => {
         </div>
 
         <!-- Fast Scan Tab Bar -->
-        <div class="flex items-center gap-1.5 border-b border-neutral-200 dark:border-neutral-800 pb-2 text-xs font-medium overflow-x-auto">
+        <div class="flex items-center gap-1.5 border-b border-neutral-200 dark:border-white/[0.08] pb-2 text-xs font-medium overflow-x-auto">
           <button
             type="button"
             class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors cursor-pointer shrink-0"

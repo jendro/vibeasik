@@ -60,8 +60,8 @@ const stats = computed(() => {
 
 <template>
   <div v-if="loading && !profile" class="space-y-4">
-    <div class="h-40 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 animate-pulse" />
-    <div class="h-64 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 animate-pulse" />
+    <div class="h-40 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] animate-pulse" />
+    <div class="h-64 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] animate-pulse" />
   </div>
 
   <div v-else-if="profile" class="space-y-5">
@@ -81,7 +81,7 @@ const stats = computed(() => {
         v-for="s in stats"
         :key="s.label"
         type="button"
-        class="text-left rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 p-3.5 shadow-2xs transition-colors"
+        class="text-left rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] p-3.5 transition-colors"
         :class="s.tab ? 'hover:border-sky-400/60 cursor-pointer' : ''"
         @click="s.tab && emit('switchTab', s.tab)"
       >
@@ -100,7 +100,7 @@ const stats = computed(() => {
 
     <!-- Purpose & maturity -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <section class="lg:col-span-2 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 p-4 sm:p-5 shadow-xs space-y-4">
+      <section class="lg:col-span-2 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] p-4 sm:p-5 space-y-4">
         <h2 class="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
           <UIcon name="i-lucide-target" class="w-4 h-4 text-sky-500" />
           Tujuan Proyek
@@ -109,7 +109,7 @@ const stats = computed(() => {
           {{ profile.purpose.value_proposition }}
         </p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-          <div class="rounded-lg bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200/70 dark:border-neutral-800 p-3">
+          <div class="rounded-lg bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200/70 dark:border-white/[0.08] p-3">
             <div class="text-xs uppercase font-bold text-rose-500 mb-1">
               Masalah
             </div>
@@ -117,7 +117,7 @@ const stats = computed(() => {
               {{ profile.purpose.problem || 'Belum diketahui — jalankan analisis AI.' }}
             </p>
           </div>
-          <div class="rounded-lg bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200/70 dark:border-neutral-800 p-3">
+          <div class="rounded-lg bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200/70 dark:border-white/[0.08] p-3">
             <div class="text-xs uppercase font-bold text-emerald-500 mb-1">
               Solusi
             </div>
@@ -138,7 +138,7 @@ const stats = computed(() => {
         </div>
       </section>
 
-      <section class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 p-4 sm:p-5 shadow-xs space-y-3">
+      <section class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] p-4 sm:p-5 space-y-3">
         <h2 class="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
           <UIcon name="i-lucide-gauge" class="w-4 h-4 text-sky-500" />
           Tingkat Kematangan
@@ -161,7 +161,7 @@ const stats = computed(() => {
     </div>
 
     <!-- Narrative -->
-    <section v-if="profile.full_description" class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 p-4 sm:p-5 shadow-xs space-y-3">
+    <section v-if="profile.full_description" class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] p-4 sm:p-5 space-y-3">
       <div class="flex items-center justify-between">
         <h2 class="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
           <UIcon name="i-lucide-file-text" class="w-4 h-4 text-sky-500" />

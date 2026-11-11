@@ -54,9 +54,9 @@ const maturityLabel: Record<string, string> = {
 </script>
 
 <template>
-  <aside class="w-full lg:w-72 xl:w-80 shrink-0 border-t lg:border-t-0 lg:border-l border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 lg:fixed lg:right-0 lg:top-16 lg:bottom-0 lg:overflow-y-auto p-4 sm:p-5 pb-16 sm:pb-20 space-y-5 z-20">
+  <aside class="w-full lg:w-72 xl:w-80 shrink-0 border-t lg:border-t-0 lg:border-l border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] lg:fixed lg:right-0 lg:top-16 lg:bottom-0 lg:overflow-y-auto p-4 sm:p-5 pb-16 sm:pb-20 space-y-5 z-20">
     <!-- Health & maturity -->
-    <div class="p-4 rounded-xl border border-neutral-200/80 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-800/40 shadow-2xs space-y-3">
+    <div class="p-4 rounded-xl border border-neutral-200/80 dark:border-white/[0.08] bg-neutral-50/70 dark:bg-neutral-800/40 space-y-3">
       <div class="flex items-center gap-3">
         <div class="px-3 py-2 rounded-xl text-center border font-mono shrink-0" :class="healthTone.cls">
           <div class="text-xl font-bold leading-none">
@@ -93,7 +93,7 @@ const maturityLabel: Record<string, string> = {
           type="button"
           class="w-full group text-left px-2.5 py-2 rounded-lg transition-all duration-150 cursor-pointer flex items-center justify-between gap-2.5 border"
           :class="activeTab === t.id
-            ? 'bg-sky-50 dark:bg-sky-950/40 border-sky-500/40 text-sky-950 dark:text-sky-100 shadow-2xs'
+            ? 'bg-sky-50 dark:bg-sky-950/40 border-sky-500/40 text-sky-950 dark:text-sky-100'
             : 'border-transparent text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100/80 dark:hover:bg-neutral-800/60'"
           :aria-current="activeTab === t.id ? 'page' : undefined"
           @click="activeTab = t.id"

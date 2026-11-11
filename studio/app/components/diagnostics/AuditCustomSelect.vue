@@ -75,7 +75,7 @@ onUnmounted(() => {
     <!-- Trigger Button: Lebar tetap, teks boleh terpotong (truncate) -->
     <button
       type="button"
-      class="inline-flex items-center justify-between gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800/60 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 transition-all cursor-pointer shadow-2xs"
+      class="inline-flex items-center justify-between gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] text-neutral-800 dark:text-neutral-200 hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800/60 focus:outline-hidden focus:ring-2 focus:ring-primary-500/30 transition-all cursor-pointer"
       :class="[buttonClass, isOpen ? 'border-primary-500/60 ring-2 ring-primary-500/20' : '']"
       :aria-expanded="isOpen"
       @click="toggleDropdown"
@@ -111,7 +111,7 @@ onUnmounted(() => {
     >
       <div
         v-if="isOpen"
-        class="absolute right-0 top-full mt-1.5 z-50 min-w-max w-max max-w-xs sm:max-w-sm rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-xl p-1.5 space-y-0.5 text-xs focus:outline-hidden whitespace-nowrap"
+        class="absolute right-0 top-full mt-1.5 z-50 min-w-max w-max max-w-xs sm:max-w-sm rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] shadow-xl p-1.5 space-y-0.5 text-xs focus:outline-hidden whitespace-nowrap"
       >
         <button
           v-for="opt in options"

@@ -37,12 +37,12 @@ const toggleSub = (f: Finding) => {
 
 <template>
   <div
-    class="p-4 rounded-xl border transition-all bg-white dark:bg-neutral-900"
+    class="p-4 rounded-xl border transition-all bg-white dark:bg-[#04111f]"
     :class="group.severity === 'CRITICAL'
       ? 'border-rose-200 dark:border-rose-900/60'
       : group.severity === 'WARNING'
         ? 'border-amber-200 dark:border-amber-900/60'
-        : 'border-neutral-200 dark:border-neutral-800'"
+        : 'border-neutral-200 dark:border-white/[0.08]'"
   >
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div class="space-y-1.5 flex-1 min-w-0">
@@ -104,7 +104,7 @@ const toggleSub = (f: Finding) => {
       </div>
     </div>
 
-    <div v-if="expanded" class="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 space-y-1.5">
+    <div v-if="expanded" class="mt-3 pt-3 border-t border-neutral-100 dark:border-white/[0.08] space-y-1.5">
       <template v-for="f in visibleSubs" :key="findingKey(f)">
         <button
           type="button"

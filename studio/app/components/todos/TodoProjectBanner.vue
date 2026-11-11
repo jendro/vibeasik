@@ -12,7 +12,7 @@ const handleSwitchProject = (id: string) => emit('switchProject', id)
 </script>
 
 <template>
-  <div class="p-3.5 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/60 dark:bg-blue-950/20 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+  <div class="p-3.5 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/60 dark:bg-blue-950/20 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
     <div class="flex items-center gap-2.5 min-w-0">
       <UIcon name="i-lucide-folder-git-2" class="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0" />
       <div class="min-w-0">

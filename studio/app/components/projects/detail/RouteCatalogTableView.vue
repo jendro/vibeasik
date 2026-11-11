@@ -22,11 +22,11 @@ const handleDelete = (route: ComponentRoute) => emit('delete', route)
 
 <template>
   <div
-    class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 shadow-xs overflow-hidden"
+    class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] overflow-hidden"
   >
     <div class="overflow-x-auto">
       <table class="w-full text-left text-xs">
-        <thead class="bg-neutral-50 dark:bg-neutral-800 text-neutral-500 uppercase text-xs tracking-wider border-b border-neutral-200 dark:border-neutral-800">
+        <thead class="bg-neutral-50 dark:bg-neutral-800 text-neutral-500 uppercase text-xs tracking-wider border-b border-neutral-200 dark:border-white/[0.08]">
           <tr v-if="isFrontend">
             <th class="py-3 px-4 w-20">
               Tipe

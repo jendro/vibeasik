@@ -37,7 +37,7 @@ const scopeBadgeClass = (scope: string) => {
 
 <template>
   <div
-    class="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/90 shadow-2xs space-y-3 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors"
+    class="p-4 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-neutral-900/90 space-y-3 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors"
   >
     <!-- Top Row: ID, Title, Severity, Scope -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-100 dark:border-neutral-800/80 pb-2.5">

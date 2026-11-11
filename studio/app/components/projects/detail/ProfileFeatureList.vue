@@ -43,7 +43,7 @@ const hasDetail = (f: ProfileFeature) => f.pages.length + f.endpoints.length + f
 </script>
 
 <template>
-  <section class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 p-4 sm:p-5 shadow-xs space-y-4">
+  <section class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] p-4 sm:p-5 space-y-4">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
       <div>
         <h2 class="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
@@ -55,14 +55,14 @@ const hasDetail = (f: ProfileFeature) => f.pages.length + f.endpoints.length + f
         </p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
-        <div class="inline-flex rounded-lg border border-neutral-200 dark:border-neutral-800 p-0.5 bg-neutral-50 dark:bg-neutral-900">
+        <div class="inline-flex rounded-lg border border-neutral-200 dark:border-white/[0.08] p-0.5 bg-neutral-50 dark:bg-[#04111f]">
           <button
             v-for="t in statusTabs"
             :key="t.value"
             type="button"
             class="px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer"
             :class="statusFilter === t.value
-              ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-2xs'
+              ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white'
               : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'"
             @click="statusFilter = t.value"
           >
@@ -81,7 +81,7 @@ const hasDetail = (f: ProfileFeature) => f.pages.length + f.endpoints.length + f
       <article
         v-for="f in filtered"
         :key="f.name"
-        class="rounded-lg border border-neutral-200/80 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40 p-3.5 space-y-2.5"
+        class="rounded-lg border border-neutral-200/80 dark:border-white/[0.08] bg-neutral-50/50 dark:bg-[#04111f] p-3.5 space-y-2.5"
       >
         <div class="flex items-start justify-between gap-2">
           <div class="min-w-0">
@@ -124,7 +124,7 @@ const hasDetail = (f: ProfileFeature) => f.pages.length + f.endpoints.length + f
           {{ expanded[f.name] ? 'Sembunyikan detail' : 'Lihat halaman, endpoint & bukti' }}
         </button>
 
-        <div v-if="expanded[f.name]" class="space-y-2 pt-2 border-t border-neutral-200/70 dark:border-neutral-800 text-xs">
+        <div v-if="expanded[f.name]" class="space-y-2 pt-2 border-t border-neutral-200/70 dark:border-white/[0.08] text-xs">
           <div v-if="f.pages.length">
             <div class="font-semibold text-neutral-500 mb-1">
               Halaman

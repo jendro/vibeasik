@@ -86,7 +86,7 @@ const goToTodos = () => {
         </div>
 
         <!-- Target File & Line Alert -->
-        <div class="p-2.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/40 flex items-center justify-between">
+        <div class="p-2.5 rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-neutral-50 dark:bg-neutral-800/40 flex items-center justify-between">
           <div class="flex items-center gap-2">
             <UIcon name="i-lucide-file-code" class="w-4 h-4 text-primary-500" />
             <span class="font-mono text-neutral-800 dark:text-neutral-200 font-semibold">{{ resolution.target_file }}</span>
@@ -143,7 +143,7 @@ const goToTodos = () => {
             <div
               v-for="(step, idx) in resolution.action_steps"
               :key="idx"
-              class="flex items-start gap-2 p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/30 border border-neutral-100 dark:border-neutral-800"
+              class="flex items-start gap-2 p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/30 border border-neutral-100 dark:border-white/[0.08]"
             >
               <span class="w-4 h-4 rounded-full bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
                 {{ idx + 1 }}

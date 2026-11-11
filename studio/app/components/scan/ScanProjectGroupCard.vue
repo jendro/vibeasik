@@ -31,7 +31,7 @@ const handleMoveChange = (compIndex: number, event: Event) => {
 </script>
 
 <template>
-  <div class="p-5 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 shadow-xs space-y-4">
+  <div class="p-5 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-4">
     <!-- Group Configuration Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-neutral-100 dark:border-white/10">
       <div class="flex flex-wrap items-center gap-2">
@@ -42,7 +42,7 @@ const handleMoveChange = (compIndex: number, event: Event) => {
           <button
             type="button"
             class="px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer"
-            :class="!group.is_existing ? 'bg-white dark:bg-neutral-700 text-sky-600 dark:text-sky-400 shadow-xs' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'"
+            :class="!group.is_existing ? 'bg-white dark:bg-neutral-700 text-sky-600 dark:text-sky-400' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'"
             @click="group.is_existing = false"
           >
             Project Baru
@@ -50,7 +50,7 @@ const handleMoveChange = (compIndex: number, event: Event) => {
           <button
             type="button"
             class="px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer"
-            :class="group.is_existing ? 'bg-white dark:bg-neutral-700 text-sky-600 dark:text-sky-400 shadow-xs' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'"
+            :class="group.is_existing ? 'bg-white dark:bg-neutral-700 text-sky-600 dark:text-sky-400' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'"
             @click="group.is_existing = true; if (!group.existing_project_id && existingProjects.length > 0) group.existing_project_id = existingProjects[0]?.id"
           >
             Project yang Sudah Ada
@@ -99,7 +99,7 @@ const handleMoveChange = (compIndex: number, event: Event) => {
           </label>
           <select
             v-model="group.project_type"
-            class="w-full px-2.5 py-1.5 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs text-neutral-800 dark:text-neutral-200 focus:outline-none focus:border-primary-500"
+            class="w-full px-2.5 py-1.5 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-[#04111f] text-xs text-neutral-800 dark:text-neutral-200 focus:outline-none focus:border-primary-500"
           >
             <option value="bundle">
               Bundle (BE + FE)
@@ -128,7 +128,7 @@ const handleMoveChange = (compIndex: number, event: Event) => {
           </label>
           <select
             v-model="group.existing_project_id"
-            class="w-full px-2.5 py-1.5 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs text-neutral-800 dark:text-neutral-200 focus:outline-none focus:border-primary-500 font-medium"
+            class="w-full px-2.5 py-1.5 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-[#04111f] text-xs text-neutral-800 dark:text-neutral-200 focus:outline-none focus:border-primary-500 font-medium"
           >
             <option v-for="ep in existingProjects" :key="ep.id" :value="ep.id">
               {{ ep.name }} (ID: {{ ep.id }} • {{ ep.project_type }} • {{ ep.components?.length || 0 }} komponen)
@@ -150,7 +150,7 @@ const handleMoveChange = (compIndex: number, event: Event) => {
         Komponen yang Dimasukkan ke Project Ini ({{ group.components.length }})
       </div>
 
-      <div v-if="group.components.length === 0" class="p-4 rounded-lg border border-dashed border-neutral-200 dark:border-neutral-800 text-center text-xs text-neutral-400">
+      <div v-if="group.components.length === 0" class="p-4 rounded-lg border border-dashed border-neutral-200 dark:border-white/[0.08] text-center text-xs text-neutral-400">
         Belum ada komponen di project ini. Pindahkan komponen dari kelompok lain.
       </div>
 
@@ -188,7 +188,7 @@ const handleMoveChange = (compIndex: number, event: Event) => {
           <div class="flex items-center gap-2 shrink-0">
             <select
               v-model="comp.role"
-              class="px-2 py-1 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs text-neutral-800 dark:text-neutral-200 focus:outline-none focus:border-primary-500"
+              class="px-2 py-1 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-[#04111f] text-xs text-neutral-800 dark:text-neutral-200 focus:outline-none focus:border-primary-500"
             >
               <option value="backend">
                 Backend (BE)

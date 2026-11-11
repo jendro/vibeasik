@@ -22,7 +22,7 @@ const { formatDateTime } = useFormatters()
 
       <div
         v-if="todo.completed_by_agent"
-        class="flex items-center gap-1 text-xs px-2 py-0.5 rounded-md bg-white dark:bg-slate-900/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
+        class="flex items-center gap-1 text-xs px-2 py-0.5 rounded-md bg-white dark:bg-[#04111f] border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
       >
         <UIcon name="i-lucide-bot" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
         <span>Agent:</span>
@@ -31,7 +31,7 @@ const { formatDateTime } = useFormatters()
 
       <div
         v-if="todo.completed_by_model"
-        class="flex items-center gap-1 font-mono text-xs px-2 py-0.5 rounded-md bg-white dark:bg-slate-900/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400"
+        class="flex items-center gap-1 font-mono text-xs px-2 py-0.5 rounded-md bg-white dark:bg-[#04111f] border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400"
       >
         <UIcon name="i-lucide-cpu" class="w-3 h-3 text-sky-500" />
         <span>Model:</span>

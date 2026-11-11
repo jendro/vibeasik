@@ -15,7 +15,7 @@ const handleRunComponentDiagnostics = () => emit('run')
 <template>
   <div class="space-y-6">
     <!-- Action Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4.5 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-xs">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4.5 rounded-xl bg-white dark:bg-[#04111f] border border-neutral-200 dark:border-white/[0.08]">
       <div>
         <h4 class="font-bold text-neutral-900 dark:text-white text-sm flex items-center gap-2">
           <UIcon name="i-lucide-shield-alert" class="w-4 h-4 text-sky-400" />
@@ -39,7 +39,7 @@ const handleRunComponentDiagnostics = () => emit('run')
     </div>
 
     <!-- State Belum Diaudit -->
-    <div v-if="!componentDiagnostic && !diagnosing" class="p-8 text-center rounded-xl border border-dashed border-neutral-200 dark:border-neutral-800 bg-white/50 dark:bg-neutral-900/50 space-y-3">
+    <div v-if="!componentDiagnostic && !diagnosing" class="p-8 text-center rounded-xl border border-dashed border-neutral-200 dark:border-white/[0.08] bg-white/50 dark:bg-neutral-900/50 space-y-3">
       <div class="w-10 h-10 mx-auto rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-400">
         <UIcon name="i-lucide-stethoscope" class="w-5 h-5" />
       </div>
@@ -59,7 +59,7 @@ const handleRunComponentDiagnostics = () => emit('run')
     <!-- Hasil Diagnostik -->
     <div v-else-if="componentDiagnostic" class="space-y-4">
       <!-- Score Banner -->
-      <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 flex items-center gap-4 shadow-xs">
+      <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] flex items-center gap-4">
         <div
           class="w-14 h-14 rounded-xl flex flex-col items-center justify-center font-mono font-bold border shrink-0"
           :class="getScoreColor(componentDiagnostic.score)"
@@ -83,7 +83,7 @@ const handleRunComponentDiagnostics = () => emit('run')
           Temuan Audit ({{ parsedFindings.length }})
         </h5>
 
-        <div v-if="parsedFindings.length === 0" class="p-6 rounded-xl border border-dashed border-neutral-200 dark:border-neutral-800 text-center text-xs text-neutral-500 bg-white/50 dark:bg-neutral-900/50">
+        <div v-if="parsedFindings.length === 0" class="p-6 rounded-xl border border-dashed border-neutral-200 dark:border-white/[0.08] text-center text-xs text-neutral-500 bg-white/50 dark:bg-neutral-900/50">
           Tidak ada masalah terdeteksi. Konfigurasi dan port aplikasi aman.
         </div>
 
@@ -95,7 +95,7 @@ const handleRunComponentDiagnostics = () => emit('run')
             ? 'border-rose-300 dark:border-rose-900/60 bg-rose-50/40 dark:bg-rose-950/20'
             : f.severity === 'WARNING'
               ? 'border-amber-300 dark:border-amber-900/60 bg-amber-50/40 dark:bg-amber-950/20'
-              : 'border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40'"
+              : 'border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f]'"
         >
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">

@@ -27,9 +27,9 @@ const stateBadge = (state: string) => {
     case 'failed':
       return { label: 'Gagal', dot: 'bg-rose-500', cls: 'text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800' }
     case 'skipped':
-      return { label: 'Dilewati', dot: 'bg-neutral-300', cls: 'text-neutral-500 bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800' }
+      return { label: 'Dilewati', dot: 'bg-neutral-300', cls: 'text-neutral-500 bg-neutral-50 dark:bg-[#04111f] border-neutral-200 dark:border-white/[0.08]' }
     default:
-      return { label: 'Menunggu', dot: 'bg-neutral-300', cls: 'text-neutral-500 bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800' }
+      return { label: 'Menunggu', dot: 'bg-neutral-300', cls: 'text-neutral-500 bg-neutral-50 dark:bg-[#04111f] border-neutral-200 dark:border-white/[0.08]' }
   }
 }
 
@@ -45,7 +45,7 @@ const sourceLabel: Record<string, string> = {
     <div
       v-for="comp in components"
       :key="comp.component_id"
-      class="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/70 space-y-2"
+      class="p-3 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] space-y-2"
       :class="{ 'opacity-60': comp.state === 'skipped' }"
     >
       <div class="flex items-start justify-between gap-2">

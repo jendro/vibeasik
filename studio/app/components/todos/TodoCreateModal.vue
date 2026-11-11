@@ -109,7 +109,7 @@ const handleSubmit = async () => {
     v-if="open"
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
   >
-    <div class="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900/40 border border-neutral-200 dark:border-white/10 shadow-xl overflow-hidden duration-150">
+    <div class="w-full max-w-lg rounded-xl bg-white dark:bg-[#04111f] border border-neutral-200 dark:border-white/10 shadow-xl overflow-hidden duration-150">
       <div class="px-6 py-4 border-b border-neutral-100 dark:border-white/10 flex items-center justify-between">
         <h3 class="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
           <UIcon name="i-lucide-plus-circle" class="w-5 h-5 text-sky-500" />
@@ -241,7 +241,7 @@ const handleSubmit = async () => {
               <button
                 type="button"
                 class="px-2 py-0.5 rounded-md font-medium transition-colors"
-                :class="activeDescTab === 'write' ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-2xs' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'"
+                :class="activeDescTab === 'write' ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'"
                 @click="activeDescTab = 'write'"
               >
                 Tulis
@@ -249,7 +249,7 @@ const handleSubmit = async () => {
               <button
                 type="button"
                 class="px-2 py-0.5 rounded-md font-medium transition-colors flex items-center gap-1"
-                :class="activeDescTab === 'preview' ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-2xs' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'"
+                :class="activeDescTab === 'preview' ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'"
                 @click="activeDescTab = 'preview'"
               >
                 <UIcon name="i-lucide-eye" class="w-3 h-3" />

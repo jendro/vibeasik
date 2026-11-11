@@ -130,7 +130,7 @@ const { getMethodColorClass } = useFormatters()
 <template>
   <div class="space-y-6">
     <!-- Top Action Bar -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-xs">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-slate-900/60">
       <div class="space-y-1">
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-book-open-check" class="size-5 text-indigo-500" />
@@ -184,12 +184,12 @@ const { getMethodColorClass } = useFormatters()
 
     <!-- Loading Skeleton -->
     <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div v-for="i in 4" :key="i" class="h-32 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 animate-pulse" />
+      <div v-for="i in 4" :key="i" class="h-32 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-100 dark:bg-slate-800 animate-pulse" />
     </div>
 
     <div v-else-if="baseKnowledge" class="space-y-6">
       <!-- Detail Section 2: Katalog Rute & Fungsi Router (Searchable) -->
-      <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 shadow-xs space-y-4">
+      <div class="p-5 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div class="flex items-center gap-2">
             <UIcon name="i-lucide-route" class="size-4.5 text-indigo-500" />
@@ -222,9 +222,9 @@ const { getMethodColorClass } = useFormatters()
         </div>
 
         <!-- Table of routes with progressive disclosure -->
-        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/[0.08]">
           <table class="w-full text-left text-xs">
-            <thead class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 font-semibold border-b border-slate-200 dark:border-slate-800">
+            <thead class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 font-semibold border-b border-slate-200 dark:border-white/[0.08]">
               <tr>
                 <th class="py-2.5 px-3">
                   Metode
@@ -273,7 +273,7 @@ const { getMethodColorClass } = useFormatters()
                 </td>
               </tr>
               <tr v-if="filteredRoutes.length > 30">
-                <td colspan="5" class="py-2.5 px-3 text-center text-slate-400 font-sans text-xs bg-slate-50/50 dark:bg-slate-900/40">
+                <td colspan="5" class="py-2.5 px-3 text-center text-slate-400 font-sans text-xs bg-slate-50/50 dark:bg-[#04111f]">
                   Menampilkan 30 rute teratas. Gunakan pencarian untuk menyaring {{ filteredRoutes.length - 30 }} rute lainnya.
                 </td>
               </tr>
@@ -288,7 +288,7 @@ const { getMethodColorClass } = useFormatters()
       </div>
 
       <!-- Detail Section 3: File Scope & Struktur Direktori (Progressive Disclosure) -->
-      <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 shadow-xs space-y-4">
+      <div class="p-5 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] space-y-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <UIcon name="i-lucide-folder-git-2" class="size-4.5 text-emerald-500" />
@@ -330,7 +330,7 @@ const { getMethodColorClass } = useFormatters()
       </div>
 
       <!-- Detail Section 4: Environment & Sanitized Keys (Progressive Disclosure) -->
-      <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 shadow-xs space-y-4">
+      <div class="p-5 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] space-y-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <UIcon name="i-lucide-key-round" class="size-4.5 text-amber-500" />
@@ -351,19 +351,19 @@ const { getMethodColorClass } = useFormatters()
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-          <div class="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
+          <div class="p-3 rounded-lg border border-slate-100 dark:border-white/[0.08] bg-slate-50/50 dark:bg-slate-950/30">
             <span class="text-xs uppercase font-semibold text-slate-400">Database Engine</span>
             <p class="font-bold text-slate-800 dark:text-slate-200 mt-0.5">
               {{ baseKnowledge.environment_scope?.database_type || 'SQLite' }}
             </p>
           </div>
-          <div class="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
+          <div class="p-3 rounded-lg border border-slate-100 dark:border-white/[0.08] bg-slate-50/50 dark:bg-slate-950/30">
             <span class="text-xs uppercase font-semibold text-slate-400">Metode Autentikasi</span>
             <p class="font-bold text-slate-800 dark:text-slate-200 mt-0.5">
               {{ baseKnowledge.environment_scope?.auth_methods?.join(', ') || 'Session / API Key' }}
             </p>
           </div>
-          <div class="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
+          <div class="p-3 rounded-lg border border-slate-100 dark:border-white/[0.08] bg-slate-50/50 dark:bg-slate-950/30">
             <span class="text-xs uppercase font-semibold text-slate-400">Layanan Pihak Ke-3</span>
             <p class="font-bold text-slate-800 dark:text-slate-200 mt-0.5 truncate">
               {{ baseKnowledge.environment_scope?.third_party_services?.join(', ') || 'None' }}
@@ -372,12 +372,12 @@ const { getMethodColorClass } = useFormatters()
         </div>
 
         <!-- Collapsible Env Keys -->
-        <div v-if="isEnvKeysOpen && baseKnowledge.environment_scope?.detected_env_keys?.length" class="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <div v-if="isEnvKeysOpen && baseKnowledge.environment_scope?.detected_env_keys?.length" class="space-y-2 pt-2 border-t border-slate-100 dark:border-white/[0.08]">
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
             <div
               v-for="k in baseKnowledge.environment_scope.detected_env_keys"
               :key="k.key"
-              class="p-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs"
+              class="p-2.5 rounded-lg border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#04111f] text-xs"
             >
               <div class="flex items-center justify-between gap-1">
                 <span class="font-mono font-bold text-slate-800 dark:text-slate-200">{{ k.key }}</span>

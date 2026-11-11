@@ -24,7 +24,7 @@ const filteredRoutes = computed(() => {
 
 <template>
   <div class="space-y-3">
-    <div class="flex flex-wrap items-center justify-between gap-2 p-3.5 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-2xs">
+    <div class="flex flex-wrap items-center justify-between gap-2 p-3.5 rounded-xl bg-white dark:bg-[#04111f] border border-neutral-200 dark:border-white/[0.08]">
       <div class="flex items-center gap-2">
         <UIcon name="i-lucide-route" class="w-4 h-4 text-primary-600 dark:text-primary-400" />
         <span class="text-xs font-bold text-neutral-800 dark:text-neutral-200">
@@ -45,9 +45,9 @@ const filteredRoutes = computed(() => {
       </div>
     </div>
 
-    <div v-if="filteredRoutes.length > 0" class="overflow-x-auto rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 shadow-2xs">
+    <div v-if="filteredRoutes.length > 0" class="overflow-x-auto rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f]">
       <table class="w-full text-left text-xs">
-        <thead class="bg-neutral-50 dark:bg-neutral-800 text-neutral-500 uppercase text-xs tracking-wider border-b border-neutral-200 dark:border-neutral-800">
+        <thead class="bg-neutral-50 dark:bg-neutral-800 text-neutral-500 uppercase text-xs tracking-wider border-b border-neutral-200 dark:border-white/[0.08]">
           <tr>
             <th class="p-3 w-20">
               Method
@@ -125,7 +125,7 @@ const filteredRoutes = computed(() => {
       </table>
     </div>
 
-    <div v-else class="p-8 text-center text-xs text-neutral-500 italic bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800">
+    <div v-else class="p-8 text-center text-xs text-neutral-500 italic bg-white dark:bg-[#04111f] rounded-xl border border-neutral-200 dark:border-white/[0.08]">
       Tidak ada router yang cocok dengan pencarian "{{ routeSearchQuery }}".
     </div>
   </div>

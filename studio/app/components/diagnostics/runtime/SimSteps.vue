@@ -34,7 +34,7 @@ const formatDuration = (ms?: number) => {
       class="p-2.5 rounded-xl border transition-colors"
       :class="step.status === 'running'
         ? 'border-primary-300 dark:border-primary-800 bg-primary-50/60 dark:bg-primary-950/30'
-        : 'border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/60'"
+        : 'border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-neutral-900/60'"
       :title="step.detail || step.title"
     >
       <div class="flex items-center gap-2">

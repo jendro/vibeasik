@@ -7,7 +7,7 @@ defineProps<{ scanResult: FastScanResult }>()
 <template>
   <div class="space-y-4">
     <!-- Framework & Engine -->
-    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 space-y-3 shadow-2xs">
+    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-cpu" class="w-4 h-4 text-primary-600 dark:text-primary-400" />
@@ -41,7 +41,7 @@ defineProps<{ scanResult: FastScanResult }>()
     </div>
 
     <!-- Design Pattern Card -->
-    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 space-y-3 shadow-2xs">
+    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-network" class="w-4 h-4 text-sky-600 dark:text-sky-400" />
@@ -63,7 +63,7 @@ defineProps<{ scanResult: FastScanResult }>()
     </div>
 
     <!-- Plugins Card -->
-    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 space-y-3 shadow-2xs">
+    <div class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-blocks" class="w-4 h-4 text-purple-600 dark:text-purple-400" />

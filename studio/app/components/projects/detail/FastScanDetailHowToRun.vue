@@ -22,7 +22,7 @@ const { copyToClipboard } = useCopyToClipboard()
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
-      <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 space-y-1.5 shadow-2xs">
+      <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-1.5">
         <div class="flex items-center justify-between text-neutral-500 text-xs uppercase font-bold">
           <span class="flex items-center gap-1 text-sky-600 dark:text-sky-400">
             <UIcon name="i-lucide-terminal" class="w-3.5 h-3.5" />
@@ -40,7 +40,7 @@ const { copyToClipboard } = useCopyToClipboard()
         </div>
       </div>
 
-      <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 space-y-1.5 shadow-2xs">
+      <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-1.5">
         <div class="flex items-center justify-between text-neutral-500 text-xs uppercase font-bold">
           <span class="flex items-center gap-1 text-blue-600 dark:text-blue-400">
             <UIcon name="i-lucide-download" class="w-3.5 h-3.5" />
@@ -58,7 +58,7 @@ const { copyToClipboard } = useCopyToClipboard()
         </div>
       </div>
 
-      <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 space-y-1.5 shadow-2xs">
+      <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-1.5">
         <div class="flex items-center justify-between text-neutral-500 text-xs uppercase font-bold">
           <span class="flex items-center gap-1 text-amber-600 dark:text-amber-400">
             <UIcon name="i-lucide-hammer" class="w-3.5 h-3.5" />
@@ -76,7 +76,7 @@ const { copyToClipboard } = useCopyToClipboard()
         </div>
       </div>
 
-      <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 space-y-1.5 shadow-2xs">
+      <div class="p-3.5 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-1.5">
         <div class="flex items-center justify-between text-neutral-500 text-xs uppercase font-bold">
           <span class="flex items-center gap-1 text-purple-600 dark:text-purple-400">
             <UIcon name="i-lucide-check-circle-2" class="w-3.5 h-3.5" />
@@ -95,7 +95,7 @@ const { copyToClipboard } = useCopyToClipboard()
       </div>
     </div>
 
-    <div v-if="scanResult.how_to_run.steps && scanResult.how_to_run.steps.length > 0" class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 space-y-2.5 shadow-2xs">
+    <div v-if="scanResult.how_to_run.steps && scanResult.how_to_run.steps.length > 0" class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-2.5">
       <div class="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
         Langkah Menjalankan (Step-by-Step):
       </div>

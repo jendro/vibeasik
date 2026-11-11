@@ -52,7 +52,7 @@ const useExample = (q: string) => {
 </script>
 
 <template>
-  <section class="p-4 sm:p-5 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-xs space-y-3.5">
+  <section class="p-4 sm:p-5 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] space-y-3.5">
     <div class="flex flex-col md:flex-row gap-2.5">
       <UInput
         v-model="query"
@@ -80,7 +80,7 @@ const useExample = (q: string) => {
       <li
         v-for="h in hits"
         :key="h.path"
-        class="p-3.5 sm:p-4 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 bg-neutral-50/40 dark:bg-neutral-900/40 hover:border-sky-300 dark:hover:border-sky-800 transition-colors"
+        class="p-3.5 sm:p-4 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 bg-neutral-50/40 dark:bg-[#04111f] hover:border-sky-300 dark:hover:border-sky-800 transition-colors"
       >
         <div class="flex flex-wrap items-center gap-2">
           <button type="button" class="font-mono text-xs font-semibold text-sky-700 dark:text-sky-300 hover:underline text-left break-all cursor-pointer" @click="emit('open', h.path)">

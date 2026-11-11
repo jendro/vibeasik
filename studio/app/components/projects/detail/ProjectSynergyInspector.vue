@@ -45,7 +45,7 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
     <template #body>
       <div v-if="inspectingFlow" class="space-y-5 text-xs max-h-[75vh] overflow-y-auto pr-1">
         <!-- Flow Context Summary Banner -->
-        <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div class="space-y-0.5">
             <div class="text-xs text-neutral-400 uppercase font-semibold">
               Dipanggil dari Halaman:
@@ -75,7 +75,7 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
             type="button"
             class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer"
             :class="inspectorActiveTab === 'payload'
-              ? 'bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-2xs font-bold'
+              ? 'bg-white dark:bg-[#04111f] text-sky-600 dark:text-sky-400 font-bold'
               : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'"
             @click="inspectorActiveTab = 'payload'"
           >
@@ -87,7 +87,7 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
             type="button"
             class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer"
             :class="inspectorActiveTab === 'validation'
-              ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs font-bold'
+              ? 'bg-white dark:bg-[#04111f] text-indigo-600 dark:text-indigo-400 font-bold'
               : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'"
             @click="inspectorActiveTab = 'validation'"
           >
@@ -99,7 +99,7 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
             type="button"
             class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer"
             :class="inspectorActiveTab === 'handler'
-              ? 'bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 shadow-2xs font-bold'
+              ? 'bg-white dark:bg-[#04111f] text-purple-600 dark:text-purple-400 font-bold'
               : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'"
             @click="inspectorActiveTab = 'handler'"
           >
@@ -111,7 +111,7 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
             type="button"
             class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer"
             :class="inspectorActiveTab === 'database'
-              ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-2xs font-bold'
+              ? 'bg-white dark:bg-[#04111f] text-amber-600 dark:text-amber-400 font-bold'
               : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'"
             @click="inspectorActiveTab = 'database'"
           >
@@ -123,7 +123,7 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
             type="button"
             class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer"
             :class="inspectorActiveTab === 'response'
-              ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-2xs font-bold'
+              ? 'bg-white dark:bg-[#04111f] text-emerald-600 dark:text-emerald-400 font-bold'
               : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'"
             @click="inspectorActiveTab = 'response'"
           >
@@ -135,13 +135,13 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
         <!-- Tab Content 1: Payload -->
         <div v-if="inspectorActiveTab === 'payload'" class="space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800 space-y-1">
+            <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/[0.08] space-y-1">
               <span class="text-xs uppercase font-bold text-neutral-400">Pemicu Event Frontend:</span>
               <p class="font-semibold text-neutral-900 dark:text-white">
                 {{ inspectingFlow.trigger_event }}
               </p>
             </div>
-            <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800 space-y-1">
+            <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/[0.08] space-y-1">
               <span class="text-xs uppercase font-bold text-neutral-400">Metode & Endpoint:</span>
               <p class="font-mono font-bold text-sky-600 dark:text-sky-400">
                 {{ inspectingFlow.http_method }} {{ inspectingFlow.route_path }}
@@ -178,7 +178,7 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
 
         <!-- Tab Content 2: Validasi -->
         <div v-else-if="inspectorActiveTab === 'validation'" class="space-y-3">
-          <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800 space-y-2">
+          <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/[0.08] space-y-2">
             <span class="text-xs font-bold text-neutral-900 dark:text-white flex items-center gap-1.5">
               <UIcon name="i-lucide-shield-check" class="w-4 h-4 text-indigo-500" />
               <span>Aturan Validasi Integritas Data (Frontend & Backend):</span>
@@ -187,7 +187,7 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
               <li
                 v-for="(rule, rIdx) in inspectingFlow.validation_rules"
                 :key="rIdx"
-                class="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-neutral-200/60 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300"
+                class="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-[#04111f] border border-neutral-200/60 dark:border-white/[0.08] text-neutral-700 dark:text-neutral-300"
               >
                 <UIcon name="i-lucide-check" class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                 <span class="leading-relaxed">{{ rule }}</span>
@@ -202,13 +202,13 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
         <!-- Tab Content 3: Handler & Middleware -->
         <div v-else-if="inspectorActiveTab === 'handler'" class="space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800 space-y-1">
+            <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/[0.08] space-y-1">
               <span class="text-xs uppercase font-bold text-neutral-400">Fungsi Handler Controller:</span>
               <p class="font-mono font-bold text-purple-700 dark:text-purple-300 text-xs">
                 {{ inspectingFlow.handler_function }}
               </p>
             </div>
-            <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800 space-y-1">
+            <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/[0.08] space-y-1">
               <span class="text-xs uppercase font-bold text-neutral-400">Guard / Middleware:</span>
               <p class="font-mono text-neutral-800 dark:text-neutral-200 text-xs">
                 {{ inspectingFlow.middleware }}
@@ -222,7 +222,7 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
               <li
                 v-for="(step, sIdx) in inspectingFlow.business_process"
                 :key="sIdx"
-                class="p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/70 dark:border-neutral-800 flex items-start gap-2.5"
+                class="p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/70 dark:border-white/[0.08] flex items-start gap-2.5"
               >
                 <span class="px-1.5 py-0.5 rounded font-mono font-bold text-xs bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300">
                   {{ sIdx + 1 }}
@@ -236,19 +236,19 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
         <!-- Tab Content 4: Basis Data -->
         <div v-else-if="inspectorActiveTab === 'database'" class="space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div class="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800 space-y-1">
+            <div class="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/[0.08] space-y-1">
               <span class="text-xs uppercase font-bold text-neutral-400">Database Engine:</span>
               <p class="font-bold text-neutral-900 dark:text-white">
                 {{ inspectingFlow.database_operation?.engine || 'SQLite' }}
               </p>
             </div>
-            <div class="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800 space-y-1">
+            <div class="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/[0.08] space-y-1">
               <span class="text-xs uppercase font-bold text-neutral-400">Operasi:</span>
               <p class="font-mono font-bold text-amber-600 dark:text-amber-400">
                 {{ inspectingFlow.database_operation?.operation_type || 'SELECT' }}
               </p>
             </div>
-            <div class="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800 space-y-1">
+            <div class="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/[0.08] space-y-1">
               <span class="text-xs uppercase font-bold text-neutral-400">Tabel Terhubung:</span>
               <p class="font-mono font-bold text-amber-700 dark:text-amber-300 truncate">
                 {{ inspectingFlow.database_operation?.target_tables?.join(', ') || '-' }}
@@ -262,7 +262,7 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
               <span
                 v-for="sf in inspectingFlow.database_operation.stored_fields"
                 :key="sf"
-                class="px-2 py-0.5 rounded bg-white dark:bg-slate-900 border border-neutral-200 dark:border-neutral-700 font-mono text-xs font-bold text-amber-700 dark:text-amber-400"
+                class="px-2 py-0.5 rounded bg-white dark:bg-[#04111f] border border-neutral-200 dark:border-neutral-700 font-mono text-xs font-bold text-amber-700 dark:text-amber-400"
               >
                 {{ sf }}
               </span>
@@ -278,13 +278,13 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
         <!-- Tab Content 5: Respon & UI Impact -->
         <div v-else-if="inspectorActiveTab === 'response'" class="space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800 space-y-1">
+            <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/[0.08] space-y-1">
               <span class="text-xs uppercase font-bold text-neutral-400">Status Respon HTTP:</span>
               <p class="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-sm">
                 HTTP {{ inspectingFlow.response_spec?.status_code || 200 }}
               </p>
             </div>
-            <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800 space-y-1">
+            <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/[0.08] space-y-1">
               <span class="text-xs uppercase font-bold text-neutral-400">Tipe Data:</span>
               <p class="font-mono font-semibold text-neutral-800 dark:text-neutral-200 text-sm">
                 {{ inspectingFlow.response_spec?.data_type || 'JSON Object' }}
@@ -292,7 +292,7 @@ const copyCurlCommand = async (req: SynergyRequestFlow) => {
             </div>
           </div>
 
-          <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800 space-y-1">
+          <div class="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/[0.08] space-y-1">
             <span class="text-xs uppercase font-bold text-neutral-400">Dampak pada Antarmuka (UI Reaction):</span>
             <p class="font-semibold text-neutral-900 dark:text-white leading-relaxed">
               {{ inspectingFlow.ui_impact || 'Perbarui state reaktif dan render ulang komponen tampilan.' }}

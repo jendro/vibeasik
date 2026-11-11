@@ -32,7 +32,7 @@ const severityClass = (s: string) => {
     v-if="open"
     class="fixed inset-0 z-50 flex items-center justify-end bg-black/50 backdrop-blur-xs"
   >
-    <div class="w-full max-w-2xl h-full bg-white dark:bg-slate-900/40 border-l border-neutral-200 dark:border-white/10 shadow-2xl flex flex-col duration-200">
+    <div class="w-full max-w-2xl h-full bg-white dark:bg-[#04111f] border-l border-neutral-200 dark:border-white/10 shadow-2xl flex flex-col duration-200">
       <!-- Header -->
       <div class="p-5 border-b border-neutral-200 dark:border-white/10 flex items-center justify-between">
         <div>
@@ -62,7 +62,7 @@ const severityClass = (s: string) => {
           type="button"
           class="px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors flex items-center gap-1.5 font-medium"
           :class="activeCategoryIndex === idx
-            ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-xs border border-neutral-200 dark:border-neutral-700'
+            ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-700'
             : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300'"
           @click="activeCategoryIndex = idx"
         >
@@ -93,7 +93,7 @@ const severityClass = (s: string) => {
             <div
               v-for="item in activeCategory.guidelines"
               :key="item.id"
-              class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 shadow-2xs space-y-2.5"
+              class="p-4 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] space-y-2.5"
             >
               <div class="flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2">

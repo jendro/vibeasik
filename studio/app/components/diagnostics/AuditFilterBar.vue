@@ -121,7 +121,7 @@ const handleSeverityChange = (val: string | number) => {
 </script>
 
 <template>
-  <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3 pb-3 border-b border-neutral-200 dark:border-neutral-800">
+  <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3 pb-3 border-b border-neutral-200 dark:border-white/[0.08]">
     <!-- Category Tabs -->
     <div class="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1 shrink-0">
       <button
@@ -130,7 +130,7 @@ const handleSeverityChange = (val: string | number) => {
         type="button"
         class="px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer shrink-0"
         :class="activeCategory === cat.id
-          ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-xs'
+          ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900'
           : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'"
         @click="emit('update:activeCategory', cat.id)"
       >
@@ -143,7 +143,7 @@ const handleSeverityChange = (val: string | number) => {
           type="button"
           class="px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer shrink-0"
           :class="activeExtra
-            ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-xs'
+            ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900'
             : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'"
         >
           <UIcon :name="activeExtra?.icon || 'i-lucide-ellipsis'" class="w-3.5 h-3.5" />

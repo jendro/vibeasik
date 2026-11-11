@@ -77,7 +77,7 @@ const submit = async () => {
             :key="opt.v"
             type="button"
             class="text-left p-3 rounded-xl border transition-colors cursor-pointer"
-            :class="mode === opt.v ? 'border-primary-400 bg-primary-50/60 dark:bg-primary-950/30' : 'border-neutral-200 dark:border-neutral-800 hover:border-neutral-300'"
+            :class="mode === opt.v ? 'border-primary-400 bg-primary-50/60 dark:bg-primary-950/30' : 'border-neutral-200 dark:border-white/[0.08] hover:border-neutral-300'"
             @click="mode = opt.v as TrafficMode"
           >
             <div class="flex items-center gap-2 text-sm font-semibold text-neutral-900 dark:text-white">

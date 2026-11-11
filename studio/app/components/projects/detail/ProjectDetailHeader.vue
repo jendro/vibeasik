@@ -62,7 +62,7 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [
 </script>
 
 <template>
-  <div class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 p-4 sm:p-5 shadow-xs space-y-3">
+  <div class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f] p-4 sm:p-5 space-y-3">
     <div class="flex items-center justify-between gap-3 text-xs">
       <NuxtLink
         to="/cockpit"

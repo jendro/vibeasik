@@ -33,7 +33,7 @@ const setPage = (newPage: number) => {
   <div id="todos-list-container" ref="todosContainerRef" class="space-y-4">
     <!-- Top Pagination Toolbar -->
     <div
-      class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-3.5 py-2 rounded-xl border border-neutral-200/80 dark:border-white/10 bg-neutral-50/70 dark:bg-neutral-900/40 text-xs shadow-2xs"
+      class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-3.5 py-2 rounded-xl border border-neutral-200/80 dark:border-white/10 bg-neutral-50/70 dark:bg-[#04111f] text-xs"
     >
       <div class="flex items-center gap-2 text-neutral-600 dark:text-neutral-400 font-medium">
         <UIcon name="i-lucide-list-todo" class="w-4 h-4 text-sky-500" />
