@@ -9,14 +9,35 @@ export interface NavItem {
   exact?: boolean
   isDetail?: boolean
   badge?: string
+  // Kelompok tampilan di sidebar (judul kecil di atas item pertama kelompok).
+  group?: string
 }
+
+// Kelompok menu proyek aktif: alur kerja auditor — ringkas → audit → kerjakan → jalankan.
+const PROJECT_GROUPS: Record<string, string> = {
+  'home': 'Ringkasan',
+  'project-detail': 'Ringkasan',
+  'audit-report': 'Audit & mutu',
+  'runtime-test': 'Audit & mutu',
+  'screenshots': 'Audit & mutu',
+  'traffic': 'Audit & mutu',
+  'audit-learning': 'Audit & mutu',
+  'todos': 'Pengerjaan',
+  'client-room': 'Pengerjaan',
+  'code-map': 'Pengerjaan',
+  'queue': 'Operasional',
+  'ports': 'Operasional',
+  'delivery': 'Operasional'
+}
+const PROJECT_ORDER = ['home', 'project-detail', 'audit-report', 'runtime-test', 'screenshots', 'traffic', 'audit-learning',
+  'todos', 'client-room', 'code-map', 'queue', 'ports', 'delivery']
 
 export const buildProjectNavItems = (activeProjectId: number | null, activeProject: { name: string } | null): NavItem[] => {
   const detailTo = activeProjectId ? `/projects/${activeProjectId}` : '/cockpit'
   const detailDesc = activeProject ? activeProject.name : 'Pilih proyek aktif'
   const detailBadge = activeProject ? 'Aktif' : undefined
 
-  return [
+  const items: NavItem[] = [
     {
       id: 'home',
       to: '/',
@@ -64,7 +85,7 @@ export const buildProjectNavItems = (activeProjectId: number | null, activeProje
       id: 'audit-report',
       to: '/audit-report',
       label: 'Audit & Diagnostik',
-      desc: 'Query, router & smelly code',
+      desc: 'Temuan keamanan, API & code smell',
       icon: 'i-lucide-file-text',
       exact: false
     },
@@ -127,11 +148,16 @@ export const buildProjectNavItems = (activeProjectId: number | null, activeProje
       exact: false
     }
   ]
+  return PROJECT_ORDER
+    .map(id => items.find(i => i.id === id))
+    .filter((i): i is NavItem => Boolean(i))
+    .map(i => ({ ...i, group: PROJECT_GROUPS[i.id] }))
 }
 
 export const GLOBAL_NAV_ITEMS: NavItem[] = [
   {
     id: 'catalog',
+    group: 'Proyek',
     to: '/cockpit',
     label: 'Katalog Proyek',
     desc: 'Pantau bundle & topologi',
@@ -140,6 +166,7 @@ export const GLOBAL_NAV_ITEMS: NavItem[] = [
   },
   {
     id: 'adapters',
+    group: 'Proyek',
     to: '/adapters',
     label: 'Katalog Adapter & Stack',
     desc: 'Nuxt, Go, Flutter & versi terbaru',
@@ -148,6 +175,7 @@ export const GLOBAL_NAV_ITEMS: NavItem[] = [
   },
   {
     id: 'organizer',
+    group: 'Proyek',
     to: '/organizer',
     label: 'Tata Folder',
     desc: 'Workspace product-centric',
@@ -156,6 +184,7 @@ export const GLOBAL_NAV_ITEMS: NavItem[] = [
   },
   {
     id: 'scan',
+    group: 'Proyek',
     to: '/scan',
     label: 'Pindai Laptop',
     desc: 'Deteksi otomatis repo lokal',
@@ -164,6 +193,7 @@ export const GLOBAL_NAV_ITEMS: NavItem[] = [
   },
   {
     id: 'ai-hub',
+    group: 'Agent & AI',
     to: '/ai-hub',
     label: 'AI Agent Hub',
     desc: 'Tanamkan System One & MCP',
@@ -172,6 +202,7 @@ export const GLOBAL_NAV_ITEMS: NavItem[] = [
   },
   {
     id: 'mcp',
+    group: 'Agent & AI',
     to: '/mcp',
     label: 'AI & MCP Hub',
     desc: 'Protokol konteks AI agent',
@@ -181,6 +212,7 @@ export const GLOBAL_NAV_ITEMS: NavItem[] = [
   {
     // Peta fungsi yang memanggil LLM luar: yang dikirim, respons yang ditunggu, fungsi lanjutan.
     id: 'llm-algorithm',
+    group: 'Agent & AI',
     to: '/llm-algorithm',
     label: 'Algoritma LLM',
     desc: 'Cara vibeasik memanggil LLM luar',
@@ -189,6 +221,7 @@ export const GLOBAL_NAV_ITEMS: NavItem[] = [
   },
   {
     id: 'orchestrator',
+    group: 'Agent & AI',
     to: '/orchestrator',
     label: 'Orkestrator Agent',
     desc: 'Suruh agent di laptop bekerja',
@@ -197,6 +230,7 @@ export const GLOBAL_NAV_ITEMS: NavItem[] = [
   },
   {
     id: 'agent-office',
+    group: 'Agent & AI',
     to: '/agent-office',
     label: 'Kantor Agent',
     desc: 'Agent AI bekerja secara live',
@@ -206,6 +240,7 @@ export const GLOBAL_NAV_ITEMS: NavItem[] = [
   },
   {
     id: 'staff',
+    group: 'Agent & AI',
     to: '/staff',
     label: 'Pegawai',
     desc: 'Agent berkepribadian & belajar',
@@ -215,6 +250,7 @@ export const GLOBAL_NAV_ITEMS: NavItem[] = [
   {
     // Terpisah dari Pegawai: dewan eksekutif terikat satu proyek, pegawai umum lintas proyek.
     id: 'executives',
+    group: 'Agent & AI',
     to: '/executives',
     label: 'Pegawai Eksekutif',
     desc: 'Dewan CEO, CTO, PO & CMO per proyek',
@@ -224,6 +260,7 @@ export const GLOBAL_NAV_ITEMS: NavItem[] = [
   {
     // Bukan milik satu proyek: satu pintu patokan & pengetahuan umum seluruh pekerja AI.
     id: 'knowledge',
+    group: 'Pengetahuan',
     to: '/knowledge',
     label: 'Pusat Pengetahuan',
     desc: 'Satu pintu patokan & belajar AI',
@@ -232,6 +269,7 @@ export const GLOBAL_NAV_ITEMS: NavItem[] = [
   },
   {
     id: 'knowledge-graph',
+    group: 'Pengetahuan',
     to: '/knowledge-graph',
     label: 'Jaring Pengetahuan',
     desc: 'Peta node & tautan pengetahuan',
@@ -240,6 +278,7 @@ export const GLOBAL_NAV_ITEMS: NavItem[] = [
   },
   {
     id: 'recap',
+    group: 'Pengetahuan',
     to: '/recap',
     label: 'Rekap Progres',
     desc: 'Commit & todo harian',
@@ -249,6 +288,7 @@ export const GLOBAL_NAV_ITEMS: NavItem[] = [
   {
     // Bukan milik satu proyek: referensi desain dipakai bersama oleh semua proyek & agent AI.
     id: 'design-library',
+    group: 'Pengetahuan',
     to: '/design-library',
     label: 'Galeri Desain',
     desc: 'Referensi UI modern untuk AI',
@@ -257,6 +297,7 @@ export const GLOBAL_NAV_ITEMS: NavItem[] = [
   },
   {
     id: 'design-lessons',
+    group: 'Pengetahuan',
     to: '/design-lessons',
     label: 'Pelajaran Desain',
     desc: 'Before / after + prinsip desain',
@@ -265,6 +306,7 @@ export const GLOBAL_NAV_ITEMS: NavItem[] = [
   },
   {
     id: 'plans',
+    group: 'Sistem',
     to: '/plans',
     label: 'Free vs Pro',
     desc: 'Perbandingan paket & akun',
@@ -273,6 +315,7 @@ export const GLOBAL_NAV_ITEMS: NavItem[] = [
   },
   {
     id: 'settings',
+    group: 'Sistem',
     to: '/settings',
     label: 'Pengaturan',
     desc: 'LLM, folder & berbagi pengetahuan',
@@ -280,3 +323,25 @@ export const GLOBAL_NAV_ITEMS: NavItem[] = [
     exact: false
   }
 ]
+
+// Judul halaman untuk navbar (breadcrumb): diambil dari label menu agar selalu sama dengan sidebar.
+const EXTRA_TITLES: Record<string, string> = {
+  '/account': 'Akun',
+  '/upgrade': 'Upgrade ke Pro',
+  '/knowledge-docs': 'Dokumen Pengetahuan',
+  '/setup': 'Penyiapan Awal'
+}
+
+export const pageTitleFor = (path: string): { title: string, section: string } => {
+  if (path.startsWith('/projects/')) {
+    return { title: path.includes('/apps/') ? 'Detail Aplikasi' : 'Detail Proyek', section: 'Proyek aktif' }
+  }
+  const projectItems = buildProjectNavItems(null, null).filter(i => !i.isDetail)
+  const all = [...projectItems, ...GLOBAL_NAV_ITEMS]
+  const hit = all.find(i => i.to === path) || all.find(i => i.to !== '/' && path.startsWith(i.to + '/'))
+  if (hit) {
+    const isProject = projectItems.some(i => i.id === hit.id)
+    return { title: hit.label, section: isProject ? 'Proyek aktif' : (hit.group || 'Workspace') }
+  }
+  return { title: EXTRA_TITLES[path] || 'Workspace', section: 'Workspace' }
+}

@@ -2,7 +2,13 @@
 @import "@nuxt/ui";
 
 @theme static {
-  --font-sans: 'Public Sans', sans-serif;
+  --font-sans: 'Public Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Angka tabular agar skor, jumlah, dan port sejajar di kartu & tabel audit. */
+.tabular-nums, .font-mono {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Skala z-index (satu sumber). Pakai di Tailwind: z-(--z-overlay), atau di CSS: z-index: var(--z-overlay).

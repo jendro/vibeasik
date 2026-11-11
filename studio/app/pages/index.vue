@@ -1,97 +1,150 @@
 <script setup lang="ts">
-useHead({ title: 'Beranda — vibeasik' })
+// Beranda Studio: dasbor kerja auditor — status engine & edisi yang sebenarnya, ringkasan audit proyek aktif,
+// proyek yang perlu perhatian, lalu panduan singkat. Semua angka dibaca dari engine, tidak ditulis tetap.
+import type { Project } from '~/types'
 
-const { apiBase } = useApi()
-const { info, load: loadEdition } = useEdition()
+useHead({ title: 'Beranda' })
+
+const { apiBase, getProjects } = useApi()
+const { info: edition, load: loadEdition } = useEdition()
+const { activeProject, activeProjectId, fetchProjects } = useActiveProject()
 const toast = useToast()
 
+interface LatestDiag {
+  score: number
+  active_findings_count: number
+  resolved_findings_count: number
+  ignored_findings_count: number
+  total_findings: number
+  severity_counts?: Record<string, number>
+  diagnostic?: { created_at?: string }
+}
+interface GuidelineCategory { guidelines?: unknown[] }
+
+const loaded = ref(false)
 const engineOk = ref<boolean | null>(null)
-const projectCount = ref<number | null>(null)
+const projects = ref<Project[] | null>(null)
+const rules = ref<{ total: number, categories: number } | null>(null)
+const latest = ref<LatestDiag | null>(null)
+const latestState = ref<'idle' | 'loading' | 'none' | 'error'>('idle')
+
+const loadLatest = async (id: number | null) => {
+  latest.value = null
+  if (!id) {
+    latestState.value = 'idle'
+    return
+  }
+  latestState.value = 'loading'
+  try {
+    latest.value = await $fetch<LatestDiag>(`${apiBase}/api/projects/${id}/diagnostics/latest`, { timeout: 5000 })
+    latestState.value = 'idle'
+  } catch (e: unknown) {
+    latestState.value = (e as { statusCode?: number })?.statusCode === 404 ? 'none' : 'error'
+  }
+}
 
 onMounted(async () => {
   loadEdition()
-  try {
-    const h = await $fetch<{ status: string }>(`${apiBase}/health`, { timeout: 2000 })
-    engineOk.value = h.status === 'ok'
-  } catch {
-    engineOk.value = false
+  fetchProjects()
+  const [health, list, guides] = await Promise.allSettled([
+    $fetch<{ status: string }>(`${apiBase}/health`, { timeout: 2000 }),
+    getProjects(),
+    $fetch<GuidelineCategory[]>(`${apiBase}/api/guidelines`, { timeout: 4000 })
+  ])
+  engineOk.value = health.status === 'fulfilled' && health.value.status === 'ok'
+  projects.value = list.status === 'fulfilled' ? list.value : null
+  if (guides.status === 'fulfilled' && Array.isArray(guides.value)) {
+    rules.value = { total: guides.value.reduce((n, c) => n + (c.guidelines?.length || 0), 0), categories: guides.value.length }
   }
-  try {
-    const list = await $fetch<unknown[]>(`${apiBase}/api/projects`, { timeout: 3000 })
-    projectCount.value = Array.isArray(list) ? list.length : 0
-  } catch {
-    projectCount.value = null
-  }
+  loaded.value = true
+})
+watch(activeProjectId, id => loadLatest(id), { immediate: true })
+
+const host = useEngineHost()
+const isActive = (p: Project) => !p.status || !['hold', 'done', 'deprecated'].includes(p.status)
+const activeCount = computed(() => projects.value?.filter(isActive).length ?? 0)
+
+// Edisi: jelaskan keadaan fitur Pro apa adanya (bukan kalimat tetap).
+const lockedCount = computed(() => {
+  const f = edition.value?.features
+  return f ? Object.values(f).filter(v => !v).length : 0
+})
+const editionHint = computed(() => {
+  if (!edition.value) return 'Engine tidak melaporkan edisi'
+  if (lockedCount.value === 0) return 'Semua fitur Pro aktif'
+  return `${lockedCount.value} fitur Pro terkunci — masuk akun untuk membuka`
 })
 
-const edisi = computed(() => info.value?.edition || '—')
-const host = computed(() => (import.meta.client ? window.location.host : 'localhost'))
-
-const status = computed(() => [
+const kpis = computed(() => [
   {
-    icon: 'i-lucide-server',
     label: 'Engine lokal',
-    value: engineOk.value === null ? 'memeriksa…' : engineOk.value ? 'Berjalan' : 'Tidak terjangkau',
-    hint: host.value,
-    tone: engineOk.value === false ? 'text-rose-500' : 'text-emerald-500'
+    value: engineOk.value === null ? '…' : engineOk.value ? 'Berjalan' : 'Offline',
+    hint: host.value || 'engine lokal',
+    dot: engineOk.value === null ? 'bg-neutral-400' : engineOk.value ? 'bg-emerald-500' : 'bg-rose-500'
   },
   {
-    icon: 'i-lucide-folder-git-2',
     label: 'Proyek terdaftar',
-    value: projectCount.value === null ? '—' : String(projectCount.value),
-    hint: 'Di komputer ini',
-    tone: 'text-sky-500'
+    value: !loaded.value ? '…' : projects.value === null ? '—' : String(projects.value.length),
+    hint: !loaded.value ? 'Memuat…' : projects.value === null ? 'Gagal memuat' : `${activeCount.value} aktif`,
+    to: '/cockpit'
   },
   {
-    icon: 'i-lucide-package-check',
+    label: 'Rule audit',
+    value: !loaded.value ? '…' : rules.value ? String(rules.value.total) : '—',
+    hint: !loaded.value ? 'Memuat…' : rules.value ? `${rules.value.categories} kategori` : 'Gagal memuat',
+    to: '/audit-report'
+  },
+  {
     label: 'Edisi',
-    value: edisi.value,
-    hint: 'Fitur Pro terkunci sampai masuk akun',
-    tone: 'text-violet-500'
+    value: edition.value?.edition || '—',
+    hint: editionHint.value,
+    to: lockedCount.value ? '/plans' : undefined
   }
 ])
 
+// Proyek aktif yang paling butuh perhatian (skor terendah dulu).
+const attention = computed(() => (projects.value || [])
+  .filter(isActive)
+  .slice()
+  .sort((a, b) => (a.health_score ?? 0) - (b.health_score ?? 0))
+  .slice(0, 6))
+
+const scoreTone = healthTone
+const scoreBar = healthBar
+
+const SEVERITIES = [
+  { key: 'CRITICAL', label: 'Kritis', cls: 'bg-rose-500' },
+  { key: 'HIGH', label: 'Tinggi', cls: 'bg-orange-500' },
+  { key: 'MEDIUM', label: 'Sedang', cls: 'bg-amber-400' },
+  { key: 'LOW', label: 'Rendah', cls: 'bg-sky-400' }
+]
+const severityRows = computed(() => {
+  const c = latest.value?.severity_counts || {}
+  const get = (k: string) => c[k] ?? c[k.toLowerCase()] ?? 0
+  return SEVERITIES.map(s => ({ ...s, count: get(s.key) }))
+})
+const lastAudit = computed(() => {
+  const d = latest.value?.diagnostic?.created_at
+  if (!d) return ''
+  return new Date(d).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
+})
+
+const shortcuts = computed(() => {
+  const id = activeProjectId.value
+  return [
+    { label: 'Temuan audit', icon: 'i-lucide-shield-check', to: '/audit-report' },
+    { label: 'Todo', icon: 'i-lucide-clipboard-check', to: '/todos' },
+    { label: 'Screenshot', icon: 'i-lucide-camera', to: '/screenshots' },
+    { label: 'Peta kode', icon: 'i-lucide-map', to: id ? '/code-map' : '/cockpit' }
+  ]
+})
+
 const steps = [
-  {
-    title: 'Daftarkan proyek Anda',
-    text: 'Klik Daftarkan proyek (atau Import), lalu pilih folder proyek. vibeasik mengenali backend, frontend, dan stack-nya.',
-    cmd: 'vibeasik scan ~/proyek-saya'
-  },
-  {
-    title: 'Jalankan audit',
-    text: 'Buka Audit & Diagnostik dan periksa temuan keamanan, arsitektur, dan API. Setiap temuan menjelaskan apa yang salah dan cara memperbaikinya.',
-    cmd: 'vibeasik diagnose ~/proyek-saya'
-  },
-  {
-    title: 'Atur port tanpa bentrok',
-    text: 'Setiap proyek mendapat blok port sendiri. Lihat dan kelola di halaman Port; jangan memilih port manual.',
-    cmd: 'vibeasik ports'
-  },
-  {
-    title: 'Sambungkan agent coding',
-    text: 'Daftarkan vibeasik sebagai server MCP ke Claude Code, Cursor, Windsurf, atau Antigravity agar agent memakai konteks dan todo proyek.',
-    cmd: 'vibeasik mcp install'
-  },
-  {
-    title: 'Ikut Pusat Pengetahuan (opsional)',
-    text: 'Masuk dengan akun gratis untuk menarik paket panduan dan checklist. Berbagi pengetahuan dapat dilihat dan diatur di halaman Berbagi Pengetahuan.',
-    cmd: 'vibeasik login'
-  }
-]
-
-const features = [
-  { icon: 'i-lucide-search-check', title: 'Audit kode buatan AI', text: '85 rule dalam 12 kategori: arsitektur, keamanan, API, database, deployment.', to: '/audit-report' },
-  { icon: 'i-lucide-layout-grid', title: 'Semua proyek di satu tempat', text: 'Stack, perintah dev, dan todo per proyek yang bisa dibaca agent.', to: '/cockpit' },
-  { icon: 'i-lucide-plug', title: 'Port tanpa bentrok', text: 'Blok port per proyek. Tidak ada lagi dua dev server berebut port 3000.', to: '/ports' },
-  { icon: 'i-lucide-bot', title: 'Server MCP untuk agent', text: 'Satu perintah pemasangan untuk agent coding favorit Anda.', to: '/mcp' },
-  { icon: 'i-lucide-map', title: 'Peta kode & rute', text: 'Konteks ringkas tentang struktur kode agar agent tidak menebak-nebak.', to: '/code-map' },
-  { icon: 'i-lucide-library', title: 'Pusat Pengetahuan', text: 'Panduan dan checklist yang tumbuh bersama pengguna; pencarian tetap lokal.', to: '/knowledge' }
-]
-
-const privacy = [
-  'Kode, fakta proyek, dan kunci API tetap di komputer Anda dan tidak diunggah.',
-  'Engine hanya mendengarkan 127.0.0.1 dan wajib memakai token lokal.',
-  'Yang dikirim ke Pusat Pengetahuan hanya pokok ilmu yang lolos penyaringan, dengan pratinjau dan riwayat yang bisa Anda lihat.'
+  { title: 'Daftarkan proyek', text: 'Pilih folder proyek; vibeasik mengenali backend, frontend, dan stack-nya.', cmd: 'vibeasik scan ~/proyek-saya' },
+  { title: 'Jalankan audit', text: 'Periksa temuan keamanan, arsitektur, dan API beserta cara memperbaikinya.', cmd: 'vibeasik diagnose ~/proyek-saya' },
+  { title: 'Atur port', text: 'Tiap proyek mendapat blok port sendiri; jangan memilih port manual.', cmd: 'vibeasik ports' },
+  { title: 'Sambungkan agent', text: 'Pasang vibeasik sebagai server MCP di Claude Code, Cursor, atau Windsurf.', cmd: 'vibeasik mcp install' },
+  { title: 'Pusat Pengetahuan', text: 'Opsional: masuk akun untuk menarik paket panduan & checklist.', cmd: 'vibeasik login' }
 ]
 
 async function copy(cmd: string) {
@@ -105,143 +158,203 @@ async function copy(cmd: string) {
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto space-y-10 pb-10">
-    <!-- Hero -->
-    <section class="space-y-4 pt-2">
-      <UBadge color="primary" variant="subtle" size="md" icon="i-lucide-laptop">
-        Berjalan di komputer Anda · lokal-dulu
-      </UBadge>
-      <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-neutral-900 dark:text-white">
-        Standar untuk kode<br class="hidden sm:block"> buatan AI
-      </h1>
-      <p class="max-w-2xl text-neutral-600 dark:text-neutral-300">
-        vibeasik mengaudit kode hasil AI, mengatur proyek dan port, dan menjadi server MCP untuk agent coding favorit Anda.
-        Kode Anda tidak pernah diunggah.
-      </p>
-      <div class="flex flex-wrap gap-2 pt-1">
-        <UButton to="/cockpit" icon="i-lucide-layout-grid" size="lg">
-          Buka Cockpit
-        </UButton>
-        <UButton to="/scan" icon="i-lucide-plus" color="neutral" variant="outline" size="lg">
-          Daftarkan proyek
-        </UButton>
-        <UButton to="#tutorial" icon="i-lucide-book-open" color="neutral" variant="ghost" size="lg">
-          Cara memakai
-        </UButton>
-      </div>
-    </section>
-
-    <!-- Status mesin -->
-    <section class="grid grid-cols-1 sm:grid-cols-3 gap-3" aria-label="Status">
-      <div
-        v-for="s in status"
-        :key="s.label"
-        class="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4"
-      >
-        <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-          <UIcon :name="s.icon" class="w-4 h-4" />
-          {{ s.label }}
-        </div>
-        <div class="mt-2 text-2xl font-bold" :class="s.tone">
-          {{ s.value }}
-        </div>
-        <div class="text-xs text-neutral-500 mt-0.5">
-          {{ s.hint }}
-        </div>
-      </div>
-    </section>
-
-    <!-- Tutorial -->
-    <section id="tutorial" class="scroll-mt-20 space-y-4">
-      <div>
-        <div class="text-xs font-mono font-semibold uppercase tracking-wider text-sky-600 dark:text-sky-400">
-          Tutorial
-        </div>
-        <h2 class="text-2xl font-bold text-neutral-900 dark:text-white">
-          Cara menggunakan vibeasik
+  <div class="space-y-8 pb-10">
+    <!-- Kepala halaman -->
+    <header class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div class="space-y-1.5">
+        <p class="text-xs font-medium text-neutral-500 dark:text-slate-400 flex items-center gap-1.5">
+          <UIcon name="i-lucide-lock-keyhole" class="size-3.5" /> Berjalan lokal · kode tidak pernah diunggah
+        </p>
+        <h2 class="text-2xl sm:text-3xl font-semibold tracking-tight text-neutral-950 dark:text-white">
+          Audit kode buatan AI, dari satu tempat
         </h2>
-        <p class="text-sm text-neutral-600 dark:text-neutral-400">
-          Lima langkah dari proyek pertama sampai agent Anda memakainya. Perintah di bawah dijalankan di terminal; semuanya juga bisa lewat Studio ini.
+        <p class="text-sm text-neutral-600 dark:text-slate-400 max-w-2xl">
+          Pantau kesehatan proyek, tindak lanjuti temuan audit, dan beri agent coding konteks yang benar lewat MCP.
         </p>
       </div>
-      <ol class="space-y-3">
+      <div class="flex gap-2 shrink-0">
+        <UButton to="/scan" icon="i-lucide-plus" color="neutral" variant="outline">
+          Daftarkan proyek
+        </UButton>
+        <UButton to="/cockpit" icon="i-lucide-layout-grid" color="neutral">
+          Katalog proyek
+        </UButton>
+      </div>
+    </header>
+
+    <!-- KPI -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-px overflow-hidden rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-neutral-200 dark:bg-white/[0.08]" aria-label="Status">
+      <component
+        :is="k.to ? 'NuxtLink' : 'div'"
+        v-for="k in kpis"
+        :key="k.label"
+        :to="k.to"
+        class="bg-white dark:bg-[#04111f] p-5 space-y-1 transition-colors"
+        :class="k.to ? 'hover:bg-neutral-50 dark:hover:bg-white/[0.03]' : ''"
+      >
+        <div class="text-xs font-medium text-neutral-500 dark:text-slate-400 flex items-center gap-1.5">
+          <span v-if="k.dot" class="size-2 rounded-full" :class="k.dot" />{{ k.label }}
+        </div>
+        <div class="text-2xl font-semibold tracking-tight tabular-nums text-neutral-950 dark:text-white">
+          {{ k.value }}
+        </div>
+        <div class="text-xs text-neutral-500 dark:text-slate-500 truncate" :title="k.hint">
+          {{ k.hint }}
+        </div>
+      </component>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <!-- Proyek aktif -->
+      <section class="lg:col-span-3 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] p-6 space-y-5" aria-label="Proyek aktif">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-xs font-medium text-neutral-500 dark:text-slate-400">
+              Proyek aktif
+            </p>
+            <h3 class="text-lg font-semibold text-neutral-950 dark:text-white truncate">
+              {{ activeProject?.name || 'Belum dipilih' }}
+            </h3>
+          </div>
+          <UButton v-if="activeProject" :to="`/projects/${activeProject.id}`" size="sm" color="neutral" variant="ghost" trailing-icon="i-lucide-arrow-right">
+            Buka
+          </UButton>
+        </div>
+
+        <div v-if="!activeProject" class="rounded-lg border border-dashed border-neutral-300 dark:border-white/10 p-6 text-center space-y-3">
+          <UIcon name="i-lucide-folder-search" class="size-8 text-neutral-400 mx-auto" />
+          <p class="text-sm text-neutral-600 dark:text-slate-400">
+            Pilih proyek di navbar (atau di katalog) untuk melihat skor audit dan temuan terbukanya di sini.
+          </p>
+          <UButton to="/cockpit" size="sm" color="neutral" variant="outline">
+            Pilih dari katalog
+          </UButton>
+        </div>
+
+        <template v-else>
+          <div v-if="latestState === 'loading'" class="h-28 rounded-lg bg-neutral-100 dark:bg-white/5 animate-pulse" />
+          <div v-else-if="latestState === 'none'" class="rounded-lg border border-dashed border-neutral-300 dark:border-white/10 p-5 text-sm text-neutral-600 dark:text-slate-400 flex items-center justify-between gap-3">
+            Proyek ini belum pernah diaudit.
+            <UButton to="/audit-report" size="sm" icon="i-lucide-play">
+              Jalankan audit
+            </UButton>
+          </div>
+          <div v-else-if="latestState === 'error'" class="rounded-lg bg-rose-50 dark:bg-rose-950/30 p-4 text-sm text-rose-700 dark:text-rose-300">
+            Gagal memuat hasil audit terakhir.
+          </div>
+          <div v-else-if="latest" class="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-6 items-center">
+            <div class="flex sm:flex-col items-baseline sm:items-start gap-2">
+              <span class="text-5xl font-semibold tracking-tight tabular-nums" :class="scoreTone(latest.score)">{{ latest.score }}</span>
+              <span class="text-sm text-neutral-500">skor kesehatan / 100</span>
+            </div>
+            <div class="space-y-3">
+              <div class="flex items-baseline justify-between text-sm">
+                <span class="text-neutral-700 dark:text-slate-300"><b class="tabular-nums">{{ latest.active_findings_count }}</b> temuan terbuka</span>
+                <span class="text-xs text-neutral-500 tabular-nums">{{ latest.resolved_findings_count }} selesai · {{ latest.ignored_findings_count }} diabaikan</span>
+              </div>
+              <div class="grid grid-cols-4 gap-2">
+                <div v-for="s in severityRows" :key="s.key" class="rounded-lg bg-neutral-50 dark:bg-white/[0.03] px-3 py-2">
+                  <div class="flex items-center gap-1.5 text-xs text-neutral-500">
+                    <span class="size-1.5 rounded-full" :class="s.cls" />{{ s.label }}
+                  </div>
+                  <div class="text-lg font-semibold tabular-nums text-neutral-900 dark:text-white">
+                    {{ s.count }}
+                  </div>
+                </div>
+              </div>
+              <p v-if="lastAudit" class="text-xs text-neutral-500">
+                Audit terakhir {{ lastAudit }}
+              </p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+            <NuxtLink
+              v-for="s in shortcuts"
+              :key="s.label"
+              :to="s.to"
+              class="flex items-center gap-2 rounded-lg border border-neutral-200 dark:border-white/[0.08] px-3 h-10 text-sm text-neutral-700 dark:text-slate-300 hover:border-sky-500/50 hover:text-sky-700 dark:hover:text-sky-300 transition-colors"
+            >
+              <UIcon :name="s.icon" class="size-4 shrink-0 text-neutral-400" />
+              <span class="truncate">{{ s.label }}</span>
+            </NuxtLink>
+          </div>
+        </template>
+      </section>
+
+      <!-- Perlu perhatian -->
+      <section class="lg:col-span-2 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] p-6 space-y-4" aria-label="Proyek perlu perhatian">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-semibold text-neutral-950 dark:text-white">
+            Skor terendah
+          </h3>
+          <NuxtLink to="/cockpit" class="text-xs text-neutral-500 hover:text-sky-600">Semua proyek</NuxtLink>
+        </div>
+        <div v-if="!loaded" class="space-y-2">
+          <div v-for="i in 4" :key="i" class="h-9 rounded-lg bg-neutral-100 dark:bg-white/5 animate-pulse" />
+        </div>
+        <p v-else-if="projects === null" class="text-sm text-rose-600">
+          Gagal memuat daftar proyek.
+        </p>
+        <p v-else-if="!attention.length" class="text-sm text-neutral-500">
+          Belum ada proyek aktif.
+        </p>
+        <ul v-else class="divide-y divide-neutral-100 dark:divide-white/[0.06]">
+          <li v-for="p in attention" :key="p.id">
+            <NuxtLink :to="`/projects/${p.id}`" class="flex items-center gap-3 py-2.5 group">
+              <span class="flex-1 min-w-0 text-sm text-neutral-700 dark:text-slate-300 truncate group-hover:text-sky-700 dark:group-hover:text-sky-300">{{ p.name }}</span>
+              <span class="w-20 h-1.5 rounded-full bg-neutral-100 dark:bg-white/10 overflow-hidden">
+                <span class="block h-full rounded-full" :class="scoreBar(p.health_score ?? 0)" :style="{ width: `${p.health_score ?? 0}%` }" />
+              </span>
+              <span class="w-8 text-right text-sm font-semibold tabular-nums" :class="scoreTone(p.health_score ?? 0)">{{ p.health_score ?? 0 }}</span>
+            </NuxtLink>
+          </li>
+        </ul>
+      </section>
+    </div>
+
+    <!-- Panduan singkat -->
+    <section id="tutorial" class="scroll-mt-20 space-y-4">
+      <div class="flex items-end justify-between gap-3">
+        <div>
+          <h3 class="text-sm font-semibold text-neutral-950 dark:text-white">
+            Mulai dalam lima langkah
+          </h3>
+          <p class="text-sm text-neutral-500 dark:text-slate-400">
+            Perintah terminal; semuanya juga bisa dilakukan dari Studio ini.
+          </p>
+        </div>
+      </div>
+      <ol class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         <li
           v-for="(s, i) in steps"
           :key="s.title"
-          class="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4 flex gap-4"
+          class="rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] p-4 flex flex-col gap-2"
         >
-          <div class="shrink-0 w-8 h-8 rounded-full bg-sky-600 text-white text-sm font-bold flex items-center justify-center">
-            {{ i + 1 }}
-          </div>
-          <div class="min-w-0 flex-1 space-y-2">
-            <h3 class="font-semibold text-neutral-900 dark:text-white">
-              {{ s.title }}
-            </h3>
-            <p class="text-sm text-neutral-600 dark:text-neutral-400">
-              {{ s.text }}
-            </p>
-            <button
-              type="button"
-              class="w-full text-left flex items-center justify-between gap-3 rounded-lg bg-neutral-950 text-neutral-100 px-3 py-2 font-mono text-xs hover:bg-neutral-900"
-              :aria-label="`Salin perintah ${s.cmd}`"
-              @click="copy(s.cmd)"
-            >
-              <span class="truncate"><span class="text-sky-400">$ </span>{{ s.cmd }}</span>
-              <UIcon name="i-lucide-copy" class="w-3.5 h-3.5 shrink-0 text-neutral-400" />
-            </button>
-          </div>
+          <span class="text-xs font-mono text-neutral-400">0{{ i + 1 }}</span>
+          <h4 class="text-sm font-semibold text-neutral-900 dark:text-white">
+            {{ s.title }}
+          </h4>
+          <p class="text-xs text-neutral-600 dark:text-slate-400 flex-1">
+            {{ s.text }}
+          </p>
+          <button
+            type="button"
+            class="w-full text-left flex items-center justify-between gap-2 rounded-md bg-neutral-950 text-neutral-100 px-2.5 py-1.5 font-mono text-xs hover:bg-neutral-800"
+            :aria-label="`Salin perintah ${s.cmd}`"
+            @click="copy(s.cmd)"
+          >
+            <span class="truncate">{{ s.cmd }}</span>
+            <UIcon name="i-lucide-copy" class="size-3.5 shrink-0 text-neutral-400" />
+          </button>
         </li>
       </ol>
-    </section>
-
-    <!-- Fitur -->
-    <section class="space-y-4">
-      <div>
-        <div class="text-xs font-mono font-semibold uppercase tracking-wider text-sky-600 dark:text-sky-400">
-          Fitur
-        </div>
-        <h2 class="text-2xl font-bold text-neutral-900 dark:text-white">
-          Yang dikerjakan vibeasik untuk Anda
-        </h2>
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        <NuxtLink
-          v-for="f in features"
-          :key="f.title"
-          :to="f.to"
-          class="group rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4 space-y-2 hover:border-sky-500/50 transition-colors"
-        >
-          <div class="w-9 h-9 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center">
-            <UIcon :name="f.icon" class="w-5 h-5" />
-          </div>
-          <h3 class="font-semibold text-neutral-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400">{{ f.title }}</h3>
-          <p class="text-sm text-neutral-600 dark:text-neutral-400">{{ f.text }}</p>
-        </NuxtLink>
-      </div>
-    </section>
-
-    <!-- Privasi -->
-    <section class="rounded-xl border border-sky-500/30 bg-sky-500/5 p-5 space-y-3">
-      <h2 class="text-lg font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-        <UIcon name="i-lucide-shield-check" class="w-5 h-5 text-sky-500" />
-        Lokal-dulu, dengan sengaja
-      </h2>
-      <ul class="space-y-1.5 text-sm text-neutral-700 dark:text-neutral-300 list-disc pl-5">
-        <li v-for="p in privacy" :key="p">
-          {{ p }}
-        </li>
-      </ul>
-      <div class="flex flex-wrap gap-2 pt-1">
-        <UButton to="/settings?tab=knowledge_sync" size="sm" color="neutral" variant="outline" icon="i-lucide-hand-heart">
-          Berbagi Pengetahuan
-        </UButton>
-        <UButton to="https://vibeasik.com/terms" target="_blank" size="sm" color="neutral" variant="ghost" icon="i-lucide-file-text">
-          Syarat &amp; Ketentuan
-        </UButton>
-        <UButton to="https://github.com/vibeasik/vibeasik" target="_blank" size="sm" color="neutral" variant="ghost" icon="i-lucide-github">
-          GitHub
-        </UButton>
-      </div>
+      <p class="text-xs text-neutral-500 dark:text-slate-500 flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span class="inline-flex items-center gap-1"><UIcon name="i-lucide-shield-check" class="size-3.5" /> Engine hanya mendengarkan 127.0.0.1 dan wajib token lokal.</span>
+        <NuxtLink to="/settings?tab=knowledge_sync" class="underline-offset-2 hover:underline">Berbagi pengetahuan</NuxtLink>
+        <a href="https://vibeasik.com/terms" target="_blank" rel="noopener" class="underline-offset-2 hover:underline">Syarat &amp; ketentuan</a>
+        <a href="https://github.com/vibeasik/vibeasik" target="_blank" rel="noopener" class="underline-offset-2 hover:underline">GitHub</a>
+      </p>
     </section>
   </div>
 </template>

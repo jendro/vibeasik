@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { pageTitleFor } from '~/utils/sidebarMenuItems'
+
 const apiConnected = ref(true)
 const checking = ref(false)
 const { apiBase } = useApi()
@@ -50,10 +52,12 @@ onMounted(() => {
   onUnmounted(() => clearInterval(interval))
 })
 
+// Judul tab mengikuti nama halaman di menu (halaman yang memanggil useHead sendiri tetap menang).
 useHead({
-  title: 'vibeasik.com - Vibecoder Delivery, Domain, Hosting & AI Agent Hub',
+  title: computed(() => pageTitleFor(route.path).title),
+  titleTemplate: (t?: string) => (t && !t.includes('vibeasik') ? `${t} · vibeasik Studio` : t || 'vibeasik Studio'),
   meta: [
-    { name: 'description', content: 'Platform all-in-one untuk vibecoder memastikan app buatan aman, bebas port bentrok, dan mudah dimaintenance.' }
+    { name: 'description', content: 'vibeasik Studio: audit kode buatan AI, kelola proyek & port, dan konteks MCP untuk agent coding — berjalan lokal.' }
   ]
 })
 </script>
@@ -86,7 +90,7 @@ useHead({
 
     <!-- 2. ADMIN & COCKPIT WORKSPACE LAYOUT (Requires Authentication) -->
     <template v-else>
-      <div class="min-h-screen bg-slate-50 dark:bg-[#020c18] text-slate-900 dark:text-slate-100 flex font-sans transition-colors duration-200">
+      <div class="min-h-screen bg-white dark:bg-[#020c18] text-neutral-900 dark:text-slate-100 flex font-sans transition-colors duration-200">
         <!-- Left Sidebar (Desktop persistent + Mobile drawer) -->
         <AppSidebar
           :collapsed="sidebarCollapsed"
