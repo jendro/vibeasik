@@ -4,12 +4,15 @@ import (
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -23,9 +26,22 @@ import (
 const (
 	lanCookie      = "va_lan"
 	lanMaxAttempts = 5
+	lanSessionTTL  = 30 * 24 * time.Hour // sama dengan cookie Studio dari `vibeasik open`
+	lanStateFile   = "lan-gate.json"
 )
 
-var lanListenPort int
+var (
+	lanListenPort int
+	lanShowPIN    bool
+)
+
+// lanState PIN & sesi gerbang yang disimpan (0600) agar restart gerbang tidak memaksa masuk ulang.
+type lanState struct {
+	PIN      string               `json:"pin"`
+	Sessions map[string]time.Time `json:"sessions"`
+}
+
+func lanStatePath() string { return filepath.Join(localauth.Dir(), lanStateFile) }
 
 // lanGate gerbang LAN: proxy ke engine lokal yang hanya dibuka setelah PIN 6 digit benar.
 // Token engine tidak pernah keluar dari laptop; proxy menyisipkannya sendiri ke setiap request.
@@ -35,6 +51,8 @@ type lanGate struct {
 	failures int
 	sessions map[string]time.Time
 	token    string
+	origin   string // origin engine; Origin browser LAN diterjemahkan ke sini
+	state    string // berkas penyimpan PIN & sesi ("" = hanya di memori)
 	proxy    *httputil.ReverseProxy
 	onRotate func(pin string)
 }
@@ -48,7 +66,7 @@ func newPIN() string {
 }
 
 func newLanGate(engine *url.URL, token string) *lanGate {
-	g := &lanGate{pin: newPIN(), sessions: map[string]time.Time{}, token: token}
+	g := &lanGate{pin: newPIN(), sessions: map[string]time.Time{}, token: token, origin: engine.Scheme + "://" + engine.Host}
 	p := httputil.NewSingleHostReverseProxy(engine)
 	dir := p.Director
 	p.Director = func(r *http.Request) {
@@ -56,11 +74,56 @@ func newLanGate(engine *url.URL, token string) *lanGate {
 		r.Host = engine.Host // engine menolak Host selain loopback (anti DNS-rebinding)
 		r.Header.Set(localauth.Header, g.token)
 		r.Header.Del("Cookie")
+		r.Header.Del("Referer")
+		// Sesi ber-PIN setara pemakai di laptop: Origin gerbang (sudah dicek sama-asal di ServeHTTP) diterjemahkan
+		// ke origin engine supaya penjaga eksekusi memperlakukannya seperti Studio yang dibuka dari localhost.
+		if r.Header.Get("Origin") != "" {
+			r.Header.Set("Origin", g.origin)
+		}
 		r.Header.Del("X-Forwarded-For")
 	}
 	p.FlushInterval = -1 // SSE/WebSocket tanpa buffer
 	g.proxy = p
 	return g
+}
+
+// restore memuat PIN & sesi yang masih berlaku dari berkas; sesudahnya setiap perubahan disimpan ke sana.
+func (g *lanGate) restore(path string) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.state = path
+	var st lanState
+	if b, err := os.ReadFile(path); err == nil && json.Unmarshal(b, &st) == nil && len(st.PIN) == 6 {
+		g.pin = st.PIN
+		now := time.Now()
+		for k, exp := range st.Sessions {
+			if now.Before(exp) {
+				g.sessions[k] = exp
+			}
+		}
+	}
+	g.saveLocked()
+}
+
+// saveLocked menulis keadaan gerbang; dipanggil dengan g.mu terkunci.
+func (g *lanGate) saveLocked() {
+	if g.state == "" {
+		return
+	}
+	b, err := json.Marshal(lanState{PIN: g.pin, Sessions: g.sessions})
+	if err != nil {
+		return
+	}
+	tmp := g.state + ".tmp"
+	if os.WriteFile(tmp, b, 0o600) == nil {
+		_ = os.Rename(tmp, g.state)
+	}
+}
+
+// sameOrigin: Origin browser harus halaman gerbang ini sendiri; website lain tidak boleh menumpang sesi.
+func sameOrigin(origin, host string) bool {
+	u, err := url.Parse(origin)
+	return err == nil && u.Host != "" && strings.EqualFold(u.Host, host)
 }
 
 func (g *lanGate) PIN() string {
@@ -83,14 +146,16 @@ func (g *lanGate) try(pin string) (session string, ok bool) {
 		b := make([]byte, 24)
 		_, _ = rand.Read(b)
 		s := hex.EncodeToString(b)
-		g.sessions[s] = time.Now().Add(12 * time.Hour)
+		g.sessions[s] = time.Now().Add(lanSessionTTL)
 		g.failures = 0
+		g.saveLocked()
 		return s, true
 	}
 	g.failures++
 	if g.failures >= lanMaxAttempts {
 		g.pin, g.failures = newPIN(), 0
 		rotated = g.pin
+		g.saveLocked()
 	}
 	return "", false
 }
@@ -105,6 +170,7 @@ func (g *lanGate) authed(r *http.Request) bool {
 	exp, ok := g.sessions[c.Value]
 	if ok && time.Now().After(exp) {
 		delete(g.sessions, c.Value)
+		g.saveLocked()
 		return false
 	}
 	return ok
@@ -138,7 +204,7 @@ func (g *lanGate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if s, ok := g.try(strings.TrimSpace(r.PostFormValue("pin"))); ok {
-			http.SetCookie(w, &http.Cookie{Name: lanCookie, Value: s, Path: "/", HttpOnly: true, SameSite: http.SameSiteStrictMode, MaxAge: 12 * 3600})
+			http.SetCookie(w, &http.Cookie{Name: lanCookie, Value: s, Path: "/", HttpOnly: true, SameSite: http.SameSiteStrictMode, MaxAge: int(lanSessionTTL.Seconds())})
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
@@ -152,6 +218,10 @@ func (g *lanGate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusUnauthorized)
 		fmt.Fprintf(w, lanPage, "")
+		return
+	}
+	if o := r.Header.Get("Origin"); o != "" && !sameOrigin(o, r.Host) {
+		http.Error(w, "origin ditolak", http.StatusForbidden)
 		return
 	}
 	g.proxy.ServeHTTP(w, r)
@@ -177,9 +247,16 @@ var lanCmd = &cobra.Command{
 	Long: `Membuka gerbang di jaringan lokal ke engine yang berjalan di laptop ini. Dari komputer lain cukup buka
 alamat yang tampil lalu ketik PIN 6 digit — tanpa menyalin token. Engine tetap bind 127.0.0.1 dan token tidak
 pernah meninggalkan laptop. PIN diganti otomatis setelah 5 kali salah. Gerbang hanya menerima koneksi dari
-IP privat dan berhenti saat perintah dihentikan (Ctrl+C). Lalu lintas LAN memakai HTTP biasa: pakai hanya di jaringan tepercaya.`,
+IP privat dan berhenti saat perintah dihentikan (Ctrl+C). Lalu lintas LAN memakai HTTP biasa: pakai hanya di jaringan tepercaya.
+
+Setelah PIN benar, komputer itu setara dengan Studio yang dibuka lewat 'vibeasik open': semua aksi tersedia,
+termasuk yang menjalankan perintah di laptop ini. Sesi berlaku 30 hari dan, bersama PIN, bertahan saat gerbang
+dijalankan ulang. 'vibeasik lan --pin' menampilkan alamat dan PIN yang sedang berlaku.`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if lanShowPIN {
+			return printLanPIN(cmd)
+		}
 		token, err := localauth.Token()
 		if err != nil {
 			return err
@@ -194,6 +271,7 @@ IP privat dan berhenti saat perintah dihentikan (Ctrl+C). Lalu lintas LAN memaka
 		resp.Body.Close()
 
 		g := newLanGate(engine, token)
+		g.restore(lanStatePath())
 		ln, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", lanListenPort))
 		if err != nil {
 			return err
@@ -209,7 +287,23 @@ IP privat dan berhenti saat perintah dihentikan (Ctrl+C). Lalu lintas LAN memaka
 	},
 }
 
+// printLanPIN menampilkan alamat & PIN gerbang yang sedang berlaku (dari berkas keadaan).
+func printLanPIN(cmd *cobra.Command) error {
+	var st lanState
+	b, err := os.ReadFile(lanStatePath())
+	if err != nil || json.Unmarshal(b, &st) != nil || st.PIN == "" {
+		return fmt.Errorf("gerbang LAN belum pernah dijalankan — jalankan `vibeasik lan` dulu")
+	}
+	out := cmd.OutOrStdout()
+	for _, u := range lanURLs(lanListenPort) {
+		fmt.Fprintln(out, "  ", u)
+	}
+	fmt.Fprintf(out, "PIN: %s\n", st.PIN)
+	return nil
+}
+
 func init() {
+	lanCmd.Flags().BoolVar(&lanShowPIN, "pin", false, "Tampilkan alamat dan PIN yang sedang berlaku lalu keluar")
 	lanCmd.Flags().IntVar(&lanListenPort, "listen", 8766, "Port gerbang LAN")
 	rootCmd.AddCommand(lanCmd)
 }

@@ -12,6 +12,7 @@ serta **membaca kode** proyek Anda. Karena itu engine dikunci secara bawaan.
 | Token akses lokal | Wajib untuk semua API, MCP HTTP, dan halaman Studio — **termasuk dari localhost**, karena website mana pun yang Anda buka di browser bisa mengirim request ke localhost. Disimpan di `~/.vibeasik/token` (izin `0600`) |
 | Studio | Masuk lewat `vibeasik open` atau tautan `/auth?t=…` yang dicetak `vibeasik serve`; token disimpan sebagai cookie `HttpOnly`, `SameSite=Strict` |
 | Penjaga eksekusi | Aksi yang menjalankan atau menyimpan perintah shell hanya dari loopback dengan origin localhost, walau pemanggil punya token. LAN: `VIBEASIK_ALLOW_LAN_EXEC=1` atau `VIBEASIK_EXEC_TOKEN` + header `X-Vibeasik-Exec-Token` |
+| Gerbang LAN | `vibeasik lan`: proxy ber-PIN 6 digit di port 8766; engine tetap bind `127.0.0.1` dan token tidak keluar dari laptop. Hanya IP privat, PIN berganti setelah 5 kali salah, Origin selain halaman gerbang ditolak. Komputer yang lolos PIN setara dengan `vibeasik open` (termasuk aksi eksekusi) selama 30 hari; PIN & sesi disimpan di `~/.vibeasik/lan-gate.json` (0600). HTTP biasa: hanya untuk jaringan tepercaya |
 | CORS | Hanya dev server Studio (`http://localhost:8760`); ubah lewat `VIBEASIK_CORS_ORIGINS` |
 | Header | `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: no-referrer` |
 

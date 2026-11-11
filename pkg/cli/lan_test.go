@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
 
@@ -66,5 +67,67 @@ func TestLanAllowedPeer(t *testing.T) {
 	}
 	if !strings.HasPrefix(newPIN(), "") || len(newPIN()) != 6 {
 		t.Error("PIN harus 6 digit")
+	}
+}
+
+func TestLanGateOriginAndRestore(t *testing.T) {
+	var gotOrigin, gotReferer string
+	hits := 0
+	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits++
+		gotOrigin, gotReferer = r.Header.Get("Origin"), r.Header.Get("Referer")
+	}))
+	defer engine.Close()
+	eu, _ := url.Parse(engine.URL)
+	state := t.TempDir() + "/lan-gate.json"
+	g := newLanGate(eu, "rahasia")
+	g.restore(state)
+	srv := httptest.NewServer(g)
+	defer srv.Close()
+	session, ok := g.try(g.PIN())
+	if !ok {
+		t.Fatal("PIN benar ditolak")
+	}
+	post := func(base, origin string) int {
+		req, _ := http.NewRequest("POST", base+"/api/agents/execute", nil)
+		req.AddCookie(&http.Cookie{Name: lanCookie, Value: session})
+		if origin != "" {
+			req.Header.Set("Origin", origin)
+			req.Header.Set("Referer", origin+"/office")
+		}
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return resp.StatusCode
+	}
+
+	// Origin halaman gerbang sendiri: diteruskan sebagai origin engine, seperti Studio dari localhost
+	if code := post(srv.URL, srv.URL); code != 200 || gotOrigin != engine.URL || gotReferer != "" {
+		t.Fatalf("origin gerbang: status=%d origin=%q referer=%q", code, gotOrigin, gotReferer)
+	}
+	// website lain tidak boleh menumpang sesi
+	before := hits
+	if code := post(srv.URL, "http://jahat.example"); code != 403 || hits != before {
+		t.Fatalf("origin asing harus 403 tanpa menyentuh engine, dapat %d", code)
+	}
+	// klien tanpa Origin (curl) tetap lolos tanpa Origin buatan
+	if code := post(srv.URL, ""); code != 200 || gotOrigin != "" {
+		t.Fatalf("tanpa origin: status=%d origin=%q", code, gotOrigin)
+	}
+
+	// gerbang dijalankan ulang: PIN dan sesi bertahan
+	g2 := newLanGate(eu, "rahasia")
+	g2.restore(state)
+	srv2 := httptest.NewServer(g2)
+	defer srv2.Close()
+	if g2.PIN() != g.PIN() {
+		t.Fatal("PIN harus bertahan setelah gerbang dijalankan ulang")
+	}
+	if code := post(srv2.URL, srv2.URL); code != 200 {
+		t.Fatalf("sesi harus bertahan setelah gerbang dijalankan ulang, dapat %d", code)
+	}
+	if fi, err := os.Stat(state); err != nil || fi.Mode().Perm() != 0o600 {
+		t.Fatalf("berkas keadaan harus 0600: %v", err)
 	}
 }
