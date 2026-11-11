@@ -202,6 +202,7 @@ func (s *Server) setupRoutes() {
 	api.Post("/settings/llm/configs/:id/activate", s.activateLLMConfig)
 	api.Put("/settings/llm/configs/:id/vision", s.setLLMModelVision)
 	api.Put("/settings/llm/configs/:id/alias", s.setLLMModelAlias)
+	api.Post("/settings/llm/models/discover", s.discoverLLMModels)
 	api.Get("/settings/workspace", s.getWorkspaceSettings)
 	api.Put("/settings/workspace", s.updateWorkspaceSettings)
 

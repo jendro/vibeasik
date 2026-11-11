@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { AuditVerdict, Finding, FindingVerification } from '~/types'
 
+const { modelName } = useModelNames()
+
 // Modal vonis pembelajaran audit: cek ulang temuan via LLM, lalu manusia memutuskan
 // "audit keliru" (kode sudah benar → rule perlu update) atau "temuan benar".
 const open = defineModel<boolean>('open', { default: false })
@@ -153,7 +155,7 @@ const save = async () => {
               >
                 {{ verificationLabel }}
               </UBadge>
-              <span class="text-xs text-neutral-500 font-mono">yakin {{ verification.confidence }}% · {{ verification.model }}</span>
+              <span class="text-xs text-neutral-500 font-mono">yakin {{ verification.confidence }}% · {{ modelName(verification.model) }}</span>
             </div>
             <p class="text-neutral-700 dark:text-neutral-300 leading-relaxed">
               {{ verification.reason }}

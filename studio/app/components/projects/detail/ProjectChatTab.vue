@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { Project, ProjectChatMessageDTO, LLMPlannerTodoItem, LLMConfig, TodoPriority, TodoLevel, ProjectBaseKnowledge } from '~/types'
 
+const { modelName } = useModelNames()
+
 const props = defineProps<{
   project: Project
   cachedBaseKnowledge?: ProjectBaseKnowledge | null
@@ -419,7 +421,7 @@ const getPriorityBadgeClass = (priority: string) => {
                 Kajian & Analisis Dampak Arsitektur
               </span>
               <span v-if="msg.model_name" class="text-xs font-mono text-slate-400">
-                model: {{ msg.model_name }}
+                model: {{ modelName(msg.model_name) }}
               </span>
             </div>
 

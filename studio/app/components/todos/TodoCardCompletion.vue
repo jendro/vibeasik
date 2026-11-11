@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { Todo } from '~/types'
 
+const { modelName } = useModelNames()
+
 defineProps<{ todo: Todo }>()
 const { formatDateTime } = useFormatters()
 </script>
@@ -33,7 +35,7 @@ const { formatDateTime } = useFormatters()
       >
         <UIcon name="i-lucide-cpu" class="w-3 h-3 text-sky-500" />
         <span>Model:</span>
-        <span class="font-semibold">{{ todo.completed_by_model }}</span>
+        <span class="font-semibold">{{ modelName(todo.completed_by_model) }}</span>
       </div>
 
       <!-- QA Score Badge -->

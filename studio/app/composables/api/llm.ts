@@ -88,6 +88,10 @@ export const useLlmApi = () => {
     })
   }
 
+  /** Ambil katalog model provider (GET {url}/models): id dikirim ke LLM, display_name hanya untuk tampilan. */
+  const discoverLLMModels = async (payload: { url?: string, key?: string, config_id?: number }): Promise<{ models: DiscoveredLLMModel[] }> =>
+    await $fetch<{ models: DiscoveredLLMModel[] }>(`${apiBase}/api/settings/llm/models/discover`, { method: 'POST', body: payload })
+
   const getLLMPool = async (): Promise<LLMPoolResponse> => await $fetch<LLMPoolResponse>(`${apiBase}/api/llm/pool`)
 
   const resetLLMProvider = async (id: number) => await $fetch(`${apiBase}/api/llm/providers/${id}/reset`, { method: 'POST' })
@@ -106,6 +110,7 @@ export const useLlmApi = () => {
     setActiveProvider,
     selectActiveModel,
     testLLMConnection,
+    discoverLLMModels,
     getLLMPool,
     resetLLMProvider
   }

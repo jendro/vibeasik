@@ -25,6 +25,13 @@ export interface TestCensorResponse {
   audit: SecurityAudit
 }
 
+/** Satu model dari katalog /models provider. */
+export interface DiscoveredLLMModel {
+  id: string
+  display_name?: string
+  owned_by?: string
+}
+
 export interface LLMConfig {
   id: number
   provider: 'system_one' | 'standard_llm'

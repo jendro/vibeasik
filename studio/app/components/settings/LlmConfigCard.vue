@@ -147,7 +147,7 @@ const visionTitle = (mod: string) => {
             <UIcon name="i-lucide-eye" class="w-3 h-3" /> {{ item.models.filter(m => item.vision?.[m]).length }} vision
           </span>
           <span v-if="item.selected_model" class="text-neutral-400 font-mono">
-            Default: {{ item.selected_model }}
+            Default: {{ aliasOf(item.selected_model) || item.selected_model }}
           </span>
         </div>
 

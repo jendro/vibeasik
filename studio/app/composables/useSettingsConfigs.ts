@@ -16,6 +16,7 @@ export function useSettingsConfigs(opts: {
   const { notify, configs, activeViewTab, systemOneConfigs, standardLLMConfigs } = opts
   const { createLLMConfig, updateLLMConfig, setLLMModelVision, setLLMModelAlias, deleteLLMConfig, activateLLMConfig } = useApi()
   const { triggerPing, refreshLLMState } = useLLMState()
+  const { refreshModelNames } = useModelNames()
 
   const testingConfigId = ref<number | null>(null)
 
@@ -63,7 +64,8 @@ export function useSettingsConfigs(opts: {
           key: formData.key,
           models: formData.models,
           selected_model: formData.selected_model,
-          is_active: formData.is_active
+          is_active: formData.is_active,
+          aliases: formData.aliases
         })
         notify(`Konfigurasi '${formData.name}' berhasil diperbarui.`)
       } else {
@@ -74,13 +76,15 @@ export function useSettingsConfigs(opts: {
           key: formData.key,
           models: formData.models,
           selected_model: formData.selected_model,
-          is_active: formData.is_active
+          is_active: formData.is_active,
+          aliases: formData.aliases
         })
         notify(`Konfigurasi '${formData.name}' berhasil ditambahkan ke grid.`)
       }
       isModalOpen.value = false
       await opts.reload()
       await refreshLLMState()
+      await refreshModelNames()
     } catch (err: any) {
       notify(`Gagal menyimpan konfigurasi: ${err.message || err}`, 'error')
     } finally {
@@ -114,6 +118,7 @@ export function useSettingsConfigs(opts: {
       const updated = await setLLMModelAlias(cfg.id, model, alias)
       configs.value = configs.value.map(c => (c.id === cfg.id ? { ...c, aliases: updated.aliases } : c))
       notify(alias ? `${model} sekarang tampil sebagai "${alias}".` : `Alias ${model} dihapus.`)
+      await refreshModelNames()
       if (cfg.is_active) await refreshLLMState()
     } catch (err: any) {
       notify(`Gagal menyimpan alias: ${err?.data?.error || err.message || err}`, 'error')

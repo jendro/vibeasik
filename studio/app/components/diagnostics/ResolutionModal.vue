@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { ResolutionResponse } from '~/types'
 
+const { modelName } = useModelNames()
+
 const open = defineModel<boolean>('open', { default: false })
 
 const props = defineProps<{
@@ -64,7 +66,7 @@ const goToTodos = () => {
             </span>
             <div class="flex items-center gap-1.5 text-neutral-500 text-xs">
               <UIcon name="i-lucide-cpu" class="w-3.5 h-3.5" />
-              <span>Model: <strong class="text-neutral-700 dark:text-neutral-300">{{ resolution.model_used }}</strong></span>
+              <span>Model: <strong class="text-neutral-700 dark:text-neutral-300">{{ modelName(resolution.model_used) }}</strong></span>
             </div>
           </div>
 

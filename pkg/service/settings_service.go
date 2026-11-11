@@ -217,6 +217,9 @@ func (s *settingsService) UpdateConfig(ctx context.Context, id uint, updates *mo
 	if updates.SelectedModel != "" {
 		existing.SelectedModel = updates.SelectedModel
 	}
+	if updates.AliasJSON != "" {
+		existing.AliasJSON = updates.AliasJSON
+	}
 
 	if updates.IsActive && !existing.IsActive {
 		if err := s.settingsRepo.UpdateConfig(ctx, existing); err != nil {

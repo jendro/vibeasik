@@ -19,10 +19,12 @@ const emit = defineEmits<{
     models: string[]
     selected_model: string
     is_active: boolean
+    aliases: Record<string, string>
   }]
 }>()
 
 const toast = useToast()
+const { discoverLLMModels } = useApi()
 
 const showKey = ref(false)
 const newModelInput = ref('')
@@ -37,6 +39,7 @@ const form = ref<{
   models: string[]
   selected_model: string
   is_active: boolean
+  aliases: Record<string, string>
 }>({
   id: 0,
   provider: 'system_one',
@@ -46,7 +49,8 @@ const form = ref<{
   masked_key: '',
   models: [],
   selected_model: '',
-  is_active: false
+  is_active: false,
+  aliases: {}
 })
 
 const systemOnePresets = [
@@ -75,7 +79,8 @@ watch(() => props.initialConfig, (cfg) => {
       masked_key: cfg.masked_key || cfg.key || '',
       models: cfg.models?.length ? [...cfg.models] : (cfg.selected_model ? [cfg.selected_model] : []),
       selected_model: cfg.selected_model || (cfg.models?.[0] || ''),
-      is_active: cfg.is_active || false
+      is_active: cfg.is_active || false,
+      aliases: { ...(cfg.aliases || {}) }
     }
   }
 }, { immediate: true })
@@ -94,6 +99,42 @@ const applyPreset = (preset: any) => {
     form.value.selected_model = preset.defaultModel
   } else if (preset.model) {
     form.value.selected_model = preset.model
+  }
+}
+
+// Nama tampilan (display_name) hanya untuk vibeasik; yang dikirim ke LLM luar tetap id model.
+const nameOf = (mod: string) => form.value.aliases[mod] || ''
+
+const discovering = ref(false)
+const discoverModels = async () => {
+  if (!form.value.url.trim() && !form.value.id) {
+    toast.add({ title: 'Isi Endpoint URL dulu', description: 'Daftar model diambil dari {URL}/models.', icon: 'i-lucide-alert-circle', color: 'warning' })
+    return
+  }
+  discovering.value = true
+  try {
+    const res = await discoverLLMModels({ url: form.value.url.trim(), key: form.value.key.trim(), config_id: form.value.id || undefined })
+    const list = res.models || []
+    if (!list.length) {
+      toast.add({ title: 'Katalog kosong', description: 'Provider tidak mengembalikan model.', icon: 'i-lucide-info', color: 'warning' })
+      return
+    }
+    const ids = list.map(m => m.id)
+    const added = ids.filter(id => !form.value.models.includes(id)).length
+    form.value.models = [...form.value.models.filter(m => !ids.includes(m)), ...ids]
+    const aliases = { ...form.value.aliases }
+    for (const m of list) {
+      if (m.display_name && !aliases[m.id]) aliases[m.id] = m.display_name
+    }
+    form.value.aliases = aliases
+    if (!form.value.selected_model || !form.value.models.includes(form.value.selected_model)) {
+      form.value.selected_model = form.value.models[0] || ''
+    }
+    toast.add({ title: 'Daftar model diambil', description: `${list.length} model dari provider (${added} baru).`, icon: 'i-lucide-check', color: 'success' })
+  } catch (err: any) {
+    toast.add({ title: 'Gagal mengambil daftar model', description: err?.data?.error || err?.message || String(err), icon: 'i-lucide-alert-circle', color: 'error' })
+  } finally {
+    discovering.value = false
   }
 }
 
@@ -120,6 +161,8 @@ const removeModel = (mod: string) => {
     return
   }
   form.value.models = form.value.models.filter(m => m !== mod)
+  const { [mod]: _removed, ...rest } = form.value.aliases
+  form.value.aliases = rest
   if (form.value.selected_model === mod) {
     form.value.selected_model = form.value.models[0] || ''
   }
@@ -153,7 +196,8 @@ const handleSubmit = () => {
     key: form.value.key.trim(),
     models: form.value.models,
     selected_model: form.value.selected_model,
-    is_active: form.value.is_active
+    is_active: form.value.is_active,
+    aliases: Object.fromEntries(Object.entries(form.value.aliases).filter(([m, a]) => form.value.models.includes(m) && a.trim()))
   })
 }
 </script>
@@ -272,23 +316,35 @@ const handleSubmit = () => {
             <label class="block font-medium text-neutral-700 dark:text-neutral-300">
               Model yang Bisa Digunakan pada Konfigurasi Ini *
             </label>
-            <span class="text-xs text-neutral-500">
-              Klik model untuk menjadikannya default
-            </span>
+            <UButton
+              v-if="form.provider === 'standard_llm'"
+              size="xs"
+              color="neutral"
+              variant="outline"
+              icon="i-lucide-download"
+              :loading="discovering"
+              @click="discoverModels"
+            >
+              Ambil dari provider
+            </UButton>
           </div>
+          <p class="text-xs text-neutral-500 dark:text-neutral-400">
+            Klik model untuk menjadikannya default. Nama tampilan diambil dari <code class="font-mono">display_name</code> katalog provider; yang dikirim ke LLM tetap id model.
+          </p>
 
           <!-- List of Models -->
           <div class="flex flex-wrap gap-1.5 min-h-8 p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200 dark:border-neutral-700">
             <span
               v-for="mod in form.models"
               :key="mod"
-              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-mono border transition-colors cursor-pointer select-none"
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border transition-colors cursor-pointer select-none"
               :class="form.selected_model === mod
                 ? 'bg-sky-100 dark:bg-sky-950 border-sky-400 dark:border-sky-700 text-sky-900 dark:text-sky-200 font-bold'
                 : 'bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300'"
               @click="form.selected_model = mod"
             >
-              <span>{{ mod }}</span>
+              <span v-if="nameOf(mod)" :title="mod">{{ nameOf(mod) }}</span>
+              <span :class="nameOf(mod) ? 'font-mono text-neutral-400 dark:text-neutral-500' : 'font-mono'">{{ mod }}</span>
               <span v-if="form.selected_model === mod" class="text-xs uppercase font-sans text-sky-700 dark:text-sky-300">
                 ✓
               </span>

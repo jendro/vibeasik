@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/vibeasik/vibeasik/pkg/models"
+	"github.com/vibeasik/vibeasik/pkg/service"
 )
 
 func (s *Server) getLLMSettings(c *fiber.Ctx) error {
@@ -127,12 +128,37 @@ type UpsertLLMConfigPayload struct {
 	Models        []string `json:"models"`
 	SelectedModel string   `json:"selected_model"`
 	IsActive      bool     `json:"is_active"`
+	// Aliases: nama tampilan per model (mis. display_name dari katalog provider). nil = tidak diubah.
+	Aliases map[string]string `json:"aliases"`
+}
+
+// aliasJSONFor menyimpan alias hanya untuk model yang terdaftar; "" bila payload tidak membawa aliases.
+func aliasJSONFor(aliases map[string]string, modelList []string) string {
+	if aliases == nil {
+		return ""
+	}
+	cfg := models.LLMConfig{AliasJSON: "{}"}
+	for _, m := range modelList {
+		m = strings.TrimSpace(m)
+		if a := strings.TrimSpace(aliases[m]); a != "" && a != m {
+			cfg.SetModelAlias(m, a)
+		}
+	}
+	return cfg.AliasJSON
 }
 
 // validateLLMConfigPayload memeriksa bentuk payload config LLM (create & update): panjang, provider, URL http(s).
 func validateLLMConfigPayload(p UpsertLLMConfigPayload) string {
 	if len(p.Models) > 500 {
 		return "field models maksimal 500 item"
+	}
+	if len(p.Aliases) > 500 {
+		return "field aliases maksimal 500 item"
+	}
+	for _, a := range p.Aliases {
+		if msg := maxLen("aliases[]", a, maxName); msg != "" {
+			return msg
+		}
 	}
 	for _, m := range p.Models {
 		if msg := maxLen("models[]", m, maxName); msg != "" {
@@ -168,6 +194,7 @@ func (s *Server) createLLMConfig(c *fiber.Ctx) error {
 		Key:           payload.Key,
 		SelectedModel: payload.SelectedModel,
 		IsActive:      payload.IsActive,
+		AliasJSON:     aliasJSONFor(payload.Aliases, payload.Models),
 	}
 
 	dto, err := s.services.Settings.CreateConfig(c.Context(), &cfg, payload.Models)
@@ -196,6 +223,7 @@ func (s *Server) updateLLMConfig(c *fiber.Ctx) error {
 		Key:           payload.Key,
 		SelectedModel: payload.SelectedModel,
 		IsActive:      payload.IsActive,
+		AliasJSON:     aliasJSONFor(payload.Aliases, payload.Models),
 	}
 
 	dto, err := s.services.Settings.UpdateConfig(c.Context(), uint(id), &cfgUpdates, payload.Models)
@@ -297,4 +325,39 @@ func (s *Server) setLLMModelAlias(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(cfg.ToDTO())
+}
+
+// discoverLLMModels: POST /settings/llm/models/discover {url, key, config_id} — ambil katalog model provider
+// (id + display_name). Key kosong/termasking memakai key tersimpan milik config_id. Key tidak pernah dikembalikan.
+func (s *Server) discoverLLMModels(c *fiber.Ctx) error {
+	c.Set(fiber.HeaderCacheControl, "no-store")
+	var body struct {
+		URL      string `json:"url"`
+		Key      string `json:"key"`
+		ConfigID uint   `json:"config_id"`
+	}
+	if msg := firstProblem(bindJSONRequired(c, &body), maxLen("url", body.URL, maxURL), maxLen("key", body.Key, maxName*2)); msg != "" {
+		return badPayload(c, msg)
+	}
+	url, key := strings.TrimSpace(body.URL), strings.TrimSpace(body.Key)
+	if body.ConfigID > 0 && (key == "" || models.IsMaskedKey(key) || url == "") {
+		var cfg models.LLMConfig
+		if err := s.db.First(&cfg, body.ConfigID).Error; err != nil {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "configuration not found"})
+		}
+		if url == "" {
+			url = cfg.URL
+		}
+		if key == "" || models.IsMaskedKey(key) {
+			key = cfg.Key
+		}
+	}
+	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+		return badPayload(c, "field url harus diawali http:// atau https://")
+	}
+	list, err := service.DiscoverLLMModels(c.Context(), url, key)
+	if err != nil {
+		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"models": list})
 }

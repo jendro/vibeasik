@@ -2,6 +2,8 @@
 import type { Finding } from '~/types'
 import type { DropdownMenuItem } from '@nuxt/ui'
 
+const { modelName } = useModelNames()
+
 const props = defineProps<{
   finding: Finding
   resolving: boolean
@@ -218,7 +220,7 @@ const getCategoryColor = (cat: string) => {
             variant="soft"
             icon="i-lucide-sparkles"
             class="font-mono text-xs font-bold tracking-wider uppercase px-1.5 py-0"
-            :title="`Temuan dari review audit LLM${finding.model_used ? ` (${finding.model_used})` : ''} — verifikasi sebelum diterapkan`"
+            :title="`Temuan dari review audit LLM${finding.model_used ? ` (${modelName(finding.model_used)})` : ''} — verifikasi sebelum diterapkan`"
           >
             LLM
           </UBadge>
@@ -373,7 +375,7 @@ const getCategoryColor = (cat: string) => {
             </span>
             <span v-if="finding.model_used" class="flex items-center gap-1 text-xs text-neutral-500 font-mono">
               <UIcon name="i-lucide-cpu" class="w-3.5 h-3.5" />
-              {{ finding.model_used }}
+              {{ modelName(finding.model_used) }}
             </span>
           </div>
 

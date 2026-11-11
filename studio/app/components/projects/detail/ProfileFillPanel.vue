@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { Project, ProjectProfile } from '~/types'
 
+const { modelName } = useModelNames()
+
 const props = defineProps<{
   project: Project
   profile: ProjectProfile
@@ -53,7 +55,7 @@ const startWaiting = () => {
       if (fresh.source === 'agent' && fresh.generated_at !== since) {
         stopWaiting()
         emit('updated', fresh)
-        toast.add({ title: 'Profil Diperbarui oleh Agent', description: fresh.model || 'AI agent via MCP', icon: 'i-lucide-bot', color: 'success' })
+        toast.add({ title: 'Profil Diperbarui oleh Agent', description: modelName(fresh.model) || 'AI agent via MCP', icon: 'i-lucide-bot', color: 'success' })
       }
     } catch {
       // engine may be busy; try again on the next tick
@@ -144,7 +146,7 @@ const savePasted = async () => {
         <UIcon :name="sourceInfo.icon" class="w-4 h-4 shrink-0 mt-0.5" :class="sourceInfo.tone === 'sky' ? 'text-sky-500' : 'text-amber-500'" />
         <div class="min-w-0">
           <div class="font-semibold text-neutral-800 dark:text-neutral-100">
-            {{ sourceInfo.label }}<span v-if="profile.model && profile.source !== 'heuristic'" class="font-mono font-normal text-neutral-500"> · {{ profile.model }}</span>
+            {{ sourceInfo.label }}<span v-if="profile.model && profile.source !== 'heuristic'" class="font-mono font-normal text-neutral-500"> · {{ modelName(profile.model) }}</span>
           </div>
           <div class="text-neutral-500 mt-0.5">
             <template v-if="profile.source !== 'heuristic'">

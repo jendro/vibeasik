@@ -58,7 +58,8 @@ export const useLLMState = () => {
   }
 
   /** Nama tampilan model: alias dari konfigurasi aktif bila ada, selain itu nama model asli. */
-  const modelLabel = (model: string) => activeStandardConfig.value?.aliases?.[model] || model
+  const { modelName } = useModelNames()
+  const modelLabel = (model: string) => activeStandardConfig.value?.aliases?.[model] || modelName(model)
 
   const dismissPing = () => {
     pingResult.value = null
