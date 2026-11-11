@@ -93,10 +93,24 @@ type ProfileRoadmapItem struct {
 	RelatedFeatures []string `json:"related_features"`
 }
 
+// Risk handling status constants
+const (
+	RiskStatusOpen       = "open"        // belum ada tindak lanjut
+	RiskStatusPlanned    = "planned"     // sudah dijadikan todo, belum dikerjakan
+	RiskStatusInProgress = "in_progress" // todo-nya sedang dikerjakan
+	RiskStatusHandled    = "handled"     // todo-nya selesai atau ditandai sudah ditangani
+	RiskStatusAccepted   = "accepted"    // disadari & diterima pemilik, tidak ditindaklanjuti
+)
+
 type ProfileRisk struct {
 	Title    string `json:"title"`
 	Severity string `json:"severity"` // high | medium | low
 	Detail   string `json:"detail"`
+	// Penanganan: diisi pemilik (atau diturunkan dari status todo yang ditautkan), bukan oleh LLM.
+	Status    string     `json:"status,omitempty"` // open | planned | in_progress | handled | accepted
+	TodoID    *uint      `json:"todo_id,omitempty"`
+	Note      string     `json:"note,omitempty"`
+	HandledAt *time.Time `json:"handled_at,omitempty"`
 }
 
 // ProfileStats are computed from facts (never from the LLM) so the numbers stay trustworthy.
