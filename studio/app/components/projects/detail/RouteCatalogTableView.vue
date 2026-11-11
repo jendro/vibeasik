@@ -4,6 +4,8 @@ import type { ComponentRoute } from '~/types'
 defineProps<{
   filteredRoutes: ComponentRoute[]
   isFrontend: boolean
+  projectId?: number
+  componentId?: number
   expandedRequests: Record<number, boolean>
   copiedPath: string | null
 }>()
@@ -182,6 +184,14 @@ const handleDelete = (route: ComponentRoute) => emit('delete', route)
             <!-- Aksi -->
             <td class="py-3.5 px-4 text-center align-top whitespace-nowrap">
               <div class="flex items-center justify-center gap-1">
+                <NuxtLink
+                  :to="clientRoomRouteLink(projectId, componentId, r.path, isFrontend)"
+                  class="p-1 rounded text-neutral-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/40"
+                  :title="isFrontend ? 'Minta dewan proyek merombak desain halaman ini di Ruang Klien' : 'Minta dewan proyek menambah atau mengubah rute ini di Ruang Klien'"
+                  :aria-label="isFrontend ? `Rombak desain halaman ${r.path}` : `Minta perubahan rute ${r.path}`"
+                >
+                  <UIcon :name="isFrontend ? 'i-lucide-palette' : 'i-lucide-handshake'" class="w-3.5 h-3.5 block" />
+                </NuxtLink>
                 <button
                   type="button"
                   class="p-1 rounded text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"

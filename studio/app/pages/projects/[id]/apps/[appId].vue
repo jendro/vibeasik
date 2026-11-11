@@ -9,6 +9,7 @@ const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 const { getProject, checkPorts } = useApi()
+const { selectActiveProject } = useActiveProject()
 
 const projectId = computed(() => Number(route.params.id))
 const appId = computed(() => Number(route.params.appId))
@@ -19,7 +20,7 @@ const loading = ref(true)
 const APP_TABS = ['blueprint', 'fast_scan', 'diagnostics', 'mcp'] as const
 type AppTab = typeof APP_TABS[number]
 const activeTab = ref<AppTab>('blueprint')
-const clientRoomLink = computed(() => ({ path: '/client-room', query: { app: String(appId.value) } }))
+const clientRoomTarget = computed(() => clientRoomLink({ projectId: projectId.value, componentId: appId.value }))
 
 const comp = computed<ProjectComponent | null>(() => {
   return project.value?.components?.find(c => c.id === appId.value) ?? null
@@ -82,6 +83,8 @@ const loadData = async (quiet = false) => {
   try {
     const proj = await getProject(projectId.value)
     project.value = proj
+    // Proyek aktif mengikuti aplikasi yang dibuka, sama seperti halaman detail proyek.
+    selectActiveProject(projectId.value)
     if (comp.value && comp.value.port > 0) {
       await checkActivePort()
     }
@@ -100,7 +103,7 @@ const loadData = async (quiet = false) => {
 }
 
 const applyTabQuery = (tab: unknown) => {
-  if (tab === 'ai') return navigateTo(clientRoomLink.value, { replace: true })
+  if (tab === 'ai') return navigateTo(clientRoomTarget.value, { replace: true })
   if (typeof tab === 'string' && (APP_TABS as readonly string[]).includes(tab)) activeTab.value = tab as AppTab
 }
 

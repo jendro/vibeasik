@@ -330,6 +330,8 @@ defineExpose({
       v-else-if="viewMode === 'grouped'"
       :grouped-routes="groupedRoutes"
       :is-frontend="isFrontend"
+      :project-id="project?.id"
+      :component-id="comp?.id"
       :expanded-requests="expandedRequests"
       :copied-path="copiedPath"
       @toggle-expand="toggleExpandRequests"
@@ -342,6 +344,8 @@ defineExpose({
       v-else
       :filtered-routes="filteredRoutes"
       :is-frontend="isFrontend"
+      :project-id="project?.id"
+      :component-id="comp?.id"
       :expanded-requests="expandedRequests"
       :copied-path="copiedPath"
       @toggle-expand="toggleExpandRequests"

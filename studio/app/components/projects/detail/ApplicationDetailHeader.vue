@@ -209,7 +209,7 @@ const tabs = computed<AppTabItem[]>(() => [
       </div>
       <!-- Satu pintu permintaan: fitur & rombak desain aplikasi ini diajukan ke dewan proyek di Ruang Klien -->
       <NuxtLink
-        :to="{ path: '/client-room', query: isFrontend ? { app: String(comp.id), kind: 'design' } : { app: String(comp.id) } }"
+        :to="clientRoomLink({ projectId: project.id, componentId: comp.id, kind: isFrontend ? 'design' : undefined })"
         :title="isFrontend ? 'Minta dewan proyek merombak desain atau menambah fitur aplikasi ini' : 'Minta dewan proyek menambah atau mengubah fitur aplikasi ini'"
         class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors text-xs text-sky-700 dark:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-950/50"
       >
