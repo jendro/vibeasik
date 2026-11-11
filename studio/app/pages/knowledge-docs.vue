@@ -128,14 +128,14 @@ const CURATOR = [
   ['Pangkas', 'Butir asli ✗ ≥ 3 & utilitas < 30% → dipensiunkan. Patokan berkas ✗ ≥ 3 & < 40% → ditandai "perlu ditinjau" (berkasnya yang diperbaiki); dilepas bila pulih ≥ 50%.'],
   ['Tautan ulang', 'Tiap butir ke 3 tetangga terdekat (kemiripan ≥ 0,25); keahlian pribadi hanya bertaut ke pemilik yang sama / pustaka bersama.'],
   ['Klaster ulang', 'Butir terkuat jadi pusat lebih dulu; gabung bila kemiripan ke pusat ≥ 0,3; label = 4 kata terberat; minimal 2 butir.'],
-  ['Tutup yang tak akan dinilai', 'Pemakaian "menunggu nilai" ditutup netral (✓/✗ tidak berubah) bila: review audit atau perencanaan tanpa hasil lebih dari 7 hari, todo sudah dihapus, atau todo selesai & bernilai lebih dari 24 jam (sisa pengerjaan ulang yang tidak dinilai lagi).'],
+  ['Tutup yang tak akan dinilai', 'Pemakaian "menunggu nilai" ditutup netral (✓/✗ tidak berubah) bila: pemakaian apa pun tanpa hasil lebih dari 7 hari, todo sudah dihapus, todo selesai & bernilai lebih dari 24 jam (sisa pengerjaan ulang yang tidak dinilai lagi), atau todo selesai tanpa nilai lebih dari 48 jam (penilaiannya tidak pernah datang).'],
   ['Bersih-bersih', 'Catatan pemakaian lebih dari 30 hari dihapus.']
 ]
 
 const CONSTS = [
   ['Dedup saat tulis', '0,8'], ['Tautan minimal / per butir', '0,25 / 3'], ['Lebur saat kurasi', '0,85'], ['Klaster', '0,3'],
   ['Relevansi minimal', '0,08'], ['Bonus domain', '0,12'], ['Peluruhan kebaruan', '45 hari'], ['Butir minimal sebelum celah dicatat', '20'],
-  ['Interval kurator', '15 menit'], ['Tunggu hasil audit/perencanaan', '7 hari'], ['Jeda setelah todo dinilai', '24 jam'], ['Simpan catatan pemakaian', '30 hari'], ['Percobaan belajar celah', '3']
+  ['Interval kurator', '15 menit'], ['Tunggu hasil pemakaian', '7 hari'], ['Jeda setelah todo dinilai', '24 jam'], ['Tunggu nilai todo selesai', '48 jam'], ['Simpan catatan pemakaian', '30 hari'], ['Percobaan belajar celah', '3']
 ]
 
 const active = ref('ringkas')

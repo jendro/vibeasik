@@ -12,30 +12,33 @@ import (
 )
 
 const (
-	// verdictWait: batas tunggu hasil untuk konteks selain todo (review audit tanpa vonis, perencanaan).
+	// verdictWait: batas tunggu hasil untuk konteks apa pun (berkas audit tanpa vonis, perencanaan, todo yang
+	// prompt-nya sudah dibangun tetapi tidak kunjung selesai). Pekerjaan yang dilanjutkan mencatat pemakaian baru.
 	verdictWait = 7 * 24 * time.Hour
 	// reviewGrace: jeda setelah todo selesai & bernilai sebelum pemakaian yang tersisa dianggap tidak akan dinilai.
 	reviewGrace = 24 * time.Hour
+	// reviewWait: todo selesai yang selama ini belum dinilai tidak akan dinilai lagi (review datang dalam sehari).
+	reviewWait  = 48 * time.Hour
 	settleBatch = 500
 )
 
 // SettleStale menutup pemakaian yang tidak akan pernah mendapat hasil sebagai netral, sehingga hitungan
 // "menunggu nilai" hanya berisi pekerjaan yang memang masih berjalan. ✓/✗ node tidak berubah: tanpa hasil kerja
 // yang dinilai tidak ada bukti untuk node itu. Yang ditutup:
-//   - konteks selain todo yang lebih tua dari verdictWait (berkas audit tanpa vonis, perencanaan);
+//   - pemakaian yang lebih tua dari verdictWait, apa pun konteksnya;
 //   - todo yang sudah dihapus;
 //   - todo selesai yang sudah bernilai lebih dari reviewGrace: penilaiannya sudah lewat, jadi pemakaian yang
-//     tersisa berasal dari pengerjaan ulang yang tidak dinilai lagi.
+//     tersisa berasal dari pengerjaan ulang yang tidak dinilai lagi;
+//   - todo selesai tanpa nilai lebih dari reviewWait: penilaiannya tidak pernah datang.
 //
-// Todo yang masih dikerjakan, atau selesai tetapi belum dinilai, tidak disentuh. Mengembalikan jumlah pemakaian
-// yang ditutup.
+// Todo yang masih dikerjakan atau baru saja selesai tidak disentuh. Mengembalikan jumlah pemakaian yang ditutup.
 func SettleStale(db *gorm.DB, now time.Time) int {
 	if db == nil {
 		return 0
 	}
 	settled := 0
 	res := db.Model(&models.KnowledgeUse{}).
-		Where("outcome = ? AND context NOT LIKE ? AND created_at < ?", "", "todo:%", now.Add(-verdictWait)).
+		Where("outcome = ? AND created_at < ?", "", now.Add(-verdictWait)).
 		Update("outcome", models.KnowledgeOutcomeNeutral)
 	if res.Error != nil {
 		log.Printf("[Knowledge] menutup pemakaian tanpa hasil gagal: %v", res.Error)
@@ -68,10 +71,8 @@ func SettleStale(db *gorm.DB, now time.Time) int {
 		log.Printf("[Knowledge] membaca todo pemakaian yang menunggu gagal: %v", err)
 		return settled
 	}
-	cutoff := now.Add(-reviewGrace)
 	for _, t := range todos {
-		reviewed := t.Status == models.TodoStatusCompleted && t.Score != nil && t.CompletedAt != nil && t.CompletedAt.Before(cutoff)
-		if !reviewed {
+		if !todoSettled(t, now) {
 			delete(byTodo, t.ID)
 		}
 	}
@@ -90,4 +91,16 @@ func SettleStale(db *gorm.DB, now time.Time) int {
 		settled += int(res.RowsAffected)
 	}
 	return settled
+}
+
+// todoSettled: todo selesai yang masa tunggu penilaiannya sudah habis.
+func todoSettled(t models.Todo, now time.Time) bool {
+	if t.Status != models.TodoStatusCompleted || t.CompletedAt == nil {
+		return false
+	}
+	wait := reviewWait
+	if t.Score != nil {
+		wait = reviewGrace
+	}
+	return t.CompletedAt.Before(now.Add(-wait))
 }

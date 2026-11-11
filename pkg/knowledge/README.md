@@ -203,9 +203,9 @@ Urutan dalam `Curate`:
 6. **Hitung ulang klaster**: leader clustering (node terkuat jadi pusat lebih dulu, gabung bila kemiripan ke
    pusat klaster ≥ 0,3), label = 4 kata terberat, klaster minimal 2 node.
 7. **Tutup pemakaian yang tidak akan dinilai** (`SettleStale`): ditandai netral, ✓/✗ node tidak berubah —
-   konteks selain todo (review audit tanpa vonis, perencanaan) lebih dari 7 hari, todo yang sudah dihapus, dan
-   todo selesai yang sudah bernilai lebih dari 24 jam (sisa pengerjaan ulang yang tidak dinilai lagi). Todo yang
-   masih dikerjakan atau belum dinilai tetap menunggu.
+   pemakaian apa pun tanpa hasil lebih dari 7 hari, todo yang sudah dihapus, todo selesai yang sudah bernilai
+   lebih dari 24 jam (sisa pengerjaan ulang yang tidak dinilai lagi), dan todo selesai tanpa nilai lebih dari
+   48 jam (penilaiannya tidak pernah datang). Todo yang masih dikerjakan atau baru selesai tetap menunggu.
 8. Hapus catatan pemakaian lebih dari 30 hari.
 
 ### Penilai QA memakai rubrik + patokan kantor
@@ -282,8 +282,9 @@ Celah yang diabaikan manusia tidak dibuka otomatis lagi.
 | Peluruhan kebaruan (`recencyDays`) | 45 hari | `recall.go` |
 | Minimal node sebelum celah dicatat (`minGapCorpus`) | 20 | `recall.go` |
 | Interval kurator | 15 menit (pertama 20 dtk setelah start) | `curate.go` |
-| Tunggu hasil konteks selain todo (`verdictWait`) | 7 hari | `settle.go` |
+| Tunggu hasil pemakaian (`verdictWait`) | 7 hari | `settle.go` |
 | Jeda setelah todo dinilai (`reviewGrace`) | 24 jam | `settle.go` |
+| Tunggu nilai todo selesai (`reviewWait`) | 48 jam | `settle.go` |
 | Simpan catatan pemakaian | 30 hari | `curate.go` |
 | Percobaan belajar celah | 3 | `gaps.go` |
 

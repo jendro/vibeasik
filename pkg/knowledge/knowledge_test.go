@@ -279,43 +279,54 @@ func TestSettleStaleClosesOnlyUsesThatWillNeverBeScored(t *testing.T) {
 		t.Fatal(err)
 	}
 	now := time.Now()
+	ago := func(h int) time.Time { return now.Add(-time.Duration(h) * time.Hour) }
 	node := mustLearn(t, db, Note{Title: "Tutup stream", Content: "Selalu batalkan StreamSubscription di dispose.", Kind: models.KnowledgeKindRule, Domain: "flutter"})
-	score, old, fresh := 60, now.Add(-48*time.Hour), now.Add(-time.Hour)
+	score, days3, hours30, hour1 := 60, ago(72), ago(30), ago(1)
 	todos := []models.Todo{
-		{Title: "selesai, dinilai, dikerjakan ulang", Status: models.TodoStatusCompleted, Score: &score, CompletedAt: &old},
-		{Title: "selesai, baru saja dinilai", Status: models.TodoStatusCompleted, Score: &score, CompletedAt: &fresh},
-		{Title: "selesai, belum dinilai", Status: models.TodoStatusCompleted, CompletedAt: &old},
-		{Title: "masih dikerjakan", Status: models.TodoStatusInProgress, Score: &score, CompletedAt: &old},
+		{Title: "selesai, dinilai, dikerjakan ulang", Status: models.TodoStatusCompleted, Score: &score, CompletedAt: &hours30},
+		{Title: "selesai, baru saja dinilai", Status: models.TodoStatusCompleted, Score: &score, CompletedAt: &hour1},
+		{Title: "selesai, tidak pernah dinilai", Status: models.TodoStatusCompleted, CompletedAt: &days3},
+		{Title: "selesai kemarin, belum dinilai", Status: models.TodoStatusCompleted, CompletedAt: &hours30},
+		{Title: "masih dikerjakan", Status: models.TodoStatusInProgress, Score: &score, CompletedAt: &days3},
+		{Title: "prompt dibangun, tidak kunjung dikerjakan", Status: models.TodoStatusPending},
 	}
 	if err := db.Create(&todos).Error; err != nil {
 		t.Fatal(err)
 	}
 	todoCtx := func(i int) string { return fmt.Sprintf("todo:%d", todos[i].ID) }
-	want := map[string]string{
-		todoCtx(0):         models.KnowledgeOutcomeNeutral,
-		todoCtx(1):         "",
-		todoCtx(2):         "",
-		todoCtx(3):         "",
-		"todo:999999":      models.KnowledgeOutcomeNeutral, // todo sudah dihapus
-		"audit:1:lama.go":  models.KnowledgeOutcomeNeutral,
-		"plan:1":           models.KnowledgeOutcomeNeutral,
-		"audit:1:baru.go":  "",
-		"todo:bukan-angka": "",
+	neutral := models.KnowledgeOutcomeNeutral
+	cases := []struct {
+		ctx  string
+		at   time.Time
+		want string
+	}{
+		{todoCtx(0), ago(48), neutral},
+		{todoCtx(1), ago(48), ""},
+		{todoCtx(2), ago(80), neutral},
+		{todoCtx(3), ago(48), ""},
+		{todoCtx(4), ago(48), ""},
+		{todoCtx(5), ago(8 * 24), neutral},
+		{"todo:999999", ago(24), neutral}, // todo sudah dihapus
+		{"audit:1:lama.go", ago(8 * 24), neutral},
+		{"plan:1", ago(8 * 24), neutral},
+		{"audit:1:baru.go", ago(24), ""},
+		{"todo:bukan-angka", ago(24), ""},
 	}
-	for ctx := range want {
-		at := now.Add(-8 * 24 * time.Hour)
-		if ctx == "audit:1:baru.go" {
-			at = now.Add(-24 * time.Hour)
+	want, closed := map[string]string{}, 0
+	for _, c := range cases {
+		want[c.ctx] = c.want
+		if c.want != "" {
+			closed++
 		}
-		if err := db.Create(&models.KnowledgeUse{NodeID: node.ID, Context: ctx, CreatedAt: at}).Error; err != nil {
+		if err := db.Create(&models.KnowledgeUse{NodeID: node.ID, Context: c.ctx, CreatedAt: c.at}).Error; err != nil {
 			t.Fatal(err)
 		}
 	}
-	done := models.KnowledgeUse{NodeID: node.ID, Context: "audit:1:lama.go", Outcome: models.KnowledgeOutcomeHelpful, CreatedAt: now.Add(-9 * 24 * time.Hour)}
+	done := models.KnowledgeUse{NodeID: node.ID, Context: "audit:1:lama.go", Outcome: models.KnowledgeOutcomeHelpful, CreatedAt: ago(9 * 24)}
 	db.Create(&done)
 
-	if n := SettleStale(db, now); n != 4 {
-		t.Fatalf("harus menutup 4 pemakaian tanpa hasil, dapat %d", n)
+	if n := SettleStale(db, now); n != closed {
+		t.Fatalf("harus menutup %d pemakaian tanpa hasil, dapat %d", closed, n)
 	}
 	var uses []models.KnowledgeUse
 	db.Where("id <> ?", done.ID).Find(&uses)
