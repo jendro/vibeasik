@@ -39,7 +39,8 @@ const categories = [
   { id: 'mobile', label: 'Android & Mobile', icon: 'i-lucide-smartphone' },
   { id: 'code_smell', label: 'Code Smells', icon: 'i-lucide-flame' },
   { id: 'security', label: 'Keamanan', icon: 'i-lucide-shield-alert' },
-  { id: 'deployment', label: 'Deploy & Env', icon: 'i-lucide-hard-drive-upload' }
+  { id: 'deployment', label: 'Deploy & Env', icon: 'i-lucide-hard-drive-upload' },
+  { id: 'risk', label: 'Risiko proyek', icon: 'i-lucide-triangle-alert' }
 ]
 
 // Kategori utama tampil sebagai tab; sisanya di menu "Lainnya" agar baris filter ringkas.

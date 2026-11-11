@@ -57,6 +57,8 @@ var penaltyRules = []penaltyRule{
 	{ruleIDs: []string{ruleNPlusOneChain}, points: 3},
 	{ruleIDs: []string{rulePolynomialGrowth}, points: 1},
 	{category: "git", points: 0},
+	// Risiko profil = potret analisis (bukan pengukuran kode): ditindaklanjuti sebagai todo, tidak menurunkan skor.
+	{category: CategoryRisk, points: 0},
 }
 
 // severityPenalty: pengurangan skor menurut tingkat keparahan (default 1).
@@ -299,6 +301,9 @@ func AnalyzeProject(project *models.Project, allProjects []models.Project) (*mod
 
 	// 6. Deep Static Code Inspection (Database Queries, Routers, and Application Code Smells)
 	findings = append(findings, InspectProjectCode(project)...)
+
+	// Risiko profil proyek yang belum ditindaklanjuti ikut diaudit (alur audit → todo)
+	findings = append(findings, projectRiskFindings(project)...)
 
 	// 7. Generate Optimizations & AI Prompts
 	optimizations := generateOptimizations(project, findings, hasBackend, len(feComponents))

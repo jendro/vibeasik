@@ -168,11 +168,8 @@ const stats = computed(() => {
     <ProjectsDetailProfileFeatureList :features="profile.features" />
 
     <ProjectsDetailProfileDirection
-      :project-id="project.id"
       :roadmap="profile.roadmap"
-      :risks="profile.risks"
       :open-questions="profile.open_questions"
-      @updated="emit('updated', $event)"
     />
   </div>
 </template>

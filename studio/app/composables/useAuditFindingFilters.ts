@@ -57,7 +57,8 @@ export function useAuditFindingFilters(reportData: Ref<DiagnosticReportResponse 
       security: 0,
       port: 0,
       architecture: 0,
-      runtime: 0
+      runtime: 0,
+      risk: 0
     }
     const list = reportData.value?.findings || []
     for (const f of list) {

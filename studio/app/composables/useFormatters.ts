@@ -92,6 +92,8 @@ export const useFormatters = () => {
       case 'deployment':
       case 'config':
         return 'i-lucide-hard-drive-upload'
+      case 'risk':
+        return 'i-lucide-triangle-alert'
       default:
         return 'i-lucide-alert-circle'
     }

@@ -153,6 +153,8 @@ const getCategoryColor = (cat: string) => {
     case 'deployment':
     case 'config':
       return 'text-orange-500'
+    case 'risk':
+      return 'text-amber-500'
     default:
       return 'text-neutral-500'
   }

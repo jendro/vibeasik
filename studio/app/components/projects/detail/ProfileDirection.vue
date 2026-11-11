@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import type { ProfileHorizon, ProfileRisk, ProfileRoadmapItem, ProjectProfile } from '~/types'
+import type { ProfileHorizon, ProfileRoadmapItem } from '~/types'
 
+// Risiko proyek tidak lagi ditampilkan di sini: risiko hasil analisis profil langsung menjadi todo (bila sudah
+// menunjuk berkas) atau temuan audit (kategori "risk") yang ditindaklanjuti lewat halaman Audit.
 const props = defineProps<{
-  projectId: number
   roadmap: ProfileRoadmapItem[]
-  risks: ProfileRisk[]
   openQuestions: string[]
 }>()
-const emit = defineEmits<{ updated: [profile: ProjectProfile] }>()
 
 const horizons: { key: ProfileHorizon, label: string, hint: string, dot: string }[] = [
   { key: 'now', label: 'Sekarang', hint: 'Dikerjakan / harus segera', dot: 'bg-sky-500' },
@@ -90,6 +89,4 @@ const byHorizon = computed(() => {
       </ul>
     </div>
   </section>
-
-  <ProjectsDetailProfileRisks :project-id="projectId" :risks="risks" @updated="emit('updated', $event)" />
 </template>
