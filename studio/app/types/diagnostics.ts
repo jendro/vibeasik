@@ -169,6 +169,8 @@ export interface RuntimeSimOptions {
   test_delete?: boolean
   skip_patterns?: string[]
   auth?: RuntimeSimAuth | null
+  // Buat akun uji sendiri (register / database lokal) bila belum ada akun atau login-nya gagal.
+  auto_account?: boolean
   skip_pages?: boolean
   max_pages?: number
   viewports?: RuntimeSimViewport[]
@@ -212,7 +214,7 @@ export interface RuntimeTestProfileResponse {
 }
 
 export interface RuntimeSimLogin {
-  kind: 'api' | 'browser'
+  kind: 'api' | 'browser' | 'account'
   component_id: number
   component: string
   target: string
@@ -261,6 +263,14 @@ export interface RuntimeSimPage {
   verdict: RuntimeSimPageVerdict
   note?: string
   error?: string
+  // Masalah tampilan yang terdeteksi (juga masuk Laporan Audit sebagai temuan RUNTIME-PAGE-*).
+  issues?: RuntimeSimPageIssue[]
+}
+
+export interface RuntimeSimPageIssue {
+  code: 'NEARLY_EMPTY' | 'ERROR_TEXT' | 'BROKEN_TEXT' | 'BROKEN_IMAGES' | 'LOADING_STUCK' | 'SMALL_TAP' | 'SMALL_TEXT' | 'NO_TITLE'
+  label: string
+  detail: string
 }
 
 export interface RuntimeSimStep {

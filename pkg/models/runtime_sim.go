@@ -32,6 +32,10 @@ type RuntimeSimOptions struct {
 	SkipPatterns []string `json:"skip_patterns,omitempty"`
 
 	Auth *RuntimeSimAuth `json:"auth,omitempty"` // login dulu agar endpoint & halaman terproteksi ikut diuji
+	// AutoAccount: bila belum ada akun uji (atau login-nya gagal), Uji Runtime membuat akun uji sendiri: daftar
+	// lewat endpoint registrasi aplikasi, lalu (khusus database lokal) akun itu dibuat/diberi peran admin & ditandai
+	// terverifikasi langsung di tabel user. Hanya akun berdomain @vibeasik.test yang pernah diubah.
+	AutoAccount bool `json:"auto_account,omitempty"`
 
 	SkipPages bool     `json:"skip_pages,omitempty"` // lewati uji halaman frontend (kecepatan & screenshot)
 	MaxPages  int      `json:"max_pages,omitempty"`  // override batas halaman per frontend (otomatis: semua, maks. 60)
@@ -94,7 +98,7 @@ type RuntimeTestProfile struct {
 
 // RuntimeSimLogin adalah hasil satu percobaan login (API atau browser frontend).
 type RuntimeSimLogin struct {
-	Kind        string `json:"kind"` // api, browser
+	Kind        string `json:"kind"` // api, browser, account (pembuatan akun uji otomatis: register / database)
 	ComponentID uint   `json:"component_id"`
 	Component   string `json:"component"`
 	Target      string `json:"target"` // endpoint atau URL halaman login
@@ -142,9 +146,20 @@ type RuntimeSimPage struct {
 	FailedRequest []string         `json:"failed_requests,omitempty"`
 	ConsoleErrors []string         `json:"console_errors,omitempty"`
 	Shots         []RuntimeSimShot `json:"shots"`
-	Verdict       string           `json:"verdict"` // OK, SLOW, REDIRECT_LOGIN, ERROR, FAILED
+	Verdict       string           `json:"verdict"` // OK, SLOW, REDIRECT_LOGIN, ERROR, FAILED, BLANK
 	Note          string           `json:"note,omitempty"`
 	Error         string           `json:"error,omitempty"`
+	// Issues: masalah tampilan yang terdeteksi di halaman yang berhasil dibuka (hampir kosong, teks error,
+	// "undefined"/NaN bocor, gambar rusak, loading tak selesai, tombol/teks terlalu kecil di mobile, ...).
+	// Setiap issue juga menjadi temuan RUNTIME-PAGE-* di Laporan Audit.
+	Issues []RuntimeSimPageIssue `json:"issues,omitempty"`
+}
+
+// RuntimeSimPageIssue adalah satu masalah tampilan pada halaman yang dibuka Uji Runtime.
+type RuntimeSimPageIssue struct {
+	Code   string `json:"code"`   // NEARLY_EMPTY, ERROR_TEXT, BROKEN_TEXT, BROKEN_IMAGES, LOADING_STUCK, SMALL_TAP, SMALL_TEXT, NO_TITLE
+	Label  string `json:"label"`  // ringkas untuk chip di galeri, mis. "Gambar rusak (3)"
+	Detail string `json:"detail"` // bukti: potongan teks, URL gambar, jumlah elemen
 }
 
 // RuntimeSimStep adalah satu tahap pada timeline simulasi.
