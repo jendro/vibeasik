@@ -175,6 +175,7 @@ func analyzeModule(dir, base string) *Graph {
 	}
 	g.Framework = strings.TrimSuffix(g.Framework, ",")
 	findDuplicates(g, m)
+	g.computeCosts(m)
 	return g
 }
 
