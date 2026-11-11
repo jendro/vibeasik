@@ -361,6 +361,36 @@ export const AUDIT_CRITERIA: AuditCriterion[] = [
       good: '// handler: cukup teruskan error domain\nif err := svc.CreateUser(req.Email); errors.Is(err, ErrEmailRequired) { return c.SendStatus(400) }'
     }
   },
+  {
+    id: 'QUERY-NPLUS1-CHAIN',
+    category: 'backend',
+    title: 'N+1 Query Lewat Rantai Pemanggilan',
+    scope: 'Backend (BE)',
+    severity: 'warning',
+    rule: 'Fungsi yang dijangkau rute tidak boleh memanggil fungsi ber-query di dalam loop atas data. Jumlah query sebuah rute, Q(n), harus tetap (tidak memuat n).',
+    rationale: 'Query di dalam loop sering tersembunyi: loop ada di handler, query ada di helper atau repository. Aturan per baris tidak melihatnya, padahal biayanya sama: 1.000 baris berarti 1.000 perjalanan ke database.',
+    inspection_check: 'Peta rute Go (routemap) menghitung Q(n) tiap fungsi dari AST dan rantai pemanggilannya. Dilaporkan di fungsi tempat loop-nya berada (pangkat n pada Q(n) lebih tinggi daripada semua fungsi yang dipanggilnya), sekali untuk semua rute yang terdampak. Lihat rumusnya di tab Biaya Proses.',
+    suggested_action: 'Ambil data yang dibutuhkan loop dalam satu query sebelum loop (Preload, JOIN, WHERE id IN) lalu cocokkan lewat map. Bila loop-nya kecil dan tetap, tandai sebagai bukan masalah.',
+    example_code: {
+      bad: 'for i := range orders {\n  orders[i].Customer = repo.FindCustomer(orders[i].CustomerID) // 1 query per baris\n}',
+      good: 'customers := repo.FindCustomersByIDs(ids) // 1 query\nfor i := range orders {\n  orders[i].Customer = customers[orders[i].CustomerID]\n}'
+    }
+  },
+  {
+    id: 'COST-POLYNOMIAL-GROWTH',
+    category: 'backend',
+    title: 'Biaya Proses Tumbuh O(n²) ke Atas',
+    scope: 'Backend (BE)',
+    severity: 'info',
+    rule: 'Jumlah langkah sebuah rute, T(n), sebaiknya tidak melebihi O(n log n). Loop bersarang atas data yang sama (O(n²) ke atas) perlu alasan: datanya terbukti kecil, atau memang tidak ada cara lain.',
+    rationale: 'Pada O(n²), data 10 kali lebih banyak berarti kerja 100 kali lebih banyak: halaman yang cepat dengan 100 baris menjadi macet pada 10.000 baris.',
+    inspection_check: 'Peta rute Go menghitung T(n) tiap fungsi (1 langkah per pernyataan, loop atas data menaikkan pangkat, fungsi lokal ikut dijumlahkan). Dilaporkan di fungsi tempat pangkatnya naik. Rumus adalah batas atas kasus terburuk dengan semua koleksi dianggap berukuran n; pangkat 4 ke atas lewat rantai pemanggilan panjang hanya petunjuk tempat memeriksa.',
+    suggested_action: 'Bangun map/set sekali lalu cari di sana (O(n)), urutkan lalu gabung, atau batasi ukuran data dengan paging. Bila salah satu koleksi selalu kecil, tandai sebagai bukan masalah.',
+    example_code: {
+      bad: 'for _, a := range items {\n  for _, b := range items {\n    if a.ParentID == b.ID { a.Parent = b }\n  }\n}',
+      good: 'byID := make(map[uint]Item, len(items))\nfor _, it := range items { byID[it.ID] = it }\nfor i := range items { items[i].Parent = byID[items[i].ParentID] }'
+    }
+  },
 
   // ================= 4. FRONTEND (FE) & SMELLY DESIGN =================
   {

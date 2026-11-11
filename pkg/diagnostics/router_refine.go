@@ -49,6 +49,7 @@ func refineRouterFindings(findings []models.Finding, dir, baseRel string, hasGo 
 			out = append(out, f)
 		}
 	}
+	out = append(out, costFindings(graphs, baseRel, out)...)
 	for _, g := range graphs {
 		out = append(out, duplicateFindings(g, baseRel)...)
 		for _, w := range g.Warnings {

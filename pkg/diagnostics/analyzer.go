@@ -53,6 +53,9 @@ var penaltyRules = []penaltyRule{
 	{titles: []string{"Missing .env.example"}, ruleIDs: []string{"ENV-EXAMPLE-MISSING"}, points: 5},
 	{titles: []string{"Missing README"}, points: 4},
 	{titles: []string{"No Automated Tests"}, points: 3},
+	// Rumus biaya statis adalah batas atas kasus terburuk: bobotnya lebih ringan dari temuan yang pasti.
+	{ruleIDs: []string{ruleNPlusOneChain}, points: 3},
+	{ruleIDs: []string{rulePolynomialGrowth}, points: 1},
 	{category: "git", points: 0},
 }
 
