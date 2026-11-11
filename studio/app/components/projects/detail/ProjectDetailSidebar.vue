@@ -12,10 +12,11 @@ const activeTab = defineModel<string>('activeTab', { default: 'overview' })
 
 const tabs = computed(() => [
   { id: 'overview', title: 'Ringkasan', icon: 'i-lucide-layout-dashboard', desc: 'Tujuan, fitur & arah pengembangan' },
+  { id: 'recap', title: 'Rekap Pemilik', icon: 'i-lucide-chart-no-axes-column', desc: 'Progres, bug ditutup, perbaikan algoritma & kesehatan kode' },
+  { id: 'cost', title: 'Biaya Proses', icon: 'i-lucide-sigma', desc: 'Rumus tick T(n) & Big-O tiap rute dan fungsi' },
   { id: 'apps', title: 'Aplikasi', icon: 'i-lucide-boxes', desc: 'Modul & hubungan antar aplikasi', badge: props.project?.components?.length },
   { id: 'technical', title: 'Rute, File & Env', icon: 'i-lucide-book-open-check', desc: 'Katalog router, struktur & .env' },
   { id: 'synergy', title: 'Alur Data', icon: 'i-lucide-network', desc: 'Halaman → API → Database' },
-  { id: 'recap', title: 'Rekap Optimasi', icon: 'i-lucide-chart-no-axes-column', desc: 'Todo selesai per kategori' },
   { id: 'ai_chat', title: 'Kaji Ide & TODO', icon: 'i-lucide-message-square-code', desc: 'AI architect & planner TODO' },
   { id: 'visual_audit', title: 'Live Visual', icon: 'i-lucide-camera', desc: 'Snapshot FE & audit multimodal' }
 ])

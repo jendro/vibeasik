@@ -8,6 +8,7 @@ import { useAgentsApi } from './api/agents'
 import { useQueueApi } from './api/queue'
 import { useTodosApi } from './api/todos'
 import { useSystemApi } from './api/system'
+import { useInsightApi } from './api/insight'
 
 export * from '../types'
 
@@ -26,6 +27,7 @@ export const useApi = () => {
     ...useAgentsApi(),
     ...useQueueApi(),
     ...useTodosApi(),
-    ...useSystemApi()
+    ...useSystemApi(),
+    ...useInsightApi()
   }
 }

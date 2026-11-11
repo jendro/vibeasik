@@ -26,7 +26,7 @@ const project = ref<Project | null>(null)
 const loading = ref(true)
 // Legacy tab ids keep old links (?tab=topology / ?tab=base_knowledge) working
 const TAB_ALIASES: Record<string, string> = { topology: 'apps', base_knowledge: 'technical' }
-const VALID_TABS = ['overview', 'apps', 'technical', 'synergy', 'ai_chat', 'visual_audit', 'recap']
+const VALID_TABS = ['overview', 'apps', 'technical', 'synergy', 'ai_chat', 'visual_audit', 'recap', 'cost']
 // Tab yang datanya dari route Pro (engine Community menjawab 402): tampilkan kartu kunci, jangan panggil API-nya.
 const TAB_FEATURE: Record<string, string> = {
   overview: 'audit.ai_review', technical: 'audit.ai_review', synergy: 'audit.ai_review',
@@ -286,11 +286,16 @@ const handleCreateDirOnDisk = async (comp: ProjectComponent) => {
     />
 
     <div class="pt-6 space-y-6">
-
       <ProLockCard v-if="lockedFeature" :feature="lockedFeature" />
 
-      <ProjectsDetailProjectOptimizationRecapTab
+      <InsightOwnerRecapPanel
         v-else-if="activeTab === 'recap'"
+        :project="project"
+        @switch-tab="activeTab = $event"
+      />
+
+      <InsightProcessCostTab
+        v-else-if="activeTab === 'cost'"
         :project="project"
       />
 

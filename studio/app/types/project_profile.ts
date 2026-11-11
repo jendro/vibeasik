@@ -46,10 +46,17 @@ export interface ProfileRoadmapItem {
   related_features: string[]
 }
 
+export type ProfileRiskStatus = 'open' | 'planned' | 'in_progress' | 'handled' | 'accepted'
+
 export interface ProfileRisk {
   title: string
   severity: ProfileSeverity
   detail: string
+  // Penanganan: diisi pemilik atau mengikuti status todo yang ditautkan.
+  status?: ProfileRiskStatus
+  todo_id?: number
+  note?: string
+  handled_at?: string
 }
 
 export interface ProfileStats {

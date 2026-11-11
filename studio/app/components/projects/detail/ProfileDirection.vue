@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import type { ProfileHorizon, ProfileRisk, ProfileRoadmapItem } from '~/types'
+import type { ProfileHorizon, ProfileRisk, ProfileRoadmapItem, ProjectProfile } from '~/types'
 
 const props = defineProps<{
+  projectId: number
   roadmap: ProfileRoadmapItem[]
   risks: ProfileRisk[]
   openQuestions: string[]
 }>()
+const emit = defineEmits<{ updated: [profile: ProjectProfile] }>()
 
 const horizons: { key: ProfileHorizon, label: string, hint: string, dot: string }[] = [
   { key: 'now', label: 'Sekarang', hint: 'Dikerjakan / harus segera', dot: 'bg-sky-500' },
@@ -18,15 +20,6 @@ const byHorizon = computed(() => {
   for (const r of props.roadmap) map[r.horizon]?.push(r)
   return map
 })
-
-const severityOrder = { high: 0, medium: 1, low: 2 }
-const sortedRisks = computed(() => [...props.risks].sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]))
-
-const severityClass: Record<ProfileRisk['severity'], string> = {
-  high: 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/60',
-  medium: 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60',
-  low: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700'
-}
 </script>
 
 <template>
@@ -37,7 +30,7 @@ const severityClass: Record<ProfileRisk['severity'], string> = {
         Arah Pengembangan
       </h2>
       <p class="text-xs text-neutral-500">
-        Roadmap disusun dari TODO terbuka, fitur yang belum lengkap, risiko, dan commit terbaru.
+        Langkah berikutnya, disusun dari todo terbuka, fitur yang belum lengkap, risiko, dan commit terbaru.
       </p>
     </div>
 
@@ -81,49 +74,22 @@ const severityClass: Record<ProfileRisk['severity'], string> = {
       Belum ada roadmap. Jalankan analisis AI atau tambahkan TODO proyek.
     </p>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <div class="space-y-2">
-        <h3 class="text-xs font-bold text-neutral-700 dark:text-neutral-200 flex items-center gap-1.5">
-          <UIcon name="i-lucide-triangle-alert" class="w-3.5 h-3.5 text-amber-500" />
-          Risiko ({{ risks.length }})
-        </h3>
-        <p v-if="!risks.length" class="text-xs text-neutral-400">
-          Tidak ada risiko yang tercatat.
-        </p>
-        <div
-          v-for="r in sortedRisks"
-          :key="r.title"
-          class="rounded-md border px-3 py-2 text-xs"
-          :class="severityClass[r.severity]"
+    <div v-if="openQuestions.length" class="space-y-2">
+      <h3 class="text-sm font-semibold text-neutral-800 dark:text-neutral-100 flex items-center gap-1.5">
+        <UIcon name="i-lucide-circle-help" class="size-4 text-sky-500" />
+        Pertanyaan terbuka ({{ openQuestions.length }})
+      </h3>
+      <ul class="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <li
+          v-for="q in openQuestions"
+          :key="q"
+          class="rounded-xl border border-neutral-200/80 dark:border-white/[0.08] px-3 py-2 text-sm text-neutral-600 dark:text-neutral-300"
         >
-          <div class="flex items-center justify-between gap-2">
-            <span class="font-semibold">{{ r.title }}</span>
-            <span class="text-xs font-semibold shrink-0">{{ r.severity }}</span>
-          </div>
-          <p v-if="r.detail" class="text-xs mt-0.5 opacity-90 leading-relaxed">
-            {{ r.detail }}
-          </p>
-        </div>
-      </div>
-
-      <div class="space-y-2">
-        <h3 class="text-xs font-bold text-neutral-700 dark:text-neutral-200 flex items-center gap-1.5">
-          <UIcon name="i-lucide-circle-help" class="w-3.5 h-3.5 text-sky-500" />
-          Pertanyaan Terbuka ({{ openQuestions.length }})
-        </h3>
-        <p v-if="!openQuestions.length" class="text-xs text-neutral-400">
-          Tidak ada pertanyaan terbuka.
-        </p>
-        <ul v-else class="space-y-1.5">
-          <li
-            v-for="q in openQuestions"
-            :key="q"
-            class="rounded-md border border-neutral-200/80 dark:border-white/[0.08] px-3 py-2 text-xs text-neutral-600 dark:text-neutral-300"
-          >
-            {{ q }}
-          </li>
-        </ul>
-      </div>
+          {{ q }}
+        </li>
+      </ul>
     </div>
   </section>
+
+  <ProjectsDetailProfileRisks :project-id="projectId" :risks="risks" @updated="emit('updated', $event)" />
 </template>

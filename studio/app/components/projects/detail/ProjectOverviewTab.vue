@@ -81,6 +81,9 @@ const stats = computed(() => {
       @updated="emit('updated', $event)"
     />
 
+    <!-- Rekap singkat untuk pemilik: kalimat, angka utama, satu grafik -->
+    <InsightOwnerRecapPanel :project="project" compact @switch-tab="emit('switchTab', $event)" />
+
     <!-- Angka utama proyek (klik untuk membuka tab terkait) -->
     <AppStatStrip :items="statItems" />
 
@@ -165,9 +168,11 @@ const stats = computed(() => {
     <ProjectsDetailProfileFeatureList :features="profile.features" />
 
     <ProjectsDetailProfileDirection
+      :project-id="project.id"
       :roadmap="profile.roadmap"
       :risks="profile.risks"
       :open-questions="profile.open_questions"
+      @updated="emit('updated', $event)"
     />
   </div>
 </template>
