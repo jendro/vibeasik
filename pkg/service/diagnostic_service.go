@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -112,6 +113,7 @@ func (s *diagnosticService) DiagnoseComponent(ctx context.Context, componentID u
 		return nil, fmt.Errorf("component diagnosis failed: %w", err)
 	}
 
+	s.carryFindingStatuses(ctx, proj.ID, comp, report)
 	compID := comp.ID
 	report.ComponentID = &compID
 
@@ -177,6 +179,7 @@ func (s *diagnosticService) auditComponents(ctx context.Context, project *models
 		comp := &project.Components[i]
 		compReport, err := diagnostics.AnalyzeComponent(comp, project, allProjects)
 		if err == nil && compReport != nil {
+			s.carryFindingStatuses(ctx, project.ID, comp, compReport)
 			compID := comp.ID
 			compReport.ComponentID = &compID
 			_ = s.diagRepo.Create(ctx, compReport)
@@ -220,4 +223,60 @@ func countFindingsByStatus(findings []models.Finding) (active, ignored, resolved
 		}
 	}
 	return active, ignored, resolved
+}
+
+// carryFindingStatuses membawa status temuan (diselesaikan/diabaikan/vonis keliru) dari audit
+// proyek & audit komponen sebelumnya ke laporan komponen yang baru, lalu menghitung ulang skornya.
+// Tanpa ini skor komponen dihitung dari temuan mentah sehingga bertentangan dengan skor proyek.
+func (s *diagnosticService) carryFindingStatuses(ctx context.Context, projectID uint, comp *models.Component, report *models.Diagnostic) {
+	if report == nil || report.FindingsJSON == "" {
+		return
+	}
+	var fresh []models.Finding
+	if json.Unmarshal([]byte(report.FindingsJSON), &fresh) != nil || len(fresh) == 0 {
+		return
+	}
+	var known []models.Finding
+	for _, prev := range []func() (*models.Diagnostic, error){
+		func() (*models.Diagnostic, error) { return s.diagRepo.FindLatestByProjectID(ctx, projectID) },
+		func() (*models.Diagnostic, error) { return s.diagRepo.FindLatestByComponentID(ctx, comp.ID) },
+	} {
+		d, err := prev()
+		if err != nil || d == nil || d.FindingsJSON == "" {
+			continue
+		}
+		var fs []models.Finding
+		if json.Unmarshal([]byte(d.FindingsJSON), &fs) == nil {
+			known = append(known, fs...)
+		}
+	}
+	ApplyKnownFindingStatuses(fresh, known)
+	if s.db != nil {
+		registry.FilterFindings(s.db, projectID, fresh)
+	}
+	oldScore := report.Score
+	report.Score = diagnostics.CalculateHealthScore(fresh)
+	if b, err := json.Marshal(fresh); err == nil {
+		report.FindingsJSON = string(b)
+	}
+	report.Summary = strings.Replace(report.Summary, fmt.Sprintf("health score: %d/100", oldScore), fmt.Sprintf("health score: %d/100", report.Score), 1)
+}
+
+// ApplyKnownFindingStatuses menyalin status bukan-terbuka dari temuan yang sudah dikenal ke temuan
+// baru yang cocok (kunci/rule+berkas+baris). Temuan yang dikenal tetapi tidak muncul lagi tidak ditambahkan.
+func ApplyKnownFindingStatuses(fresh, known []models.Finding) {
+	for i := range fresh {
+		if fresh[i].Status != "" && fresh[i].Status != models.FindingStatusOpen {
+			continue
+		}
+		for _, k := range known {
+			if k.Status == "" || k.Status == models.FindingStatusOpen {
+				continue
+			}
+			if models.AreFindingsMatching(k, fresh[i]) {
+				fresh[i].Status = k.Status
+				break
+			}
+		}
+	}
 }
