@@ -71,10 +71,17 @@ const handleShowRuntimeFindings = () => {
 }
 
 const handleSwitchProject = (newId: number) => {
+  // Pemuatan ulang diurus watch(activeProjectId) di bawah.
   selectActiveProject(newId)
-  loadAuditReport(newId, false)
-  loadRuntimeSimulation(newId)
 }
+
+// Proyek diganti dari navbar (atau halaman lain): muat laporan proyek itu, jangan tampilkan temuan proyek lama.
+let mounted = false
+watch(activeProjectId, (id, old) => {
+  if (!mounted || !id || id === old) return
+  loadAuditReport(id, false)
+  loadRuntimeSimulation(id)
+})
 
 onMounted(async () => {
   try {
@@ -101,6 +108,7 @@ onMounted(async () => {
   } else {
     loading.value = false
   }
+  mounted = true
 })
 </script>
 

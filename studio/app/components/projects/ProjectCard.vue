@@ -134,7 +134,7 @@ const handleCardRefreshSummary = () => {
               {{ project.project_type === 'multi_fe' ? 'Multi-FE Bundle' : project.project_type === 'bundle' ? 'BE + FE Bundle' : project.project_type }}
             </UBadge>
             <UBadge
-              v-if="project.is_unified"
+              v-if="isProjectUnified(project)"
               size="xs"
               color="success"
               variant="subtle"
@@ -528,7 +528,7 @@ const handleCardRefreshSummary = () => {
 
       <div class="flex items-center gap-1">
         <UButton
-          v-if="!project.is_unified"
+          v-if="!isProjectUnified(project)"
           icon="i-lucide-folder-input"
           color="warning"
           variant="subtle"

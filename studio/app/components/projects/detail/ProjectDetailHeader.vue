@@ -36,7 +36,7 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [
       icon: 'i-lucide-sparkles',
       onSelect: () => initProject(props.project.id, props.project.name)
     },
-    ...(!props.project.is_unified
+    ...(!isProjectUnified(props.project)
       ? [{
           label: 'Satukan ke 1 folder induk',
           icon: 'i-lucide-folder-input',
@@ -65,7 +65,7 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [
   <div class="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-slate-900/40 p-4 sm:p-5 shadow-xs space-y-3">
     <div class="flex items-center justify-between gap-3 text-xs">
       <NuxtLink
-        to="/"
+        to="/cockpit"
         class="inline-flex items-center gap-1.5 text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors font-medium"
       >
         <UIcon name="i-lucide-arrow-left" class="w-3.5 h-3.5" />
@@ -129,7 +129,7 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [
           {{ project.git_branch }}
         </UBadge>
         <UBadge
-          v-if="!project.is_unified"
+          v-if="!isProjectUnified(project)"
           size="sm"
           color="warning"
           variant="subtle"

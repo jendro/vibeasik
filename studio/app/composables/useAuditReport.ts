@@ -19,7 +19,8 @@ export function useAuditReport() {
   const latestDeepCheck = ref<DeepCheckLatestResponse | null>(null)
   const resolvedFindingKeys = ref<Set<string>>(new Set())
 
-  const currentScore = computed(() => reportData.value?.score ?? activeProject.value?.health_score ?? 100)
+  // null bila proyek belum punya laporan audit (bukan 100 — skor sempurna yang menyesatkan).
+  const currentScore = computed<number | null>(() => reportData.value ? reportData.value.score : null)
 
   const loadLatestDeepCheck = async (projectId: number) => {
     try {

@@ -40,12 +40,17 @@ const tableCount = computed(() => {
   return Math.max(props.profile?.stats?.tables ?? 0, set.size)
 })
 
+const hasFrontend = computed(() => (props.project.components || []).some(c => c.role?.startsWith('frontend')))
+
 const stats = computed(() => {
   const s = props.profile?.stats
   return [
     { label: 'Aplikasi', value: s?.apps ?? props.project.components?.length ?? 0, sub: `${props.activePortsCount} sedang jalan`, icon: 'i-lucide-boxes', tab: 'apps' },
     { label: 'Fitur', value: featureCounts.value.total, sub: `${featureCounts.value.done} selesai`, icon: 'i-lucide-puzzle', tab: '' },
-    { label: 'Halaman', value: s?.pages ?? 0, sub: 'rute frontend', icon: 'i-lucide-panels-top-left', tab: 'technical' },
+    // Tanpa aplikasi frontend terdaftar, "0 halaman" menyesatkan: halaman memang tidak dihitung.
+    hasFrontend.value
+      ? { label: 'Halaman', value: s?.pages ?? 0, sub: 'rute frontend', icon: 'i-lucide-panels-top-left', tab: 'technical' }
+      : { label: 'Halaman', value: '—', sub: 'tak ada app frontend', icon: 'i-lucide-panels-top-left', tab: 'apps' },
     { label: 'Endpoint API', value: s?.endpoints ?? 0, sub: `${s?.domains ?? 0} domain`, icon: 'i-lucide-route', tab: 'technical' },
     { label: 'Entitas Data', value: tableCount.value, sub: 'tabel / model', icon: 'i-lucide-database', tab: 'synergy' },
     { label: 'TODO Terbuka', value: s?.open_todos ?? 0, sub: `${s?.done_todos ?? 0} selesai`, icon: 'i-lucide-list-todo', tab: 'ai_chat' }

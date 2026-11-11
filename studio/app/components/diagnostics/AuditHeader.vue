@@ -4,7 +4,7 @@ import type { Project } from '~/types'
 defineProps<{
   project: Project | null
   projects?: Project[]
-  score: number
+  score: number | null
   loading?: boolean
   resolvingAll?: boolean
   diagnosing?: boolean
@@ -34,17 +34,8 @@ const emit = defineEmits<{
   (e: 'runSweep'): void
 }>()
 
-const getScoreTextColor = (score: number) => {
-  if (score >= 90) return 'text-sky-600 dark:text-sky-400'
-  if (score >= 70) return 'text-amber-600 dark:text-amber-400'
-  return 'text-rose-600 dark:text-rose-400'
-}
-
-const getScoreLabel = (score: number) => {
-  if (score >= 90) return 'Kondisi Prima & Siap Produksi'
-  if (score >= 70) return 'Perlu Refactoring Ringan'
-  return 'Kritis: Ditemukan Anti-Pattern / Smells'
-}
+const getScoreTextColor = healthTone
+const getScoreLabel = healthLabel
 
 const { formatDateTime } = useFormatters()
 </script>
@@ -105,11 +96,11 @@ const { formatDateTime } = useFormatters()
       <!-- Health Score -->
       <div v-if="project" class="text-right shrink-0">
         <div class="text-4xl sm:text-5xl font-black font-mono tracking-tight leading-none" :class="getScoreTextColor(score)">
-          {{ score }}
+          {{ score ?? '—' }}
         </div>
         <div class="mt-1 text-right space-y-0.5">
-          <div class="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-            Health Score
+          <div class="text-xs font-medium text-neutral-400 dark:text-neutral-500">
+            Skor kesehatan
           </div>
           <div class="text-xs font-semibold" :class="getScoreTextColor(score)">
             {{ getScoreLabel(score) }}
