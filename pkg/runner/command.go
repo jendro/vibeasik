@@ -23,11 +23,20 @@ var (
 	// --port 3000, --port=3000, --web-port 3000, -p 3000 (yang terakhir dilewati untuk docker)
 	portFlagRe     = regexp.MustCompile(`(--(?:web-)?port[= ]|(?:^|\s)-p\s+)(\d{2,5})\b`)
 	longPortFlagRe = regexp.MustCompile(`(--(?:web-)?port[= ])(\d{2,5})\b`)
-	inlineEnvRe    = regexp.MustCompile(`\b(PORT|NUXT_PORT|NITRO_PORT)=\d{2,5}\b`)
+	inlineEnvRe    = regexp.MustCompile(`\b(PORT|NUXT_PORT|NITRO_PORT|APP_PORT|SERVER_PORT|HTTP_PORT)=\d{2,5}\b`)
 	runserverRe    = regexp.MustCompile(`(runserver\s+(?:[\w.\-\[\]:]+:)?)(\d{2,5})\b`)
 	pkgScriptRe    = regexp.MustCompile(`^\s*(npm|pnpm|yarn|bun)\s+(?:run\s+)?([\w:.\-]+)\s*(.*)$`)
 	slugRe         = regexp.MustCompile(`[^A-Z0-9]+`)
 )
+
+// backendPortEnv are listen-port variables that backends commonly read before (or instead of) PORT.
+var backendPortEnv = []string{"APP_PORT", "SERVER_PORT", "HTTP_PORT"}
+
+// isFrontendRole: frontends keep only PORT/NUXT_PORT/NITRO_PORT; APP_PORT in a frontend .env often names
+// the backend's port instead.
+func isFrontendRole(role string) bool {
+	return role == models.RoleFrontendAdmin || role == models.RoleFrontendClient || role == models.RoleFrontendMobile
+}
 
 // pkgBuiltins are package-manager subcommands that are not package.json scripts.
 var pkgBuiltins = map[string]bool{"install": true, "i": true, "add": true, "exec": true, "x": true, "dlx": true, "create": true}
@@ -44,6 +53,14 @@ func BuildLaunch(comp models.Component, port int, siblings []models.Component) L
 		"NITRO_PORT=" + p,
 		"BROWSER=none",
 		"VIBEASIK_RUN=1",
+	}
+	if !isFrontendRole(comp.Role) {
+		// Backend sering membaca APP_PORT/SERVER_PORT/HTTP_PORT dari .env sebelum PORT. Loader .env umum
+		// (godotenv.Load, dotenv, phpdotenv, python-dotenv) tidak menimpa env yang sudah ada, jadi nilai
+		// ini membuat backend tetap listen di port alokasi yang dipakai frontend sibling-nya.
+		for _, k := range backendPortEnv {
+			spec.Env = append(spec.Env, k+"="+p)
+		}
 	}
 	backendURL := ""
 	for _, s := range siblings {

@@ -84,6 +84,26 @@ func TestBuildLaunchPackageScripts(t *testing.T) {
 	}
 }
 
+// Backend yang membaca APP_PORT dari .env (godotenv tidak menimpa env yang ada) harus tetap mendapat port
+// alokasi, sedangkan frontend tidak diberi APP_PORT karena .env frontend sering memakainya untuk port backend.
+func TestBuildLaunchBackendPortAliases(t *testing.T) {
+	be := BuildLaunch(models.Component{ID: 1, Role: models.RoleBackend, DevCommand: "go run main.go"}, 4135, nil)
+	env := strings.Join(be.Env, " ")
+	for _, want := range []string{"PORT=4135", "APP_PORT=4135", "SERVER_PORT=4135", "HTTP_PORT=4135"} {
+		if !strings.Contains(env, want) {
+			t.Errorf("backend env missing %s: %s", want, env)
+		}
+	}
+	fe := BuildLaunch(models.Component{ID: 2, Role: models.RoleFrontendClient, DevCommand: "nuxt dev"}, 4130, nil)
+	if env := strings.Join(fe.Env, " "); strings.Contains(env, "APP_PORT=") {
+		t.Errorf("frontend must not get APP_PORT: %s", env)
+	}
+	inline := BuildLaunch(models.Component{ID: 3, Role: models.RoleBackend, DevCommand: "APP_PORT=8080 go run ."}, 4136, nil)
+	if inline.Command != "APP_PORT=4136 go run ." {
+		t.Errorf("inline APP_PORT must be rewritten, got %q", inline.Command)
+	}
+}
+
 func TestAllocateUsesProjectSlot(t *testing.T) {
 	db := setupDB(t)
 	db.Create(&models.Project{ID: 1, Name: "A", Slug: "a"})
@@ -528,4 +548,3 @@ func BenchmarkServiceStatus_Idle(b *testing.B) {
 		}
 	}
 }
-
