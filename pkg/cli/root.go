@@ -26,11 +26,14 @@ mengatur port & dev server, dan menjadi server MCP untuk agent coding (Claude Co
 	SilenceUsage: true,
 	// Setiap perintah (serve, mcp stdio, …) memakai entitlement akun yang tersimpan.
 	PersistentPreRun: func(cmd *cobra.Command, args []string) { account.Activate() },
-	// Tanpa perintah: tampilkan bantuan. Bila dibuka dengan klik ganda di Windows, jalankan engine dan
-	// buka Studio, agar jendela konsol tidak langsung tertutup.
+	// Tanpa perintah: tampilkan bantuan. Bila dibuka dengan klik ganda di Windows, buka vibeasik-panel.exe;
+	// tanpa panel, jalankan engine dan buka Studio agar jendela konsol tidak langsung tertutup.
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if !launchedByDoubleClick() {
 			return cmd.Help()
+		}
+		if startPanel() {
+			return nil
 		}
 		openBrowser = true
 		err := serveCmd.RunE(serveCmd, nil)

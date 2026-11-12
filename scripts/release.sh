@@ -14,7 +14,11 @@ for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64; d
   CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" go build -trimpath \
     -ldflags "-s -w -X github.com/vibeasik/vibeasik/pkg/cli.Version=${VERSION}" \
     -o "dist/vibeasik${ext}" ./cmd/vibeasik
-  if [ "$os" = windows ]; then (cd dist && zip -q "${name}.zip" vibeasik.exe && rm vibeasik.exe)
+  if [ "$os" = windows ]; then
+    # Panel kendali (Jalankan/Buka Studio) untuk pengguna Windows; -H windowsgui = tanpa jendela konsol.
+    CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" go build -trimpath -ldflags "-s -w -H windowsgui" \
+      -o dist/vibeasik-panel.exe ./cmd/vibeasik-panel
+    (cd dist && zip -q "${name}.zip" vibeasik.exe vibeasik-panel.exe && rm vibeasik.exe vibeasik-panel.exe)
   else (cd dist && tar -czf "${name}.tar.gz" vibeasik && rm vibeasik); fi
 done
 (cd dist && sha256sum * > sha256sums.txt)
