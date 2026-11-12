@@ -19,6 +19,7 @@ const PROJECT_GROUPS: Record<string, string> = {
   'project-detail': 'Ringkasan',
   'audit-report': 'Audit & mutu',
   'runtime-test': 'Audit & mutu',
+  'security-test': 'Audit & mutu',
   'screenshots': 'Audit & mutu',
   'traffic': 'Audit & mutu',
   'audit-learning': 'Audit & mutu',
@@ -29,7 +30,7 @@ const PROJECT_GROUPS: Record<string, string> = {
   'ports': 'Operasional',
   'delivery': 'Operasional'
 }
-const PROJECT_ORDER = ['home', 'project-detail', 'audit-report', 'runtime-test', 'screenshots', 'traffic', 'audit-learning',
+const PROJECT_ORDER = ['home', 'project-detail', 'audit-report', 'security-test', 'runtime-test', 'screenshots', 'traffic', 'audit-learning',
   'todos', 'client-room', 'code-map', 'queue', 'ports', 'delivery']
 
 export const buildProjectNavItems = (activeProjectId: number | null, activeProject: { name: string } | null): NavItem[] => {
@@ -87,6 +88,15 @@ export const buildProjectNavItems = (activeProjectId: number | null, activeProje
       label: 'Audit & Diagnostik',
       desc: 'Temuan keamanan, API & code smell',
       icon: 'i-lucide-file-text',
+      exact: false
+    },
+    {
+      // Router + server berjalan: rate limit (DDoS), SQL injection, header, CORS, auth — dibuktikan lewat respons nyata.
+      id: 'security-test',
+      to: '/security-test',
+      label: 'Uji Keamanan',
+      desc: 'Router & server live: DDoS, SQLi, header',
+      icon: 'i-lucide-shield-check',
       exact: false
     },
     {
