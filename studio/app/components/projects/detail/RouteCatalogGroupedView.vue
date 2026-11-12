@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import type { ComponentRoute } from '~/types'
 
-defineProps<{
+const props = defineProps<{
   groupedRoutes: { domain: string, routes: ComponentRoute[] }[]
+  /** Jumlah rute per domain di seluruh hasil filter (daftar dipaging, grup hanya memuat halaman aktif). */
+  domainTotals?: Record<string, number>
   isFrontend: boolean
   projectId?: number
   componentId?: number
@@ -20,6 +22,11 @@ const toggleExpandRequests = (routeId: number) => emit('toggleExpand', routeId)
 const copyRoutePath = (path: string) => emit('copyPath', path)
 const openEditModal = (route: ComponentRoute) => emit('edit', route)
 const handleDelete = (route: ComponentRoute) => emit('delete', route)
+// "3 dari 12" bila domain terpotong paging, selain itu jumlahnya saja.
+const countLabel = (group: { domain: string, routes: ComponentRoute[] }) => {
+  const all = props.domainTotals?.[group.domain] ?? group.routes.length
+  return all !== group.routes.length ? `${group.routes.length} dari ${all}` : String(all)
+}
 </script>
 
 <template>
@@ -37,7 +44,7 @@ const handleDelete = (route: ComponentRoute) => emit('delete', route)
             {{ group.domain }}
           </span>
           <UBadge size="xs" color="neutral" variant="subtle" class="font-semibold">
-            {{ group.routes.length }} {{ isFrontend ? 'halaman' : 'endpoint' }}
+            {{ countLabel(group) }} {{ isFrontend ? 'halaman' : 'endpoint' }}
           </UBadge>
         </div>
       </div>

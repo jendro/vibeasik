@@ -2,7 +2,7 @@
 import type { SynergyRequestFlow } from '~/types'
 import type { SynergyInspectPage, SynergyInspectTab, SynergyMatrixRow } from '~/utils/synergy'
 
-defineProps<{ matrixRows: SynergyMatrixRow[] }>()
+defineProps<{ matrixRows: SynergyMatrixRow[], totalRows?: number }>()
 const emit = defineEmits<{
   inspect: [flow: SynergyRequestFlow, page: SynergyInspectPage, tab?: SynergyInspectTab]
 }>()
@@ -19,7 +19,7 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-table-properties" class="w-4 h-4 text-sky-500" />
           <span class="text-xs font-bold text-neutral-800 dark:text-neutral-200">
-            Matriks Audit Menyeluruh ({{ matrixRows.length }} Baris Terhubung)
+            Matriks Audit Menyeluruh ({{ totalRows ?? matrixRows.length }} Baris Terhubung)
           </span>
         </div>
         <div class="text-xs text-neutral-400 font-mono">

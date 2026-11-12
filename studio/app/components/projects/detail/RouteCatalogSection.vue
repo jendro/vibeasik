@@ -139,15 +139,31 @@ const filteredRoutes = computed(() => {
   return list
 })
 
-// Grouped by Domain
+// Paging: satu baris rute (badge, path, request target, aksi) ≈ 40 simpul DOM → 20 per halaman
+// (anggaran 800 simpul, utils/listPaging). Tampilan grup dipaging dari daftar yang sudah diurutkan per domain
+// agar satu domain tidak tercecer di beberapa halaman secara acak.
+const domainOf = (r: ComponentRoute) => r.domain || 'Umum'
+const pagingSource = computed(() => viewMode.value === 'grouped'
+  ? [...filteredRoutes.value].sort((a, b) => domainOf(a).localeCompare(domainOf(b)))
+  : filteredRoutes.value)
+const routePaging = useListPaging(pagingSource, {
+  nodesPerRow: 40, queryKey: 'rpg', resetOn: [searchQuery, selectedDomain, selectedMethod, viewMode]
+})
+
+const domainTotals = computed(() => {
+  const counts: Record<string, number> = {}
+  for (const r of filteredRoutes.value) counts[domainOf(r)] = (counts[domainOf(r)] || 0) + 1
+  return counts
+})
+
+// Grouped by Domain (dari halaman yang sedang tampil)
 const groupedRoutes = computed<{ domain: string, routes: ComponentRoute[] }[]>(() => {
   const groups: Record<string, ComponentRoute[]> = {}
-  filteredRoutes.value.forEach((r) => {
-    const d = r.domain || 'Umum'
+  routePaging.pagedItems.value.forEach((r) => {
+    const d = domainOf(r)
     if (!groups[d]) groups[d] = []
     groups[d]!.push(r)
   })
-
   return Object.keys(groups)
     .sort()
     .map(domainName => ({
@@ -328,7 +344,10 @@ defineExpose({
 
     <ProjectsDetailRouteCatalogGroupedView
       v-else-if="viewMode === 'grouped'"
+      id="route-catalog-list"
+      class="scroll-mt-32"
       :grouped-routes="groupedRoutes"
+      :domain-totals="domainTotals"
       :is-frontend="isFrontend"
       :project-id="project?.id"
       :component-id="comp?.id"
@@ -342,7 +361,9 @@ defineExpose({
 
     <ProjectsDetailRouteCatalogTableView
       v-else
-      :filtered-routes="filteredRoutes"
+      id="route-catalog-list"
+      class="scroll-mt-32"
+      :filtered-routes="routePaging.pagedItems.value"
       :is-frontend="isFrontend"
       :project-id="project?.id"
       :component-id="comp?.id"
@@ -352,6 +373,18 @@ defineExpose({
       @copy-path="copyRoutePath"
       @edit="openEditModal"
       @delete="handleDelete"
+    />
+
+    <AppListPager
+      v-if="filteredRoutes.length > 0"
+      v-model:page="routePaging.page.value"
+      v-model:per-page="routePaging.perPage.value"
+      :total="routePaging.total.value"
+      :per-page-options="routePaging.perPageOptions"
+      :range-start="routePaging.rangeStart.value"
+      :range-end="routePaging.rangeEnd.value"
+      :noun="isFrontend ? 'halaman' : 'rute'"
+      scroll-target="route-catalog-list"
     />
 
     <ProjectsDetailRouteCatalogEditModal

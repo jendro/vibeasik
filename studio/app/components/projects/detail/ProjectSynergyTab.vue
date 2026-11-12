@@ -56,6 +56,14 @@ const activeView = ref<'pipeline' | 'matrix' | 'topology'>('pipeline')
 // Filter + data turunan (halaman terfilter, baris matriks, daftar tabel)
 const { searchQuery, filterMethod, filterTable, availableTables, filteredPages, matrixRows, resetFilters } = useSynergyFilters(synergyMap)
 
+// Paging: satu kartu halaman (navigasi + cabang API) ≈ 160 simpul DOM → 5 per layar;
+// satu baris matriks ≈ 35 simpul → 20 per layar (anggaran 800 simpul, utils/listPaging).
+const pagingResetOn = [searchQuery, filterMethod, filterTable, activeView]
+const pipelinePaging = useListPaging(filteredPages, { nodesPerRow: 160, queryKey: 'pg', resetOn: pagingResetOn })
+const matrixPaging = useListPaging(matrixRows, { nodesPerRow: 35, queryKey: 'mpg', resetOn: pagingResetOn })
+const activePaging = computed(() => (activeView.value === 'matrix' ? matrixPaging : activeView.value === 'pipeline' ? pipelinePaging : null))
+const pagingNoun = computed(() => (activeView.value === 'matrix' ? 'baris alur' : 'halaman'))
+
 // Dialog inspektur (state di dalam komponen inspektur)
 const inspector = ref<{ open: (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?: SynergyInspectTab) => void } | null>(null)
 const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?: SynergyInspectTab) => inspector.value?.open(flow, page, tab)
@@ -184,6 +192,18 @@ const downloadSynergyJson = () => {
       @reset="resetFilters"
     />
 
+    <AppListPager
+      v-if="activePaging && filteredPages.length > 0"
+      v-model:page="activePaging.page.value"
+      v-model:per-page="activePaging.perPage.value"
+      position="top"
+      :total="activePaging.total.value"
+      :per-page-options="activePaging.perPageOptions"
+      :range-start="activePaging.rangeStart.value"
+      :range-end="activePaging.rangeEnd.value"
+      :noun="pagingNoun"
+    />
+
     <!-- Loading Skeleton -->
     <div v-if="loading && !synergyMap" class="space-y-4">
       <div v-for="i in 3" :key="i" class="h-44 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-neutral-100 dark:bg-neutral-800/40 animate-pulse" />
@@ -210,7 +230,9 @@ const downloadSynergyJson = () => {
 
     <ProjectsDetailProjectSynergyPipelineView
       v-else-if="activeView === 'pipeline'"
-      :filtered-pages="filteredPages"
+      id="synergy-list"
+      class="scroll-mt-32"
+      :filtered-pages="pipelinePaging.pagedItems.value"
       :collapsed-pages="collapsedPages"
       @toggle="togglePageCollapse"
       @inspect="openInspector"
@@ -218,11 +240,26 @@ const downloadSynergyJson = () => {
 
     <ProjectsDetailProjectSynergyMatrixView
       v-else-if="activeView === 'matrix'"
-      :matrix-rows="matrixRows"
+      id="synergy-list"
+      class="scroll-mt-32"
+      :matrix-rows="matrixPaging.pagedItems.value"
+      :total-rows="matrixRows.length"
       @inspect="openInspector"
     />
 
     <ProjectsDetailProjectSynergyTopologyView v-else-if="activeView === 'topology'" :synergy-map="synergyMap" />
+
+    <AppListPager
+      v-if="activePaging && filteredPages.length > 0"
+      v-model:page="activePaging.page.value"
+      v-model:per-page="activePaging.perPage.value"
+      :total="activePaging.total.value"
+      :per-page-options="activePaging.perPageOptions"
+      :range-start="activePaging.rangeStart.value"
+      :range-end="activePaging.rangeEnd.value"
+      :noun="pagingNoun"
+      scroll-target="synergy-list"
+    />
 
     <ProjectsDetailProjectSynergyInspector ref="inspector" :project="project" />
   </div>

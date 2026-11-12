@@ -99,6 +99,9 @@ const filteredRoutes = computed(() => {
   })
 })
 
+// Satu baris rute ≈ 14 simpul DOM → 50 per halaman (anggaran 800 simpul, utils/listPaging).
+const routePaging = useListPaging(filteredRoutes, { nodesPerRow: 14, queryKey: 'rpg', resetOn: [searchRouteQuery, selectedDomain] })
+
 const availableDomains = computed(() => {
   if (!baseKnowledge.value?.routers_scope?.domain_groups) return []
   return Object.keys(baseKnowledge.value.routers_scope.domain_groups)
@@ -223,7 +226,7 @@ const { getMethodColorClass } = useFormatters()
         </div>
 
         <!-- Table of routes with progressive disclosure -->
-        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/[0.08]">
+        <div id="bk-route-list" class="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/[0.08] scroll-mt-32">
           <table class="w-full text-left text-xs">
             <thead class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 font-semibold border-b border-slate-200 dark:border-white/[0.08]">
               <tr>
@@ -246,8 +249,8 @@ const { getMethodColorClass } = useFormatters()
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 font-mono text-xs">
               <tr
-                v-for="(r, idx) in filteredRoutes.slice(0, 30)"
-                :key="idx"
+                v-for="(r, idx) in routePaging.pagedItems.value"
+                :key="`${idx}-${r.method}-${r.path}`"
                 class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
               >
                 <td class="py-2 px-3 whitespace-nowrap">
@@ -273,11 +276,6 @@ const { getMethodColorClass } = useFormatters()
                   {{ r.description || '-' }}
                 </td>
               </tr>
-              <tr v-if="filteredRoutes.length > 30">
-                <td colspan="5" class="py-2.5 px-3 text-center text-slate-400 font-sans text-xs bg-slate-50/50 dark:bg-[#04111f]">
-                  Menampilkan 30 rute teratas. Gunakan pencarian untuk menyaring {{ filteredRoutes.length - 30 }} rute lainnya.
-                </td>
-              </tr>
               <tr v-if="filteredRoutes.length === 0">
                 <td colspan="5" class="py-6 px-3 text-center text-slate-400 font-sans text-xs">
                   Tidak ada rute yang cocok dengan filter.
@@ -286,6 +284,16 @@ const { getMethodColorClass } = useFormatters()
             </tbody>
           </table>
         </div>
+        <AppListPager
+          v-model:page="routePaging.page.value"
+          v-model:per-page="routePaging.perPage.value"
+          :total="routePaging.total.value"
+          :per-page-options="routePaging.perPageOptions"
+          :range-start="routePaging.rangeStart.value"
+          :range-end="routePaging.rangeEnd.value"
+          noun="rute"
+          scroll-target="bk-route-list"
+        />
       </div>
 
       <!-- Detail Section 3: File Scope & Struktur Direktori (Progressive Disclosure) -->

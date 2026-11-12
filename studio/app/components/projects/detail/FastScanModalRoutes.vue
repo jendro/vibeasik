@@ -21,6 +21,9 @@ const filteredRoutes = computed(() => {
     || (r.middleware && r.middleware.toLowerCase().includes(q))
   )
 })
+
+// Satu baris endpoint ≈ 25 simpul DOM → 25 per halaman (anggaran 800 simpul, utils/listPaging).
+const routePaging = useListPaging(filteredRoutes, { nodesPerRow: 25, resetOn: [routeSearchQuery] })
 </script>
 
 <template>
@@ -69,7 +72,7 @@ const filteredRoutes = computed(() => {
         </thead>
         <tbody class="divide-y divide-neutral-100 dark:divide-neutral-800/60 font-mono text-xs">
           <tr
-            v-for="(r, rIdx) in filteredRoutes"
+            v-for="(r, rIdx) in routePaging.pagedItems.value"
             :key="rIdx"
             class="hover:bg-neutral-50/60 dark:hover:bg-neutral-800/40 transition-colors"
           >
@@ -129,5 +132,14 @@ const filteredRoutes = computed(() => {
     <div v-else class="p-8 text-center text-xs text-neutral-500 italic bg-white dark:bg-[#04111f] rounded-xl border border-neutral-200 dark:border-white/[0.08]">
       Tidak ada router yang cocok dengan pencarian "{{ routeSearchQuery }}".
     </div>
+    <AppListPager
+      v-model:page="routePaging.page.value"
+      v-model:per-page="routePaging.perPage.value"
+      :total="routePaging.total.value"
+      :per-page-options="routePaging.perPageOptions"
+      :range-start="routePaging.rangeStart.value"
+      :range-end="routePaging.rangeEnd.value"
+      noun="endpoint"
+    />
   </div>
 </template>

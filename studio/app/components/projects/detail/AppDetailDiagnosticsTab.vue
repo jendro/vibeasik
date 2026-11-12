@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Diagnostic, Finding, ProjectComponent } from '~/types'
 
-defineProps<{
+const props = defineProps<{
   comp: ProjectComponent
   loading: boolean
   diagnosing: boolean
@@ -10,6 +10,9 @@ defineProps<{
 }>()
 const emit = defineEmits<{ run: [] }>()
 const handleRunComponentDiagnostics = () => emit('run')
+
+// Satu kartu temuan ≈ 30 simpul DOM → 25 per halaman (anggaran 800 simpul, utils/listPaging).
+const findingPaging = useListPaging(() => props.parsedFindings, { nodesPerRow: 30, queryKey: 'fpg' })
 </script>
 
 <template>
@@ -78,7 +81,7 @@ const handleRunComponentDiagnostics = () => emit('run')
       </div>
 
       <!-- Findings List -->
-      <div class="space-y-3">
+      <div id="app-finding-list" class="space-y-3 scroll-mt-32">
         <h5 class="text-xs font-semibold text-neutral-400">
           Temuan Audit ({{ parsedFindings.length }})
         </h5>
@@ -88,7 +91,7 @@ const handleRunComponentDiagnostics = () => emit('run')
         </div>
 
         <div
-          v-for="(f, idx) in parsedFindings"
+          v-for="(f, idx) in findingPaging.pagedItems.value"
           :key="idx"
           class="p-4 rounded-xl border space-y-2 text-xs"
           :class="f.severity === 'CRITICAL'
@@ -124,6 +127,16 @@ const handleRunComponentDiagnostics = () => emit('run')
             <span>Saran: {{ f.suggestion }}</span>
           </div>
         </div>
+        <AppListPager
+          v-model:page="findingPaging.page.value"
+          v-model:per-page="findingPaging.perPage.value"
+          :total="findingPaging.total.value"
+          :per-page-options="findingPaging.perPageOptions"
+          :range-start="findingPaging.rangeStart.value"
+          :range-end="findingPaging.rangeEnd.value"
+          noun="temuan"
+          scroll-target="app-finding-list"
+        />
       </div>
     </div>
   </div>

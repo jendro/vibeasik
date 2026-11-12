@@ -15,6 +15,15 @@ const { getMethodColorClass: methodColorClass } = useFormatters()
 const getMethodColorClass = (method: string) => methodColorClass(method, 'sky')
 const togglePageCollapse = (pageId: string) => emit('toggle', pageId)
 const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?: SynergyInspectTab) => emit('inspect', flow, page, tab)
+
+// Satu kartu halaman bisa memuat puluhan alur API: tampilkan 3 alur & 6 navigasi dulu agar satu
+// halaman daftar (5 kartu) tetap di bawah anggaran 800 simpul DOM; sisanya dibuka per kartu.
+const FLOW_PREVIEW = 3
+const NAV_PREVIEW = 6
+const showAllFlows = ref<Record<string, boolean>>({})
+const showAllNav = ref<Record<string, boolean>>({})
+const visibleFlows = (p: SynergyFrontendPage) => (showAllFlows.value[p.id] ? p.outbound_requests : p.outbound_requests.slice(0, FLOW_PREVIEW))
+const visibleNav = (p: SynergyFrontendPage) => (showAllNav.value[p.id] ? p.navigation_targets : p.navigation_targets.slice(0, NAV_PREVIEW))
 </script>
 
 <template>
@@ -78,7 +87,7 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
 
           <div v-if="p.navigation_targets.length > 0" class="flex flex-wrap gap-2 pt-0.5">
             <div
-              v-for="(nav, nIdx) in p.navigation_targets"
+              v-for="(nav, nIdx) in visibleNav(p)"
               :key="nIdx"
               class="px-2.5 py-1.5 rounded-lg bg-white dark:bg-[#04111f] border border-neutral-200/70 dark:border-white/[0.08] text-xs space-y-0.5"
             >
@@ -95,6 +104,16 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
           <div v-else class="text-xs text-neutral-400 italic">
             Tidak ada navigasi keluar langsung dari halaman ini.
           </div>
+          <UButton
+            v-if="p.navigation_targets.length > NAV_PREVIEW"
+            size="xs"
+            color="neutral"
+            variant="ghost"
+            :icon="showAllNav[p.id] ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+            @click="showAllNav[p.id] = !showAllNav[p.id]"
+          >
+            {{ showAllNav[p.id] ? 'Ringkas navigasi' : `Tampilkan ${p.navigation_targets.length - NAV_PREVIEW} navigasi lainnya` }}
+          </UButton>
         </div>
 
         <!-- Outbound API Branches -->
@@ -118,7 +137,7 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
 
           <!-- Flow Cards -->
           <div
-            v-for="r in p.outbound_requests"
+            v-for="r in visibleFlows(p)"
             :key="r.id"
             class="p-4 rounded-xl bg-white dark:bg-[#04111f] border border-neutral-200/80 dark:border-white/[0.08] space-y-3 hover:border-sky-400/50 transition-colors"
           >
@@ -223,6 +242,18 @@ const openInspector = (flow: SynergyRequestFlow, page: SynergyInspectPage, tab?:
               </button>
             </div>
           </div>
+          <UButton
+            v-if="p.outbound_requests.length > FLOW_PREVIEW"
+            size="xs"
+            color="neutral"
+            variant="outline"
+            block
+            :icon="showAllFlows[p.id] ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+            title="Alur lain di halaman ini disembunyikan agar daftar tetap ringan"
+            @click="showAllFlows[p.id] = !showAllFlows[p.id]"
+          >
+            {{ showAllFlows[p.id] ? 'Ringkas alur' : `Tampilkan ${p.outbound_requests.length - FLOW_PREVIEW} alur lainnya` }}
+          </UButton>
         </div>
       </div>
     </div>

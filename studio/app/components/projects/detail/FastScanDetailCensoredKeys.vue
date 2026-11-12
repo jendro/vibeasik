@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import type { FastScanResult } from '~/types'
 
-defineProps<{ scanResult: FastScanResult }>()
+const props = defineProps<{ scanResult: FastScanResult }>()
 
 const { copyToClipboard } = useCopyToClipboard()
+
+// Satu baris kunci ≈ 15 simpul DOM → 50 per halaman (anggaran 800 simpul, utils/listPaging).
+const keyPaging = useListPaging(() => props.scanResult?.security_audit?.records ?? [], { nodesPerRow: 15, queryKey: 'kpg' })
 </script>
 
 <template>
@@ -95,7 +98,7 @@ const { copyToClipboard } = useCopyToClipboard()
           </thead>
           <tbody class="divide-y divide-neutral-100 dark:divide-neutral-800">
             <tr
-              v-for="(rec, rIdx) in scanResult.security_audit.records"
+              v-for="(rec, rIdx) in keyPaging.pagedItems.value"
               :key="rIdx"
               class="hover:bg-neutral-50/60 dark:hover:bg-neutral-800/40 transition-colors"
             >
@@ -130,6 +133,15 @@ const { copyToClipboard } = useCopyToClipboard()
       <div v-else class="p-6 text-center text-xs text-neutral-500 italic bg-neutral-50/50 dark:bg-neutral-800/30 rounded-lg border border-dashed border-neutral-200 dark:border-white/[0.08]">
         Tidak ada kredensial atau string rahasia terdeteksi pada scan komponen ini (Aman dan bersih).
       </div>
+      <AppListPager
+        v-model:page="keyPaging.page.value"
+        v-model:per-page="keyPaging.perPage.value"
+        :total="keyPaging.total.value"
+        :per-page-options="keyPaging.perPageOptions"
+        :range-start="keyPaging.rangeStart.value"
+        :range-end="keyPaging.rangeEnd.value"
+        noun="kunci"
+      />
     </div>
   </div>
 </template>
