@@ -88,6 +88,21 @@ export const AUDIT_CRITERIA: AuditCriterion[] = [
     }
   },
   {
+    id: 'SEC-RATE-LIMIT-MISSING',
+    category: 'security',
+    title: 'Endpoint Autentikasi Tanpa Rate Limiting (Brute-Force & DoS)',
+    scope: 'Backend (BE)',
+    severity: 'warning',
+    rule: 'Setiap endpoint autentikasi publik (login, register, reset password, OTP, 2FA) wajib dilindungi middleware rate limiting per-IP: maksimal 5 request/menit untuk autentikasi dan 100 request/menit untuk API umum, dengan respons HTTP 429 Too Many Requests beserta header Retry-After.',
+    rationale: 'Tanpa pembatas laju, endpoint login menjadi sasaran serangan brute-force password dan credential stuffing, sementara endpoint publik dapat dibanjiri request untuk menghabiskan kapasitas server (Denial of Service).',
+    inspection_check: 'Deteksi deklarasi rute POST/PUT/PATCH ke path autentikasi (login/register/reset/otp/2fa) pada berkas server yang tidak memuat middleware atau pustaka rate limiting. Bila limiter terpasang di berkas router/middleware global terpisah, telusuri rantai middleware efektif sebelum menindaklanjuti.',
+    suggested_action: 'Pasang rate limiter ketat pada grup rute autentikasi dan limiter umum pada router utama; kembalikan 429 dengan Retry-After saat batas terlampaui.',
+    example_code: {
+      bad: 'app.Post("/login", handler) // tanpa pembatas laju: terbuka untuk brute-force',
+      good: 'auth := app.Group("/auth", limiter.New(limiter.Config{Max: 5, Expiration: time.Minute}))\nauth.Post("/login", handler)'
+    }
+  },
+  {
     id: 'SEC-HARDCODED-SECRETS',
     category: 'security',
     title: 'Hardcoded Secrets, Tokens & Private Keys',

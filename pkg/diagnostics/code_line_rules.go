@@ -14,6 +14,7 @@ type fileScan struct {
 	isUI, isAndroid       bool
 	isServer, usesSQL     bool
 	isControllerOrHandler bool
+	hasRateLimiter        bool
 	guardedGroups         map[string]bool
 	inLoop                bool
 	inRawString           bool
@@ -276,6 +277,26 @@ func ruleUnsafeHTML(s *fileScan) (models.Finding, bool) {
 		"// Bersihkan HTML sebelum rendering:\nimport DOMPurify from 'dompurify'\nconst safeContent = computed(() => DOMPurify.sanitize(rawHtml))"), true
 }
 
+func ruleAuthRateLimit(s *fileScan) (models.Finding, bool) {
+	// hasRateLimiter dihitung sekali per berkas: bila limiter ada di mana pun di berkas ini,
+	// rute autentikasi dianggap sudah terlindungi dan aturan tidak dipicu (menekan false positive).
+	if !s.isServer || s.inRawString || s.hasRateLimiter {
+		return models.Finding{}, false
+	}
+	matches := authRouteRegex.FindStringSubmatch(s.trimmed)
+	if len(matches) < 3 {
+		return models.Finding{}, false
+	}
+	httpMethod := strings.ToUpper(matches[1])
+	routePath := matches[2]
+	return s.newFinding("security", "WARNING", "SEC-RATE-LIMIT-MISSING",
+		fmt.Sprintf("Endpoint Autentikasi (%s %s) Tanpa Proteksi Rate Limiting", httpMethod, routePath),
+		fmt.Sprintf("Rute autentikasi '%s %s' pada baris %d dideklarasikan tanpa middleware rate limiting yang terdeteksi di berkas ini. Tanpa pembatas laju per-IP, endpoint login menjadi sasaran brute-force password dan credential stuffing, dan dapat dibanjiri request untuk menguras kapasitas server (Denial of Service). Catatan: bila limiter dipasang pada berkas router/middleware global terpisah, telusuri rantai middleware efektif lebih dahulu sebelum menindaklanjuti.", httpMethod, routePath, s.lineNum),
+		"Pasang rate limiter per-IP address: maksimal 5 request/menit untuk endpoint autentikasi/login dan 100 request/menit untuk API umum; kembalikan HTTP 429 Too Many Requests dengan header Retry-After.",
+		"OWASP Top 10 A07:2021-Identification and Authentication Failures, OWASP API Security API4:2023 (Unrestricted Resource Consumption) & CWE-307 (Improper Restriction of Excessive Authentication Attempts).",
+		"// Pasang rate limiter ketat pada grup autentikasi (contoh Fiber):\n// auth := app.Group(\"/auth\", limiter.New(limiter.Config{Max: 5, Expiration: time.Minute}))\n// auth.Post(\"/login\", handler)"), true
+}
+
 func ruleWildcardLike(s *fileScan) (models.Finding, bool) {
 	if !s.usesSQL || !wildcardLikeRegex.MatchString(s.trimmed) {
 		return models.Finding{}, false
@@ -330,7 +351,7 @@ var codeLineRules = []lineRule{
 	ruleTrackGuardedGroups, ruleUnguardedMutation, ruleWildcardCORS,
 	ruleStubHandler, ruleVerbInPath, ruleSwallowedError, ruleMissingTimeout,
 	ruleHardcodedSecret, ruleCommandInjection, rulePathTraversal, ruleUnsafeHTML,
-	ruleWildcardLike, ruleSyncIO, ruleUnboundedBody, ruleNativeDialog,
+	ruleAuthRateLimit, ruleWildcardLike, ruleSyncIO, ruleUnboundedBody, ruleNativeDialog,
 }
 
 // loopTracker melacak kedalaman blok loop berdasarkan kurung kurawal baris demi baris.

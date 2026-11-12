@@ -211,6 +211,19 @@
    "suggested_fix": "// Pasang middleware autentikasi sebelum handler:\n// SESUDAH: api.Post(\"/users\", authMiddleware, handler)"
   },
   {
+   "category": "security",
+   "severity": "WARNING",
+   "title": "Endpoint Autentikasi (POST /login) Tanpa Proteksi Rate Limiting",
+   "description": "Rute autentikasi 'POST /login' pada baris 432 dideklarasikan tanpa middleware rate limiting yang terdeteksi di berkas ini. Tanpa pembatas laju per-IP, endpoint login menjadi sasaran brute-force password dan credential stuffing, dan dapat dibanjiri request untuk menguras kapasitas server (Denial of Service). Catatan: bila limiter dipasang pada berkas router/middleware global terpisah, telusuri rantai middleware efektif lebih dahulu sebelum menindaklanjuti.",
+   "suggestion": "Pasang rate limiter per-IP address: maksimal 5 request/menit untuk endpoint autentikasi/login dan 100 request/menit untuk API umum; kembalikan HTTP 429 Too Many Requests dengan header Retry-After.",
+   "target_file": "api/user_handler.go",
+   "line": 432,
+   "snippet": "app.Post(\"/login\", handler)",
+   "rule_id": "SEC-RATE-LIMIT-MISSING",
+   "theory_basis": "OWASP Top 10 A07:2021-Identification and Authentication Failures, OWASP API Security API4:2023 (Unrestricted Resource Consumption) \u0026 CWE-307 (Improper Restriction of Excessive Authentication Attempts).",
+   "suggested_fix": "// Pasang rate limiter ketat pada grup autentikasi (contoh Fiber):\n// auth := app.Group(\"/auth\", limiter.New(limiter.Config{Max: 5, Expiration: time.Minute}))\n// auth.Post(\"/login\", handler)"
+  },
+  {
    "category": "router",
    "severity": "WARNING",
    "title": "Rute Mutasi Data (POST /items) Tanpa Proteksi Middleware",

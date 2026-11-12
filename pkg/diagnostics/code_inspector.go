@@ -112,6 +112,12 @@ var (
 	// Security: Dangerous HTML Injection / XSS in Frontend
 	unsafeHtmlRegex = regexp.MustCompile(`(?i)(v-html\s*=|dangerouslySetInnerHTML\s*=|(?:\.|\b)innerHTML\s*=)`)
 
+	// Security: deklarasi rute autentikasi (login/register/reset) yang rawan brute-force.
+	// Dibatasi ke method submisi (POST/PUT/PATCH) agar halaman GET login tidak ikut terpicu.
+	authRouteRegex = regexp.MustCompile(`(?i)\.(Post|Put|Patch)\s*\(\s*["']([^"']*(?:login|sign-?in|log-?in|authenticate|register|sign-?up|forgot|reset-?password|/otp|/2fa|/mfa)[^"']*)["']`)
+	// rateLimiterRegex: kehadiran middleware/pustaka rate limiting lintas framework (Go, Node, Python).
+	rateLimiterRegex = regexp.MustCompile(`(?i)(limiter\.New|rate[\s_-]?limit|rate\.(?:New)?Limiter|express-rate-limit|rateLimit\s*\(|\bthrottle|tollbooth|x/time/rate|ThrottlerGuard|flask[\s_-]?limiter|django_ratelimit|slidingwindow|leaky[\s_-]?bucket|token[\s_-]?bucket|middleware/limiter)`)
+
 	// Performance / Heavy Process: Blocking Synchronous I/O in Handlers
 	syncIoRegex = regexp.MustCompile(`(?i)\bfs\.(readFileSync|writeFileSync|appendFileSync)\s*\(`)
 
@@ -362,13 +368,14 @@ func newFileScan(relPath, lang, content string) *fileScan {
 	isAndroid := (lang == "kotlin" || lang == "java") && isAndroidSourceFile(relPath, content)
 	isServer := isServerLang(lang) && !isUI && !isAndroid
 	return &fileScan{
-		relPath:       relPath,
-		lang:          lang,
-		isUI:          isUI,
-		isAndroid:     isAndroid,
-		isServer:      isServer,
-		usesSQL:       isServer || lang == "dart" || isAndroid, // sqflite / Room rawQuery juga memakai SQL
-		guardedGroups: map[string]bool{},
+		relPath:        relPath,
+		lang:           lang,
+		isUI:           isUI,
+		isAndroid:      isAndroid,
+		isServer:       isServer,
+		usesSQL:        isServer || lang == "dart" || isAndroid, // sqflite / Room rawQuery juga memakai SQL
+		hasRateLimiter: isServer && rateLimiterRegex.MatchString(content),
+		guardedGroups:  map[string]bool{},
 		isControllerOrHandler: isServer && (strings.Contains(relPath, "handler") ||
 			strings.Contains(relPath, "controller") ||
 			strings.Contains(relPath, "router") ||
