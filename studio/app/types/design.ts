@@ -317,7 +317,7 @@ export interface MeasuredComponentStyle {
   contrast?: number
 }
 
-export type MeasuredRole = 'navbar' | 'heading' | 'button' | 'input' | 'card' | 'form' | 'image' | 'footer' | 'section'
+export type MeasuredRole = 'navbar' | 'heading' | 'button' | 'input' | 'card' | 'form' | 'image' | 'footer' | 'section' | 'text' | 'icon' | 'group' | 'item'
 
 export interface MeasuredComponent {
   id: number
@@ -326,6 +326,10 @@ export interface MeasuredComponent {
   label?: string
   tag: string
   section: number
+  /** ID komponen terukur terdekat yang membungkusnya (kosong = langsung di section) */
+  parent?: number
+  /** group: isi tiap butir yang berulang, mis. "card" atau "icon+heading+text" */
+  item?: string
   box: MeasuredBox
   x_pct: number
   w_pct: number
@@ -344,6 +348,8 @@ export interface MeasuredComponent {
 export interface MeasuredSection {
   index: number
   role: string
+  /** jenis menurut isi: hero, features, cards, products, pricing, testimonials, faq, cta, … */
+  kind?: string
   label?: string
   y: number
   h: number
@@ -355,6 +361,8 @@ export interface MeasuredSection {
 }
 
 export interface PageMeasure {
+  /** 2 = komponen bertingkat (parent, group, item) + jenis section; kosong = daftar rata */
+  version?: number
   viewport_w: number
   viewport_h: number
   page_height: number

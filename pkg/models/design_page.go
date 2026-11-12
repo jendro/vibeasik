@@ -7,7 +7,8 @@ import (
 	"gorm.io/gorm"
 )
 
-// Galeri Desain bertingkat: Website (DesignReference) → Halaman (DesignPage) → Komponen (MeasuredComponent).
+// Galeri Desain bertingkat: Website (DesignReference) → Halaman (DesignPage) → Section (SectionBox) →
+// Komponen (MeasuredComponent, bersarang lewat Parent: kelompok → kartu → judul/teks/tombol).
 // Halaman menyimpan hasil UKUR browser sungguhan (getBoundingClientRect + getComputedStyle), bukan tebakan
 // LLM: layout (container, section, ritme spacing), komponen (posisi, ukuran, margin, padding, style) per
 // viewport, dan fakta pengamatan (ObservedFact) yang dihitung dari hasil ukur itu. Galeri tidak menilai website:
@@ -88,11 +89,13 @@ type ComponentStyle struct {
 // Style = tampilan komponen itu sendiri.
 type MeasuredComponent struct {
 	ID        int            `json:"id"`              // nomor urut di halaman (K1, K2, …) — dipakai juga di label LLM
-	Role      string         `json:"role"`            // navbar, hero, heading, button, input, card, image, form, footer, section
+	Role      string         `json:"role"`            // navbar, heading, button, input, card, image, form, footer, text, icon, group, item
 	Level     int            `json:"level,omitempty"` // heading 1–6
 	Label     string         `json:"label,omitempty"`
 	Tag       string         `json:"tag"`
-	Section   int            `json:"section"` // indeks section induk (-1 = di luar section)
+	Section   int            `json:"section"`          // indeks section induk (-1 = di luar section)
+	Parent    int            `json:"parent,omitempty"` // ID komponen terukur terdekat yang membungkusnya (0 = langsung di section)
+	Item      string         `json:"item,omitempty"`   // group: isi tiap butir yang berulang, mis. "card" atau "icon+heading+text"
 	Box       Box            `json:"box"`
 	XPct      float64        `json:"x_pct"` // posisi & lebar relatif lebar viewport (%)
 	WPct      float64        `json:"w_pct"`
@@ -107,10 +110,39 @@ type MeasuredComponent struct {
 	Signature string         `json:"signature"` // kunci varian (peran + style + ukuran dibulatkan)
 }
 
+// Jenis section menurut isinya (SectionBox.Kind). Role hanya membedakan header/hero/section/footer; Kind
+// menamai section biasa dari susunan komponennya.
+const (
+	SectionKindHeader       = "header"
+	SectionKindHero         = "hero"
+	SectionKindLogos        = "logos"        // deret logo/ikon tanpa teks
+	SectionKindStats        = "stats"        // deret angka besar
+	SectionKindFeatures     = "features"     // butir berulang: (ikon/gambar +) judul + teks
+	SectionKindCards        = "cards"        // grid kartu umum
+	SectionKindProducts     = "products"     // grid kartu berharga
+	SectionKindPricing      = "pricing"      // kartu paket: harga + tombol
+	SectionKindTestimonials = "testimonials" // kutipan pelanggan
+	SectionKindFAQ          = "faq"
+	SectionKindGallery      = "gallery"    // deret gambar tanpa teks
+	SectionKindForm         = "form"       // formulir dengan beberapa isian
+	SectionKindNewsletter   = "newsletter" // satu isian + tombol
+	SectionKindCTA          = "cta"        // judul + tombol, pendek
+	SectionKindMediaText    = "media_text" // teks berdampingan dengan gambar
+	SectionKindText         = "text"       // judul + paragraf saja
+	SectionKindFooter       = "footer"
+	SectionKindOther        = "other"
+)
+
+// DesignSectionKinds adalah jenis section yang dikenali (urutan tampil di UI).
+var DesignSectionKinds = []string{SectionKindHeader, SectionKindHero, SectionKindLogos, SectionKindStats, SectionKindFeatures,
+	SectionKindCards, SectionKindProducts, SectionKindPricing, SectionKindTestimonials, SectionKindFAQ, SectionKindGallery,
+	SectionKindForm, SectionKindNewsletter, SectionKindCTA, SectionKindMediaText, SectionKindText, SectionKindFooter, SectionKindOther}
+
 // SectionBox adalah satu blok vertikal halaman (header, hero, section, footer).
 type SectionBox struct {
 	Index         int    `json:"index"`
 	Role          string `json:"role"`
+	Kind          string `json:"kind,omitempty"`  // jenis menurut isi (SectionKind…); kosong = belum dikenali
 	Label         string `json:"label,omitempty"` // heading pertama di section
 	Y             int    `json:"y"`
 	H             int    `json:"h"`
@@ -158,8 +190,13 @@ type MeasureStats struct {
 	SmallTargets   int                `json:"small_targets"` // < 44px (mobile) / < 24px (desktop)
 }
 
+// PageMeasureTree adalah versi hasil ukur yang komponennya tersusun bertingkat (Parent, group, item) dan
+// section-nya berjenis (Kind). Hasil ukur lama (Version 0) hanya berupa daftar rata.
+const PageMeasureTree = 2
+
 // PageMeasure adalah hasil ukur satu halaman pada satu viewport.
 type PageMeasure struct {
+	Version    int                 `json:"version,omitempty"`
 	ViewportW  int                 `json:"viewport_w"`
 	ViewportH  int                 `json:"viewport_h"`
 	PageHeight int                 `json:"page_height"`
