@@ -61,5 +61,6 @@ vibeasik_run_component
 vibeasik_run_local_agent
 vibeasik_run_status
 vibeasik_search_domain
+vibeasik_security_test
 vibeasik_stop_component
 vibeasik_tutorials

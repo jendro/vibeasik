@@ -230,6 +230,23 @@ func (s *Server) extendedToolsList() []Tool {
 			},
 		},
 
+		{
+			Name:        "vibeasik_security_test",
+			Description: "Project security test: audits the backend router/source for standard controls (rate limiting against DDoS & brute-force, security headers, CORS, parameterized SQL vs injection, input validation, auth on mutations, error leaks) and proves them against the project's own running server (local port or base_url of the live server) with benign requests: header check, foreign-Origin CORS, unusual-input boundary (no SQL error / 5xx), and a small request burst expecting 429. Returns score, grade, and per-check evidence with file:line.",
+			InputSchema: ToolSchema{
+				Type: "object",
+				Properties: map[string]interface{}{
+					"project_id":   prop("integer", "Project ID"),
+					"component_id": prop("integer", "Optional: only this component (default: all backend components)"),
+					"base_url":     prop("string", "Optional: URL of the running/live server, e.g. https://api.example.com (default: the component's local port)"),
+					"live":         prop("boolean", "Run the live probe (default true when a target exists)"),
+					"skip_burst":   prop("boolean", "Skip the rate-limit burst (e.g. fragile production server)"),
+					"burst":        prop("integer", "Burst size for the rate-limit check (default 25, max 60)"),
+				},
+				Required: []string{"project_id"},
+			},
+		},
+
 		// --- Background queue ---
 
 		// --- Visual audit ---

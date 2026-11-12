@@ -18,6 +18,7 @@ type Services struct {
 	ScaleUp     ScaleUpService
 	Similarity  SimilarityService
 	Organizer   OrganizerService
+	SecTest     SecurityTestService
 }
 
 // NewServices initializes all domain services using the provided repositories and db
@@ -33,5 +34,6 @@ func NewServices(repos *repository.Repositories, db *gorm.DB) *Services {
 		ScaleUp:     NewScaleUpService(repos.Components, repos.Projects),
 		Similarity:  NewSimilarityService(repos.Projects),
 		Organizer:   NewOrganizerService(repos.Projects, repos.Components, db),
+		SecTest:     NewSecurityTestService(repos.Projects, repos.Routes),
 	}
 }

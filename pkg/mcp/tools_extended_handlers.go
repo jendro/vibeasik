@@ -32,6 +32,7 @@ var extendedToolHandlers = map[string]toolHandler{
 	"get_security_status":           (*Server).toolSecurityStatus,
 	"test_secret_sanitizer":         (*Server).toolSecretSanitizer,
 	"vibeasik_cloud_security_audit": (*Server).toolCloudSecurityAudit,
+	"vibeasik_security_test":        (*Server).toolSecurityTest,
 	"plan_workspace_reorg":          (*Server).toolPlanReorg,
 	"preview_consolidate_project":   (*Server).toolPreviewConsolidate,
 	"consolidate_project":           (*Server).toolConsolidateProject,
@@ -248,6 +249,27 @@ func (s *Server) toolCloudSecurityAudit(args map[string]interface{}) (*ToolCallR
 		return nil, err
 	}
 	return jsonResult(r)
+}
+
+func (s *Server) toolSecurityTest(args map[string]interface{}) (*ToolCallResult, error) {
+	req := service.SecurityTestRequest{
+		ProjectID:   argUint(args, "project_id"),
+		ComponentID: argUint(args, "component_id"),
+		BaseURL:     argString(args, "base_url"),
+		Burst:       int(argUint(args, "burst")),
+	}
+	if v, ok := args["live"].(bool); ok {
+		req.Live = &v
+	}
+	req.SkipBurst, _ = args["skip_burst"].(bool)
+	if req.Burst > 60 {
+		req.Burst = 60
+	}
+	rep, err := s.services.SecTest.Run(context.Background(), req)
+	if err != nil {
+		return nil, err
+	}
+	return jsonResult(rep)
 }
 
 func (s *Server) toolPlanReorg(args map[string]interface{}) (*ToolCallResult, error) {
