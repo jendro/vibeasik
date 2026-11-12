@@ -24,15 +24,15 @@ const { selectActiveProject } = useActiveProject()
 const projectId = computed(() => Number(route.params.id))
 const project = ref<Project | null>(null)
 const loading = ref(true)
-// Legacy tab ids keep old links (?tab=topology / ?tab=base_knowledge) working
-const TAB_ALIASES: Record<string, string> = { topology: 'apps', base_knowledge: 'technical' }
-const VALID_TABS = ['overview', 'apps', 'technical', 'synergy', 'visual_audit', 'recap', 'cost']
+// Legacy tab ids keep old links (?tab=topology / ?tab=base_knowledge) working.
+// Tab "Live Visual" dihapus: tangkapan layar & audit visual ada di halaman Screenshot; ?tab=visual_audit jatuh ke Ringkasan.
+const TAB_ALIASES: Record<string, string> = { topology: 'apps', base_knowledge: 'technical', visual_audit: 'overview' }
+const VALID_TABS = ['overview', 'apps', 'technical', 'synergy', 'recap', 'cost']
 // Tab "Kaji Ide & TODO" dilebur ke Ruang Klien (satu pintu permintaan); tautan lama diarahkan ke sana.
 const CLIENT_ROOM_TABS = ['ai_chat']
 // Tab yang datanya dari route Pro (engine Community menjawab 402): tampilkan kartu kunci, jangan panggil API-nya.
 const TAB_FEATURE: Record<string, string> = {
-  overview: 'audit.ai_review', technical: 'audit.ai_review', synergy: 'audit.ai_review',
-  visual_audit: 'runtime_sim'
+  overview: 'audit.ai_review', technical: 'audit.ai_review', synergy: 'audit.ai_review'
 }
 const { load: loadEdition, isLocked } = useEdition()
 const lockedFeature = computed(() => {
@@ -359,12 +359,6 @@ const handleCreateDirOnDisk = async (comp: ProjectComponent) => {
         @open-add-modal="openAddComponentModal"
         @open-detail="handleOpenAppDetail"
         @switch-tab="switchTab"
-      />
-
-      <ProjectsDetailVisualAuditTab
-        v-else-if="activeTab === 'visual_audit'"
-        :project="project"
-        :port-statuses="portStatuses"
       />
     </div>
 

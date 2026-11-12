@@ -16,8 +16,7 @@ const tabs = computed(() => [
   { id: 'cost', title: 'Biaya Proses', icon: 'i-lucide-sigma', desc: 'Rumus tick T(n) & Big-O tiap rute dan fungsi' },
   { id: 'apps', title: 'Aplikasi', icon: 'i-lucide-boxes', desc: 'Modul & hubungan antar aplikasi', badge: props.project?.components?.length },
   { id: 'technical', title: 'Rute, File & Env', icon: 'i-lucide-book-open-check', desc: 'Katalog router, struktur & .env' },
-  { id: 'synergy', title: 'Alur Data', icon: 'i-lucide-network', desc: 'Halaman → API → Database' },
-  { id: 'visual_audit', title: 'Live Visual', icon: 'i-lucide-camera', desc: 'Snapshot FE & audit multimodal' }
+  { id: 'synergy', title: 'Alur Data', icon: 'i-lucide-network', desc: 'Halaman → API → Database' }
 ])
 </script>
 
