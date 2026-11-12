@@ -7,6 +7,8 @@ import (
 	"os"
 	"strings"
 	"syscall"
+
+	"github.com/vibeasik/vibeasik/pkg/config"
 )
 
 // restartTarget biner yang akan dijalankan ulang. Setelah pembaruan biner diganti di tempat, sehingga
@@ -33,5 +35,5 @@ var restartSelf = func() error {
 	if err != nil {
 		return err
 	}
-	return syscall.Exec(exe, os.Args, append(os.Environ(), restartedEnv+"=1"))
+	return syscall.Exec(exe, os.Args, append(config.ChildEnviron(), restartedEnv+"=1"))
 }

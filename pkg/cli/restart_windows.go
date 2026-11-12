@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+
+	"github.com/vibeasik/vibeasik/pkg/config"
 )
 
 // restartTarget biner yang akan dijalankan ulang. Setelah pembaruan, biner lama dipindah ke .old dan
@@ -34,7 +36,7 @@ var restartSelf = func() error {
 	}
 	cmd := exec.Command(exe, os.Args[1:]...)
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
-	cmd.Env = append(os.Environ(), restartedEnv+"=1")
+	cmd.Env = append(config.ChildEnviron(), restartedEnv+"=1")
 	if err := cmd.Run(); err != nil {
 		if ee, ok := err.(*exec.ExitError); ok {
 			os.Exit(ee.ExitCode())
