@@ -462,6 +462,8 @@ export interface MeasuredNorms {
 
 export interface DesignPagesResponse {
   pages: DesignPage[]
+  /** sari bentuk per ID halaman: susunan yang disarikan dari tampilan (desktop & mobile) + teks ringkasnya */
+  shapes?: Record<string, { text: string, desktop: unknown, mobile: unknown }>
   components: { desktop: ComponentVariant[], mobile: ComponentVariant[] }
   norms: MeasuredNorms | null
   /** kesimpulan galeri untuk jenis website referensi ini (pembanding, bukan nilai) */
