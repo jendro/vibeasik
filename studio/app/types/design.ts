@@ -460,6 +460,70 @@ export interface MeasuredNorms {
   chars_per_line: number
 }
 
+/** Median & rentang umum satu angka di jaringan pola (satu suara per website). */
+export interface PatternNumber { median: number, low: number, high: number, sites: number }
+
+export interface PatternExample { reference_id: number, name: string, page_id: number, page_kind: string, section: number }
+
+/** Satu pola bentuk di jaringan: varian section, komposisi (isi), komponen, atau elemen. Tanpa warna. */
+export interface PatternNode {
+  id: string
+  level: 'section' | 'composition' | 'component' | 'element'
+  kind?: string
+  key: string
+  label: string
+  sites: number
+  uses: number
+  contexts?: Record<string, number>
+  numbers?: Record<string, PatternNumber>
+  examples?: PatternExample[]
+  sample?: string
+}
+
+export interface PatternLink {
+  node: PatternNode
+  sites: number
+  in_context: number
+  /** angka bentuk ini di dalam varian yang ditanyakan */
+  numbers?: Record<string, PatternNumber>
+}
+
+export interface PatternAnswer {
+  variant: PatternNode
+  in_context: number
+  compositions: PatternLink[]
+  components: PatternLink[]
+  elements: PatternLink[]
+  with?: PatternLink[]
+  next?: PatternLink[]
+  before?: PatternLink[]
+}
+
+export interface PatternQuery { text?: string, kind?: string, surface?: string, layout?: string, purpose?: string, tone?: string, limit?: number }
+
+export interface PatternResult {
+  query: PatternQuery
+  context?: string[]
+  sites: number
+  context_sites: number
+  relaxed?: string[]
+  answers: PatternAnswer[]
+  markdown: string
+}
+
+export interface PatternKindSummary { kind: string, variants: number, sites: number, in_context: number }
+
+export interface DesignPatternsResponse {
+  result: PatternResult
+  sites: number
+  pages: number
+  nodes: number
+  edges: number
+  kinds: PatternKindSummary[]
+  /** urutan varian section halaman beranda yang paling sering */
+  skeleton: PatternNode[] | null
+}
+
 export interface DesignPagesResponse {
   pages: DesignPage[]
   /** sari bentuk per ID halaman: susunan yang disarikan dari tampilan (desktop & mobile) + teks ringkasnya */
