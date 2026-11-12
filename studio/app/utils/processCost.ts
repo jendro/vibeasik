@@ -21,3 +21,7 @@ export const shortFormula = (formula: string, terms = 3) => {
   const parts = formula.split(' + ')
   return parts.length <= terms + 1 ? formula : `${parts.slice(0, terms).join(' + ')} + …`
 }
+
+/** Label bahasa/framework baris biaya: Go, Laravel, CodeIgniter 4, PHP … */
+export const costStackLabel = (r: { lang?: string, framework?: string }) =>
+  r.lang === 'php' ? (r.framework || 'PHP') : 'Go'

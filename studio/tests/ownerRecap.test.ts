@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import type { OwnerRecap } from '../app/types'
 import { recapDayLabels, recapHeadline } from '../app/utils/ownerRecap'
-import { costClassInfo, fmtTicks, shortFormula } from '../app/utils/processCost'
+import { costClassInfo, costStackLabel, fmtTicks, shortFormula } from '../app/utils/processCost'
 
 const recap = (over: Partial<OwnerRecap['todos']> = {}, bugs = 0, algo = 0, findings = 0): OwnerRecap => ({
   project_id: 1, days: 30, generated_at: '', health_score: 80, timeline: [], categories: [], health: [], highlights: [],
@@ -40,5 +40,10 @@ describe('kelas biaya proses', () => {
   test('shortFormula menyisakan suku tertinggi', () => {
     expect(shortFormula('3n² + 2n + 5')).toBe('3n² + 2n + 5')
     expect(shortFormula('9n⁴ + 8n³ + 7n² + 6n + 5')).toBe('9n⁴ + 8n³ + 7n² + …')
+  })
+  test('costStackLabel memberi label Go / framework PHP', () => {
+    expect(costStackLabel({ lang: 'go', framework: 'fiber' })).toBe('Go')
+    expect(costStackLabel({ lang: 'php', framework: 'Laravel' })).toBe('Laravel')
+    expect(costStackLabel({ lang: 'php' })).toBe('PHP')
   })
 })

@@ -77,8 +77,13 @@ export interface ProcessCost {
   growth: { n: number, ticks: number, queries: number }[]
 }
 
+export type CostLang = 'go' | 'php'
+
 export interface RouteCost extends ProcessCost {
   module: string
+  lang: CostLang
+  /** fiber, gin, echo … (Go) atau Laravel, Lumen, CodeIgniter 4, Slim, PHP */
+  framework?: string
   method: string
   path: string
   handler: string
@@ -89,6 +94,7 @@ export interface RouteCost extends ProcessCost {
 
 export interface FuncCost extends ProcessCost {
   module: string
+  lang: CostLang
   name: string
   file: string
   line: number
@@ -111,6 +117,8 @@ export interface ProcessCostSnapshot {
 export interface ProcessCostSummary {
   supported: boolean
   modules: string[]
+  /** mis. ['Go (fiber)', 'Laravel'] */
+  frameworks: string[]
   routes: number
   funcs: number
   route_classes: Partial<Record<CostClass, number>>

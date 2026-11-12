@@ -642,6 +642,7 @@ func (c cst) export() Cost {
 // FuncCost = biaya satu fungsi lokal.
 type FuncCost struct {
 	Module string `json:"module"`
+	Lang   string `json:"lang"` // go, php
 	Name   string `json:"name"`
 	File   string `json:"file"`
 	Line   int    `json:"line"`
@@ -653,6 +654,8 @@ type FuncCost struct {
 // RouteCost = biaya satu rute: handler beserta semua fungsi lokal yang dijangkaunya + middleware lokal di rantainya.
 type RouteCost struct {
 	Module      string `json:"module"`
+	Lang        string `json:"lang"`                // go, php
+	Framework   string `json:"framework,omitempty"` // fiber, gin, Laravel, CodeIgniter 4, PHP …
 	Method      string `json:"method"`
 	Path        string `json:"path"`
 	Handler     string `json:"handler"`
@@ -697,7 +700,7 @@ func (g *Graph) computeCosts(m *module) {
 				mws++
 			}
 		}
-		g.routeCosts[rt] = RouteCost{Module: g.Module, Method: rt.Method, Path: rt.Path, Handler: rt.Handler,
+		g.routeCosts[rt] = RouteCost{Module: g.Module, Lang: "go", Framework: g.Framework, Method: rt.Method, Path: rt.Path, Handler: rt.Handler,
 			HandlerDecl: rt.HandlerDecl, Auth: rt.Auth, Middlewares: mws, Cost: total.export()}
 	}
 }
@@ -722,9 +725,15 @@ func Costs(graphs []*Graph) *CostReport {
 			if !ok {
 				continue
 			}
-			rep.Funcs = append(rep.Funcs, FuncCost{Module: g.Module, Name: ref.Name, File: ref.File, Line: ref.Line, End: ref.End, Routes: reach[k], Cost: fc})
+			rep.Funcs = append(rep.Funcs, FuncCost{Module: g.Module, Lang: "go", Name: ref.Name, File: ref.File, Line: ref.Line, End: ref.End, Routes: reach[k], Cost: fc})
 		}
 	}
+	finishCosts(rep)
+	return rep
+}
+
+// finishCosts mengurutkan rute & fungsi dari yang paling mahal saat data tumbuh dan membuang rute ganda.
+func finishCosts(rep *CostReport) {
 	sort.SliceStable(rep.Routes, func(i, j int) bool {
 		a, b := rep.Routes[i], rep.Routes[j]
 		if a.rank != b.rank {
@@ -750,7 +759,6 @@ func Costs(graphs []*Graph) *CostReport {
 		}
 		return a.File+a.Name < b.File+b.Name
 	})
-	return rep
 }
 
 // reachableFrom: fungsi lokal yang dijangkau dari key (termasuk key sendiri).
@@ -855,7 +863,7 @@ func Hotspots(graphs []*Graph) []Hotspot {
 					bestT, viaT = cc.rank, name
 				}
 			}
-			fn := FuncCost{Module: g.Module, Name: ref.Name, File: ref.File, Line: ref.Line, End: ref.End, Routes: len(routes), Cost: fc}
+			fn := FuncCost{Module: g.Module, Lang: "go", Name: ref.Name, File: ref.File, Line: ref.Line, End: ref.End, Routes: len(routes), Cost: fc}
 			sample := routes
 			if len(sample) > hotspotRouteSamples {
 				sample = sample[:hotspotRouteSamples]

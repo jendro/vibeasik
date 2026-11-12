@@ -6,8 +6,9 @@ const RULES = [
   { code: 'loop atas data', text: '(n + 1) cek syarat + n × isi loop — inilah yang menaikkan pangkat n' },
   { code: 'loop batas tetap', text: 'for i < 3 hanya mengalikan angka, tidak menaikkan pangkat' },
   { code: 'fungsi lokal', text: 'rumus fungsi yang dipanggil ikut dijumlahkan; di dalam loop dikalikan n' },
-  { code: 'pustaka luar', text: '1 tick; sort = n log n; callback Map/Filter/Walk = n × isi callback' },
-  { code: 'query database', text: 'dihitung terpisah sebagai Q(n); query di dalam loop → Q(n) = n + 1' }
+  { code: 'pustaka luar', text: '1 tick; sort/usort/sortBy = n log n; callback Map/Filter/Walk, array_map, ->each/->map = n × isi callback' },
+  { code: 'query database', text: 'dihitung terpisah sebagai Q(n): GORM/sql (Go), Eloquent/DB::/PDO/CodeIgniter (PHP); di dalam loop → Q(n) = n + 1' },
+  { code: 'rute PHP', text: 'Laravel Route:: (group, prefix, middleware, resource), CodeIgniter $routes, Slim $app; tanpa router: tiap berkas .php = satu halaman' }
 ]
 const EXAMPLES = [
   { formula: '3', bigO: 'O(1)', text: 'ambil satu baris lalu kirim' },
@@ -25,7 +26,7 @@ const EXAMPLES = [
       <p class="text-sm text-neutral-700 dark:text-neutral-200 max-w-3xl leading-relaxed">
         <strong class="font-semibold">T(n)</strong> = jumlah langkah (tick) yang dijalankan sebuah rute bila jumlah datanya <strong class="font-semibold">n</strong>.
         T(1) adalah biaya untuk 1 data; suku tertinggi rumusnya menentukan kelas pertumbuhan (Big-O).
-        Hitungan dibaca langsung dari kode (AST Go), bukan dari pengukuran waktu.
+        Hitungan dibaca langsung dari kode (AST Go dan pengurai PHP), bukan dari pengukuran waktu.
       </p>
     </div>
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -48,7 +49,7 @@ const EXAMPLES = [
       </ul>
     </div>
     <p class="text-xs text-neutral-500">
-      Batasan: semua koleksi dianggap berukuran n; rekursi ditandai dan rumusnya menjadi batas bawah; biaya di dalam pustaka luar dan mesin database tidak ikut dihitung.
+      Batasan: semua koleksi dianggap berukuran n; rekursi ditandai dan rumusnya menjadi batas bawah; biaya di dalam pustaka luar dan mesin database tidak ikut dihitung; di PHP, relasi Eloquent yang dibaca sebagai properti ($post->user) tidak terlihat sebagai query.
     </p>
   </section>
 </template>

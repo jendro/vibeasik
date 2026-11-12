@@ -3,7 +3,7 @@ import type { CostClass, ProcessCostPage, Project } from '~/types'
 import type { StatItem } from '~/components/AppStatStrip.vue'
 import { COST_CLASSES, fmtTicks, shortFormula } from '~/utils/processCost'
 
-// Tab "Biaya Proses": rumus tick T(n), Big-O, dan jumlah query tiap rute/fungsi backend Go, paging dari server.
+// Tab "Biaya Proses": rumus tick T(n), Big-O, dan jumlah query tiap rute/fungsi backend Go & PHP (Laravel, CodeIgniter, Slim, PHP biasa), paging dari server.
 const props = defineProps<{ project: Project }>()
 
 const { getProcessCost } = useApi()
@@ -61,7 +61,7 @@ const stats = computed<StatItem[]>(() => {
   if (!s) return []
   const light = (s.route_classes.constant || 0) + (s.route_classes.log || 0) + (s.route_classes.linear || 0) + (s.route_classes.linearithmic || 0)
   return [
-    { label: 'Rute dihitung', value: s.routes, hint: `${s.funcs} fungsi lokal` },
+    { label: 'Rute dihitung', value: s.routes, hint: [`${s.funcs} fungsi lokal`, ...(s.frameworks || [])].join(' · ') },
     { label: 'Rute ringan', value: light, hint: 'O(1) sampai O(n log n)', dot: 'bg-emerald-500' },
     { label: 'Rute O(n²) ke atas', value: heavy(s.route_classes), hint: 'loop bersarang atas data', dot: 'bg-amber-500', tone: heavy(s.route_classes) ? 'text-amber-600 dark:text-amber-400' : undefined },
     { label: 'Rute N+1 query', value: s.n_plus_one_routes, hint: 'query di dalam loop', dot: 'bg-rose-500', tone: s.n_plus_one_routes ? 'text-rose-600 dark:text-rose-400' : undefined },
@@ -98,10 +98,10 @@ const card = 'min-w-0 rounded-2xl border border-neutral-200 dark:border-white/10
       <div v-if="!summary.supported" class="rounded-2xl border border-dashed border-neutral-300 dark:border-neutral-700 p-10 text-center space-y-2">
         <UIcon name="i-lucide-sigma" class="size-8 text-neutral-400 mx-auto" />
         <p class="text-sm font-medium text-neutral-800 dark:text-neutral-100">
-          Belum ada rute backend Go yang bisa dihitung
+          Belum ada rute backend Go atau PHP yang bisa dihitung
         </p>
         <p class="text-sm text-neutral-500 max-w-md mx-auto">
-          Penghitung tick membaca rute Fiber, Gin, Echo, Chi, dan net/http langsung dari kode Go. Proyek ini belum punya backend Go ber-rute di folder yang dipantau.
+          Penghitung tick membaca rute Fiber, Gin, Echo, Chi, dan net/http dari kode Go, serta rute Laravel/Lumen, CodeIgniter 4, Slim, dan halaman PHP biasa dari kode PHP. Proyek ini belum punya backend ber-rute di folder yang dipantau.
         </p>
       </div>
 

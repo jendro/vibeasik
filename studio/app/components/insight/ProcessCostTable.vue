@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import type { FuncCost, ProcessCost, RouteCost } from '~/types'
-import { costClassInfo, fmtTicks, shortFormula } from '~/utils/processCost'
+import { costClassInfo, costStackLabel, fmtTicks, shortFormula } from '~/utils/processCost'
 
 // Tabel rumus biaya per rute atau per fungsi; klik baris untuk melihat pertumbuhan T(n) pada n = 1 … 10.000.
 const props = defineProps<{ kind: 'routes' | 'funcs', routes: RouteCost[], funcs: FuncCost[] }>()
 
 type Row = ProcessCost & { key: string, title: string, sub: string, method?: string }
 const rows = computed<Row[]>(() => props.kind === 'routes'
-  ? props.routes.map(r => ({ ...r, key: `${r.module}|${r.method}|${r.path}`, title: r.path, method: r.method, sub: `${r.handler}${r.middlewares ? ` · +${r.middlewares} middleware` : ''}` }))
-  : props.funcs.map(f => ({ ...f, key: `${f.module}|${f.file}|${f.name}|${f.line}`, title: f.name, sub: `${f.file}:${f.line}${f.routes ? ` · dipakai ${f.routes} rute` : ''}` })))
+  ? props.routes.map(r => ({ ...r, key: `${r.module}|${r.method}|${r.path}`, title: r.path, method: r.method, sub: `${costStackLabel(r)} · ${r.handler}${r.middlewares ? ` · +${r.middlewares} middleware` : ''}` }))
+  : props.funcs.map(f => ({ ...f, key: `${f.module}|${f.file}|${f.name}|${f.line}`, title: f.name, sub: `${costStackLabel(f)} · ${f.file}:${f.line}${f.routes ? ` · dipakai ${f.routes} rute` : ''}` })))
 
 const open = ref<string | null>(null)
 const toggle = (key: string) => { open.value = open.value === key ? null : key }

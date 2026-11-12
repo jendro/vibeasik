@@ -27,8 +27,9 @@ type CostQuery struct {
 
 // CostSummary = sebaran kelas pertumbuhan seluruh proyek (bukan hanya halaman yang termuat).
 type CostSummary struct {
-	Supported      bool                `json:"supported"` // false: tidak ada backend Go ber-rute yang bisa ditelusuri
+	Supported      bool                `json:"supported"` // false: tidak ada backend Go/PHP ber-rute yang bisa ditelusuri
 	Modules        []string            `json:"modules"`
+	Frameworks     []string            `json:"frameworks"` // Go (fiber, gin …), Laravel, CodeIgniter 4, Slim, PHP
 	Routes         int                 `json:"routes"`
 	Funcs          int                 `json:"funcs"`
 	RouteClasses   map[string]int      `json:"route_classes"`
@@ -61,12 +62,25 @@ const (
 
 // ProcessCost menghitung biaya proses proyek, mencatat potret hariannya, dan mengembalikan satu halaman daftar.
 func ProcessCost(db *gorm.DB, projectID uint, q CostQuery, now time.Time) (*CostPage, error) {
-	graphs, _, err := codemap.RouteGraphs(db, projectID)
+	graphs, root, err := codemap.RouteGraphs(db, projectID)
 	if err != nil {
 		return nil, err
 	}
-	rep := routemap.Costs(graphs)
-	page := &CostPage{Summary: summarize(graphs, rep), Kind: "routes", Routes: []routemap.RouteCost{}, Funcs: []routemap.FuncCost{}}
+	// Go dan PHP (Laravel, CodeIgniter, Slim, PHP biasa) dihitung dengan model tick yang sama lalu digabung.
+	phpRep, phpMods := routemap.PHPCosts(root)
+	rep := routemap.MergeCosts(routemap.Costs(graphs), phpRep)
+	var mods, fws []string
+	for _, g := range graphs {
+		mods = append(mods, g.Module)
+		if g.Framework != "" {
+			fws = append(fws, "Go ("+g.Framework+")")
+		}
+	}
+	for _, m := range phpMods {
+		mods = append(mods, m.Name)
+		fws = append(fws, phpFrameworkName(m.Framework))
+	}
+	page := &CostPage{Summary: summarize(mods, fws, rep), Kind: "routes", Routes: []routemap.RouteCost{}, Funcs: []routemap.FuncCost{}}
 	if page.Summary.Supported {
 		saveSnapshot(db, projectID, page.Summary, now)
 	}
@@ -126,12 +140,33 @@ func window[T any](all []T, offset, limit int) []T {
 	return all[offset:end]
 }
 
-func summarize(graphs []*routemap.Graph, rep *routemap.CostReport) CostSummary {
-	s := CostSummary{Modules: []string{}, RouteClasses: map[string]int{}, FuncClasses: map[string]int{}, Routes: len(rep.Routes), Funcs: len(rep.Funcs)}
-	for _, g := range graphs {
-		s.Modules = append(s.Modules, g.Module)
+func phpFrameworkName(fw string) string {
+	switch fw {
+	case "laravel":
+		return "Laravel"
+	case "lumen":
+		return "Lumen"
+	case "codeigniter4":
+		return "CodeIgniter 4"
+	case "slim":
+		return "Slim"
 	}
-	sort.Strings(s.Modules)
+	return "PHP"
+}
+
+func uniqSorted(in []string) []string {
+	sort.Strings(in)
+	out := []string{}
+	for i, s := range in {
+		if i == 0 || s != in[i-1] {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
+func summarize(mods, fws []string, rep *routemap.CostReport) CostSummary {
+	s := CostSummary{Modules: uniqSorted(mods), Frameworks: uniqSorted(fws), RouteClasses: map[string]int{}, FuncClasses: map[string]int{}, Routes: len(rep.Routes), Funcs: len(rep.Funcs)}
 	s.Supported = len(rep.Routes) > 0
 	for _, r := range rep.Routes {
 		s.RouteClasses[r.Class]++
