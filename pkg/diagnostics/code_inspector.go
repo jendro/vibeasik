@@ -183,7 +183,7 @@ func InspectDirectory(dir string, baseRelPath string) []models.Finding {
 	var findings []models.Finding
 	maxFiles := 1200
 	scannedFiles := 0
-	hasGo := false
+	hasGo, hasPHP := false, false
 	var inspected []string // berkas sumber yang diaudit, dibaca ulang hanya untuk deteksi object storage
 
 	_ = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
@@ -234,6 +234,7 @@ func InspectDirectory(dir string, baseRelPath string) []models.Finding {
 		}
 
 		hasGo = hasGo || lang == "go"
+		hasPHP = hasPHP || lang == "php"
 		inspected = append(inspected, path)
 		fileFindings := InspectFile(path, relPath, lang)
 		findings = append(findings, fileFindings...)
@@ -243,7 +244,11 @@ func InspectDirectory(dir string, baseRelPath string) []models.Finding {
 	})
 
 	findings = dropStorageWhenObjectStore(findings, inspected)
-	return refineRouterFindings(findings, dir, baseRelPath, hasGo)
+	findings = refineRouterFindings(findings, dir, baseRelPath, hasGo)
+	if hasPHP {
+		findings = append(findings, phpCostFindings(dir, baseRelPath, findings)...)
+	}
+	return findings
 }
 
 func inspectRootLevelCode(rootPath string) []models.Finding {

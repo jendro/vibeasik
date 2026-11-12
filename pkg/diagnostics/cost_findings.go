@@ -27,63 +27,91 @@ const (
 )
 
 func costFindings(graphs []*routemap.Graph, baseRel string, existing []models.Finding) []models.Finding {
+	return hotspotFindings(routemap.Hotspots(graphs), baseRel, existing)
+}
+
+// phpCostFindings: sumber biaya rute Laravel/Lumen, CodeIgniter 4, Slim, dan halaman PHP biasa di dir.
+func phpCostFindings(dir, baseRel string, existing []models.Finding) []models.Finding {
+	return hotspotFindings(routemap.PHPHotspots(dir), baseRel, existing)
+}
+
+func hotspotFindings(hots []routemap.Hotspot, baseRel string, existing []models.Finding) []models.Finding {
 	var out []models.Finding
 	left := map[string]int{"nplus1": maxNPlusOneFindings, "growth": maxGrowthFindings}
-	for _, h := range actionableFirst(routemap.Hotspots(graphs)) {
+	for _, h := range actionableFirst(hots) {
 		if left[h.Kind] <= 0 {
 			continue
 		}
-		file := h.Func.File
-		if baseRel != "" {
-			file = filepath.ToSlash(filepath.Join(baseRel, file))
-		}
-		routes := strings.Join(h.Routes, ", ")
-		if h.RouteCount > len(h.Routes) {
-			routes += fmt.Sprintf(" (+%d rute lain)", h.RouteCount-len(h.Routes))
-		}
-		f := models.Finding{TargetFile: file, Line: h.Func.Line}
-		switch h.Kind {
-		case "nplus1":
-			// Query yang tertulis langsung di dalam loop fungsi ini sudah dilaporkan aturan per baris.
-			if hasFindingIn(existing, "QUERY-NPLUS1", file, h.Func.Line, h.Func.End) {
-				continue
-			}
-			via := "di dalam loop atas data"
-			if h.Via != "" {
-				via = fmt.Sprintf("lewat pemanggilan `%s` di dalam loop atas data", h.Via)
-			}
-			f.Category, f.Severity, f.RuleID = "query", "WARNING", ruleNPlusOneChain
-			f.Title = "N+1 Query Lewat Rantai Pemanggilan"
-			f.Description = fmt.Sprintf("Fungsi `%s` menjalankan query %s: jumlah query Q(n) = %s (n = jumlah data). Untuk 1.000 data berarti %s query. Rute terdampak: %s.",
-				h.Func.Name, via, h.Func.QueryFormula, growthAt(h.Func.Cost, 1000, true), routes)
-			f.Suggestion = "Ambil semua data yang dibutuhkan loop dalam satu query sebelum loop (Preload, JOIN, atau WHERE id IN (...)), lalu cocokkan di memori lewat map. Bila loop-nya memang kecil dan tetap (mis. ≤ 5 jenis), tandai temuan ini sebagai bukan masalah."
-			f.TheoryBasis = "N+1 Selects (Martin Fowler, Patterns of Enterprise Application Architecture): biaya I/O tumbuh linear terhadap jumlah baris."
-		default:
-			// Pangkat 3 atau loop bersarang di badan fungsi sendiri cukup dapat dipercaya untuk jadi peringatan;
-			// pangkat lebih tinggi lewat rantai pemanggilan panjang hanyalah petunjuk tempat memeriksa.
-			sev := "INFO"
-			if h.Func.Degree == 3 || (h.Func.Degree >= 3 && h.Via == "") {
-				sev = "WARNING"
-			}
-			via := "loop bersarang atas data di badan fungsi"
-			if h.Via != "" {
-				via = fmt.Sprintf("loop atas data yang memanggil `%s` (yang juga mengulang data)", h.Via)
-			}
-			caveat := "Hitungan ini batas atas kasus terburuk dengan semua koleksi dianggap berukuran n."
-			if h.Func.Degree >= 4 && h.Via != "" {
-				caveat = "Pangkat setinggi ini muncul karena rantai pemanggilan panjang dan semua koleksi dianggap berukuran n: perlakukan sebagai petunjuk tempat memeriksa, bukan angka pasti."
-			}
-			f.Category, f.Severity, f.RuleID = "code_smell", sev, rulePolynomialGrowth
-			f.Title = fmt.Sprintf("Biaya Proses Tumbuh %s", h.Func.BigO)
-			f.Description = fmt.Sprintf("Fungsi `%s` memuat %s: jumlah langkah T(n) = %s. Untuk 1 data %d langkah, untuk 100 data sekitar %s langkah. Rute terdampak: %s. %s",
-				h.Func.Name, via, leadingTerms(h.Func.Formula, 3), h.Func.Ticks1, growthAt(h.Func.Cost, 100, false), routes, caveat)
-			f.Suggestion = "Ganti pencarian di loop dalam dengan map/set yang dibangun sekali (O(n)), urutkan lalu gabung, atau batasi ukuran data lewat paging. Bila salah satu koleksinya selalu kecil dan tetap, tandai temuan ini sebagai bukan masalah."
-			f.TheoryBasis = "Analisis kompleksitas waktu (Cormen dkk., Introduction to Algorithms): suku tertinggi menentukan pertumbuhan biaya saat data membesar."
+		f := HotspotFinding(h, baseRel)
+		// Query yang tertulis langsung di dalam loop fungsi ini sudah dilaporkan aturan per baris.
+		if h.Kind == "nplus1" && hasFindingIn(existing, "QUERY-NPLUS1", f.TargetFile, h.Func.Line, h.Func.End) {
+			continue
 		}
 		left[h.Kind]--
 		out = append(out, f)
 	}
 	return out
+}
+
+// Aturan audit untuk sumber biaya proses (dipakai juga oleh tab Biaya Proses untuk menautkan todo).
+const (
+	RuleNPlusOneChain    = ruleNPlusOneChain
+	RulePolynomialGrowth = rulePolynomialGrowth
+)
+
+// HotspotRule: aturan audit untuk satu jenis sumber biaya.
+func HotspotRule(kind string) string {
+	if kind == "nplus1" {
+		return ruleNPlusOneChain
+	}
+	return rulePolynomialGrowth
+}
+
+// HotspotFinding menyusun temuan audit untuk satu sumber biaya; baseRel = folder aplikasi relatif root proyek.
+func HotspotFinding(h routemap.Hotspot, baseRel string) models.Finding {
+	file := h.Func.File
+	if baseRel != "" {
+		file = filepath.ToSlash(filepath.Join(baseRel, file))
+	}
+	routes := strings.Join(h.Routes, ", ")
+	if h.RouteCount > len(h.Routes) {
+		routes += fmt.Sprintf(" (+%d rute lain)", h.RouteCount-len(h.Routes))
+	}
+	f := models.Finding{TargetFile: file, Line: h.Func.Line, RuleID: HotspotRule(h.Kind)}
+	if h.Kind == "nplus1" {
+		via := "di dalam loop atas data"
+		if h.Via != "" {
+			via = fmt.Sprintf("lewat pemanggilan `%s` di dalam loop atas data", h.Via)
+		}
+		f.Category, f.Severity = "query", "WARNING"
+		f.Title = "N+1 Query Lewat Rantai Pemanggilan"
+		f.Description = fmt.Sprintf("Fungsi `%s` menjalankan query %s: jumlah query Q(n) = %s (n = jumlah data). Untuk 1.000 data berarti %s query. Rute terdampak: %s.",
+			h.Func.Name, via, h.Func.QueryFormula, growthAt(h.Func.Cost, 1000, true), routes)
+		f.Suggestion = nplusOneFix(h.Func.Lang) + " Bila loop-nya memang kecil dan tetap (mis. ≤ 5 jenis), tandai temuan ini sebagai bukan masalah."
+		f.TheoryBasis = "N+1 Selects (Martin Fowler, Patterns of Enterprise Application Architecture): biaya I/O tumbuh linear terhadap jumlah baris."
+		return f
+	}
+	// Pangkat 3 atau loop bersarang di badan fungsi sendiri cukup dapat dipercaya untuk jadi peringatan;
+	// pangkat lebih tinggi lewat rantai pemanggilan panjang hanyalah petunjuk tempat memeriksa.
+	sev := "INFO"
+	if h.Func.Degree == 3 || (h.Func.Degree >= 3 && h.Via == "") {
+		sev = "WARNING"
+	}
+	via := "loop bersarang atas data di badan fungsi"
+	if h.Via != "" {
+		via = fmt.Sprintf("loop atas data yang memanggil `%s` (yang juga mengulang data)", h.Via)
+	}
+	caveat := "Hitungan ini batas atas kasus terburuk dengan semua koleksi dianggap berukuran n."
+	if h.Func.Degree >= 4 && h.Via != "" {
+		caveat = "Pangkat setinggi ini muncul karena rantai pemanggilan panjang dan semua koleksi dianggap berukuran n: perlakukan sebagai petunjuk tempat memeriksa, bukan angka pasti."
+	}
+	f.Category, f.Severity = "code_smell", sev
+	f.Title = fmt.Sprintf("Biaya Proses Tumbuh %s", h.Func.BigO)
+	f.Description = fmt.Sprintf("Fungsi `%s` memuat %s: jumlah langkah T(n) = %s. Untuk 1 data %d langkah, untuk 100 data sekitar %s langkah. Rute terdampak: %s. %s",
+		h.Func.Name, via, leadingTerms(h.Func.Formula, 3), h.Func.Ticks1, growthAt(h.Func.Cost, 100, false), routes, caveat)
+	f.Suggestion = "Ganti pencarian di loop dalam dengan map/set yang dibangun sekali (O(n)), urutkan lalu gabung, atau batasi ukuran data lewat paging. Bila salah satu koleksinya selalu kecil dan tetap, tandai temuan ini sebagai bukan masalah."
+	f.TheoryBasis = "Analisis kompleksitas waktu (Cormen dkk., Introduction to Algorithms): suku tertinggi menentukan pertumbuhan biaya saat data membesar."
+	return f
 }
 
 // growthAt: nilai T(n) atau Q(n) pada ukuran n dari tabel pertumbuhan, diformat ringkas.
@@ -150,4 +178,12 @@ func actionableFirst(hs []routemap.Hotspot) []routemap.Hotspot {
 	out := append([]routemap.Hotspot(nil), hs...)
 	sort.SliceStable(out, func(i, j int) bool { return group(out[i]) < group(out[j]) })
 	return out
+}
+
+// nplusOneFix: cara memperbaiki N+1 dalam istilah ekosistemnya.
+func nplusOneFix(lang string) string {
+	if lang == "php" {
+		return "Ambil semua data yang dibutuhkan loop dalam satu query sebelum loop (Eloquent `with()`/`load()`, JOIN, atau `whereIn('id', ...)`), lalu cocokkan di memori lewat array berkunci id."
+	}
+	return "Ambil semua data yang dibutuhkan loop dalam satu query sebelum loop (Preload, JOIN, atau WHERE id IN (...)), lalu cocokkan di memori lewat map."
 }

@@ -1,6 +1,9 @@
 package routemap
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 var laravelFixture = map[string]string{
 	"composer.json": `{"name": "demo/shop", "require": {"laravel/framework": "^11.0"}}`,
@@ -364,5 +367,39 @@ func TestMergeCostsSortsAcrossLanguages(t *testing.T) {
 	}
 	if goRep.Routes[0].Lang != "go" || goRep.Funcs[0].Lang != "go" {
 		t.Error("rute/fungsi Go harus berlabel lang=go")
+	}
+}
+
+func TestPHPHotspotsPointAtSource(t *testing.T) {
+	hots := PHPHotspots(writeTree(t, laravelFixture))
+	find := func(kind, name string) *Hotspot {
+		for i := range hots {
+			if hots[i].Kind == kind && strings.HasSuffix(hots[i].Func.Name, name) {
+				return &hots[i]
+			}
+		}
+		return nil
+	}
+	n := find("nplus1", "nplus")
+	if n == nil || n.Via != "" || len(n.AllRoutes) != 1 || n.AllRoutes[0] != "GET /nplus" {
+		t.Fatalf("hotspot N+1 nplus(): %+v (semua: %+v)", n, hots)
+	}
+	if !strings.HasSuffix(n.Func.File, ".php") || n.Func.Line == 0 {
+		t.Errorf("lokasi hotspot: %s:%d", n.Func.File, n.Func.Line)
+	}
+	if g := find("growth", "pairs"); g == nil || g.Func.BigO != "O(n²)" {
+		t.Errorf("hotspot O(n²) pairs(): %+v", g)
+	}
+	if find("growth", "list") != nil || find("nplus1", "list") != nil {
+		t.Error("list() O(n) tanpa N+1 bukan sumber biaya")
+	}
+}
+
+func TestPHPHotspotsOnPlainPage(t *testing.T) {
+	hots := PHPHotspots(writeTree(t, map[string]string{
+		"index.php": "<?php\n$pdo = new PDO('x');\n$rows = $pdo->query('SELECT 1')->fetchAll();\nforeach ($rows as $r) {\n    $pdo->query('SELECT 2');\n}\n",
+	}))
+	if len(hots) != 1 || hots[0].Kind != "nplus1" || hots[0].Func.File != "index.php" {
+		t.Fatalf("halaman PHP biasa: %+v", hots)
 	}
 }

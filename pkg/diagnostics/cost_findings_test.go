@@ -92,3 +92,49 @@ func TestCostFindingsReportSourceFunction(t *testing.T) {
 		t.Errorf("bobot skor: N+1 berantai %d (mau 3), pertumbuhan %d (mau 1)", CalculateFindingPenalty(f), CalculateFindingPenalty(growth[0]))
 	}
 }
+
+func TestPHPCostFindingsInAudit(t *testing.T) {
+	dir := t.TempDir()
+	files := map[string]string{
+		"composer.json":  `{"require": {"laravel/framework": "^11.0"}}`,
+		"routes/web.php": "<?php\nuse App\\Http\\Controllers\\ReportController;\nRoute::get('/report', [ReportController::class, 'index']);\n",
+		"app/Http/Controllers/ReportController.php": `<?php
+namespace App\Http\Controllers;
+use App\Models\User;
+use App\Models\Order;
+class ReportController extends Controller
+{
+    public function index()
+    {
+        $users = User::all();
+        foreach ($users as $u) {
+            $u->total = Order::where('user_id', $u->id)->sum('amount');
+        }
+        return $users;
+    }
+}
+`,
+	}
+	for name, src := range files {
+		p := filepath.Join(dir, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte(src), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var got *models.Finding
+	for _, f := range InspectDirectory(dir, "be") {
+		if f.RuleID == ruleNPlusOneChain || (f.RuleID == "QUERY-NPLUS1" && strings.HasSuffix(f.TargetFile, "ReportController.php")) {
+			got = &f
+			break
+		}
+	}
+	if got == nil {
+		t.Fatal("N+1 di controller Laravel tidak masuk audit")
+	}
+	if got.TargetFile != "be/app/Http/Controllers/ReportController.php" {
+		t.Errorf("berkas temuan: %s", got.TargetFile)
+	}
+}

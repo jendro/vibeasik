@@ -7,11 +7,28 @@ import (
 
 var phpFrameworkLabel = map[string]string{"laravel": "Laravel", "lumen": "Lumen", "codeigniter4": "CodeIgniter 4", "slim": "Slim", "php": "PHP"}
 
+// PHPAnalysis = hasil satu kali analisis biaya semua aplikasi PHP di bawah root.
+type PHPAnalysis struct {
+	Report   *CostReport
+	Modules  []PHPModule
+	Hotspots []Hotspot // sumber N+1 & pertumbuhan O(n²) ke atas, seperti Hotspots untuk Go
+}
+
 // PHPCosts menghitung biaya proses (tick & query) rute dan fungsi semua aplikasi PHP di bawah root, dengan
 // model yang sama dengan Costs untuk Go. Aplikasi tanpa rute/halaman yang bisa ditelusuri tidak dilaporkan.
 func PHPCosts(root string) (*CostReport, []PHPModule) {
+	a := AnalyzePHP(root)
+	return a.Report, a.Modules
+}
+
+// PHPHotspots: sumber biaya PHP saja (untuk audit).
+func PHPHotspots(root string) []Hotspot { return AnalyzePHP(root).Hotspots }
+
+// AnalyzePHP menghitung laporan biaya dan sumber biayanya sekaligus.
+func AnalyzePHP(root string) PHPAnalysis {
 	rep := &CostReport{Routes: []RouteCost{}, Funcs: []FuncCost{}}
 	var mods []PHPModule
+	var hots []Hotspot
 	for _, m := range findPHPModules(root) {
 		routes := collectPHPRoutes(m)
 		if len(routes) == 0 {
@@ -22,6 +39,7 @@ func PHPCosts(root string) (*CostReport, []PHPModule) {
 		label := phpFrameworkLabel[m.Framework]
 		c := newPHPCostCtx(m)
 		reach := map[string]int{}
+		routesOf := map[string][]string{}
 		for i, r := range routes {
 			key := "route#" + itoa(i)
 			c.cur = []string{key}
@@ -50,6 +68,7 @@ func PHPCosts(root string) (*CostReport, []PHPModule) {
 			c.cur = nil
 			for k := range phpReach(c.edges, key) {
 				reach[k]++
+				routesOf[k] = append(routesOf[k], r.Method+" "+r.Path)
 			}
 			rep.Routes = append(rep.Routes, RouteCost{Module: m.Name, Lang: "php", Framework: label, Method: r.Method, Path: r.Path,
 				Handler: r.Handler, HandlerDecl: decl, Auth: r.auth || m.authAlias(r.mws), Middlewares: mws, Cost: total.export()})
@@ -58,9 +77,65 @@ func PHPCosts(root string) (*CostReport, []PHPModule) {
 			rep.Funcs = append(rep.Funcs, FuncCost{Module: m.Name, Lang: "php", Name: fn.Key, File: fn.file.Rel, Line: fn.Line,
 				End: fn.End, Routes: reach[phpNodeKey(fn)], Cost: c.funcCost(fn).export()})
 		}
+		hots = append(hots, c.hotspots(routesOf)...)
 	}
 	finishCosts(rep)
-	return rep, mods
+	sortHotspots(hots)
+	return PHPAnalysis{Report: rep, Modules: mods, Hotspots: hots}
+}
+
+// hotspots: fungsi/halaman yang pangkat Q(n) atau T(n)-nya lebih tinggi daripada semua yang dipanggilnya,
+// yaitu tempat loop yang menaikkan biaya benar-benar ditulis.
+func (c *phpCostCtx) hotspots(routesOf map[string][]string) []Hotspot {
+	type node struct {
+		fc   FuncCost
+		cost Cost
+	}
+	nodes := map[string]node{}
+	for _, fn := range c.m.all {
+		k := phpNodeKey(fn)
+		cost := c.funcCost(fn).export()
+		nodes[k] = node{FuncCost{Module: c.m.Name, Lang: "php", Name: fn.Key, File: fn.file.Rel, Line: fn.Line, End: fn.End, Cost: cost}, cost}
+	}
+	for f, v := range c.fileMemo {
+		cost := v.export()
+		nodes["file:"+f.Rel] = node{FuncCost{Module: c.m.Name, Lang: "php", Name: f.Rel, File: f.Rel, Line: 1, Cost: cost}, cost}
+	}
+	var out []Hotspot
+	for k, n := range nodes {
+		routes := uniqueSorted(append([]string(nil), routesOf[k]...))
+		if len(routes) == 0 {
+			continue
+		}
+		maxQ, maxT, viaQ, viaT := 0, 0, "", ""
+		var bestQ, bestT float64
+		for to := range c.edges[k] {
+			cn, ok := nodes[to]
+			if !ok || to == k {
+				continue
+			}
+			maxQ, maxT = max(maxQ, cn.cost.qDegree), max(maxT, cn.cost.Degree)
+			if q := float64(cn.cost.Queries1); q > bestQ {
+				bestQ, viaQ = q, cn.fc.Name
+			}
+			if cn.cost.Degree >= 1 && cn.cost.rank > bestT {
+				bestT, viaT = cn.cost.rank, cn.fc.Name
+			}
+		}
+		fn := n.fc
+		fn.Routes = len(routes)
+		sample := routes
+		if len(sample) > hotspotRouteSamples {
+			sample = sample[:hotspotRouteSamples]
+		}
+		if n.cost.qDegree >= 1 && n.cost.qDegree > maxQ {
+			out = append(out, Hotspot{Kind: "nplus1", Func: fn, Via: viaQ, Routes: sample, RouteCount: len(routes), AllRoutes: routes})
+		}
+		if n.cost.Degree >= 2 && n.cost.Degree > maxT {
+			out = append(out, Hotspot{Kind: "growth", Func: fn, Via: viaT, Routes: sample, RouteCount: len(routes), AllRoutes: routes})
+		}
+	}
+	return out
 }
 
 // middlewareFuncs: middleware lokal (alias Kernel / nama kelas) → method handle()/before() miliknya.

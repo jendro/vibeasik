@@ -811,6 +811,8 @@ type Hotspot struct {
 	Via        string   `json:"via,omitempty"` // fungsi terpanggil yang membawa query/loop; kosong = di badan fungsi ini sendiri
 	Routes     []string `json:"routes"`        // contoh rute terdampak (maks. 3)
 	RouteCount int      `json:"route_count"`
+	// AllRoutes: semua rute terdampak ("METHOD path"), untuk menautkan baris rute ke sumber biayanya.
+	AllRoutes []string `json:"-"`
 }
 
 const hotspotRouteSamples = 3
@@ -869,13 +871,19 @@ func Hotspots(graphs []*Graph) []Hotspot {
 				sample = sample[:hotspotRouteSamples]
 			}
 			if fc.qDegree >= 1 && fc.qDegree > maxQ {
-				out = append(out, Hotspot{Kind: "nplus1", Func: fn, Via: viaQ, Routes: sample, RouteCount: len(routes)})
+				out = append(out, Hotspot{Kind: "nplus1", Func: fn, Via: viaQ, Routes: sample, RouteCount: len(routes), AllRoutes: routes})
 			}
 			if fc.Degree >= 2 && fc.Degree > maxT {
-				out = append(out, Hotspot{Kind: "growth", Func: fn, Via: viaT, Routes: sample, RouteCount: len(routes)})
+				out = append(out, Hotspot{Kind: "growth", Func: fn, Via: viaT, Routes: sample, RouteCount: len(routes), AllRoutes: routes})
 			}
 		}
 	}
+	sortHotspots(out)
+	return out
+}
+
+// sortHotspots: termahal dulu; seri diurutkan jenis + berkas + nama agar hasilnya stabil.
+func sortHotspots(out []Hotspot) {
 	sort.SliceStable(out, func(i, j int) bool {
 		a, b := out[i], out[j]
 		if a.Func.rank != b.Func.rank {
@@ -883,7 +891,6 @@ func Hotspots(graphs []*Graph) []Hotspot {
 		}
 		return a.Kind+a.Func.File+a.Func.Name < b.Kind+b.Func.File+b.Func.Name
 	})
-	return out
 }
 
 func shortName(g *Graph, key string) string {
