@@ -271,11 +271,25 @@ func codeMapCost(s *Server, pid uint, args map[string]interface{}) (*ToolCallRes
 	var b strings.Builder
 	sum := page.Summary
 	if !sum.Supported {
-		b.WriteString("Tidak ada rute backend Go yang bisa dihitung di proyek ini.\n")
+		b.WriteString("Tidak ada rute backend Go atau PHP yang bisa dihitung di proyek ini.\n")
 		return &ToolCallResult{Content: []ToolContent{{Type: "text", Text: b.String()}}}, nil
 	}
 	fmt.Fprintf(&b, "%d rute, %d fungsi — rute N+1 query: %d — kelas rute: %v\n", sum.Routes, sum.Funcs, sum.NPlusOneRoutes, sum.RouteClasses)
+	if h := page.Handling; h.Sources > 0 {
+		fmt.Fprintf(&b, "Sumber biaya tinggi: %d — di todo %d, di Audit %d, bukan masalah %d, perlu cek ulang %d, belum ditangani %d\n",
+			h.Sources, h.InTodo, h.InAudit, h.Ignored, h.Recheck, h.Open)
+	}
 	fmt.Fprintf(&b, "%d %s cocok (ditampilkan %d), urut dari yang termahal saat data tumbuh:\n", page.Total, page.Kind, len(page.Routes)+len(page.Funcs))
+	handled := func(src *insight.CostSource, h *insight.CostHandling) string {
+		out := ""
+		if h != nil {
+			out += fmt.Sprintf("\n  ditangani (%s): %s", h.Where, h.Next)
+		}
+		if src != nil {
+			out += fmt.Sprintf("\n  belum ditangani: sumber %s (%s:%d)", src.Func, src.File, src.Line)
+		}
+		return out
+	}
 	line := func(title, where string, c routemap.Cost) {
 		flags := ""
 		if c.NPlusOne {
@@ -290,10 +304,10 @@ func codeMapCost(s *Server, pid uint, args map[string]interface{}) (*ToolCallRes
 		fmt.Fprintf(&b, "\n%s\n  T(n) = %s → %s, T(1) = %d tick; Q(n) = %s%s\n  %s\n", title, c.Formula, c.BigO, c.Ticks1, c.QueryFormula, flags, where)
 	}
 	for _, r := range page.Routes {
-		line(r.Method+" "+r.Path, "handler "+r.Handler+" ("+r.HandlerDecl+")", r.Cost)
+		line(r.Method+" "+r.Path, "handler "+r.Handler+" ("+r.HandlerDecl+")"+handled(r.Source, r.Handled), r.Cost)
 	}
 	for _, f := range page.Funcs {
-		line(f.Name, fmt.Sprintf("%s:%d — dijangkau %d rute", f.File, f.Line, f.Routes), f.Cost)
+		line(f.Name, fmt.Sprintf("%s:%d — dijangkau %d rute", f.File, f.Line, f.Routes)+handled(f.Source, f.Handled), f.Cost)
 	}
 	return &ToolCallResult{Content: []ToolContent{{Type: "text", Text: b.String()}}}, nil
 }

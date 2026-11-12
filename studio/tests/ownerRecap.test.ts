@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import type { OwnerRecap } from '../app/types'
 import { recapDayLabels, recapHeadline } from '../app/utils/ownerRecap'
-import { costClassInfo, costStackLabel, fmtTicks, shortFormula } from '../app/utils/processCost'
+import { costClassInfo, costHandledBadge, costHandlingNote, costStackLabel, fmtTicks, shortFormula } from '../app/utils/processCost'
 
 const recap = (over: Partial<OwnerRecap['todos']> = {}, bugs = 0, algo = 0, findings = 0): OwnerRecap => ({
   project_id: 1, days: 30, generated_at: '', health_score: 80, timeline: [], categories: [], health: [], highlights: [],
@@ -45,5 +45,25 @@ describe('kelas biaya proses', () => {
     expect(costStackLabel({ lang: 'go', framework: 'fiber' })).toBe('Go')
     expect(costStackLabel({ lang: 'php', framework: 'Laravel' })).toBe('Laravel')
     expect(costStackLabel({ lang: 'php' })).toBe('PHP')
+  })
+})
+
+describe('costHandlingNote', () => {
+  test('menyebut tempat penanganan dan langkah berikutnya', () => {
+    const n = costHandlingNote({ sources: 5, in_todo: 2, in_audit: 1, ignored: 0, recheck: 0, open: 2, todos: [{ id: 12, title: 'a', status: 'pending' }, { id: 15, title: 'b', status: 'in_progress' }] })
+    expect(n.title).toBe('Sudah ditangani 3 dari 5 sumber biaya tinggi')
+    expect(n.where).toBe('2 di todo (#12, #15) · 1 di temuan Audit')
+    expect(n.next).toContain('kerjakan todo-nya')
+    expect(n.next).toContain('buat todo untuk 2 sumber')
+  })
+  test('belum ada yang ditangani', () => {
+    const n = costHandlingNote({ sources: 3, in_todo: 0, in_audit: 0, ignored: 0, recheck: 0, open: 3, todos: [] })
+    expect(n.title).toBe('3 sumber biaya tinggi belum ditangani')
+    expect(n.where).toBe('')
+  })
+  test('label penanda baris', () => {
+    const src = { kind: 'nplus1' as const, rule: 'R', func: 'f', file: 'a.go', line: 1, big_o: 'O(n)' }
+    expect(costHandledBadge({ where: 'todo', todo_id: 7, todo_status: 'pending', rule: 'R', source: src, next: '' }).label).toBe('Todo #7 · menunggu')
+    expect(costHandledBadge({ where: 'audit', rule: 'R', source: src, next: '' }).label).toBe('Di Audit')
   })
 })

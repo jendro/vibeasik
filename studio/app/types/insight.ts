@@ -79,7 +79,50 @@ export interface ProcessCost {
 
 export type CostLang = 'go' | 'php'
 
-export interface RouteCost extends ProcessCost {
+/** Sumber biaya tinggi: fungsi/halaman tempat loop N+1 atau O(n²) ke atas ditulis (bisa dijadikan todo). */
+export interface CostSource {
+  kind: 'nplus1' | 'growth'
+  rule: string
+  func: string
+  file: string
+  line: number
+  big_o: string
+  query_formula?: string
+}
+
+/** todo = todo terbuka · audit = temuan audit terbuka · ignored = bukan masalah · recheck = sudah selesai tapi masih tinggi */
+export type CostHandledWhere = 'todo' | 'audit' | 'ignored' | 'recheck'
+
+export interface CostHandling {
+  where: CostHandledWhere
+  todo_id?: number
+  todo_title?: string
+  todo_status?: string
+  rule: string
+  source: CostSource
+  /** langkah berikutnya, kalimat siap tampil */
+  next: string
+}
+
+/** Penanda penanganan pada baris tabel biaya. */
+export interface CostRowHandling {
+  /** sumber biaya baris ini yang belum ditangani */
+  source?: CostSource
+  handled?: CostHandling
+}
+
+export interface CostHandlingSummary {
+  sources: number
+  in_todo: number
+  in_audit: number
+  ignored: number
+  recheck: number
+  open: number
+  todos: { id: number, title: string, status: string }[]
+  audit_at?: string
+}
+
+export interface RouteCost extends ProcessCost, CostRowHandling {
   module: string
   lang: CostLang
   /** fiber, gin, echo … (Go) atau Laravel, Lumen, CodeIgniter 4, Slim, PHP */
@@ -92,7 +135,7 @@ export interface RouteCost extends ProcessCost {
   middlewares: number
 }
 
-export interface FuncCost extends ProcessCost {
+export interface FuncCost extends ProcessCost, CostRowHandling {
   module: string
   lang: CostLang
   name: string
@@ -140,4 +183,5 @@ export interface ProcessCostPage {
   routes: RouteCost[]
   funcs: FuncCost[]
   history: ProcessCostSnapshot[]
+  handling?: CostHandlingSummary
 }

@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import type { CostClass, ProcessCostPage, Project } from '~/types'
+import type { CostClass, CostSource, ProcessCostPage, Project } from '~/types'
 import type { StatItem } from '~/components/AppStatStrip.vue'
-import { COST_CLASSES, fmtTicks, shortFormula } from '~/utils/processCost'
+import { COST_CLASSES, costHandlingNote, fmtTicks, shortFormula } from '~/utils/processCost'
 
 // Tab "Biaya Proses": rumus tick T(n), Big-O, dan jumlah query tiap rute/fungsi backend Go & PHP (Laravel, CodeIgniter, Slim, PHP biasa), paging dari server.
 const props = defineProps<{ project: Project }>()
 
-const { getProcessCost } = useApi()
+const { getProcessCost, createProcessCostTodo } = useApi()
+const { selectActiveProject } = useActiveProject()
+const toast = useToast()
 const PAGE = 50
 const page = shallowRef<ProcessCostPage | null>(null)
 const loading = ref(false)
@@ -72,6 +74,31 @@ const stats = computed<StatItem[]>(() => {
 const history = computed(() => page.value?.history || [])
 const historyLabels = computed(() => recapDayLabels(history.value.map(h => h.snap_date)))
 const heavySeries = computed(() => history.value.map(h => h.quadratic + h.worse + h.n_plus_one))
+
+// Penanganan biaya tinggi: sumber biaya otomatis ikut Audit; yang belum ditangani bisa langsung dijadikan todo.
+const handling = computed(() => page.value?.handling)
+const note = computed(() => handling.value && handling.value.sources ? costHandlingNote(handling.value) : null)
+const busySource = ref('')
+const openTodos = () => { selectActiveProject(props.project.id); navigateTo('/todos') }
+const openAudit = () => navigateTo(`/audit-report?project_id=${props.project.id}`)
+const makeTodo = async (src: CostSource) => {
+  busySource.value = `${src.kind}|${src.file}|${src.line}`
+  try {
+    const res = await createProcessCostTodo(props.project.id, src)
+    toast.add({
+      title: res.already_exists ? `Sudah ada todo #${res.todo.id}` : `Todo #${res.todo.id} dibuat`,
+      description: res.todo.title,
+      color: res.already_exists ? 'neutral' : 'success',
+      icon: 'i-lucide-list-checks',
+      actions: [{ label: 'Buka Todo', onClick: openTodos }]
+    })
+    await load()
+  } catch (err: any) {
+    toast.add({ title: 'Gagal membuat todo', description: err?.data?.error || err?.message || '', color: 'error' })
+  } finally {
+    busySource.value = ''
+  }
+}
 
 const total = computed(() => page.value?.total || 0)
 const from = computed(() => total.value ? offset.value + 1 : 0)
@@ -185,10 +212,46 @@ const card = 'min-w-0 rounded-2xl border border-neutral-200 dark:border-white/10
           <span class="ml-auto text-xs text-neutral-500 tabular-nums">{{ from }}–{{ to }} dari {{ total }}</span>
         </div>
 
+        <div
+          v-if="note"
+          class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm"
+          :class="handling!.open || handling!.recheck ? 'border-amber-300/60 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-950/20' : 'border-neutral-200 bg-neutral-50 dark:border-white/[0.08] dark:bg-white/[0.03]'"
+          role="status"
+        >
+          <div class="flex items-start gap-2.5 min-w-0">
+            <UIcon :name="handling!.open || handling!.recheck ? 'i-lucide-triangle-alert' : 'i-lucide-list-checks'" class="size-4 mt-0.5 shrink-0" :class="handling!.open || handling!.recheck ? 'text-amber-600 dark:text-amber-400' : 'text-neutral-500'" />
+            <div class="min-w-0 space-y-0.5">
+              <p class="text-neutral-900 dark:text-white">
+                <span class="font-semibold">{{ note.title }}</span>{{ note.where ? `: ${note.where}` : '' }}.
+              </p>
+              <p class="text-xs text-neutral-600 dark:text-neutral-300">
+                {{ note.next }} Sumber biaya (N+1 &amp; O(n²) ke atas) otomatis ikut Audit; todo yang dibuat dari sini memakai kunci audit yang sama, jadi tidak tercatat ganda.
+              </p>
+            </div>
+          </div>
+          <div class="flex gap-2 shrink-0">
+            <UButton v-if="handling!.in_todo" size="sm" color="neutral" variant="soft" icon="i-lucide-list-checks" @click="openTodos">
+              Buka Todo ({{ handling!.in_todo }})
+            </UButton>
+            <UButton v-if="handling!.in_audit || handling!.recheck" size="sm" color="neutral" variant="soft" icon="i-lucide-shield-check" @click="openAudit">
+              Buka Audit
+            </UButton>
+          </div>
+        </div>
+
         <div v-if="total === 0" class="rounded-2xl border border-dashed border-neutral-300 dark:border-neutral-700 p-8 text-center text-sm text-neutral-500">
           Tidak ada {{ kind === 'routes' ? 'rute' : 'fungsi' }} yang cocok dengan saringan ini.
         </div>
-        <InsightProcessCostTable v-else :kind="page.kind" :routes="page.routes" :funcs="page.funcs" :class="loading ? 'opacity-60' : ''" />
+        <InsightProcessCostTable
+          v-else
+          :kind="page.kind"
+          :routes="page.routes"
+          :funcs="page.funcs"
+          :busy="busySource"
+          :class="loading ? 'opacity-60' : ''"
+          @make-todo="makeTodo"
+          @open-todo="openTodos"
+        />
 
         <div v-if="total > PAGE" class="flex justify-end gap-2">
           <UButton size="sm" color="neutral" variant="outline" icon="i-lucide-chevron-left" :disabled="offset === 0 || loading" @click="go(-1)">

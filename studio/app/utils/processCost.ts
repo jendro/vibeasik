@@ -1,4 +1,4 @@
-import type { CostClass } from '~/types'
+import type { CostClass, CostHandling, CostHandlingSummary } from '~/types'
 
 // Kelas pertumbuhan: label manusiawi + warna status. Warna selalu ditemani label (tidak bergantung warna saja).
 export const COST_CLASSES: { key: CostClass, bigO: string, label: string, meaning: string, bar: string, text: string }[] = [
@@ -25,3 +25,38 @@ export const shortFormula = (formula: string, terms = 3) => {
 /** Label bahasa/framework baris biaya: Go, Laravel, CodeIgniter 4, PHP … */
 export const costStackLabel = (r: { lang?: string, framework?: string }) =>
   r.lang === 'php' ? (r.framework || 'PHP') : 'Go'
+
+const TODO_STATUS: Record<string, string> = { pending: 'menunggu', in_progress: 'dikerjakan', suggested: 'saran', completed: 'selesai' }
+
+// Penanda penanganan satu baris: di mana sumber biayanya sudah ditangani (label pendek + warna + ikon).
+export const costHandledBadge = (h: CostHandling) => {
+  switch (h.where) {
+    case 'todo':
+      return { label: `Todo #${h.todo_id} · ${TODO_STATUS[h.todo_status || ''] || h.todo_status}`, icon: 'i-lucide-list-checks', tone: 'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300' }
+    case 'audit':
+      return { label: 'Di Audit', icon: 'i-lucide-shield-check', tone: 'bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300' }
+    case 'ignored':
+      return { label: 'Bukan masalah', icon: 'i-lucide-circle-slash', tone: 'bg-neutral-100 text-neutral-600 dark:bg-white/[0.06] dark:text-neutral-300' }
+  }
+  return { label: h.todo_id ? `Cek ulang #${h.todo_id}` : 'Cek ulang', icon: 'i-lucide-rotate-ccw', tone: 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300' }
+}
+
+// Keterangan di atas tabel: sudah ditangani di mana, lalu langkah yang perlu dilakukan.
+export const costHandlingNote = (s: CostHandlingSummary) => {
+  const handled = s.in_todo + s.in_audit + s.ignored + s.recheck
+  const where: string[] = []
+  if (s.in_todo) where.push(`${s.in_todo} di todo${s.todos.length ? ` (${s.todos.map(t => `#${t.id}`).join(', ')})` : ''}`)
+  if (s.in_audit) where.push(`${s.in_audit} di temuan Audit`)
+  if (s.ignored) where.push(`${s.ignored} ditandai bukan masalah`)
+  if (s.recheck) where.push(`${s.recheck} perlu dicek ulang`)
+  const todo: string[] = []
+  if (s.in_todo) todo.push('kerjakan todo-nya di halaman Todo atau kirim ke agent coding')
+  if (s.in_audit) todo.push('buka Audit lalu klik Selesaikan pada temuannya agar menjadi todo')
+  if (s.recheck) todo.push('jalankan Audit ulang untuk yang sudah selesai tetapi rumusnya masih tinggi')
+  if (s.open) todo.push(`buat todo untuk ${s.open} sumber yang belum ditangani lewat tombol di barisnya`)
+  return {
+    title: handled ? `Sudah ditangani ${handled} dari ${s.sources} sumber biaya tinggi` : `${s.sources} sumber biaya tinggi belum ditangani`,
+    where: where.join(' · '),
+    next: todo.length ? `Lakukan: ${todo.join('; ')}.` : 'Tidak ada yang perlu dilakukan.'
+  }
+}

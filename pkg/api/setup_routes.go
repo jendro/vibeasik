@@ -72,6 +72,7 @@ func (s *Server) setupRoutes() {
 	api.Get("/projects/:id/code-map/file", s.getCodeMapFile)
 	api.Post("/projects/:id/code-map/export", s.exportCodeMap)
 	api.Get("/projects/:id/process-cost", s.getProcessCost)
+	api.Post("/projects/:id/process-cost/todo", s.createProcessCostTodo)
 	// Uji keamanan proyek: audit router + probe server berjalan (lokal/live). Request probe hanya ke server proyek sendiri.
 	api.Get("/projects/:id/security-test", s.getProjectSecurityTest)
 	api.Post("/projects/:id/security-test", s.runProjectSecurityTest)

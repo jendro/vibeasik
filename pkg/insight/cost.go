@@ -49,9 +49,11 @@ type CostPage struct {
 	Total   int                          `json:"total"`
 	Limit   int                          `json:"limit"`
 	Offset  int                          `json:"offset"`
-	Routes  []routemap.RouteCost         `json:"routes"`
-	Funcs   []routemap.FuncCost          `json:"funcs"`
+	Routes  []RouteRow                   `json:"routes"`
+	Funcs   []FuncRow                    `json:"funcs"`
 	History []models.ProcessCostSnapshot `json:"history"`
+	// Handling: sumber biaya tinggi yang sudah ditangani (todo / audit) dan yang belum.
+	Handling CostHandlingSummary `json:"handling"`
 }
 
 const (
@@ -60,31 +62,51 @@ const (
 	costHistoryDays  = 60
 )
 
-// ProcessCost menghitung biaya proses proyek, mencatat potret hariannya, dan mengembalikan satu halaman daftar.
-func ProcessCost(db *gorm.DB, projectID uint, q CostQuery, now time.Time) (*CostPage, error) {
+type costAnalysis struct {
+	root string
+	rep  *routemap.CostReport
+	mods []string
+	fws  []string
+	hots []routemap.Hotspot
+}
+
+// analyze menghitung biaya Go dan PHP (Laravel, CodeIgniter, Slim, PHP biasa) dengan model tick yang sama,
+// lalu menggabungkannya, beserta sumber biaya (hotspot) keduanya.
+func analyze(db *gorm.DB, projectID uint) (*costAnalysis, error) {
 	graphs, root, err := codemap.RouteGraphs(db, projectID)
 	if err != nil {
 		return nil, err
 	}
-	// Go dan PHP (Laravel, CodeIgniter, Slim, PHP biasa) dihitung dengan model tick yang sama lalu digabung.
-	phpRep, phpMods := routemap.PHPCosts(root)
-	rep := routemap.MergeCosts(routemap.Costs(graphs), phpRep)
-	var mods, fws []string
+	php := routemap.AnalyzePHP(root)
+	a := &costAnalysis{root: root, rep: routemap.MergeCosts(routemap.Costs(graphs), php.Report)}
 	for _, g := range graphs {
-		mods = append(mods, g.Module)
+		a.mods = append(a.mods, g.Module)
 		if g.Framework != "" {
-			fws = append(fws, "Go ("+g.Framework+")")
+			a.fws = append(a.fws, "Go ("+g.Framework+")")
 		}
 	}
-	for _, m := range phpMods {
-		mods = append(mods, m.Name)
-		fws = append(fws, phpFrameworkName(m.Framework))
+	for _, m := range php.Modules {
+		a.mods = append(a.mods, m.Name)
+		a.fws = append(a.fws, phpFrameworkName(m.Framework))
 	}
-	page := &CostPage{Summary: summarize(mods, fws, rep), Kind: "routes", Routes: []routemap.RouteCost{}, Funcs: []routemap.FuncCost{}}
+	a.hots = append(routemap.Hotspots(graphs), php.Hotspots...)
+	return a, nil
+}
+
+// ProcessCost menghitung biaya proses proyek, mencatat potret hariannya, dan mengembalikan satu halaman daftar.
+func ProcessCost(db *gorm.DB, projectID uint, q CostQuery, now time.Time) (*CostPage, error) {
+	a, err := analyze(db, projectID)
+	if err != nil {
+		return nil, err
+	}
+	rep := a.rep
+	page := &CostPage{Summary: summarize(a.mods, a.fws, rep), Kind: "routes", Routes: []RouteRow{}, Funcs: []FuncRow{}}
 	if page.Summary.Supported {
 		saveSnapshot(db, projectID, page.Summary, now)
 	}
 	page.History = costHistory(db, projectID, now)
+	routeRow, funcRow, handling := annotate(a.hots, loadCostLedger(db, projectID))
+	page.Handling = handling
 
 	page.Limit, page.Offset = q.Limit, q.Offset
 	if page.Limit <= 0 {
@@ -115,7 +137,9 @@ func ProcessCost(db *gorm.DB, projectID uint, q CostQuery, now time.Time) (*Cost
 			}
 		}
 		page.Total = len(all)
-		page.Funcs = append(page.Funcs, window(all, page.Offset, page.Limit)...)
+		for _, f := range window(all, page.Offset, page.Limit) {
+			page.Funcs = append(page.Funcs, funcRow(f))
+		}
 		return page, nil
 	}
 	var all []routemap.RouteCost
@@ -125,7 +149,9 @@ func ProcessCost(db *gorm.DB, projectID uint, q CostQuery, now time.Time) (*Cost
 		}
 	}
 	page.Total = len(all)
-	page.Routes = append(page.Routes, window(all, page.Offset, page.Limit)...)
+	for _, r := range window(all, page.Offset, page.Limit) {
+		page.Routes = append(page.Routes, routeRow(r))
+	}
 	return page, nil
 }
 

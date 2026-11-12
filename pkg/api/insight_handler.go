@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -35,4 +36,31 @@ func (s *Server) getOwnerRecap(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(recap)
+}
+
+// createProcessCostTodo: satu sumber biaya tinggi di tab Biaya Proses dijadikan todo (kunci audit sama dengan
+// temuan audit, jadi audit berikutnya menggabung ke todo ini). Todo terbuka yang sudah ada dikembalikan apa adanya.
+func (s *Server) createProcessCostTodo(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil || id <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
+	}
+	var req struct {
+		File string `json:"file"`
+		Line int    `json:"line"`
+		Kind string `json:"kind"`
+	}
+	if msg := firstProblem(bindJSONRequired(c, &req), needText("file", req.File, maxPath), oneOf("kind", req.Kind, "nplus1", "growth")); msg != "" {
+		return badPayload(c, msg)
+	}
+	todo, existed, err := insight.CreateCostTodo(s.db, uint(id), req.File, req.Line, req.Kind)
+	switch {
+	case errors.Is(err, insight.ErrCostSourceGone):
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
+	case err != nil:
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	case existed:
+		return c.JSON(fiber.Map{"todo": todo, "already_exists": true})
+	}
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"todo": todo, "already_exists": false})
 }

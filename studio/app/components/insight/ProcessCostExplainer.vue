@@ -8,7 +8,8 @@ const RULES = [
   { code: 'fungsi lokal', text: 'rumus fungsi yang dipanggil ikut dijumlahkan; di dalam loop dikalikan n' },
   { code: 'pustaka luar', text: '1 tick; sort/usort/sortBy = n log n; callback Map/Filter/Walk, array_map, ->each/->map = n × isi callback' },
   { code: 'query database', text: 'dihitung terpisah sebagai Q(n): GORM/sql (Go), Eloquent/DB::/PDO/CodeIgniter (PHP); di dalam loop → Q(n) = n + 1' },
-  { code: 'rute PHP', text: 'Laravel Route:: (group, prefix, middleware, resource), CodeIgniter $routes, Slim $app; tanpa router: tiap berkas .php = satu halaman' }
+  { code: 'rute PHP', text: 'Laravel Route:: (group, prefix, middleware, resource), CodeIgniter $routes, Slim $app; tanpa router: tiap berkas .php = satu halaman' },
+  { code: 'penanganan', text: 'fungsi sumber N+1 / O(n²) ke atas otomatis jadi temuan Audit; "Buat todo" memakai kunci audit yang sama (aturan + berkas), jadi audit berikutnya menggabung ke todo itu' }
 ]
 const EXAMPLES = [
   { formula: '3', bigO: 'O(1)', text: 'ambil satu baris lalu kirim' },

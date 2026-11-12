@@ -150,3 +150,111 @@ func b(c *fiber.Ctx) error {
 		t.Errorf("potret: %d baris, history %+v", n, page.History)
 	}
 }
+
+func TestProcessCostHandlingFlow(t *testing.T) {
+	db := testDB(t)
+	root := t.TempDir()
+	write := func(name, src string) {
+		if err := os.WriteFile(filepath.Join(root, name), []byte(src), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write("go.mod", "module demo\n\ngo 1.22\n")
+	write("main.go", `package main
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
+)
+
+var db *gorm.DB
+
+func main() {
+	app := fiber.New()
+	app.Get("/b", b)
+	app.Get("/pairs", pairs)
+}
+
+func b(c *fiber.Ctx) error {
+	var ids []int
+	db.Find(&ids)
+	for _, id := range ids {
+		db.First(&id, id)
+	}
+	return nil
+}
+
+func pairs(c *fiber.Ctx) error {
+	var ids []int
+	db.Find(&ids)
+	n := 0
+	for _, x := range ids {
+		for _, y := range ids {
+			if x == y {
+				n++
+			}
+		}
+	}
+	return c.JSON(n)
+}
+`)
+	proj := models.Project{Name: "demo", RootPath: root}
+	db.Create(&proj)
+	now := time.Date(2026, 3, 10, 9, 0, 0, 0, time.UTC)
+	route := func(p *CostPage, path string) RouteRow {
+		for _, r := range p.Routes {
+			if r.Path == path {
+				return r
+			}
+		}
+		t.Fatalf("rute %s tidak ada", path)
+		return RouteRow{}
+	}
+
+	page, err := ProcessCost(db, proj.ID, CostQuery{}, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if page.Handling.Sources != 2 || page.Handling.Open != 2 {
+		t.Fatalf("rekap awal: %+v", page.Handling)
+	}
+	nb := route(page, "/b")
+	if nb.Source == nil || nb.Source.Kind != "nplus1" || nb.Handled != nil {
+		t.Fatalf("/b belum ditangani: %+v %+v", nb.Source, nb.Handled)
+	}
+
+	// Temuan audit untuk /pairs → "ada di Audit".
+	pr := route(page, "/pairs")
+	fs, _ := json.Marshal([]models.Finding{{RuleID: "COST-POLYNOMIAL-GROWTH", TargetFile: pr.Source.File, Line: pr.Source.Line, Status: "open"}})
+	db.Create(&models.Diagnostic{ProjectID: proj.ID, FindingsJSON: string(fs)})
+
+	todo, existed, err := CreateCostTodo(db, proj.ID, nb.Source.File, nb.Source.Line, "nplus1")
+	if err != nil || existed || todo.AuditKey != "QUERY-NPLUS1-CHAIN|"+nb.Source.File || todo.Status != models.TodoStatusPending {
+		t.Fatalf("buat todo: %+v existed=%v err=%v", todo, existed, err)
+	}
+	again, existed, _ := CreateCostTodo(db, proj.ID, nb.Source.File, nb.Source.Line, "nplus1")
+	if !existed || again.ID != todo.ID {
+		t.Errorf("klik kedua harus mengembalikan todo yang sama: %+v", again)
+	}
+
+	page, _ = ProcessCost(db, proj.ID, CostQuery{}, now)
+	if h := route(page, "/b").Handled; h == nil || h.Where != HandledTodo || h.TodoID != todo.ID || route(page, "/b").Source != nil {
+		t.Errorf("/b harus menunjuk todo #%d: %+v", todo.ID, h)
+	}
+	if h := route(page, "/pairs").Handled; h == nil || h.Where != HandledAudit {
+		t.Errorf("/pairs harus menunjuk Audit: %+v", h)
+	}
+	if hs := page.Handling; hs.InTodo != 1 || hs.InAudit != 1 || hs.Open != 0 || len(hs.Todos) != 1 || hs.AuditAt == nil {
+		t.Errorf("rekap: %+v", hs)
+	}
+
+	// Todo selesai tetapi kodenya belum berubah → perlu dicek ulang.
+	db.Model(&models.Todo{}).Where("id = ?", todo.ID).Update("status", models.TodoStatusCompleted)
+	page, _ = ProcessCost(db, proj.ID, CostQuery{}, now)
+	if h := route(page, "/b").Handled; h == nil || h.Where != HandledRecheck {
+		t.Errorf("/b setelah todo selesai: %+v", h)
+	}
+	if _, _, err := CreateCostTodo(db, proj.ID, "nope.go", 1, "nplus1"); err != ErrCostSourceGone {
+		t.Errorf("sumber hilang: %v", err)
+	}
+}

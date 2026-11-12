@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import type { FuncCost, ProcessCost, RouteCost } from '~/types'
-import { costClassInfo, costStackLabel, fmtTicks, shortFormula } from '~/utils/processCost'
+import type { CostRowHandling, CostSource, FuncCost, ProcessCost, RouteCost } from '~/types'
+import { costClassInfo, costHandledBadge, costStackLabel, fmtTicks, shortFormula } from '~/utils/processCost'
 
 // Tabel rumus biaya per rute atau per fungsi; klik baris untuk melihat pertumbuhan T(n) pada n = 1 … 10.000.
-const props = defineProps<{ kind: 'routes' | 'funcs', routes: RouteCost[], funcs: FuncCost[] }>()
+// Kolom "Penanganan": todo/temuan Audit yang menangani sumber biayanya, atau tombol untuk menjadikannya todo.
+const props = defineProps<{ kind: 'routes' | 'funcs', routes: RouteCost[], funcs: FuncCost[], busy?: string }>()
+const emit = defineEmits<{ 'make-todo': [src: CostSource], 'open-todo': [id: number] }>()
 
-type Row = ProcessCost & { key: string, title: string, sub: string, method?: string }
+type Row = ProcessCost & CostRowHandling & { key: string, title: string, sub: string, method?: string }
+const srcKey = (s: CostSource) => `${s.kind}|${s.file}|${s.line}`
 const rows = computed<Row[]>(() => props.kind === 'routes'
   ? props.routes.map(r => ({ ...r, key: `${r.module}|${r.method}|${r.path}`, title: r.path, method: r.method, sub: `${costStackLabel(r)} · ${r.handler}${r.middlewares ? ` · +${r.middlewares} middleware` : ''}` }))
   : props.funcs.map(f => ({ ...f, key: `${f.module}|${f.file}|${f.name}|${f.line}`, title: f.name, sub: `${costStackLabel(f)} · ${f.file}:${f.line}${f.routes ? ` · dipakai ${f.routes} rute` : ''}` })))
@@ -21,7 +24,7 @@ const METHOD_TONE: Record<string, string> = {
 
 <template>
   <div class="overflow-x-auto rounded-2xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#04111f]">
-    <table class="w-full min-w-[760px] text-sm">
+    <table class="w-full min-w-[900px] text-sm">
       <thead>
         <tr class="text-left text-xs text-neutral-500 border-b border-neutral-200 dark:border-white/[0.08]">
           <th class="font-medium px-5 py-2.5">
@@ -36,8 +39,11 @@ const METHOD_TONE: Record<string, string> = {
           <th class="font-medium px-3 py-2.5 text-right">
             T(1)
           </th>
-          <th class="font-medium px-3 py-2.5 pr-5">
+          <th class="font-medium px-3 py-2.5">
             Query Q(n)
+          </th>
+          <th class="font-medium px-3 py-2.5 pr-5">
+            Penanganan
           </th>
         </tr>
       </thead>
@@ -76,15 +82,58 @@ const METHOD_TONE: Record<string, string> = {
             <td class="px-3 py-2.5 text-right font-mono text-xs tabular-nums text-neutral-900 dark:text-white">
               {{ fmtTicks(r.ticks_1) }}
             </td>
-            <td class="px-3 py-2.5 pr-5 whitespace-nowrap">
+            <td class="px-3 py-2.5 whitespace-nowrap">
               <code class="font-mono text-xs" :class="r.n_plus_one ? 'text-rose-700 dark:text-rose-400 font-semibold' : 'text-neutral-700 dark:text-neutral-300'">{{ r.query_formula }}</code>
               <span v-if="r.n_plus_one" class="ml-1.5 inline-flex items-center gap-1 rounded-md bg-rose-50 dark:bg-rose-950/40 px-1.5 py-0.5 text-xs font-medium text-rose-700 dark:text-rose-300">
                 <UIcon name="i-lucide-triangle-alert" class="size-3" />N+1
               </span>
             </td>
+            <td class="px-3 py-2.5 pr-5 whitespace-nowrap" @click.stop @keydown.stop>
+              <div class="flex items-center gap-1.5">
+                <button
+                  v-if="r.handled"
+                  type="button"
+                  class="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                  :class="costHandledBadge(r.handled).tone"
+                  :title="`${r.handled.next}${r.handled.todo_title ? ` — ${r.handled.todo_title}` : ''}`"
+                  @click="r.handled.todo_id ? emit('open-todo', r.handled.todo_id) : toggle(r.key)"
+                >
+                  <UIcon :name="costHandledBadge(r.handled).icon" class="size-3" />{{ costHandledBadge(r.handled).label }}
+                </button>
+                <UButton
+                  v-if="r.source"
+                  size="xs"
+                  color="neutral"
+                  variant="outline"
+                  icon="i-lucide-list-plus"
+                  :loading="busy === srcKey(r.source)"
+                  :disabled="!!busy && busy !== srcKey(r.source)"
+                  :title="`Jadikan todo: ${r.source.func} (${r.source.file}:${r.source.line})`"
+                  @click="emit('make-todo', r.source)"
+                >
+                  Buat todo
+                </UButton>
+                <span v-if="!r.handled && !r.source" class="text-xs text-neutral-400">—</span>
+              </div>
+            </td>
           </tr>
           <tr v-if="open === r.key" class="border-b border-neutral-100 dark:border-white/[0.05] bg-neutral-50/70 dark:bg-white/[0.02]">
-            <td colspan="5" class="px-5 py-3">
+            <td colspan="6" class="px-5 py-3">
+              <div v-if="r.handled || r.source" class="mb-3 rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] px-3 py-2 text-xs space-y-1">
+                <div v-if="r.handled" class="text-neutral-700 dark:text-neutral-200">
+                  <span class="font-semibold">Sudah ditangani</span>
+                  <span v-if="r.handled.todo_id"> di todo #{{ r.handled.todo_id }}<template v-if="r.handled.todo_title"> “{{ r.handled.todo_title }}”</template></span>
+                  <span v-else-if="r.handled.where === 'audit' || r.handled.where === 'ignored'"> di Audit</span>
+                  — sumber <code class="font-mono">{{ r.handled.source.func }}</code> <span class="font-mono text-neutral-500">{{ r.handled.source.file }}:{{ r.handled.source.line }}</span>.
+                  {{ r.handled.next }}
+                </div>
+                <div v-if="r.source" class="text-neutral-700 dark:text-neutral-200">
+                  <span class="font-semibold">Belum ditangani:</span>
+                  {{ r.source.kind === 'nplus1' ? `N+1 query (Q(n) = ${r.source.query_formula})` : `biaya ${r.source.big_o}` }} berasal dari
+                  <code class="font-mono">{{ r.source.func }}</code> <span class="font-mono text-neutral-500">{{ r.source.file }}:{{ r.source.line }}</span>.
+                  Klik “Buat todo” agar perbaikannya masuk antrean todo.
+                </div>
+              </div>
               <div class="text-xs text-neutral-500">
                 Rumus lengkap
               </div>
