@@ -12,6 +12,7 @@ const (
 	maxStaticFiles    = 4000
 	maxStaticFileSize = 512 << 10
 	maxLocations      = 8
+	maxRouteRefs      = 200
 )
 
 var skipDirs = map[string]bool{
@@ -26,7 +27,7 @@ var (
 	// File TS/JS hanya dihitung sebagai server bila memakai kerangka server.
 	jsServerRe = regexp.MustCompile(`(?i)(require\(['"]express['"]\)|from ['"](express|fastify|hono|koa|@nestjs/[a-z]+|h3|elysia)['"]|defineEventHandler\s*\(|createServer\s*\()`)
 
-	routeDeclRe = regexp.MustCompile(`(?i)\.(Get|Post|Put|Patch|Delete|All)\s*\(\s*["'` + "`" + `]/`)
+	routeDeclRe = regexp.MustCompile(`(?i)\.(Get|Post|Put|Patch|Delete|All)\s*\(\s*["'` + "`" + `](/[^"'` + "`" + `]*)`)
 	mutationRe  = regexp.MustCompile(`(?i)\.(Post|Put|Patch|Delete)\s*\(\s*["'` + "`" + `]/`)
 	authRouteRe = regexp.MustCompile(`(?i)\.(Post|Put|Patch)\s*\(\s*["'` + "`" + `]([^"'` + "`" + `]*(login|sign-?in|authenticate|register|sign-?up|forgot|reset-?password|/otp|/2fa|/token)[^"'` + "`" + `]*)["'` + "`" + `]`)
 	rateLimitRe = regexp.MustCompile(`(?i)(limiter\.New|rate[\s_-]?limit|rate\.(New)?Limiter|express-rate-limit|rateLimit\s*\(|\bthrottle|tollbooth|x/time/rate|ThrottlerGuard|flask[\s_-]?limiter|django_ratelimit|slowapi|token[\s_-]?bucket|middleware/limiter|RateLimiter::)`)
@@ -68,11 +69,17 @@ type staticFacts struct {
 	errorLeak   []Location
 	debugMode   []Location
 	serverFiles int
+	routeRefs   []RouteRef // rute yang terbaca dari sumber (cadangan bila rute komponen belum disinkron)
 }
 
 func addLoc(list []Location, file string, line int, text string) []Location {
 	if len(list) >= maxLocations {
 		return list
+	}
+	for _, l := range list {
+		if l.File == file && l.Line == line {
+			return list
+		}
 	}
 	t := strings.TrimSpace(text)
 	if len(t) > 160 {
@@ -163,8 +170,11 @@ func scanLines(f *staticFacts, relPath, content string) {
 		if strings.HasPrefix(trim, "//") || strings.HasPrefix(trim, "#") || strings.HasPrefix(trim, "*") {
 			continue
 		}
-		if routeDeclRe.MatchString(line) {
+		if m := routeDeclRe.FindStringSubmatch(line); m != nil {
 			f.routes++
+			if len(f.routeRefs) < maxRouteRefs {
+				f.routeRefs = append(f.routeRefs, RouteRef{Method: strings.ToUpper(m[1]), Path: m[2]})
+			}
 		}
 		if mutationRe.MatchString(line) {
 			f.mutations++
@@ -274,7 +284,10 @@ func staticChecks(f staticFacts) []Check {
 	case len(f.corsStar) > 0 && len(f.corsCreds) > 0:
 		cr.Status, cr.Severity = StatusFail, SevCritical
 		cr.Evidence = []string{"CORS mengizinkan semua asal (*) sekaligus credentials — situs lain bisa memakai sesi pengguna."}
-		cr.Locations = append(f.corsStar, f.corsCreds...)
+		cr.Locations = f.corsStar
+		for _, l := range f.corsCreds {
+			cr.Locations = addLoc(cr.Locations, l.File, l.Line, l.Snippet)
+		}
 	case len(f.corsStar) > 0:
 		cr.Status, cr.Severity = StatusWarn, SevWarning
 		cr.Evidence = []string{"CORS mengizinkan semua asal (*)."}

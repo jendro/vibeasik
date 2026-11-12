@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
+	"github.com/vibeasik/vibeasik/pkg/secaudit"
 	"github.com/vibeasik/vibeasik/pkg/service"
 )
 
@@ -22,6 +23,7 @@ func (s *Server) runProjectSecurityTest(c *fiber.Ctx) error {
 	req.BaseURL = strings.TrimSpace(req.BaseURL)
 	if msg := firstProblem(
 		maxLen("base_url", req.BaseURL, maxURL),
+		secaudit.ValidateBaseURL(req.BaseURL),
 		burstProblem(req.Burst),
 	); msg != "" {
 		return badPayload(c, msg)

@@ -75,6 +75,7 @@ type LiveResult struct {
 	StatusCode  int               `json:"status_code,omitempty"`
 	LatencyMs   int64             `json:"latency_ms,omitempty"`
 	Headers     map[string]string `json:"headers,omitempty"`
+	Paths       []string          `json:"paths,omitempty"` // rute yang menjawab dan ikut diuji
 	RequestsRun int               `json:"requests_run"`
 }
 

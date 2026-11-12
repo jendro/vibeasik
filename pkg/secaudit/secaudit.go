@@ -54,6 +54,7 @@ func Run(ctx context.Context, in Input) *Report {
 		rep.FilesRead = facts.files
 		if rep.RoutesSeen == 0 {
 			rep.RoutesSeen = facts.routes
+			in.Routes = facts.routeRefs
 		}
 		rep.Checks = append(rep.Checks, staticChecks(facts)...)
 	} else {
@@ -101,6 +102,11 @@ func merge(dst *staticFacts, src staticFacts) {
 	dst.routes += src.routes
 	dst.mutations += src.mutations
 	dst.sqlParam += src.sqlParam
+	for _, r := range src.routeRefs {
+		if len(dst.routeRefs) < maxRouteRefs {
+			dst.routeRefs = append(dst.routeRefs, r)
+		}
+	}
 	cat := func(a, b []Location) []Location {
 		for _, l := range b {
 			if len(a) >= maxLocations {

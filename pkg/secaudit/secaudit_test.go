@@ -146,6 +146,26 @@ func TestLiveBareServerFails(t *testing.T) {
 	}
 }
 
+// Rute health yang bersih tidak boleh menutupi rute API yang bocor: tiap rute dinilai, yang terburuk dilaporkan.
+func TestLiveWorstRouteIsReported(t *testing.T) {
+	app := bareApp()
+	app.Get("/health", func(c *fiber.Ctx) error { return c.SendString("ok") })
+	base := serve(t, app)
+	rep := Run(context.Background(), Input{Routes: []RouteRef{{"GET", "/health"}, {"GET", "/api/items"}}, Live: &LiveOptions{BaseURL: base, SkipBurst: true}})
+	if got := rep.Live.Paths; len(got) != 2 || got[0] != "/health" || got[1] != "/api/items" {
+		t.Fatalf("rute diuji = %v", got)
+	}
+	c := byID(rep)
+	// Galat SQL hanya ada di /api/items, padahal /health dijawab bersih.
+	if b := c["LIVE-INPUT-BOUNDARY"]; b.Status != StatusFail || len(b.Evidence) == 0 || b.Evidence[0] != "Rute /api/items:" {
+		t.Errorf("LIVE-INPUT-BOUNDARY = %s %v, ingin fail dengan rute /api/items", b.Status, b.Evidence)
+	}
+	// CORS dipasang global di bareApp, jadi gagal (rute mana pun boleh disebut).
+	if c["LIVE-CORS"].Status != StatusFail {
+		t.Errorf("LIVE-CORS = %s", c["LIVE-CORS"].Status)
+	}
+}
+
 func TestLiveUnreachableIsSkipped(t *testing.T) {
 	ln, _ := net.Listen("tcp", "127.0.0.1:0")
 	addr := ln.Addr().String()
@@ -157,6 +177,9 @@ func TestLiveUnreachableIsSkipped(t *testing.T) {
 }
 
 func TestNormalizeBaseURLRejectsOtherSchemes(t *testing.T) {
+	if ValidateBaseURL("") != "" || ValidateBaseURL("https://api.contoh.test") != "" || ValidateBaseURL("file:///x") == "" {
+		t.Errorf("ValidateBaseURL keliru")
+	}
 	for _, raw := range []string{"", "ftp://x", "file:///etc/passwd", "http://"} {
 		if _, err := normalizeBaseURL(raw); err == nil {
 			t.Errorf("%q seharusnya ditolak", raw)
@@ -224,6 +247,12 @@ func setup(app *fiber.App, db *gorm.DB) {
 	}
 	if rep.FilesRead != 1 {
 		t.Errorf("node_modules harus dilewati; files_read=%d", rep.FilesRead)
+	}
+	if n := len(c["CORS"].Locations); n != 1 {
+		t.Errorf("lokasi CORS di baris sama harus satu, dapat %d", n)
+	}
+	if rep.RoutesSeen != 3 {
+		t.Errorf("rute dari sumber = %d, ingin 3", rep.RoutesSeen)
 	}
 }
 

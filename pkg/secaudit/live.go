@@ -39,6 +39,17 @@ type prober struct {
 	count  int
 }
 
+// ValidateBaseURL mengembalikan pesan galat bila URL server tidak bisa diuji (bukan http/https, tanpa host).
+func ValidateBaseURL(raw string) string {
+	if strings.TrimSpace(raw) == "" {
+		return ""
+	}
+	if _, err := normalizeBaseURL(raw); err != nil {
+		return err.Error()
+	}
+	return ""
+}
+
 // normalizeBaseURL menerima http(s)://host[:port][/prefix]; host saja dianggap http.
 func normalizeBaseURL(raw string) (*url.URL, error) {
 	raw = strings.TrimSpace(raw)
@@ -144,32 +155,48 @@ func probeLive(ctx context.Context, opts LiveOptions) (*LiveResult, []Check) {
 		paths = []string{"/"}
 	}
 
-	// 1. Jangkauan: path pertama yang menjawab menjadi sasaran uji berikutnya.
-	var first probeResp
-	target := paths[0]
+	// 1. Jangkauan: tiap rute terpilih diminta sekali; yang menjawab menjadi sasaran uji berikutnya.
+	type answered struct {
+		path string
+		resp probeResp
+	}
+	var ok []answered
+	var lastErr error
 	for _, path := range paths {
-		first = p.do(ctx, http.MethodGet, p.urlFor(path, nil), nil, nil)
-		if first.err == nil {
-			target = path
-			break
+		r := p.do(ctx, http.MethodGet, p.urlFor(path, nil), nil, nil)
+		if r.err != nil {
+			lastErr = r.err
+			continue
 		}
+		ok = append(ok, answered{path, r})
 	}
-	if first.err != nil {
-		res.Error = first.err.Error()
+	if len(ok) == 0 {
+		res.Error = lastErr.Error()
 		res.RequestsRun = p.count
-		return res, []Check{liveSkipped("Server tidak bisa dihubungi: " + first.err.Error())}
+		return res, []Check{liveSkipped("Server tidak bisa dihubungi: " + lastErr.Error())}
 	}
+	first := ok[0].resp
+	target := ok[0].path
 	res.Reachable = true
 	res.StatusCode = first.status
 	res.LatencyMs = first.latency.Milliseconds()
 	res.Headers = pickHeaders(first.headers)
 
+	// 2. Kontrol per rute: tiap rute dinilai sendiri, laporan memuat hasil terburuk beserta rutenya.
+	var headers, disclosure, cors, boundary []Check
+	for _, a := range ok {
+		res.Paths = append(res.Paths, a.path)
+		headers = append(headers, liveHeaderCheck(a.resp.headers))
+		disclosure = append(disclosure, liveDisclosureCheck(a.resp.headers))
+		cors = append(cors, liveCORSCheck(ctx, p, a.path))
+		boundary = append(boundary, liveErrorLeakCheck(ctx, p, a.path))
+	}
 	var checks []Check
-	checks = append(checks, liveHeaderCheck(first.headers))
+	checks = append(checks, worstOf(headers, res.Paths))
 	checks = append(checks, liveTransportCheck(base, first.headers))
-	checks = append(checks, liveDisclosureCheck(first.headers))
-	checks = append(checks, liveCORSCheck(ctx, p, target))
-	checks = append(checks, liveErrorLeakCheck(ctx, p, target))
+	checks = append(checks, worstOf(disclosure, res.Paths))
+	checks = append(checks, worstOf(cors, res.Paths))
+	checks = append(checks, worstOf(boundary, res.Paths))
 	if opts.SkipBurst {
 		checks = append(checks, Check{ID: "LIVE-RATE-LIMIT", Category: CatRateLimit, Title: "Rate limit terbukti di server", Status: StatusSkipped,
 			Severity: SevInfo, Source: "live", Evidence: []string{"Uji burst dilewati atas permintaan."}})
@@ -192,6 +219,25 @@ func probeLive(ctx context.Context, opts LiveOptions) (*LiveResult, []Check) {
 	}
 	res.RequestsRun = p.count
 	return res, checks
+}
+
+// worstOf memilih hasil terburuk dari pemeriksaan yang sama di beberapa rute dan menyebut rutenya.
+func worstOf(per []Check, paths []string) Check {
+	best := 0
+	for i := range per {
+		if rank(per[i]) < rank(per[best]) {
+			best = i
+		}
+	}
+	c := per[best]
+	if len(per) > 1 {
+		if c.Status == StatusPass {
+			c.Evidence = append([]string{fmt.Sprintf("Semua %d rute aman: %s", len(paths), strings.Join(paths, ", "))}, c.Evidence...)
+		} else {
+			c.Evidence = append([]string{"Rute " + paths[best] + ":"}, c.Evidence...)
+		}
+	}
+	return c
 }
 
 func liveSkipped(reason string) Check {

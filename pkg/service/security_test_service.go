@@ -3,8 +3,10 @@ package service
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -70,20 +72,34 @@ func componentDir(p *models.Project, c models.Component) string {
 	return ""
 }
 
+// localBaseURL memilih port lokal komponen yang benar-benar menjawab: port jalan dari vibeasik (run_port)
+// lalu port yang dideklarasikan kode. Bila tidak ada yang menjawab, port pertama dipakai (probe melapor skipped).
 func localBaseURL(c models.Component) string {
-	port := c.RunPort
-	if port == 0 {
-		port = c.Port
+	var ports []int
+	for _, p := range []int{c.RunPort, c.Port} {
+		if p > 0 && (len(ports) == 0 || ports[0] != p) {
+			ports = append(ports, p)
+		}
 	}
-	if port == 0 {
+	if len(ports) == 0 {
 		return ""
 	}
-	return fmt.Sprintf("http://127.0.0.1:%d", port)
+	for _, p := range ports {
+		addr := net.JoinHostPort("127.0.0.1", strconv.Itoa(p))
+		if conn, err := net.DialTimeout("tcp", addr, 400*time.Millisecond); err == nil {
+			conn.Close()
+			return "http://" + addr
+		}
+	}
+	return fmt.Sprintf("http://127.0.0.1:%d", ports[0])
 }
 
 func (s *securityTestService) Run(ctx context.Context, req SecurityTestRequest) (*secaudit.Report, error) {
 	if req.ProjectID == 0 {
 		return nil, fmt.Errorf("project_id wajib diisi")
+	}
+	if msg := secaudit.ValidateBaseURL(req.BaseURL); msg != "" {
+		return nil, fmt.Errorf("%s", msg)
 	}
 	p, err := s.projects.FindByID(ctx, req.ProjectID)
 	if err != nil || p == nil {
