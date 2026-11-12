@@ -33,5 +33,5 @@ var restartSelf = func() error {
 	if err != nil {
 		return err
 	}
-	return syscall.Exec(exe, os.Args, os.Environ())
+	return syscall.Exec(exe, os.Args, append(os.Environ(), restartedEnv+"=1"))
 }

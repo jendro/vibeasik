@@ -143,7 +143,7 @@ var serveCmd = &cobra.Command{
 		log.Printf("   • DB:      %s\n", cfg.DBDriver)
 		log.Println("==================================================================")
 
-		if openBrowser {
+		if openBrowser && !isRestarted() {
 			go func() {
 				time.Sleep(350 * time.Millisecond)
 				_ = openURL(studioURL)
