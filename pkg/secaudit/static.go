@@ -163,70 +163,123 @@ func scanDebugOnly(f *staticFacts, path, relPath string) {
 	}
 }
 
+// Kata kunci murah (huruf kecil) per pola: regex hanya dijalankan bila salah satunya ada di baris.
+// Tanpa saringan ini ±17 regex case-insensitive per baris membuat repo ratusan berkas butuh puluhan detik.
+var (
+	kwRoute     = []string{".get(", ".post(", ".put(", ".patch(", ".delete(", ".all("}
+	kwMutation  = []string{".post(", ".put(", ".patch(", ".delete("}
+	kwRateLimit = []string{"limit", "throttl", "slowapi", "tollbooth", "bucket", "x/time/rate", "rate."}
+	kwHeaders   = []string{"helmet", "x-frame", "content-security", "x-content-type", "strict-transport", "secure.new", "securitymiddleware", "talisman"}
+	kwHSTS      = []string{"strict-transport", "hsts"}
+	kwCSP       = []string{"content-security", "contentsecuritypolicy"}
+	kwCORS      = []string{"cors", "alloworigins", "access-control-allow-origin"}
+	kwCORSStar  = []string{"*"}
+	kwCreds     = []string{"credentials"}
+	kwSQL       = []string{"sprintf", "select", "update", "delete", "insert"}
+	kwSQLParam  = []string{"where(", "$1", "prepare", "bind", ".find(", ".first(", "prisma.", "sqlx", "sqlc", "execute("}
+	kwCmd       = []string{"exec.command", "child_process", "os.system", "subprocess", "shell_exec", "passthru"}
+	kwValidator = []string{"valid", "binding:", "zod", "z.object", "joi.", "pydantic", "basemodel", "formrequest", "yup."}
+	kwBodyLimit = []string{"bodylimit", "maxbytesreader", "limit", "data_upload_max", "client_max_body", "post_max_size"}
+	kwAuth      = []string{"auth", "jwt", "passport", "guard", "login_required", "verifytoken", "current_user"}
+	kwErrLeak   = []string{"err.error()", "error.message", "err.message", "stack", "traceback", "gettraceasstring"}
+	kwDebug     = []string{"debug", "enableprintroutes", "display_errors"}
+)
+
+func hasAny(lower string, kws []string) bool {
+	for _, k := range kws {
+		if strings.Contains(lower, k) {
+			return true
+		}
+	}
+	return false
+}
+
 func scanLines(f *staticFacts, relPath, content string) {
 	for i, line := range strings.Split(content, "\n") {
 		n := i + 1
 		trim := strings.TrimSpace(line)
-		if strings.HasPrefix(trim, "//") || strings.HasPrefix(trim, "#") || strings.HasPrefix(trim, "*") {
+		if trim == "" || strings.HasPrefix(trim, "//") || strings.HasPrefix(trim, "#") || strings.HasPrefix(trim, "*") {
 			continue
 		}
-		if m := routeDeclRe.FindStringSubmatch(line); m != nil {
-			f.routes++
-			if len(f.routeRefs) < maxRouteRefs {
-				f.routeRefs = append(f.routeRefs, RouteRef{Method: strings.ToUpper(m[1]), Path: m[2]})
+		lower := strings.ToLower(line)
+		match := func(kws []string, re *regexp.Regexp) bool { return hasAny(lower, kws) && re.MatchString(line) }
+		if hasAny(lower, kwRoute) {
+			if m := routeDeclRe.FindStringSubmatch(line); m != nil {
+				f.routes++
+				if len(f.routeRefs) < maxRouteRefs {
+					f.routeRefs = append(f.routeRefs, RouteRef{Method: strings.ToUpper(m[1]), Path: m[2]})
+				}
+			}
+			if match(kwMutation, mutationRe) {
+				f.mutations++
+			}
+			if authRouteRe.MatchString(line) {
+				f.authRoutes = addLoc(f.authRoutes, relPath, n, line)
 			}
 		}
-		if mutationRe.MatchString(line) {
-			f.mutations++
-		}
-		if authRouteRe.MatchString(line) {
-			f.authRoutes = addLoc(f.authRoutes, relPath, n, line)
-		}
-		if rateLimitRe.MatchString(line) {
+		if match(kwRateLimit, rateLimitRe) {
 			f.rateLimit = addLoc(f.rateLimit, relPath, n, line)
 		}
-		if headersRe.MatchString(line) {
+		if match(kwHeaders, headersRe) {
 			f.headers = addLoc(f.headers, relPath, n, line)
 		}
-		if hstsRe.MatchString(line) {
+		if match(kwHSTS, hstsRe) {
 			f.hsts = addLoc(f.hsts, relPath, n, line)
 		}
-		if cspRe.MatchString(line) {
+		if match(kwCSP, cspRe) {
 			f.csp = addLoc(f.csp, relPath, n, line)
 		}
-		if corsRe.MatchString(line) {
+		if match(kwCORS, corsRe) {
 			f.cors = addLoc(f.cors, relPath, n, line)
 		}
-		if corsStarRe.MatchString(line) {
+		if match(kwCORSStar, corsStarRe) {
 			f.corsStar = addLoc(f.corsStar, relPath, n, line)
 		}
-		if corsCredsRe.MatchString(line) {
+		if match(kwCreds, corsCredsRe) {
 			f.corsCreds = addLoc(f.corsCreds, relPath, n, line)
 		}
-		if sqlConcatRe.MatchString(line) {
+		if match(kwSQL, sqlConcatRe) {
 			f.sqlConcat = addLoc(f.sqlConcat, relPath, n, line)
-		} else if sqlParamRe.MatchString(line) {
+		} else if match(kwSQLParam, sqlParamRe) {
 			f.sqlParam++
 		}
-		if cmdInjectRe.MatchString(line) {
+		if match(kwCmd, cmdInjectRe) {
 			f.cmdInject = addLoc(f.cmdInject, relPath, n, line)
 		}
-		if validatorRe.MatchString(line) {
+		if match(kwValidator, validatorRe) {
 			f.validator = addLoc(f.validator, relPath, n, line)
 		}
-		if bodyLimitRe.MatchString(line) {
+		if match(kwBodyLimit, bodyLimitRe) {
 			f.bodyLimit = addLoc(f.bodyLimit, relPath, n, line)
 		}
-		if authMwRe.MatchString(line) {
+		if match(kwAuth, authMwRe) {
 			f.authMw = addLoc(f.authMw, relPath, n, line)
 		}
-		if errorLeakRe.MatchString(line) {
+		if match(kwErrLeak, errorLeakRe) {
 			f.errorLeak = addLoc(f.errorLeak, relPath, n, line)
 		}
-		if debugModeRe.MatchString(line) {
+		if match(kwDebug, debugModeRe) {
 			f.debugMode = addLoc(f.debugMode, relPath, n, line)
 		}
 	}
+}
+
+// corsComboWindow: "*" dan credentials dianggap satu konfigurasi CORS bila berada di berkas yang sama
+// dan paling jauh sekian baris; pasangan lintas berkas/jauh biasanya teks penjelasan, bukan konfigurasi.
+const corsComboWindow = 15
+
+func corsCombo(star, creds []Location) []Location {
+	var out []Location
+	for _, s := range star {
+		for _, c := range creds {
+			d := s.Line - c.Line
+			if s.File == c.File && d <= corsComboWindow && d >= -corsComboWindow {
+				out = addLoc(out, s.File, s.Line, s.Snippet)
+				out = addLoc(out, c.File, c.Line, c.Snippet)
+			}
+		}
+	}
+	return out
 }
 
 // staticChecks mengubah fakta sumber menjadi daftar pemeriksaan berbukti kode.
@@ -281,13 +334,10 @@ func staticChecks(f staticFacts) []Check {
 	// CORS.
 	cr := Check{ID: "CORS", Category: CatCORS, Title: "CORS asal terbatas", Source: "static"}
 	switch {
-	case len(f.corsStar) > 0 && len(f.corsCreds) > 0:
+	case len(corsCombo(f.corsStar, f.corsCreds)) > 0:
 		cr.Status, cr.Severity = StatusFail, SevCritical
 		cr.Evidence = []string{"CORS mengizinkan semua asal (*) sekaligus credentials — situs lain bisa memakai sesi pengguna."}
-		cr.Locations = f.corsStar
-		for _, l := range f.corsCreds {
-			cr.Locations = addLoc(cr.Locations, l.File, l.Line, l.Snippet)
-		}
+		cr.Locations = corsCombo(f.corsStar, f.corsCreds)
 	case len(f.corsStar) > 0:
 		cr.Status, cr.Severity = StatusWarn, SevWarning
 		cr.Evidence = []string{"CORS mengizinkan semua asal (*)."}

@@ -302,3 +302,42 @@ func TestLivePathsSkipSideEffects(t *testing.T) {
 		t.Errorf("AuthPaths = %v", a)
 	}
 }
+
+// "*" dan credentials di berkas berbeda (atau berjauhan) bukan satu konfigurasi CORS: cukup peringatan.
+func TestStaticCORSComboNeedsSameFile(t *testing.T) {
+	dir := writeFiles(t, map[string]string{
+		"api.go":  "package main\nfunc s(app *fiber.App) {\n\tapp.Use(cors.New(cors.Config{AllowOrigins: \"*\"}))\n}\n",
+		"docs.go": "package main\nvar tip = Config{AllowCredentials: true}\n",
+	})
+	c := byID(Run(context.Background(), Input{Dirs: []SourceDir{{Path: dir}}}))
+	if c["CORS"].Status != StatusWarn {
+		t.Errorf("CORS lintas berkas = %s, ingin warn; %v", c["CORS"].Status, c["CORS"].Locations)
+	}
+}
+
+// Saringan kata kunci tidak boleh menyembunyikan deteksi: satu baris contoh per keluarga pola.
+func TestKeywordPrefilterKeepsDetections(t *testing.T) {
+	cases := map[string]func(staticFacts) bool{
+		`app.Use(limiter.New(limiter.Config{Max: 100}))`:            func(f staticFacts) bool { return len(f.rateLimit) > 0 },
+		`limiter = Limiter(key_func=get_remote_address)  # slowapi`: func(f staticFacts) bool { return len(f.rateLimit) > 0 },
+		`app.use(helmet())`: func(f staticFacts) bool { return len(f.headers) > 0 },
+		`w.Header().Set("Strict-Transport-Security", "max-age=1")`:   func(f staticFacts) bool { return len(f.hsts) > 0 },
+		`db.Raw(fmt.Sprintf("SELECT * FROM t WHERE a='%s'", q))`:     func(f staticFacts) bool { return len(f.sqlConcat) > 0 },
+		"cursor.execute(f\"SELECT * FROM t WHERE id={uid}\")":        func(f staticFacts) bool { return len(f.sqlConcat) > 0 },
+		`cmd := exec.Command("sh", "-c", userInput)`:                 func(f staticFacts) bool { return len(f.cmdInject) > 0 },
+		"Name string `json:\"name\" binding:\"required\"`":           func(f staticFacts) bool { return len(f.validator) > 0 },
+		`r.Body = http.MaxBytesReader(w, r.Body, 1<<20)`:             func(f staticFacts) bool { return len(f.bodyLimit) > 0 },
+		`api := app.Group("/api", jwtware.New(jwtware.Config{}))`:    func(f staticFacts) bool { return len(f.authMw) > 0 },
+		`return c.Status(500).JSON(fiber.Map{"error": err.Error()})`: func(f staticFacts) bool { return len(f.errorLeak) > 0 },
+		`app.run(host="0.0.0.0", debug=True)`:                        func(f staticFacts) bool { return len(f.debugMode) > 0 },
+		`app.Post("/api/auth/login", login)`:                         func(f staticFacts) bool { return len(f.authRoutes) > 0 && f.mutations == 1 && f.routes == 1 },
+		`app.use(cors({ origin: "*", credentials: true }))`:          func(f staticFacts) bool { return len(f.corsStar) > 0 && len(f.corsCreds) > 0 },
+	}
+	for line, ok := range cases {
+		var f staticFacts
+		scanLines(&f, "x.go", line)
+		if !ok(f) {
+			t.Errorf("tidak terdeteksi: %s", line)
+		}
+	}
+}
