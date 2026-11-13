@@ -42,19 +42,6 @@
  ],
  "go_handler": [
   {
-   "category": "code_smell",
-   "severity": "WARNING",
-   "title": "God Controller Smell: File Terlalu Besar (441 Baris)",
-   "description": "Berkas handler 'user_handler.go' memiliki 441 baris kode. Ukuran yang membengkak mengindikasikan pelanggaran Single Responsibility Principle (SRP).",
-   "suggestion": "Pecah handler menjadi beberapa modul controller yang lebih kecil berdasarkan domain entitas bisnis (misal: user_handler, order_handler).",
-   "target_file": "api/user_handler.go",
-   "line": 1,
-   "snippet": "package api",
-   "rule_id": "SMELL-GOD-CONTROLLER",
-   "theory_basis": "Robert C. Martin (Uncle Bob) SOLID - Single Responsibility Principle (SRP) \u0026 Martin Fowler 'Large Class' Code Smell.",
-   "suggested_fix": "// Pisahkan tanggung jawab handler ke controller terpisah:\n// 1. Ekstrak action handlers ke sub-handler modular\n// 2. Gunakan dependency injection atau service layer terpisah"
-  },
-  {
    "category": "query",
    "severity": "CRITICAL",
    "title": "N+1 Query Anti-Pattern: Pemanggilan Database di Dalam Loop",
@@ -105,19 +92,6 @@
    "rule_id": "PERF-WILDCARD-LIKE",
    "theory_basis": "Relational Database B-Tree Index Mechanics \u0026 SQL Query Execution Plan Optimization.",
    "suggested_fix": "// Gunakan indexing berbasis prefix atau FTS:\n// SEBELUM: db.Where(\"name LIKE ?\", \"%\" + query + \"%\")\n// SESUDAH: db.Where(\"name LIKE ?\", query + \"%\") // atau gunakan FTS5"
-  },
-  {
-   "category": "code_smell",
-   "severity": "WARNING",
-   "title": "Swallowed Error Smell: Kesalahan / Error Diabaikan Tanpa Penanganan",
-   "description": "Error return diabaikan atau ditangkap tanpa log/handling pada baris 422. Ini memicu silent failure dan inkonsistensi state data.",
-   "suggestion": "Periksa error return secara eksplisit. Log error dengan context yang relevan atau teruskan error ke error-handling layer.",
-   "target_file": "api/user_handler.go",
-   "line": 422,
-   "snippet": "_, err := doThing()",
-   "rule_id": "SMELL-SWALLOWED-ERROR",
-   "theory_basis": "Jim Shore's Fail-Fast Principle \u0026 Google SRE Observability Engineering.",
-   "suggested_fix": "// Tangani error secara eksplisit:\n// SESUDAH:\nif err != nil {\n    log.Printf(\"[ERROR] failed operation: %v\", err)\n    return err\n}"
   },
   {
    "category": "code_smell",
@@ -222,19 +196,6 @@
    "rule_id": "SEC-RATE-LIMIT-MISSING",
    "theory_basis": "OWASP Top 10 A07:2021-Identification and Authentication Failures, OWASP API Security API4:2023 (Unrestricted Resource Consumption) \u0026 CWE-307 (Improper Restriction of Excessive Authentication Attempts).",
    "suggested_fix": "// Pasang rate limiter ketat pada grup autentikasi (contoh Fiber):\n// auth := app.Group(\"/auth\", limiter.New(limiter.Config{Max: 5, Expiration: time.Minute}))\n// auth.Post(\"/login\", handler)"
-  },
-  {
-   "category": "router",
-   "severity": "WARNING",
-   "title": "Rute Mutasi Data (POST /items) Tanpa Proteksi Middleware",
-   "description": "Rute pengubah status 'POST /items' pada baris 433 tidak memiliki middleware otorisasi/autentikasi eksplisit.",
-   "suggestion": "Pasang middleware autentikasi (JWT Bearer Token / Session Guard / Role Checker) pada rantai handler rute.",
-   "target_file": "api/user_handler.go",
-   "line": 433,
-   "snippet": "app.Post(\"/items\", authMiddleware, handler)",
-   "rule_id": "ROUTER-UNGUARDED-MUTATION",
-   "theory_basis": "OWASP API Security Top 10 API1:2023 (Broken Object Level Authorization - BOLA) \u0026 API2:2023 (Broken Authentication).",
-   "suggested_fix": "// Pasang middleware autentikasi sebelum handler:\n// SESUDAH: api.Post(\"/items\", authMiddleware, handler)"
   },
   {
    "category": "router",
@@ -373,19 +334,6 @@
   }
  ],
  "py": [
-  {
-   "category": "router",
-   "severity": "INFO",
-   "title": "Handler Rute Belum Terimplementasi (Dangling / Stub Endpoint)",
-   "description": "Terdeteksi penanda handler yang belum selesai atau bernilai placeholder pada baris 2.",
-   "suggestion": "Selesaikan logika bisnis handler atau kembalikan HTTP status 501 (Not Implemented) dengan dokumentasi error yang jelas.",
-   "target_file": "app/views.py",
-   "line": 2,
-   "snippet": "pass",
-   "rule_id": "ROUTER-STUB-HANDLER",
-   "theory_basis": "Richardson Maturity Model (Level 2) \u0026 Robustness Principle (Postel's Law).",
-   "suggested_fix": "// Kembalikan status HTTP 501 jika endpoint belum selesai:\nreturn c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{\"error\": \"Endpoint dalam tahap pengembangan\"})"
-  },
   {
    "category": "router",
    "severity": "INFO",

@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/vibeasik/vibeasik/pkg/util"
@@ -13,6 +14,35 @@ import (
 	"github.com/vibeasik/vibeasik/pkg/models"
 	"github.com/vibeasik/vibeasik/pkg/security"
 )
+
+// ID aturan pemeriksaan tingkat proyek/komponen (struktur, bukan isi kode). ID tetap membuat temuan bisa dilacak
+// per aturan di pembelajaran audit dan dipetakan ke dasar pemeriksaannya.
+const (
+	RulePortCollision       = "PROJ-PORT-COLLISION"
+	RuleGitignoreMissing    = "PROJ-GITIGNORE-MISSING"
+	RuleReadmeMissing       = "PROJ-README-MISSING"
+	RuleComponentPathUnset  = "PROJ-COMPONENT-PATH-UNSET"
+	RuleComponentDirMissing = "PROJ-COMPONENT-DIR-MISSING"
+	RuleNoTests             = "PROJ-NO-TESTS"
+	RuleFEBackendEnv        = "PROJ-FE-BACKEND-ENV"
+	RuleGitUncommitted      = "GIT-UNCOMMITTED"
+)
+
+// componentRef: penanda komponen untuk kunci temuan tingkat komponen (path relatif, atau namanya bila kosong).
+func componentRef(comp *models.Component) string {
+	if comp.RelativePath != "" && comp.RelativePath != "." {
+		return comp.RelativePath
+	}
+	return comp.Name
+}
+
+// IsAdvisoryFinding: temuan yang hanya potret keadaan sesaat atau perkiraan, bukan cacat kode yang bisa
+// "diperbaiki" — working tree yang sedang berubah, port bawaan yang sama dengan proyek lain, dan estimasi biaya
+// statis. Ditampilkan di laporan audit, tetapi tidak dijadikan todo otomatis.
+func IsAdvisoryFinding(f models.Finding) bool {
+	return f.Category == "git" || f.RuleID == RuleGitUncommitted || strings.HasPrefix(f.RuleID, "PORT-SHARED-") ||
+		f.RuleID == rulePolynomialGrowth
+}
 
 // penaltyRule: aturan pengurangan skor berurutan; aturan pertama yang cocok menang.
 // category kosong = semua kategori; tanpa titles & ruleIDs = cocok untuk seluruh kategori itu.
@@ -128,10 +158,14 @@ func hasProjectRoot(project *models.Project) bool {
 // rootFileFindings memeriksa berkas penting di root proyek (.gitignore, env, dev.sh/deploy.sh, README).
 func rootFileFindings(project *models.Project) []models.Finding {
 	var findings []models.Finding
-	if !util.FileExists(filepath.Join(project.RootPath, ".gitignore")) {
+	// .gitignore & README root hanya bermakna bila root proyek adalah repo git; root berupa folder kerja biasa
+	// (kumpulan repo, folder dokumen) tidak punya indeks git untuk dijaga.
+	isRepo := util.PathExists(filepath.Join(project.RootPath, ".git"))
+	if isRepo && !util.FileExists(filepath.Join(project.RootPath, ".gitignore")) {
 		findings = append(findings, models.Finding{
 			Category:    "config",
 			Severity:    "WARNING",
+			RuleID:      RuleGitignoreMissing,
 			Title:       "Missing .gitignore at Project Root",
 			Description: "No root .gitignore file was found. Build artifacts and secrets could be accidentally tracked.",
 			Suggestion:  "Add a comprehensive .gitignore covering node_modules, binaries, and .env files.",
@@ -143,10 +177,11 @@ func rootFileFindings(project *models.Project) []models.Finding {
 	// dev.sh & deploy.sh wajib (Aturan 45)
 	findings = append(findings, inspectProjectTooling(project)...)
 
-	if !util.FileExists(filepath.Join(project.RootPath, "README.md")) {
+	if isRepo && !util.FileExists(filepath.Join(project.RootPath, "README.md")) {
 		findings = append(findings, models.Finding{
 			Category:    "documentation",
 			Severity:    "INFO",
+			RuleID:      RuleReadmeMissing,
 			Title:       "Missing README.md Documentation",
 			Description: "No root README.md found. AI agents and contributors need quick architectural instructions.",
 			Suggestion:  "Create README.md describing the BE/FE bundle structure and run instructions.",
@@ -160,10 +195,24 @@ func rootFileFindings(project *models.Project) []models.Finding {
 func inspectProjectComponent(project *models.Project, comp *models.Component) []models.Finding {
 	var findings []models.Finding
 	// Check component path exists
+	if comp.AbsolutePath == "" {
+		// Komponen tanpa path sama sekali: yang kurang adalah data komponennya, bukan direktori di disk.
+		return append(findings, models.Finding{
+			Category:    "architecture",
+			Severity:    "WARNING",
+			RuleID:      RuleComponentPathUnset,
+			TargetFile:  comp.Name,
+			Title:       fmt.Sprintf("Component Path Not Set: %s", comp.Name),
+			Description: fmt.Sprintf("Component '%s' has neither an absolute nor a relative path, so its code cannot be inspected.", comp.Name),
+			Suggestion:  "Set the component path (relative to the project root) or re-scan the project.",
+		})
+	}
 	if _, err := os.Stat(comp.AbsolutePath); err != nil {
 		return append(findings, models.Finding{
 			Category:    "architecture",
 			Severity:    "CRITICAL",
+			RuleID:      RuleComponentDirMissing,
+			TargetFile:  comp.Name,
 			Title:       fmt.Sprintf("Component Directory Missing: %s", comp.Name),
 			Description: fmt.Sprintf("The path '%s' does not exist on disk.", comp.AbsolutePath),
 			Suggestion:  "Verify directory path or re-scan project.",
@@ -175,11 +224,13 @@ func inspectProjectComponent(project *models.Project, comp *models.Component) []
 		findings = append(findings, inspectEnvHygiene(comp.AbsolutePath, comp.RelativePath)...)
 	}
 
-	// Check tests
-	if !hasTests(comp.AbsolutePath, comp.Language) {
+	// Check tests (komponen non-kode seperti dokumentasi/aset tidak diwajibkan punya test)
+	if comp.Role != models.RoleOther && !hasTests(comp.AbsolutePath, comp.Language) {
 		findings = append(findings, models.Finding{
 			Category:    "quality",
 			Severity:    "INFO",
+			RuleID:      RuleNoTests,
+			TargetFile:  componentRef(comp),
 			Title:       fmt.Sprintf("No Automated Tests Detected in %s", comp.Name),
 			Description: fmt.Sprintf("Component '%s' has no test suites detected.", comp.Name),
 			Suggestion:  "Add unit or integration tests to ensure regression-free development.",
@@ -191,6 +242,7 @@ func inspectProjectComponent(project *models.Project, comp *models.Component) []
 		findings = append(findings, models.Finding{
 			Category:    "git",
 			Severity:    "INFO",
+			RuleID:      RuleGitUncommitted,
 			Title:       fmt.Sprintf("Uncommitted Git Changes in %s", comp.Name),
 			Description: fmt.Sprintf("Working tree in '%s' has modified files.", comp.Name),
 			Suggestion:  "Review status with 'git status' and commit changes before running major AI refactors.",
@@ -218,6 +270,8 @@ func bundleCoherenceFindings(backendComp *models.Component, feComponents []model
 		findings = append(findings, models.Finding{
 			Category:    "architecture",
 			Severity:    "INFO",
+			RuleID:      RuleFEBackendEnv,
+			TargetFile:  componentRef(&fe),
 			Title:       fmt.Sprintf("Frontend '%s' May Lack Backend Endpoint Config", fe.Name),
 			Description: fmt.Sprintf("Could not identify explicit API target env in '%s' pointing to backend port %d.", fe.Name, backendComp.Port),
 			Suggestion:  fmt.Sprintf("Ensure %s has an environment variable e.g. NUXT_PUBLIC_API_URL=http://localhost:%d", fe.Name, backendComp.Port),
@@ -234,6 +288,7 @@ func uncommittedRootFinding(project *models.Project) []models.Finding {
 	return []models.Finding{{
 		Category:    "git",
 		Severity:    "INFO",
+		RuleID:      RuleGitUncommitted,
 		Title:       "Uncommitted Git Changes Detected",
 		Description: "Working tree has modified or uncommitted files.",
 		Suggestion:  "Review status with 'git status' and commit changes before running major AI refactors.",
@@ -244,6 +299,12 @@ func uncommittedRootFinding(project *models.Project) []models.Finding {
 func buildDiagnostic(projectID uint, findings []models.Finding, optimizations []models.Optimization, summaryFor func(score int) string, structureTree string) *models.Diagnostic {
 	score := CalculateHealthScore(findings)
 
+	// Rahasia hanya bisa ikut lewat potongan kode; path berkas, judul, dan ID tidak disamarkan (nama berkas/slug
+	// panjang yang ikut tersamar membuat target temuan tidak bisa dibuka lagi).
+	for i := range findings {
+		findings[i].Snippet = security.SanitizeText(findings[i].Snippet)
+		findings[i].SuggestedFix = security.SanitizeText(findings[i].SuggestedFix)
+	}
 	findingsBytes, _ := json.Marshal(findings)
 	optimizationsBytes, _ := json.Marshal(optimizations)
 
@@ -251,14 +312,48 @@ func buildDiagnostic(projectID uint, findings []models.Finding, optimizations []
 		ProjectID:     projectID,
 		Summary:       summaryFor(score),
 		Score:         score,
-		FindingsJSON:  security.SanitizeText(string(findingsBytes)),
+		FindingsJSON:  string(findingsBytes),
 		Optimizations: security.SanitizeText(string(optimizationsBytes)),
 		StructureTree: structureTree,
 	}
 }
 
+// withResolvedComponentPaths mengembalikan salinan proyek yang komponennya punya path absolut: komponen yang hanya
+// menyimpan path relatif (absolute_path kosong) dihitung dari root proyek. Tanpa ini seluruh pemeriksaan komponen
+// membaca path kosong dan melaporkan direktori "hilang" padahal ada di disk.
+func withResolvedComponentPaths(project *models.Project) *models.Project {
+	if !hasProjectRoot(project) {
+		return project
+	}
+	out := *project
+	out.Components = append([]models.Component(nil), project.Components...)
+	for i := range out.Components {
+		if c := &out.Components[i]; c.AbsolutePath == "" && c.RelativePath != "" {
+			c.AbsolutePath = resolveComponentDir(project.RootPath, c.RelativePath)
+		}
+	}
+	return &out
+}
+
+// resolveComponentDir: direktori komponen dari path relatifnya. Sebagian proyek menyimpan path relatif yang
+// diawali nama folder root ("toko/mobile" dengan root ".../toko"); kandidat yang benar-benar ada dipilih.
+func resolveComponentDir(root, rel string) string {
+	direct := filepath.Join(root, rel)
+	if util.PathExists(direct) {
+		return direct
+	}
+	relSlash := filepath.ToSlash(rel)
+	if base := filepath.Base(root); strings.HasPrefix(relSlash, base+"/") {
+		if alt := filepath.Join(filepath.Dir(root), rel); util.PathExists(alt) {
+			return alt
+		}
+	}
+	return direct
+}
+
 // AnalyzeProject runs static diagnostics and returns an evaluation report
 func AnalyzeProject(project *models.Project, allProjects []models.Project) (*models.Diagnostic, error) {
+	project = withResolvedComponentPaths(project)
 	findings := make([]models.Finding, 0)
 
 	// 1. Port Conflict Detection (Internal & Cross-project). Port lintas proyek wajib unik (blok PORTS.md, Aturan 35/45).
@@ -369,6 +464,12 @@ func generateOptimizations(project *models.Project, findings []models.Finding, h
 	return opts
 }
 
+// testFileRegex: berkas test lintas ekosistem (Go, JS/TS, Dart, Python, PHP, Java/Kotlin).
+var testFileRegex = regexp.MustCompile(`(_test\.(go|dart|py)|\.(test|spec)\.(ts|tsx|js|jsx|mjs|cjs)|Test\.(php|java|kt)|Tests?\.cs)$|^test_.*\.py$`)
+
+// testDirNames: folder yang isinya test menurut konvensi umum.
+var testDirNames = map[string]bool{"tests": true, "test": true, "__tests__": true, "spec": true, "e2e": true, "integration_test": true}
+
 func hasTests(dir string, lang string) bool {
 	var found bool
 	_ = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
@@ -382,7 +483,9 @@ func hasTests(dir string, lang string) bool {
 			return nil
 		}
 		name := info.Name()
-		if strings.HasSuffix(name, "_test.go") || strings.HasSuffix(name, ".test.ts") || strings.HasSuffix(name, ".spec.ts") || strings.HasSuffix(name, ".test.js") || strings.HasSuffix(name, "test.dart") || strings.HasPrefix(name, "test_") {
+		_, isSource := auditFileExtensions[strings.ToLower(filepath.Ext(name))]
+		inTestDir := testDirNames[filepath.Base(filepath.Dir(path))] && (isSource || strings.HasSuffix(name, ".mjs"))
+		if testFileRegex.MatchString(name) || strings.HasPrefix(name, "test_") || inTestDir {
 			found = true
 			return filepath.SkipDir
 		}
@@ -460,6 +563,9 @@ func componentPortFindings(comp *models.Component, project *models.Project, allP
 			findings = append(findings, models.Finding{
 				Category:    "port",
 				Severity:    "CRITICAL",
+				RuleID:      RulePortCollision,
+				TargetFile:  comp.Name,
+				Line:        port,
 				Title:       fmt.Sprintf("Internal Port Collision: %d", port),
 				Description: fmt.Sprintf("Port %d is also assigned to '%s' in this project.", port, other.Name),
 				Suggestion:  fmt.Sprintf("Reassign port for '%s' to avoid execution failure.", comp.Name),

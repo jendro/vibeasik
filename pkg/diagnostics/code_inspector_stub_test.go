@@ -26,6 +26,7 @@ func TestStubHandlerRegexPrecision(t *testing.T) {
 		{`throw NotImplementedException(`, true},
 		{`throw new UnsupportedOperationException("stub")`, true},
 		{`TODO()`, true},
+		{`ctx := context.TODO()`, false},
 		{`throwMyNotImplementedError`, false},
 		{`throw new NotImplementedErrorX`, false},
 		{`// handle the request`, false},

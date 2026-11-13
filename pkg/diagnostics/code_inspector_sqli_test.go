@@ -51,14 +51,6 @@ func TestQuerySQLiStillDetected(t *testing.T) {
 }
 
 func TestCommandInjection_MetadataAndDynamic(t *testing.T) {
-	// Guard metadata check
-	if !isCommandInjectionRuleMetadata("// CWE-78: exec.Command(\"sh \" + input)") {
-		t.Error("expected comment/metadata to be recognized by guard")
-	}
-	if isCommandInjectionRuleMetadata("exec.Command(\"sh\", \"-c\", \"echo \" + input)") {
-		t.Error("actual command invocation should not be recognized as rule metadata")
-	}
-
 	// Real dynamic command invocation must still be detected
 	p := t.TempDir() + "/runner.go"
 	src := "package runner\n\nimport \"os/exec\"\n\nfunc run(input string) {\n\texec.Command(\"sh\", \"-c\", \"echo \" + input).Run()\n}\n"

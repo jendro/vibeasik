@@ -692,20 +692,10 @@ text: {
 ERR: component not found: record not found
 ### get_latest_diagnostic
 text: {
-  "active_findings_count": 5,
+  "active_findings_count": 3,
   "created_at": "<t>",
   "diagnostic_id": 2,
   "findings": [
-    {
-      "id": "Missing .gitignore at Project Root_.gitignore_0",
-      "category": "config",
-      "severity": "WARNING",
-      "title": "Missing .gitignore at Project Root",
-      "description": "No root .gitignore file was found. Build artifacts and secrets could be accidentally tracked.",
-      "suggestion": "Add a comprehensive .gitignore covering node_modules, binaries, and .env files.",
-      "target_file": ".gitignore",
-      "status": "open"
-    },
     {
       "id": "DEV-SCRIPT-MISSING_dev.sh_0",
       "category": "deployment",
@@ -733,22 +723,14 @@ text: {
       "status": "open"
     },
     {
-      "id": "Missing README.md Documentation_README.md_0",
-      "category": "documentation",
-      "severity": "INFO",
-      "title": "Missing README.md Documentation",
-      "description": "No root README.md found. AI agents and contributors need quick architectural instructions.",
-      "suggestion": "Create README.md describing the BE/FE bundle structure and run instructions.",
-      "target_file": "README.md",
-      "status": "open"
-    },
-    {
-      "id": "Component Directory Missing: api__0",
+      "id": "PROJ-COMPONENT-PATH-UNSET_api_0",
       "category": "architecture",
-      "severity": "CRITICAL",
-      "title": "Component Directory Missing: api",
-      "description": "The path '' does not exist on disk.",
-      "suggestion": "Verify directory path or re-scan project.",
+      "severity": "WARNING",
+      "title": "Component Path Not Set: api",
+      "description": "Component 'api' has neither an absolute nor a relative path, so its code cannot be inspected.",
+      "suggestion": "Set the component path (relative to the project root) or re-scan the project.",
+      "target_file": "api",
+      "rule_id": "PROJ-COMPONENT-PATH-UNSET",
       "status": "open"
     }
   ],
@@ -778,14 +760,12 @@ text: {
       "prompt_for_ai": "Review the backend service of 'Alpha' and optimize Fiber/Go database connection pooling, response compression, and CORS policy for local development and production."
     }
   ],
-  "score": 60,
+  "score": 88,
   "severity_counts": {
-    "CRITICAL": 1,
-    "INFO": 1,
     "WARNING": 3
   },
-  "summary": "Analyzed 1 components across bundle architecture. Total 5 findings (5 aktif, 0 diabaikan, 0 diselesaikan). Codebase health score: 60/100.",
-  "total_findings": 5
+  "summary": "Analyzed 1 components across bundle architecture. Total 3 findings (3 aktif, 0 diabaikan, 0 diselesaikan). Codebase health score: 88/100.",
+  "total_findings": 3
 }
 ### set_finding_status
 ERR: finding zz not found in latest diagnostic

@@ -31,11 +31,11 @@ func refineRouterFindings(findings []models.Finding, dir, baseRel string, hasGo 
 		rt := routemap.RouteAt(graphs, filepath.ToSlash(f.TargetFile), f.Line)
 		switch {
 		case rt == nil:
-			if isNonRouteFile(f.TargetFile) {
-				continue
-			}
-			out = append(out, f)
-		case rt.Auth || rt.Unreachable:
+			// Baris ini tidak terpetakan sebagai rute dari main (router diteruskan lewat antarmuka lain, pendaftaran
+			// dinamis, atau bukan rute). Rantai middleware efektifnya tidak diketahui, jadi dari satu baris saja tidak
+			// bisa disimpulkan "tanpa proteksi" — tidak dilaporkan.
+			continue
+		case rt.Auth || rt.Unreachable || handlerChecksAccess(rt):
 			continue
 		default:
 			var chain []string
@@ -71,6 +71,17 @@ func refineRouterFindings(findings []models.Finding, dir, baseRel string, hasGo 
 		}
 	}
 	return out
+}
+
+// handlerChecksAccess: handler (atau helper yang dipanggilnya) sendiri menolak permintaan tanpa hak akses —
+// menjawab 401/403 — sehingga pemeriksaan auth ada di dalam handler, bukan di middleware.
+func handlerChecksAccess(rt *routemap.Route) bool {
+	for _, r := range rt.Responses {
+		if r.Status == 401 || r.Status == 403 {
+			return true
+		}
+	}
+	return false
 }
 
 // warningPos mengambil "berkas:baris" dari teks peringatan "Fungsi setup x (berkas.go:12) …".
@@ -120,13 +131,4 @@ func splitPos(pos string) (string, int) {
 	n := 0
 	fmt.Sscanf(ln, "%d", &n)
 	return file, n
-}
-
-// isNonRouteFile mengidentifikasi berkas yang bukan bagian dari lapisan rute/handler (mis. service, repository, model).
-func isNonRouteFile(file string) bool {
-	f := strings.ToLower(file)
-	if strings.Contains(f, "handler") || strings.Contains(f, "controller") || strings.Contains(f, "router") || strings.Contains(f, "routes") || strings.Contains(f, "server") || strings.HasSuffix(f, "main.go") {
-		return false
-	}
-	return strings.Contains(f, "service") || strings.Contains(f, "model") || strings.Contains(f, "repository")
 }

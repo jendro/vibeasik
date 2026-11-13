@@ -12,7 +12,7 @@ import (
 const maxInvokeDepth = 12
 
 var (
-	authRe     = regexp.MustCompile(`(?i)(auth|jwt|protect|guard|session|permission|rbac|acl|casbin|bearer|token|signin|login_?required|require_?(admin|role|user|login|exec)|localaccess|local_access|execaccess|exec_access)`)
+	authRe     = regexp.MustCompile(`(?i)(auth|jwt|protect|guard|session|permission|rbac|acl|casbin|bearer|token|signin|login_?required|require_?[a-z]\w*|localaccess|local_access|execaccess|exec_access)`)
 	optionalRe = regexp.MustCompile(`(?i)optional|maybe|try|soft`)
 )
 

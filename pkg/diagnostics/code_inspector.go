@@ -2,11 +2,14 @@ package diagnostics
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/vibeasik/vibeasik/pkg/models"
 	"github.com/vibeasik/vibeasik/pkg/util"
@@ -28,6 +31,29 @@ var ignoredDirNames = map[string]bool{
 	".vscode":      true,
 	".idea":        true,
 	"coverage":     true,
+	"_nuxt":        true, // bundel hasil build Nuxt yang ikut tersimpan (situs statis)
+	"testdata":     true, // data uji (konvensi Go): bukan kode aplikasi
+	"__pycache__":  true,
+}
+
+// gitIgnoredPaths: path (relatif dir, tanpa garis miring akhir) yang diabaikan git di bawah dir — hasil build,
+// unggahan pengguna, arsip lama. Yang tidak dilacak repo bukan kode proyek, jadi tidak diaudit. Kosong bila dir
+// bukan bagian repo git atau git tidak tersedia.
+func gitIgnoredPaths(dir string) map[string]bool {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "git", "-C", dir, "ls-files", "--others", "--ignored", "--exclude-standard", "--directory")
+	out, err := cmd.Output()
+	if err != nil {
+		return nil
+	}
+	ignored := map[string]bool{}
+	for _, line := range strings.Split(string(out), "\n") {
+		if line = strings.TrimSuffix(strings.TrimSpace(line), "/"); line != "" {
+			ignored[filepath.FromSlash(line)] = true
+		}
+	}
+	return ignored
 }
 
 // Allowed source code extensions
@@ -54,7 +80,10 @@ var (
 	loopKeywordRegex = regexp.MustCompile(`(?m)^\s*(for\b|while\b|foreach\b|\.map\(|\.forEach\()`)
 
 	// DB query detection
-	dbQueryCallRegex = regexp.MustCompile(`(?i)(db\.(Find|Where|First|Last|Query|QueryRow|Exec|Raw|Take)|repo\.(Find|Get|List|Query)|prisma\.[a-zA-Z]+\.(find|create|update|delete)|sequelize\.|Model::(find|where|all)|\$this->db->(query|get|where)|session\.(query|execute)|objects\.(filter|get|all))`)
+	// Hanya pemanggilan yang MEMBACA dari database: penyusun kondisi (db.Where(...) tanpa terminal, Model::where,
+	// $this->db->where, objects.filter yang lazy) belum menyentuh database, dan penulisan per baris (Create/Update/
+	// Delete) bukan pola N+1 SELECT yang diselesaikan dengan eager loading.
+	dbQueryCallRegex = regexp.MustCompile(`(?i)(\b\w*db\w*\b(?:\.\w+\([^;]*\))*\.(Find|First|Last|Take|Scan|Count|Pluck|Query|QueryRow|QueryContext|QueryRowContext|Rows?)\(|repo\.(Find|Get|List|Query)|prisma\.[a-zA-Z]+\.(find|create|update|delete)|sequelize\.|Model::(find|all)\(|\$this->db->(query|get)\(|session\.(query|execute)|objects\.(get|all)\()`)
 
 	// SQL Injection string concat
 	sqlConcatRegex = regexp.MustCompile(`(?i)(db\.(Raw|Exec|Where)\s*\(\s*fmt\.Sprintf|\.query\s*\(\s*['"` + "`" + `]\s*SELECT.*WHERE.*['"` + "`" + `]\s*\+|\.query\s*\(\s*` + "`" + `.*SELECT.*WHERE.*\$\{.*` + "`" + `|\$db->query\s*\(\s*['"].*SELECT.*['"]\s*\.|\.execute\s*\(\s*f["'].*SELECT.*\{)`)
@@ -88,20 +117,23 @@ var (
 			`|\bpanic\(\s*["']not implemented["']\s*\)` +
 			`|\breturn\b[^\n]{0,80}\bnot` + ` implemented\b` +
 			`|\bhttp\.StatusNot` + `Implemented\b` +
-			`|\bTODO\(\)` +
+			`|(?:^|[^\w.])TODO\(` + // Kotlin TODO(); bukan context.TODO() milik Go
 			`|\bthrow\s+(?:new\s+)?(?:Not` + `ImplementedError|UnsupportedOperationException|Not` + `ImplementedException)\s*[\(;]` +
 			`)`,
 	)
-	stubPythonRegex = regexp.MustCompile(`(?i)(^pass$|raise\s+NotImplementedError|#\s*TODO:?\s*(implement|fix|handle))`)
-	routerVerbRegex = regexp.MustCompile(`(?i)\.(Get|Post|Put|Delete)\s*\(\s*["']\/[a-zA-Z0-9_/-]*(get|fetch|delete|remove|create|add|update|edit)[A-Z_][a-zA-Z0-9_/-]*["']`)
+	// `pass` sebagai stub ditangani ruleStubHandler (hanya bila satu-satunya isi def di berkas handler).
+	stubPythonRegex = regexp.MustCompile(`(?i)(raise\s+NotImplementedError|#\s*TODO:?\s*(implement|fix|handle))`)
 
 	// Code smells
-	swallowedErrorGoRegex = regexp.MustCompile(`(?m)^\s*_\s*,\s*err\s*:?=`)
-	ignoredErrGoRegex     = regexp.MustCompile(`(?m)^\s*_\s*=\s*err\b`)
-	emptyCatchRegex       = regexp.MustCompile(`(?m)catch\s*\([^)]*\)\s*\{\s*\}`)
-	emptyExceptRegex      = regexp.MustCompile(`(?m)except\s*(Exception)?\s*:\s*pass\b`)
-	noTimeoutClientRegex  = regexp.MustCompile(`(&http\.Client\{\s*\}|http\.(Get|Post|Head)\s*\()`)
-	hardcodedSecretRegex  = regexp.MustCompile(`(?i)(jwt[_-]?secret|api[_-]?key|db[_-]?password|auth[_-]?token)\s*[:=]\s*["']([a-zA-Z0-9_\-+=/]{12,})["']`)
+	// capturedErrGoRegex: `_, err := f()` MENANGKAP error (nilai pertama yang dibuang); baru menjadi temuan bila err
+	// tidak pernah dibaca sesudahnya (isSwallowedError).
+	capturedErrGoRegex = regexp.MustCompile(`(?m)^\s*_\s*,\s*err\s*:?=`)
+	ignoredErrGoRegex  = regexp.MustCompile(`(?m)^\s*_\s*=\s*err\b`)
+	emptyCatchRegex    = regexp.MustCompile(`(?m)catch\s*\([^)]*\)\s*\{\s*\}`)
+	emptyExceptRegex   = regexp.MustCompile(`(?m)except\s*(Exception)?\s*:\s*pass\b`)
+	// Hanya paket net/http (http.Get), bukan method .Get milik klien sendiri (s.http.Get(ctx, url)).
+	noTimeoutClientRegex = regexp.MustCompile(`(&http\.Client\{\s*\}|(?:^|[^\w.])http\.(Get|Post|Head)\s*\()`)
+	hardcodedSecretRegex = regexp.MustCompile(`(?i)(jwt[_-]?secret|api[_-]?key|db[_-]?password|auth[_-]?token)\s*[:=]\s*["']([a-zA-Z0-9_\-+=/]{12,})["']`)
 
 	// Security Critical: Command Injection / RCE
 	commandInjectionRegex = regexp.MustCompile(`(?i)(exec\.Command\s*\(|child_process\.(exec|execSync)\s*\(|\beval\s*\(|\bos\.system\s*\(|\bsubprocess\.(Popen|call|run)\s*\([^)]*shell\s*=\s*True|\bpassthru\s*\(|\bshell_exec\s*\()`)
@@ -116,7 +148,7 @@ var (
 	// Dibatasi ke method submisi (POST/PUT/PATCH) agar halaman GET login tidak ikut terpicu.
 	authRouteRegex = regexp.MustCompile(`(?i)\.(Post|Put|Patch)\s*\(\s*["']([^"']*(?:login|sign-?in|log-?in|authenticate|register|sign-?up|forgot|reset-?password|/otp|/2fa|/mfa)[^"']*)["']`)
 	// rateLimiterRegex: kehadiran middleware/pustaka rate limiting lintas framework (Go, Node, Python).
-	rateLimiterRegex = regexp.MustCompile(`(?i)(limiter\.New|rate[\s_-]?limit|rate\.(?:New)?Limiter|express-rate-limit|rateLimit\s*\(|\bthrottle|tollbooth|x/time/rate|ThrottlerGuard|flask[\s_-]?limiter|django_ratelimit|slidingwindow|leaky[\s_-]?bucket|token[\s_-]?bucket|middleware/limiter)`)
+	rateLimiterRegex = regexp.MustCompile(`(?i)(limiter\.New|rate[\s_-]?limit|rate\.(?:New)?Limiter|express-rate-limit|rateLimit\s*\(|\bthrottle|\w*limiter\w*\s*\(|tollbooth|x/time/rate|ThrottlerGuard|flask[\s_-]?limiter|django_ratelimit|slidingwindow|leaky[\s_-]?bucket|token[\s_-]?bucket|middleware/limiter)`)
 
 	// Performance / Heavy Process: Blocking Synchronous I/O in Handlers
 	syncIoRegex = regexp.MustCompile(`(?i)\bfs\.(readFileSync|writeFileSync|appendFileSync)\s*\(`)
@@ -185,9 +217,16 @@ func InspectDirectory(dir string, baseRelPath string) []models.Finding {
 	scannedFiles := 0
 	hasGo, hasPHP := false, false
 	var inspected []string // berkas sumber yang diaudit, dibaca ulang hanya untuk deteksi object storage
+	gitIgnored := gitIgnoredPaths(dir)
 
 	_ = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
+			return nil
+		}
+		if rel, relErr := filepath.Rel(dir, path); relErr == nil && gitIgnored[rel] {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 
@@ -358,8 +397,9 @@ func InspectFile(fullPath string, relPath string, lang string) []models.Finding 
 	// Aturan Flutter hanya untuk Dart milik aplikasi Flutter, bukan Dart murni (server/CLI)
 	isFlutter := lang == "dart" && isFlutterSource(fullPath, content)
 
-	// Smell 1: God Controller / Fat File (>400 LOC in handler/controller/service)
-	if len(lines) > 400 && scan.isControllerOrHandler {
+	// Smell 1: God Controller / Fat File (>400 baris KODE di berkas handler/controller; baris kosong, komentar,
+	// dan berkas tipe/data tidak dihitung)
+	if len(lines) > godControllerLines && scan.isControllerOrHandler && !isTypeOrDataFile(relPath) && countCodeLines(lines, lang) > godControllerLines {
 		findings = append(findings, godControllerFinding(relPath, lines))
 	}
 
@@ -373,19 +413,60 @@ func newFileScan(relPath, lang, content string) *fileScan {
 	isAndroid := (lang == "kotlin" || lang == "java") && isAndroidSourceFile(relPath, content)
 	isServer := isServerLang(lang) && !isUI && !isAndroid
 	return &fileScan{
-		relPath:        relPath,
-		lang:           lang,
-		isUI:           isUI,
-		isAndroid:      isAndroid,
-		isServer:       isServer,
-		usesSQL:        isServer || lang == "dart" || isAndroid, // sqflite / Room rawQuery juga memakai SQL
-		hasRateLimiter: isServer && rateLimiterRegex.MatchString(content),
-		guardedGroups:  map[string]bool{},
-		isControllerOrHandler: isServer && (strings.Contains(relPath, "handler") ||
-			strings.Contains(relPath, "controller") ||
-			strings.Contains(relPath, "router") ||
-			strings.Contains(relPath, "api")),
+		relPath:               relPath,
+		lang:                  lang,
+		isUI:                  isUI,
+		isAndroid:             isAndroid,
+		isServer:              isServer,
+		usesSQL:               isServer || lang == "dart" || isAndroid, // sqflite / Room rawQuery juga memakai SQL
+		hasRateLimiter:        isServer && rateLimiterRegex.MatchString(content),
+		hasBodyLimit:          isServer && bodyLimitRegex.MatchString(content),
+		oneOffTool:            isOneOffToolPath(relPath),
+		guardedGroups:         map[string]bool{},
+		authAlias:             map[string]bool{},
+		isControllerOrHandler: isServer && isHandlerPath(relPath),
 	}
+}
+
+const godControllerLines = 400
+
+var (
+	bodyLimitRegex = regexp.MustCompile(`(MaxBytesReader|LimitReader|BodyLimit|LimitRequestBody)`)
+	// handlerDirRegex / handlerFileRegex: berkas lapisan HTTP dikenali dari SEGMEN path, bukan sembarang substring
+	// ("api" di types/api.ts, api-docs.ts, api_service.dart bukan handler).
+	handlerDirRegex  = regexp.MustCompile(`(^|/)(handlers?|controllers?|routers?|routes?|api|apis|endpoints?|http)(/|$)`)
+	handlerFileRegex = regexp.MustCompile(`(^|[_.-])(handlers?|controllers?)([_.-]|$)|controller\.[a-z]+$|handler\.[a-z]+$`)
+	typeOrDataRegex  = regexp.MustCompile(`(^|/)(types?|typings|data|fixtures|mocks?|docs?|schemas?|generated|constants?)(/|$)|[_.-](docs|types|raw|schema|data|constants)\.[a-z]+$`)
+	oneOffToolRegex  = regexp.MustCompile(`(^|/)(cmd/bench[^/]*|bench(marks?)?|scripts?|seeds?|seeders?|migrations?|fixtures|tools)(/|$)|(^|[_/-])(seed|seeder|migrate|migration|bench)[_.-]`)
+)
+
+// isHandlerPath: berkas berada di lapisan HTTP (handler/controller/router) menurut folder atau nama berkasnya.
+func isHandlerPath(relPath string) bool {
+	lower := strings.ToLower(filepath.ToSlash(relPath))
+	dir, base := filepath.ToSlash(filepath.Dir(lower)), filepath.Base(lower)
+	// Django: views.py / urls.py adalah lapisan HTTP-nya.
+	return handlerDirRegex.MatchString(dir) || handlerFileRegex.MatchString(base) || base == "views.py" || base == "urls.py"
+}
+
+// isTypeOrDataFile: berkas deklarasi tipe atau data statis (panjangnya bukan tanda terlalu banyak tanggung jawab).
+func isTypeOrDataFile(relPath string) bool {
+	return typeOrDataRegex.MatchString(strings.ToLower(filepath.ToSlash(relPath)))
+}
+
+// isOneOffToolPath: skrip sekali jalan (benchmark, seed, migrasi, alat bantu); query di dalam loopnya disengaja.
+func isOneOffToolPath(relPath string) bool {
+	return oneOffToolRegex.MatchString(strings.ToLower(filepath.ToSlash(relPath)))
+}
+
+// countCodeLines: jumlah baris yang memuat kode setelah komentar dikosongkan.
+func countCodeLines(lines []string, lang string) int {
+	n := 0
+	for _, l := range stripCode(lines, lang) {
+		if strings.TrimSpace(l) != "" {
+			n++
+		}
+	}
+	return n
 }
 
 // inspectFileLevel menjalankan pemeriksaan tingkat berkas (bukan per-baris) sesuai peran berkas.
@@ -609,8 +690,15 @@ type AuditableFile struct {
 // memakai filter folder, ekstensi, dan pengecualian test yang sama dengan InspectDirectory.
 func ListAuditableFiles(dir string, baseRelPath string, maxFiles int) []AuditableFile {
 	var out []AuditableFile
+	gitIgnored := gitIgnoredPaths(dir)
 	_ = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
+			return nil
+		}
+		if rel, relErr := filepath.Rel(dir, path); relErr == nil && gitIgnored[rel] {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 		if info.IsDir() {
