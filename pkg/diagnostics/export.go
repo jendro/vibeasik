@@ -39,3 +39,9 @@ func GitStatusShort(dir string) string { return getGitStatusShort(dir) }
 func CheckFunctionComplexity(content, targetFile, lang string, findings *[]models.Finding) {
 	checkFunctionComplexity(content, targetFile, lang, findings)
 }
+
+// FillFindingEvidence mengisi potongan kode temuan yang menunjuk berkas & baris tetapi belum membawa buktinya
+// (dipakai pemeriksaan di luar audit statis, mis. Deep Check).
+func FillFindingEvidence(project *models.Project, findings []models.Finding) {
+	fillFindingEvidence(project, findings)
+}

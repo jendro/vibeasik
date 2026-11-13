@@ -143,6 +143,9 @@ func internalPortCollisionFindings(project *models.Project) []models.Finding {
 		findings = append(findings, models.Finding{
 			Category:    "port",
 			Severity:    "CRITICAL",
+			RuleID:      RulePortCollision,
+			TargetFile:  comp.Name,
+			Line:        port,
 			Title:       fmt.Sprintf("Internal Port Collision: %d", port),
 			Description: fmt.Sprintf("Both '%s' and '%s' are assigned to port %d. Simultaneous execution will fail.", comp.Name, existingComp, port),
 			Suggestion:  fmt.Sprintf("Reassign port for '%s' in dev_command or env file (e.g. port %d).", comp.Name, port+1),
@@ -351,6 +354,36 @@ func resolveComponentDir(root, rel string) string {
 	return direct
 }
 
+// fillFindingEvidence mengisi potongan kode (Snippet) temuan yang menunjuk berkas & baris tetapi belum membawa
+// buktinya, dengan membaca baris itu dari disk. Temuan tanpa lokasi kode (berkas yang belum ada, tingkat proyek)
+// dibiarkan: buktinya adalah keadaan proyek, bukan baris kode.
+func fillFindingEvidence(project *models.Project, findings []models.Finding) {
+	if !hasProjectRoot(project) {
+		return
+	}
+	cache := map[string][]string{}
+	for i := range findings {
+		f := &findings[i]
+		if f.Snippet != "" || f.TargetFile == "" || f.Line <= 0 {
+			continue
+		}
+		lines, ok := cache[f.TargetFile]
+		if !ok {
+			if data, err := os.ReadFile(filepath.Join(project.RootPath, filepath.FromSlash(f.TargetFile))); err == nil && len(data) < 2<<20 {
+				lines = strings.Split(string(data), "\n")
+			}
+			cache[f.TargetFile] = lines
+		}
+		if f.Line <= len(lines) {
+			if code := strings.TrimSpace(lines[f.Line-1]); len(code) > 220 {
+				f.Snippet = code[:220] + "…"
+			} else {
+				f.Snippet = code
+			}
+		}
+	}
+}
+
 // AnalyzeProject runs static diagnostics and returns an evaluation report
 func AnalyzeProject(project *models.Project, allProjects []models.Project) (*models.Diagnostic, error) {
 	project = withResolvedComponentPaths(project)
@@ -403,6 +436,8 @@ func AnalyzeProject(project *models.Project, allProjects []models.Project) (*mod
 	// 7. Generate Optimizations & AI Prompts
 	optimizations := generateOptimizations(project, findings, hasBackend, len(feComponents))
 	findings = models.DeduplicateFindings(findings)
+	// Setiap temuan yang menunjuk berkas & baris wajib membawa potongan kodenya sebagai bukti.
+	fillFindingEvidence(project, findings)
 
 	var structureTree string
 	if hasProjectRoot(project) {

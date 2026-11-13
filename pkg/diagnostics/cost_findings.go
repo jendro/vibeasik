@@ -78,6 +78,9 @@ func HotspotFinding(h routemap.Hotspot, baseRel string) models.Finding {
 		routes += fmt.Sprintf(" (+%d rute lain)", h.RouteCount-len(h.Routes))
 	}
 	f := models.Finding{TargetFile: file, Line: h.Func.Line, RuleID: HotspotRule(h.Kind)}
+	// Bukti: baris yang menaikkan biaya (loop atas data, query di dalam loop, pemanggilan berbiaya), diambil dari
+	// penghitung yang sama dengan rumusnya. Baris terpenting menjadi potongan kode temuan.
+	f.Snippet = hotspotEvidence(h)
 	if h.Kind == "nplus1" {
 		via := "di dalam loop atas data"
 		if h.Via != "" {
@@ -89,6 +92,7 @@ func HotspotFinding(h routemap.Hotspot, baseRel string) models.Finding {
 			h.Func.Name, via, h.Func.QueryFormula, growthAt(h.Func.Cost, 1000, true), routes)
 		f.Suggestion = nplusOneFix(h.Func.Lang) + " Bila loop-nya memang kecil dan tetap (mis. ≤ 5 jenis), tandai temuan ini sebagai bukan masalah."
 		f.TheoryBasis = "N+1 Selects (Martin Fowler, Patterns of Enterprise Application Architecture): biaya I/O tumbuh linear terhadap jumlah baris."
+		f.Description += evidenceSentence(h)
 		return f
 	}
 	// Pangkat 3 atau loop bersarang di badan fungsi sendiri cukup dapat dipercaya untuk jadi peringatan;
@@ -111,7 +115,51 @@ func HotspotFinding(h routemap.Hotspot, baseRel string) models.Finding {
 		h.Func.Name, via, leadingTerms(h.Func.Formula, 3), h.Func.Ticks1, growthAt(h.Func.Cost, 100, false), routes, caveat)
 	f.Suggestion = "Ganti pencarian di loop dalam dengan map/set yang dibangun sekali (O(n)), urutkan lalu gabung, atau batasi ukuran data lewat paging. Bila salah satu koleksinya selalu kecil dan tetap, tandai temuan ini sebagai bukan masalah."
 	f.TheoryBasis = "Analisis kompleksitas waktu (Cormen dkk., Introduction to Algorithms): suku tertinggi menentukan pertumbuhan biaya saat data membesar."
+	f.Description += evidenceSentence(h)
 	return f
+}
+
+// hotspotEvidence memilih baris bukti terpenting sebuah sumber biaya sebagai potongan kode temuan: query
+// terdalam untuk N+1, loop terdalam untuk pertumbuhan tick (bila tidak ada, bukti pertama).
+func hotspotEvidence(h routemap.Hotspot) string {
+	want := "loop"
+	if h.Kind == "nplus1" {
+		want = "query"
+	}
+	ev := h.Func.Evidence
+	best := -1
+	for i, e := range ev {
+		if e.Kind == want && (best < 0 || e.Depth > ev[best].Depth) {
+			best = i
+		}
+	}
+	if best < 0 && len(ev) > 0 {
+		best = 0
+	}
+	if best < 0 {
+		return ""
+	}
+	return ev[best].Code
+}
+
+// evidenceSentence: daftar singkat baris bukti untuk deskripsi temuan ("Bukti: L12 `for …` (loop atas data) …").
+func evidenceSentence(h routemap.Hotspot) string {
+	if len(h.Func.Evidence) == 0 {
+		return ""
+	}
+	var parts []string
+	for _, e := range h.Func.Evidence {
+		if len(parts) == 4 {
+			parts = append(parts, fmt.Sprintf("… (+%d baris lain)", len(h.Func.Evidence)-4))
+			break
+		}
+		code := e.Code
+		if len(code) > 90 {
+			code = code[:90] + "…"
+		}
+		parts = append(parts, fmt.Sprintf("L%d `%s` (%s)", e.Line, code, e.Note))
+	}
+	return " Bukti di " + h.Func.File + ": " + strings.Join(parts, "; ") + "."
 }
 
 // growthAt: nilai T(n) atau Q(n) pada ukuran n dari tabel pertumbuhan, diformat ringkas.
