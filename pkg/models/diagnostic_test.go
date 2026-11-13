@@ -172,6 +172,12 @@ func TestReconcileStaticFindings(t *testing.T) {
 	if _, ok := got["SMELL-X_a.go_20"]; ok {
 		t.Error("lokasi lama temuan yang bergeser tidak boleh tersisa")
 	}
+	if f := got["ROUTER-Y_b.go_9"]; !f.Gone {
+		t.Error("riwayat selesai yang tidak terdeteksi lagi harus bertanda Gone")
+	}
+	if f := got["QUERY-SQLI_a.go_10"]; f.Gone {
+		t.Error("temuan yang masih terdeteksi tidak boleh bertanda Gone")
+	}
 	if _, ok := got["ROUTER-Y_b.go_5"]; ok {
 		t.Error("temuan statis terbuka yang tidak terdeteksi lagi harus dibuang")
 	}
@@ -186,5 +192,46 @@ func TestReconcileStaticFindings(t *testing.T) {
 	}
 	if kept != 4 {
 		t.Errorf("temuan non-statis dan riwayat yang selesai harus dipertahankan, dapat %d", kept)
+	}
+}
+
+// Temuan lama tanpa rule ID (dikunci dari judul) harus mewarisi status ke temuan yang kini ber-ID tetap, dan
+// rekonsiliasi Deep Check hanya menilai ulang temuan miliknya.
+func TestReconcileFindingsLegacyTitleAndDeepScope(t *testing.T) {
+	todo := uint(3)
+	prev := []Finding{
+		{Title: "No Automated Tests Detected in api", Status: FindingStatusResolved, TodoID: &todo},
+		{RuleID: "QUERY-SQLI", TargetFile: "a.go", Line: 1, Snippet: "db.Raw(q)", Status: FindingStatusOpen},
+		{ID: "deep_form_val_POST_users", RuleID: "DEEP-FORM-MISSING-VALIDATION", IsDeep: true, Status: FindingStatusResolved, TodoID: &todo},
+		{ID: "deep_latency_warn_GET_health", RuleID: "DEEP-ROUTE-LATENCY-WARNING", IsDeep: true, Status: FindingStatusOpen},
+	}
+	static := ReconcileStaticFindings(prev[:2], []Finding{{RuleID: "PROJ-NO-TESTS", TargetFile: "api", Title: "No Automated Tests Detected in api"},
+		{RuleID: "QUERY-SQLI", TargetFile: "a.go", Line: 1, Snippet: "db.Raw(q)"}})
+	var tests Finding
+	for _, f := range static {
+		if f.RuleID == "PROJ-NO-TESTS" {
+			tests = f
+		}
+	}
+	if len(static) != 2 || tests.Status != FindingStatusResolved || tests.TodoID == nil || tests.Gone {
+		t.Fatalf("temuan berjudul sama harus mewarisi status & todo lama: %+v", static)
+	}
+
+	deep := ReconcileFindings(prev, []Finding{{ID: "deep_form_val_POST_items", RuleID: "DEEP-FORM-MISSING-VALIDATION", IsDeep: true}}, IsDeepCheckFinding)
+	byID := map[string]Finding{}
+	for _, f := range deep {
+		byID[f.ID] = f
+	}
+	if _, ok := byID["deep_latency_warn_GET_health"]; ok {
+		t.Error("temuan Deep Check terbuka yang tidak muncul lagi harus dibuang")
+	}
+	if f := byID["deep_form_val_POST_users"]; !f.Gone || f.TodoID == nil {
+		t.Errorf("temuan Deep Check yang sudah jadi todo dan tidak muncul lagi harus jadi riwayat Gone: %+v", f)
+	}
+	if f := byID["QUERY-SQLI_a.go_1"]; f.Status != FindingStatusOpen || f.Gone {
+		t.Errorf("temuan audit statis tidak boleh disentuh rekonsiliasi Deep Check: %+v", f)
+	}
+	if len(deep) != 4 {
+		t.Errorf("harus 4 temuan (1 baru, 1 riwayat deep, 2 non-deep), dapat %d", len(deep))
 	}
 }

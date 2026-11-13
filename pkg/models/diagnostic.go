@@ -43,6 +43,10 @@ type Finding struct {
 	Status       string `json:"status,omitempty"`  // "open", "resolved", "ignored"
 	IsDeep       bool   `json:"is_deep,omitempty"` // true if issue detected specifically by Deep Check
 	IsLLM        bool   `json:"is_llm,omitempty"`  // true if issue reported by the queued LLM audit review
+	// Gone: temuan yang sudah diselesaikan/diabaikan dan TIDAK terdeteksi lagi pada pemeriksaan terakhir yang
+	// memilikinya (audit statis atau Deep Check). Disimpan sebagai riwayat; todo terbuka yang seluruh temuannya
+	// Gone tidak lagi punya dasar di kode.
+	Gone bool `json:"gone,omitempty"`
 
 	// Vonis pembelajaran audit (models.AuditFeedback): false_positive = audit keliru, confirmed = temuan benar
 	Verdict       string `json:"verdict,omitempty"`
@@ -110,6 +114,11 @@ func AreFindingsMatching(a, b Finding) bool {
 	keyB := GenerateFindingKey(b)
 	if keyA != "" && keyB != "" && keyA == keyB {
 		return true
+	}
+	// Dua temuan ber-ID eksplisit yang berbeda adalah temuan berbeda (mis. dua rute Deep Check yang memakai handler
+	// yang sama menunjuk berkas & baris yang sama, tetapi tetap dua temuan).
+	if a.ID != "" && b.ID != "" {
+		return false
 	}
 	// Secondary fallback: Match on rule_id + target_file + line
 	if a.RuleID != "" && b.RuleID != "" && a.RuleID == b.RuleID &&
@@ -275,23 +284,50 @@ func IsStaticAuditFinding(f Finding) bool {
 
 func isOpenFinding(f Finding) bool { return f.Status == "" || f.Status == FindingStatusOpen }
 
-// ReconcileStaticFindings menyatukan temuan audit sebelumnya dengan hasil audit statis terbaru:
-//
-//   - temuan statis yang muncul lagi mempertahankan status, vonis, dan todo-nya; bila kodenya hanya bergeser baris
-//     (rule, berkas, dan potongan kode sama) temuan lama DIPINDAH ke baris baru, bukan dihitung sebagai temuan baru;
-//   - temuan statis TERBUKA yang tidak muncul lagi dibuang: kodenya sudah berubah atau aturannya sudah diperbaiki,
-//     jadi tidak boleh lagi menjadi dasar todo;
-//   - temuan statis yang sudah diselesaikan/diabaikan dan temuan dari pemeriksaan lain (Deep Check, runtime,
-//     review) dipertahankan apa adanya.
+// IsDeepCheckFinding: temuan milik Deep Check (dinilai ulang setiap Deep Check dijalankan).
+func IsDeepCheckFinding(f Finding) bool {
+	return f.IsDeep || strings.HasPrefix(f.RuleID, "DEEP-")
+}
+
+// ReconcileStaticFindings menyatukan temuan audit sebelumnya dengan hasil audit statis terbaru
+// (lihat ReconcileFindings; yang dinilai ulang hanya temuan milik audit statis).
 func ReconcileStaticFindings(prev, fresh []Finding) []Finding {
+	return ReconcileFindings(prev, fresh, IsStaticAuditFinding)
+}
+
+// ReconcileFindings menyatukan temuan sebelumnya dengan hasil terbaru sebuah pemeriksaan. owned menandai temuan
+// lama yang dimiliki pemeriksaan itu (dinilai ulang sekarang):
+//
+//   - temuan yang muncul lagi mempertahankan status, vonis, dan todo-nya; bila kodenya hanya bergeser baris (rule,
+//     berkas, dan potongan kode sama) temuan lama DIPINDAH ke baris baru, bukan dihitung sebagai temuan baru;
+//   - temuan milik pemeriksaan ini yang TERBUKA dan tidak muncul lagi dibuang: kodenya sudah berubah atau aturannya
+//     sudah diperbaiki, jadi tidak boleh lagi menjadi dasar todo;
+//   - yang sudah diselesaikan/diabaikan dan tidak muncul lagi dipertahankan sebagai riwayat bertanda Gone;
+//   - temuan dari pemeriksaan lain dibiarkan apa adanya.
+func ReconcileFindings(prev, fresh []Finding, owned func(Finding) bool) []Finding {
 	seen := make([]bool, len(prev))
 	type moveKey struct{ rule, file, snippet string }
 	byMove := map[moveKey][]int{}
+	byTitle := map[string][]int{}
 	for i, p := range prev {
-		if h := AuditSnippetHash(p.Snippet); h != "" && IsStaticAuditFinding(p) {
+		if !owned(p) {
+			continue
+		}
+		if h := AuditSnippetHash(p.Snippet); h != "" {
 			k := moveKey{p.RuleID, p.TargetFile, h}
 			byMove[k] = append(byMove[k], i)
 		}
+		if p.RuleID == "" && p.Title != "" {
+			byTitle[p.Title] = append(byTitle[p.Title], i) // temuan lama sebelum aturannya diberi ID tetap
+		}
+	}
+	firstUnseen := func(idx []int) int {
+		for _, i := range idx {
+			if !seen[i] {
+				return i
+			}
+		}
+		return -1
 	}
 	matchPrev := func(f Finding) int {
 		for i, p := range prev {
@@ -316,16 +352,15 @@ func ReconcileStaticFindings(prev, fresh []Finding) []Finding {
 		seen[i] = true
 		out = append(out, carryFindingState(prev[i], f))
 	}
-	// Sisa temuan baru: cari temuan lama yang sama tetapi barisnya bergeser.
+	// Sisa temuan baru: cari temuan lama yang sama tetapi barisnya bergeser (atau kuncinya berganti karena aturannya
+	// baru diberi ID).
 	for _, f := range unmatched {
 		moved := -1
 		if h := AuditSnippetHash(f.Snippet); h != "" {
-			for _, i := range byMove[moveKey{f.RuleID, f.TargetFile, h}] {
-				if !seen[i] {
-					moved = i
-					break
-				}
-			}
+			moved = firstUnseen(byMove[moveKey{f.RuleID, f.TargetFile, h}])
+		}
+		if moved < 0 && f.Title != "" {
+			moved = firstUnseen(byTitle[f.Title])
 		}
 		if moved < 0 {
 			if f.ID == "" {
@@ -341,8 +376,11 @@ func ReconcileStaticFindings(prev, fresh []Finding) []Finding {
 		if seen[i] {
 			continue
 		}
-		if IsStaticAuditFinding(p) && isOpenFinding(p) {
-			continue // basi: tidak terdeteksi lagi
+		if owned(p) {
+			if isOpenFinding(p) {
+				continue // basi: tidak terdeteksi lagi
+			}
+			p.Gone = true
 		}
 		if p.ID == "" {
 			p.ID = GenerateFindingKey(p)
@@ -357,6 +395,7 @@ func ReconcileStaticFindings(prev, fresh []Finding) []Finding {
 func carryFindingState(old, cur Finding) Finding {
 	cur.ID = ""
 	cur.ID = GenerateFindingKey(cur)
+	cur.Gone = false
 	if !isOpenFinding(old) {
 		cur.Status = old.Status
 	}
