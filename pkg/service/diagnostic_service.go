@@ -189,8 +189,10 @@ func (s *diagnosticService) auditComponents(ctx context.Context, project *models
 	}
 }
 
-// mergeProjectFindings menggabungkan temuan baru dengan temuan diagnosa terakhir
-// (tanpa menghapus temuan lama) lalu meredam temuan yang pernah divonis keliru.
+// mergeProjectFindings menyatukan hasil audit statis terbaru dengan temuan diagnosa terakhir
+// (models.ReconcileStaticFindings): status/vonis/todo temuan yang masih ada dipertahankan, temuan statis terbuka
+// yang tidak terdeteksi lagi dibuang, temuan Deep Check/runtime/review tetap. Lalu temuan yang pernah divonis
+// keliru diredam.
 func (s *diagnosticService) mergeProjectFindings(ctx context.Context, projectID uint, project *models.Project, report *models.Diagnostic) []models.Finding {
 	var freshFindings []models.Finding
 	if report.FindingsJSON != "" {
@@ -205,7 +207,7 @@ func (s *diagnosticService) mergeProjectFindings(ctx context.Context, projectID 
 		_ = json.Unmarshal([]byte(prevDiag.FindingsJSON), &prevFindings)
 	}
 
-	mergedFindings := models.MergeFindings(prevFindings, freshFindings)
+	mergedFindings := models.ReconcileStaticFindings(prevFindings, models.DeduplicateFindings(freshFindings))
 	// Temuan yang pernah divonis audit keliru (pembelajaran audit) langsung diredam
 	registry.FilterFindings(s.db, projectID, mergedFindings)
 	return mergedFindings

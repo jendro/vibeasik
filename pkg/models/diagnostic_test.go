@@ -134,3 +134,57 @@ func TestMergeFindings_PreservesExistingAndAvoidsDuplicates(t *testing.T) {
 		t.Errorf("expected third finding to be SECURITY-HARDCODED-SECRET")
 	}
 }
+
+func TestReconcileStaticFindings(t *testing.T) {
+	todo := uint(7)
+	prev := []Finding{
+		// masih ada di baris yang sama, sudah jadi todo
+		{RuleID: "QUERY-SQLI", TargetFile: "a.go", Line: 10, Snippet: "db.Raw(q)", Status: FindingStatusResolved, TodoID: &todo, ResolutionTitle: "Bind"},
+		// kodenya bergeser 5 baris, pernah divonis keliru
+		{RuleID: "SMELL-X", TargetFile: "a.go", Line: 20, Snippet: "_ = err", Status: FindingStatusIgnored, Verdict: "false_positive", VerdictReason: "sengaja"},
+		// terbuka dan tidak terdeteksi lagi → basi
+		{RuleID: "ROUTER-Y", TargetFile: "b.go", Line: 5, Snippet: "app.Post(\"/x\", h)", Status: FindingStatusOpen},
+		// selesai dan kodenya sudah diperbaiki → riwayat dipertahankan
+		{RuleID: "ROUTER-Y", TargetFile: "b.go", Line: 9, Snippet: "app.Post(\"/y\", h)", Status: FindingStatusResolved, TodoID: &todo},
+		// bukan hasil audit statis → tidak dinilai ulang
+		{RuleID: "DEEP-ROUTE-X", TargetFile: "h.go", IsDeep: true, Status: FindingStatusOpen},
+		{RuleID: "LLM-REVIEW-GO", TargetFile: "h.go", Line: 3, IsLLM: true, Status: FindingStatusOpen},
+		{RuleID: "RUNTIME-PAGE-BLANK", TargetFile: "/", Status: FindingStatusOpen},
+	}
+	fresh := []Finding{
+		{RuleID: "QUERY-SQLI", TargetFile: "a.go", Line: 10, Snippet: "db.Raw(q)"},
+		{RuleID: "SMELL-X", TargetFile: "a.go", Line: 25, Snippet: "_ = err"},
+		{RuleID: "NEW-RULE", TargetFile: "c.go", Line: 1, Snippet: "baru"},
+	}
+	got := map[string]Finding{}
+	for _, f := range ReconcileStaticFindings(prev, fresh) {
+		got[f.ID] = f
+	}
+	if len(got) != 7 {
+		t.Fatalf("harus 7 temuan (1 basi dibuang), dapat %d: %+v", len(got), got)
+	}
+	if f := got["QUERY-SQLI_a.go_10"]; f.Status != FindingStatusResolved || f.TodoID == nil || *f.TodoID != 7 || f.ResolutionTitle != "Bind" {
+		t.Errorf("temuan yang masih ada harus mempertahankan status & todo: %+v", f)
+	}
+	if f := got["SMELL-X_a.go_25"]; f.Status != FindingStatusIgnored || f.Verdict != "false_positive" || f.Line != 25 {
+		t.Errorf("temuan yang bergeser baris harus pindah ke baris baru dengan vonisnya: %+v", f)
+	}
+	if _, ok := got["SMELL-X_a.go_20"]; ok {
+		t.Error("lokasi lama temuan yang bergeser tidak boleh tersisa")
+	}
+	if _, ok := got["ROUTER-Y_b.go_5"]; ok {
+		t.Error("temuan statis terbuka yang tidak terdeteksi lagi harus dibuang")
+	}
+	if f := got["NEW-RULE_c.go_1"]; f.Status != FindingStatusOpen {
+		t.Errorf("temuan baru harus terbuka: %+v", f)
+	}
+	kept := 0
+	for _, f := range got {
+		if f.IsDeep || f.IsLLM || f.RuleID == "RUNTIME-PAGE-BLANK" || (f.RuleID == "ROUTER-Y" && f.Line == 9) {
+			kept++
+		}
+	}
+	if kept != 4 {
+		t.Errorf("temuan non-statis dan riwayat yang selesai harus dipertahankan, dapat %d", kept)
+	}
+}

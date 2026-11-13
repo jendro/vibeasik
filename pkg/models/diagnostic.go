@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -253,4 +254,129 @@ type DeepCheckReport struct {
 	TotalFunctionsChecked int       `json:"total_functions_checked"`
 	TotalFindings         int       `json:"total_findings"`
 	CreatedAt             time.Time `json:"created_at"`
+}
+
+// externalFindingPrefixes: awalan rule temuan yang TIDAK dihasilkan audit statis (Deep Check, uji runtime, review
+// LLM/agent, ronda pegawai). Temuan seperti ini tidak ikut dinilai ulang saat audit statis dijalankan.
+var externalFindingPrefixes = []string{"DEEP-", "RUNTIME-", "LLM-REVIEW-", "PROBE-", "PEGANGAN-"}
+
+// IsStaticAuditFinding: temuan berasal dari audit statis (dipindai ulang setiap audit proyek).
+func IsStaticAuditFinding(f Finding) bool {
+	if f.IsDeep || f.IsLLM {
+		return false
+	}
+	for _, p := range externalFindingPrefixes {
+		if strings.HasPrefix(f.RuleID, p) {
+			return false
+		}
+	}
+	return true
+}
+
+func isOpenFinding(f Finding) bool { return f.Status == "" || f.Status == FindingStatusOpen }
+
+// ReconcileStaticFindings menyatukan temuan audit sebelumnya dengan hasil audit statis terbaru:
+//
+//   - temuan statis yang muncul lagi mempertahankan status, vonis, dan todo-nya; bila kodenya hanya bergeser baris
+//     (rule, berkas, dan potongan kode sama) temuan lama DIPINDAH ke baris baru, bukan dihitung sebagai temuan baru;
+//   - temuan statis TERBUKA yang tidak muncul lagi dibuang: kodenya sudah berubah atau aturannya sudah diperbaiki,
+//     jadi tidak boleh lagi menjadi dasar todo;
+//   - temuan statis yang sudah diselesaikan/diabaikan dan temuan dari pemeriksaan lain (Deep Check, runtime,
+//     review) dipertahankan apa adanya.
+func ReconcileStaticFindings(prev, fresh []Finding) []Finding {
+	seen := make([]bool, len(prev))
+	type moveKey struct{ rule, file, snippet string }
+	byMove := map[moveKey][]int{}
+	for i, p := range prev {
+		if h := AuditSnippetHash(p.Snippet); h != "" && IsStaticAuditFinding(p) {
+			k := moveKey{p.RuleID, p.TargetFile, h}
+			byMove[k] = append(byMove[k], i)
+		}
+	}
+	matchPrev := func(f Finding) int {
+		for i, p := range prev {
+			if !seen[i] && AreFindingsMatching(p, f) {
+				return i
+			}
+		}
+		return -1
+	}
+
+	out := make([]Finding, 0, len(prev)+len(fresh))
+	var unmatched []Finding
+	for _, f := range fresh {
+		if f.Status == "" {
+			f.Status = FindingStatusOpen
+		}
+		i := matchPrev(f)
+		if i < 0 {
+			unmatched = append(unmatched, f)
+			continue
+		}
+		seen[i] = true
+		out = append(out, carryFindingState(prev[i], f))
+	}
+	// Sisa temuan baru: cari temuan lama yang sama tetapi barisnya bergeser.
+	for _, f := range unmatched {
+		moved := -1
+		if h := AuditSnippetHash(f.Snippet); h != "" {
+			for _, i := range byMove[moveKey{f.RuleID, f.TargetFile, h}] {
+				if !seen[i] {
+					moved = i
+					break
+				}
+			}
+		}
+		if moved < 0 {
+			if f.ID == "" {
+				f.ID = GenerateFindingKey(f)
+			}
+			out = append(out, f)
+			continue
+		}
+		seen[moved] = true
+		out = append(out, carryFindingState(prev[moved], f))
+	}
+	for i, p := range prev {
+		if seen[i] {
+			continue
+		}
+		if IsStaticAuditFinding(p) && isOpenFinding(p) {
+			continue // basi: tidak terdeteksi lagi
+		}
+		if p.ID == "" {
+			p.ID = GenerateFindingKey(p)
+		}
+		out = append(out, p)
+	}
+	return out
+}
+
+// carryFindingState: temuan terbaru (lokasi, potongan kode, deskripsi) dengan status, vonis, dan hasil penyelesaian
+// milik temuan lama yang sama.
+func carryFindingState(old, cur Finding) Finding {
+	cur.ID = ""
+	cur.ID = GenerateFindingKey(cur)
+	if !isOpenFinding(old) {
+		cur.Status = old.Status
+	}
+	cur.Verdict, cur.VerdictReason = old.Verdict, old.VerdictReason
+	cur.CopyResolution(Finding{
+		Status: cur.Status, ResolutionTitle: old.ResolutionTitle, Explanation: old.Explanation, ActionSteps: old.ActionSteps,
+		CodeBefore: old.CodeBefore, CodeAfter: old.CodeAfter, TargetLines: old.TargetLines, PlacementPlan: old.PlacementPlan,
+		ModelUsed: old.ModelUsed, TheoryBasis: firstNonEmptyString(old.TheoryBasis, cur.TheoryBasis), TodoID: old.TodoID, ResolvedAt: old.ResolvedAt,
+	})
+	if cur.Status == "" {
+		cur.Status = FindingStatusOpen
+	}
+	return cur
+}
+
+func firstNonEmptyString(vals ...string) string {
+	for _, v := range vals {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
 }
