@@ -1,7 +1,15 @@
 import type { DesignColor } from './design'
 
-/** Pelajaran Desain (before/after): gambar awal + gambar akhir + narasi konten, dianalisis LLM vision. */
+/**
+ * Pelajaran Desain, dianalisis LLM vision. Dua jenis:
+ * - before_after: gambar awal + gambar akhir + narasi konten.
+ * - theory: satu teori desain + keterangan opsional + contoh gambar (tunggal benar/salah, atau komparasi benar vs salah).
+ */
+export type DesignLessonKind = 'before_after' | 'theory'
 export type DesignLessonSide = 'before' | 'after'
+/** Contoh pelajaran teori: tunggal (satu gambar benar ATAU salah) atau komparasi (gambar benar + gambar salah). */
+export type DesignLessonExampleMode = 'single' | 'compare'
+export type DesignLessonSlot = 'good' | 'bad'
 export type DesignLessonPlatform = 'graphic' | 'web' | 'android' | 'ios'
 export type DesignLessonStatus = 'new' | 'analyzed' | 'failed'
 
@@ -10,6 +18,20 @@ export interface DesignLessonMistake {
   principle: string
   problem: string
   evidence: string
+}
+
+export interface DesignLessonStrength {
+  area: string
+  point: string
+  evidence: string
+}
+
+export interface DesignLessonExample {
+  id: string
+  mode: DesignLessonExampleMode
+  note?: string
+  good_file?: string
+  bad_file?: string
 }
 
 export interface DesignLessonChange {
@@ -36,11 +58,14 @@ export interface DesignLessonAnalysis {
   principles: DesignLessonPrinciple[]
   palette?: { before: DesignColor[], after: DesignColor[], notes: string }
   takeaway: string
+  /** Pelajaran teori: penerapan teori yang benar pada contoh. */
+  strengths?: DesignLessonStrength[]
   matched?: boolean
 }
 
 export interface DesignLesson {
   id: number
+  kind: DesignLessonKind
   title: string
   narrative: string
   source_url: string
@@ -48,6 +73,9 @@ export interface DesignLesson {
   tags: string[]
   before_file?: string
   after_file?: string
+  /** Pelajaran teori: id konsep katalog teori desain. */
+  theory_id?: string
+  examples: DesignLessonExample[]
   status: DesignLessonStatus
   last_error?: string
   analysis?: DesignLessonAnalysis
@@ -58,6 +86,9 @@ export interface DesignLesson {
 }
 
 export interface DesignLessonInput {
+  /** Hanya dipakai saat membuat. */
+  kind?: DesignLessonKind
+  theory_id?: string
   title?: string
   narrative?: string
   source_url?: string
