@@ -38,7 +38,9 @@ func TestInspectUIPerformanceVue(t *testing.T) {
       :key="row.id"
       @click="() => select(row)"
     >ok</li>
-    <img :src="avatar">
+    <div v-for="p in photos" :key="p.id">
+      <img :src="p.url">
+    </div>
     <img src="/a.png" width="10" height="10" alt="a" loading="lazy">
     <div class="w-[1200px] text-[9px]" @click="open">x</div>
     <button class="text-xs" @click="open">ok</button>
@@ -60,7 +62,7 @@ onMounted(() => window.addEventListener('resize', onResize))
 	if f := got["FE-VFOR-MISSING-KEY"]; f.Line != 3 || !strings.Contains(f.Description, "1 elemen") {
 		t.Errorf("v-for multi-line with :key must not be flagged, got line %d: %s", f.Line, f.Description)
 	}
-	if f := got["FE-IMG-MISSING-ALT"]; f.Line != 9 {
+	if f := got["FE-IMG-MISSING-ALT"]; f.Line != 10 {
 		t.Errorf("<img> inside <script> string must be ignored, got line %d", f.Line)
 	}
 }
@@ -150,16 +152,43 @@ func TestInspectAndroidLayoutXML(t *testing.T) {
 
 func TestInspectFlutterWidgets(t *testing.T) {
 	dart := `Widget build(BuildContext context) {
-  return ListView(
-    shrinkWrap: true,
-    children: [Opacity(opacity: 0.5, child: Image.network(url))],
-  );
+  return Column(children: [
+    ListView(
+      children: items.map((i) => Opacity(opacity: 0.5, child: Image.network(i.url))).toList(),
+    ),
+    ListView.builder(
+      shrinkWrap: true,
+      itemCount: items.length,
+      itemBuilder: (c, i) => Text(items[i].name),
+    ),
+  ]);
 }
 `
 	got := ruleSet(InspectFile(writeFixture(t, t.TempDir(), "lib/screens/home_screen.dart", dart), "lib/screens/home_screen.dart", "dart"))
 	for _, id := range []string{"MOB-LISTVIEW-NON-BUILDER", "MOB-SHRINKWRAP-LIST", "MOB-IMAGE-NETWORK-NO-CACHE", "MOB-OPACITY-WIDGET"} {
 		if _, ok := got[id]; !ok {
 			t.Errorf("expected %s to be reported", id)
+		}
+	}
+}
+
+// Daftar berisi beberapa widget tetap (halaman statis, form, empty state) tidak butuh builder, dan shrinkWrap
+// pada daftar non-lazy tidak menghitung ulang anak sebanyak data.
+func TestFlutterStaticListIsNotFlagged(t *testing.T) {
+	dart := `Widget build(BuildContext context) {
+  return ListView(
+    shrinkWrap: true,
+    children: const [
+      Text('Kebijakan Privasi'),
+      Text('Paragraf pertama'),
+    ],
+  );
+}
+`
+	got := ruleSet(InspectFile(writeFixture(t, t.TempDir(), "lib/screens/privacy_screen.dart", dart), "lib/screens/privacy_screen.dart", "dart"))
+	for _, id := range []string{"MOB-LISTVIEW-NON-BUILDER", "MOB-SHRINKWRAP-LIST"} {
+		if _, ok := got[id]; ok {
+			t.Errorf("%s tidak boleh dilaporkan untuk daftar statis", id)
 		}
 	}
 }
@@ -174,6 +203,12 @@ func TestInspectAssetFile(t *testing.T) {
 	if f := InspectAssetFile("public/icon.png", 20*1024); f != nil {
 		t.Errorf("small asset must not be flagged")
 	}
+	// Unggahan pengguna / arsip bukan aset aplikasi.
+	for _, p := range []string{"public/uploads/bukti-bayar/a.jpg", "legacy/site/public/img/big.png", "storage/app/avatars/x.png"} {
+		if f := InspectAssetFile(p, 5*1024*1024); f != nil {
+			t.Errorf("%s adalah isi pengguna/arsip, tidak boleh ditandai", p)
+		}
+	}
 }
 
 // Gambar di dalam overlay kondisional (UModal, layer v-if fixed inset-0, komponen *Lightbox) baru dirender
@@ -181,7 +216,7 @@ func TestInspectAssetFile(t *testing.T) {
 func TestInspectLazyImageSkipsOverlays(t *testing.T) {
 	overlay := `<template>
   <div>
-    <img :src="cover" alt="c" width="10" height="10">
+    <img v-for="cover in covers" :key="cover" :src="cover" alt="c" width="10" height="10">
     <UModal :open="open">
       <template #content>
         <img :src="full" alt="f" class="max-w-full h-auto">

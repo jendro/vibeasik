@@ -153,19 +153,6 @@
   {
    "category": "mobile",
    "severity": "INFO",
-   "title": "Flutter ListView/GridView Tanpa .builder",
-   "description": "Berkas 'a_screen.dart' membuat ListView/GridView dengan children statis sebanyak 2 kali (pertama pada baris 4). Seluruh item dibangun sekaligus meskipun tidak terlihat, berat untuk daftar panjang/dinamis.",
-   "suggestion": "Gunakan ListView.builder / GridView.builder / ListView.separated untuk data dinamis.",
-   "target_file": "lib/screens/a_screen.dart",
-   "line": 4,
-   "snippet": "return ListView(children: [",
-   "rule_id": "MOB-LISTVIEW-NON-BUILDER",
-   "theory_basis": "Flutter Performance Best Practices — Build Lazily (ListView.builder).",
-   "suggested_fix": "ListView.builder(itemCount: items.length, itemBuilder: (ctx, i) =\u003e ItemTile(items[i]))"
-  },
-  {
-   "category": "mobile",
-   "severity": "INFO",
    "title": "Flutter Widget Opacity (saveLayer Mahal)",
    "description": "Berkas 'a_screen.dart' memakai widget Opacity sebanyak 1 kali (pertama pada baris 6). Opacity memicu saveLayer offscreen yang mahal, terutama bila dianimasikan.",
    "suggestion": "Gunakan AnimatedOpacity/FadeTransition untuk animasi, atau warna dengan alpha (withOpacity) untuk elemen statis.",
@@ -175,35 +162,9 @@
    "rule_id": "MOB-OPACITY-WIDGET",
    "theory_basis": "Flutter Performance Best Practices — Use Opacity Sparingly (saveLayer).",
    "suggested_fix": "FadeTransition(opacity: animation, child: child)"
-  },
-  {
-   "category": "mobile",
-   "severity": "WARNING",
-   "title": "Flutter shrinkWrap: true pada Scrollable",
-   "description": "Berkas 'a_screen.dart' memakai shrinkWrap: true sebanyak 1 kali (pertama pada baris 7). Semua anak diukur di awal sehingga lazy loading hilang dan scroll menjadi berat.",
-   "suggestion": "Gunakan CustomScrollView + Sliver (SliverList) alih-alih menumpuk ListView ber-shrinkWrap di dalam Column/ScrollView.",
-   "target_file": "lib/screens/a_screen.dart",
-   "line": 7,
-   "snippet": "ListView(shrinkWrap: true),",
-   "rule_id": "MOB-SHRINKWRAP-LIST",
-   "theory_basis": "Flutter API Docs — ScrollView.shrinkWrap (\"significantly more expensive\") \u0026 Slivers.",
-   "suggested_fix": "CustomScrollView(slivers: [SliverToBoxAdapter(child: Header()), SliverList.builder(...)])"
   }
  ],
  "dart_cached": [
-  {
-   "category": "mobile",
-   "severity": "INFO",
-   "title": "Flutter ListView/GridView Tanpa .builder",
-   "description": "Berkas 'a.dart' membuat ListView/GridView dengan children statis sebanyak 2 kali (pertama pada baris 4). Seluruh item dibangun sekaligus meskipun tidak terlihat, berat untuk daftar panjang/dinamis.",
-   "suggestion": "Gunakan ListView.builder / GridView.builder / ListView.separated untuk data dinamis.",
-   "target_file": "lib/a.dart",
-   "line": 4,
-   "snippet": "return ListView(children: [",
-   "rule_id": "MOB-LISTVIEW-NON-BUILDER",
-   "theory_basis": "Flutter Performance Best Practices — Build Lazily (ListView.builder).",
-   "suggested_fix": "ListView.builder(itemCount: items.length, itemBuilder: (ctx, i) =\u003e ItemTile(items[i]))"
-  },
   {
    "category": "mobile",
    "severity": "INFO",
@@ -216,19 +177,6 @@
    "rule_id": "MOB-OPACITY-WIDGET",
    "theory_basis": "Flutter Performance Best Practices — Use Opacity Sparingly (saveLayer).",
    "suggested_fix": "FadeTransition(opacity: animation, child: child)"
-  },
-  {
-   "category": "mobile",
-   "severity": "WARNING",
-   "title": "Flutter shrinkWrap: true pada Scrollable",
-   "description": "Berkas 'a.dart' memakai shrinkWrap: true sebanyak 1 kali (pertama pada baris 7). Semua anak diukur di awal sehingga lazy loading hilang dan scroll menjadi berat.",
-   "suggestion": "Gunakan CustomScrollView + Sliver (SliverList) alih-alih menumpuk ListView ber-shrinkWrap di dalam Column/ScrollView.",
-   "target_file": "lib/a.dart",
-   "line": 7,
-   "snippet": "ListView(shrinkWrap: true),",
-   "rule_id": "MOB-SHRINKWRAP-LIST",
-   "theory_basis": "Flutter API Docs — ScrollView.shrinkWrap (\"significantly more expensive\") \u0026 Slivers.",
-   "suggested_fix": "CustomScrollView(slivers: [SliverToBoxAdapter(child: Header()), SliverList.builder(...)])"
   }
  ],
  "depth": {
@@ -550,19 +498,6 @@
    "rule_id": "FE-IMG-MISSING-ALT",
    "theory_basis": "WCAG 2.2 Success Criterion 1.1.1 (Non-text Content) — Level A.",
    "suggested_fix": "\u003cimg src=\"/logo.svg\" alt=\"Logo Vibeasik\" width=\"120\" height=\"32\" /\u003e"
-  },
-  {
-   "category": "frontend",
-   "severity": "INFO",
-   "title": "Gambar Tanpa Lazy Loading",
-   "description": "Berkas 'A.tsx' memiliki 1 tag \u003cimg\u003e tanpa loading=\"lazy\" (pertama pada baris 4). Gambar di luar viewport ikut diunduh saat halaman pertama dibuka sehingga memperlambat LCP.",
-   "suggestion": "Tambahkan loading=\"lazy\" untuk gambar di bawah lipatan layar, dan decoding=\"async\" untuk gambar besar.",
-   "target_file": "src/components/A.tsx",
-   "line": 4,
-   "snippet": "\u003cimg src=\"a.png\" /\u003e",
-   "rule_id": "FE-IMG-NO-LAZY",
-   "theory_basis": "Google Web Fundamentals — Browser-level Image Lazy Loading \u0026 Largest Contentful Paint (LCP).",
-   "suggested_fix": "\u003cimg :src=\"thumb\" loading=\"lazy\" decoding=\"async\" width=\"320\" height=\"180\" alt=\"...\" /\u003e"
   }
  ],
  "vue": [
@@ -656,19 +591,6 @@
    "rule_id": "FE-IMG-MISSING-ALT",
    "theory_basis": "WCAG 2.2 Success Criterion 1.1.1 (Non-text Content) — Level A.",
    "suggested_fix": "\u003cimg src=\"/logo.svg\" alt=\"Logo Vibeasik\" width=\"120\" height=\"32\" /\u003e"
-  },
-  {
-   "category": "frontend",
-   "severity": "INFO",
-   "title": "Gambar Tanpa Lazy Loading",
-   "description": "Berkas 'A.vue' memiliki 1 tag \u003cimg\u003e tanpa loading=\"lazy\" (pertama pada baris 8). Gambar di luar viewport ikut diunduh saat halaman pertama dibuka sehingga memperlambat LCP.",
-   "suggestion": "Tambahkan loading=\"lazy\" untuk gambar di bawah lipatan layar, dan decoding=\"async\" untuk gambar besar.",
-   "target_file": "components/A.vue",
-   "line": 8,
-   "snippet": "\u003cimg src=\"a.png\"\u003e",
-   "rule_id": "FE-IMG-NO-LAZY",
-   "theory_basis": "Google Web Fundamentals — Browser-level Image Lazy Loading \u0026 Largest Contentful Paint (LCP).",
-   "suggested_fix": "\u003cimg :src=\"thumb\" loading=\"lazy\" decoding=\"async\" width=\"320\" height=\"180\" alt=\"...\" /\u003e"
   },
   {
    "category": "frontend",

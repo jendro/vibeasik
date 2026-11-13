@@ -50,20 +50,29 @@ var (
 	feImgTagRegex         = regexp.MustCompile(`<img\b`)
 	feImgWidthClassRegex  = regexp.MustCompile(`\b(w-|size-|aspect-)`)
 	feImgHeightClassRegex = regexp.MustCompile(`\b(h-|size-|aspect-)`)
-	feClickableDivRegex   = regexp.MustCompile(`<(div|span|li|td)\b[^>]*(@click|v-on:click|onClick=)`)
-	feSmallFontTwRegex    = regexp.MustCompile(`text-\[(\d+(?:\.\d+)?)px\]`)
-	feSmallFontCssRegex   = regexp.MustCompile(`font-size\s*:\s*(\d+(?:\.\d+)?)px`)
-	feFixedWidthCssRegex  = regexp.MustCompile(`(?:^|[^a-z-])(?:min-)?width\s*:\s*(\d{3,4})px`)
-	feFixedWidthTwRegex   = regexp.MustCompile(`(?:^|[\s"'])(?:min-)?w-\[(\d{3,4})px\]`)
-	feStaticStyleRegex    = regexp.MustCompile(`(?:^|\s)style="`)
-	feHexColorRegex       = regexp.MustCompile(`(?:[:\s"'(\[]|^)#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})(?:[0-9a-fA-F]{2})?\b`)
-	feHeavyImportRegex    = regexp.MustCompile(`(?:import\s+[A-Za-z_$][\w$]*\s+from\s+['"](lodash|moment)['"]|require\(\s*['"](lodash|moment)['"]\s*\)|import\s+\*\s+as\s+\w+\s+from\s+['"](lodash|lucide-react|@mui/icons-material|@mui/material|date-fns|echarts|rxjs|antd)['"])`)
-	feBase64AssetRegex    = regexp.MustCompile(`data:(?:image|font|application)/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+`)
-	feConsoleLogRegex     = regexp.MustCompile(`\bconsole\.(log|debug)\s*\(`)
-	feZIndexRegex         = regexp.MustCompile(`(?:z-index\s*:\s*|z-\[)(\d{4,})`)
-	feImportantRegex      = regexp.MustCompile(`!important`)
-	feRouterStaticImport  = regexp.MustCompile(`(?m)^\s*import\s+\w+\s+from\s+['"][^'"]*(pages|views|screens)/[^'"]+['"]`)
-	feRouterLazyRegex     = regexp.MustCompile(`(\(\)\s*=>\s*import\(|\blazy\(|defineAsyncComponent|loadable\()`)
+	// Hanya klik yang punya handler: `@click.stop` tanpa nilai cuma menghentikan propagasi dan bukan kontrol.
+	feClickableDivRegex   = regexp.MustCompile(`<(div|span|li|td)\b[^>]*(@click(?:\.[a-z]+)*=|v-on:click(?:\.[a-z]+)*=|onClick=)`)
+	feRepeatContextRegex  = regexp.MustCompile(`(v-for=|\.map\(|\{#each\b|v-for\s)`)
+	feGlobalListenerRegex = regexp.MustCompile(`\b(window|document|globalThis)\.addEventListener\(`)
+	feLifecycleRegex      = regexp.MustCompile(`\b(onMounted|onBeforeUnmount|onUnmounted|useEffect|onMount|onDestroy|mounted\s*\(|componentDidMount)\b`)
+	feOverflowWrapRegex   = regexp.MustCompile(`overflow-(x-)?(auto|scroll)|overflow(-x)?\s*:\s*(auto|scroll)`)
+	feCssVarDeclRegex     = regexp.MustCompile(`^\s*--[\w-]+\s*:`)
+	feSvgPaintAttrRegex   = regexp.MustCompile(`\b(fill|stroke|stop-color|flood-color)=`)
+	// Teks yang memang dirancang kecil: angka badge/penghitung dan label kapital (eyebrow) 11px.
+	feBadgeHintRegex     = regexp.MustCompile(`(rounded-full|\bbadge\b|\buppercase\b|text-transform\s*:\s*uppercase)`)
+	feSmallFontTwRegex   = regexp.MustCompile(`text-\[(\d+(?:\.\d+)?)px\]`)
+	feSmallFontCssRegex  = regexp.MustCompile(`font-size\s*:\s*(\d+(?:\.\d+)?)px`)
+	feFixedWidthCssRegex = regexp.MustCompile(`(?:^|[^a-z-])(?:min-)?width\s*:\s*(\d{3,4})px`)
+	feFixedWidthTwRegex  = regexp.MustCompile(`(?:^|[\s"'])(?:min-)?w-\[(\d{3,4})px\]`)
+	feStaticStyleRegex   = regexp.MustCompile(`(?:^|\s)style="`)
+	feHexColorRegex      = regexp.MustCompile(`(?:[:\s"'(\[]|^)#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})(?:[0-9a-fA-F]{2})?\b`)
+	feHeavyImportRegex   = regexp.MustCompile(`(?:import\s+[A-Za-z_$][\w$]*\s+from\s+['"](lodash|moment)['"]|require\(\s*['"](lodash|moment)['"]\s*\)|import\s+\*\s+as\s+\w+\s+from\s+['"](lodash|lucide-react|@mui/icons-material|@mui/material|date-fns|echarts|rxjs|antd)['"])`)
+	feBase64AssetRegex   = regexp.MustCompile(`data:(?:image|font|application)/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+`)
+	feConsoleLogRegex    = regexp.MustCompile(`\bconsole\.(log|debug)\s*\(`)
+	feZIndexRegex        = regexp.MustCompile(`(?:z-index\s*:\s*|z-\[)(\d{4,})`)
+	feImportantRegex     = regexp.MustCompile(`!important`)
+	feRouterStaticImport = regexp.MustCompile(`(?m)^\s*import\s+\w+\s+from\s+['"][^'"]*(pages|views|screens)/[^'"]+['"]`)
+	feRouterLazyRegex    = regexp.MustCompile(`(\(\)\s*=>\s*import\(|\blazy\(|defineAsyncComponent|loadable\()`)
 
 	// Android (Kotlin / Java)
 	andMainThreadBlockRegex = regexp.MustCompile(`(\brunBlocking\s*[{(]|\bThread\.sleep\s*\(|\.allowMainThreadQueries\(\))`)
@@ -85,9 +94,12 @@ var (
 
 	// Flutter (Dart)
 	dartListNonBuilderRegex = regexp.MustCompile(`\b(ListView|GridView)\(`)
-	dartShrinkWrapRegex     = regexp.MustCompile(`shrinkWrap\s*:\s*true`)
-	dartImageNetworkRegex   = regexp.MustCompile(`\bImage\.network\s*\(`)
-	dartOpacityRegex        = regexp.MustCompile(`(?:^|[^\w.])Opacity\s*\(`)
+	// Anak daftar yang dirakit dari koleksi (jumlahnya ikut data) — hanya ini yang butuh builder.
+	dartDynamicChildrenRegex = regexp.MustCompile(`(\.map\(|List\.generate\(|\bfor\s*\(|\.\.\.\s*\w)`)
+	dartLazyListCtorRegex    = regexp.MustCompile(`\b(ListView|GridView)\.(builder|separated|custom)\(`)
+	dartShrinkWrapRegex      = regexp.MustCompile(`shrinkWrap\s*:\s*true`)
+	dartImageNetworkRegex    = regexp.MustCompile(`\bImage\.network\s*\(`)
+	dartOpacityRegex         = regexp.MustCompile(`(?:^|[^\w.])Opacity\s*\(`)
 )
 
 // uiIssue mengumpulkan beberapa lokasi pelanggaran aturan yang sama dalam satu berkas,
@@ -733,9 +745,10 @@ func newFEScan(set *uiIssueSet, content, relPath, lang string, lines []string) *
 		isMarkup:    isMarkup,
 		isAppSource: isMarkup || isFrontendSourcePath(strings.ToLower(filepath.ToSlash(relPath))),
 		overlayFile: feOverlayFileRegex.MatchString(filepath.Base(relPath)),
-		// Listener / timer leak: dihitung per berkas
-		listenerUnpaired: strings.Contains(content, "addEventListener(") && !strings.Contains(content, "removeEventListener("),
-		intervalUnpaired: strings.Contains(content, "setInterval(") && !strings.Contains(content, "clearInterval("),
+		// Listener / timer leak: dihitung per berkas, hanya pada unit SPA (komponen/composable yang punya siklus
+		// mount-unmount). Halaman statis, bundel hasil build, dan plugin sekali-jalan tidak menumpuk listener.
+		listenerUnpaired: spaUnit(relPath, lang, content) && strings.Contains(content, "addEventListener(") && !strings.Contains(content, "removeEventListener(") && !strings.Contains(content, "AbortController"),
+		intervalUnpaired: spaUnit(relPath, lang, content) && strings.Contains(content, "setInterval(") && !strings.Contains(content, "clearInterval("),
 		staticStyles:     newFECounter(),
 		hexColors:        newFECounter(),
 		importants:       newFECounter(),
@@ -747,17 +760,34 @@ func newFEScan(set *uiIssueSet, content, relPath, lang string, lines []string) *
 	return s
 }
 
+// spaUnit: berkas komponen/composable aplikasi SPA yang hidup-mati bersama navigasi (punya hook siklus hidup).
+func spaUnit(relPath, lang, content string) bool {
+	lower := strings.ToLower(filepath.ToSlash(relPath))
+	for _, skip := range []string{"/public/", "/plugins/", "/legacy/", "/_nuxt/", "/static/", "/dist/"} {
+		if strings.Contains("/"+lower, skip) {
+			return false
+		}
+	}
+	// Komponen (.vue/.svelte/.tsx/.jsx) dijalankan ulang tiap mount; modul JS/TS biasa hanya bila memakai hook
+	// siklus hidup (composable/hook).
+	isComponent := lang == "vue" || lang == "svelte" || strings.HasSuffix(lower, ".tsx") || strings.HasSuffix(lower, ".jsx")
+	return isComponent || feLifecycleRegex.MatchString(content)
+}
+
 func isFELineSkippable(trimmed string) bool {
 	return trimmed == "" || strings.HasPrefix(trimmed, "//") || strings.HasPrefix(trimmed, "*") || strings.HasPrefix(trimmed, "<!--")
 }
 
 // scanScriptRules menjalankan aturan yang berlaku pada semua berkas frontend (bukan hanya markup).
 func (s *feScan) scanScriptRules(idx int, line string) {
-	if (s.listenerUnpaired && strings.Contains(line, "addEventListener(") && !strings.Contains(line, "once: true")) ||
+	// Listener pada window/document hidup lebih lama dari komponennya; listener pada elemen komponen ikut hilang
+	// saat elemennya dilepas.
+	if (s.listenerUnpaired && feGlobalListenerRegex.MatchString(line) && !strings.Contains(line, "once: true")) ||
 		(s.intervalUnpaired && strings.Contains(line, "setInterval(")) {
 		s.set.hit("FE-LISTENER-LEAK", idx)
 	}
-	if feHeavyImportRegex.MatchString(line) {
+	// Pernyataan impor sungguhan (di awal baris), bukan teks contoh di dalam string.
+	if t := strings.TrimSpace(line); (strings.HasPrefix(t, "import ") || strings.Contains(t, "= require(")) && feHeavyImportRegex.MatchString(line) {
 		s.set.hit("FE-HEAVY-LIB-IMPORT", idx)
 	}
 	if m := feBase64AssetRegex.FindString(line); len(m) > 4000 {
@@ -856,16 +886,63 @@ func (s *feScan) checkImages(idx int, line string) {
 		tag := tagSpan(s.lines, idx, loc[0])
 		hasWidth := strings.Contains(tag, "width=") || feImgWidthClassRegex.MatchString(tag)
 		hasHeight := strings.Contains(tag, "height=") || feImgHeightClassRegex.MatchString(tag)
-		if !hasWidth || !hasHeight {
+		// Ruang gambar juga terjaga bila rasio ditetapkan lewat style, atau gambar mengisi wadah berukuran
+		// (absolute + inset-0 / object-cover di wadah ber-aspect-ratio).
+		reserved := strings.Contains(strings.ToLower(tag), "aspect") || (strings.Contains(tag, "absolute") && strings.Contains(tag, "inset-0"))
+		if (!hasWidth || !hasHeight) && !reserved {
 			s.set.hit("FE-IMG-LAYOUT-SHIFT", idx)
 		}
 		if !strings.Contains(tag, "alt=") && !strings.Contains(tag, ":alt=") {
 			s.set.hit("FE-IMG-MISSING-ALT", idx)
 		}
-		if !strings.Contains(tag, "loading=") && !s.overlayFile && !s.inOverlay(idx) {
+		// Lazy loading hanya untuk gambar berulang (daftar/galeri/tabel). Gambar tunggal seperti hero, logo, dan
+		// gambar utama produk berada di atas lipatan (kandidat LCP) dan justru tidak boleh lazy.
+		if !strings.Contains(tag, "loading=") && !strings.Contains(tag, "fetchpriority") && !s.overlayFile && !s.inOverlay(idx) && s.inRepeat(idx, tag) {
 			s.set.hit("FE-IMG-NO-LAZY", idx)
 		}
 	}
+}
+
+// inRepeat: tag berada di konteks berulang (v-for / .map / #each pada tag itu sendiri atau pembungkus terdekat).
+func (s *feScan) inRepeat(idx int, tag string) bool {
+	if feRepeatContextRegex.MatchString(tag) {
+		return true
+	}
+	// Pembungkus = baris di atasnya yang indentasinya lebih dangkal (leluhur pada markup yang diformat).
+	indent := func(l string) int { return len(l) - len(strings.TrimLeft(l, " \t")) }
+	own := indent(s.lines[idx])
+	for j := idx - 1; j >= 0 && j >= idx-15; j-- {
+		if strings.TrimSpace(s.lines[j]) == "" || indent(s.lines[j]) >= own {
+			continue
+		}
+		if feRepeatContextRegex.MatchString(s.lines[j]) {
+			return true
+		}
+		own = indent(s.lines[j])
+	}
+	return false
+}
+
+// smallerThan: baris memuat ukuran font di bawah limit px (badge/label kapital pun tidak boleh di bawah 9px).
+func smallerThan(line string, limit float64) bool {
+	for _, re := range []*regexp.Regexp{feSmallFontTwRegex, feSmallFontCssRegex} {
+		for _, m := range re.FindAllStringSubmatch(line, -1) {
+			if v, err := strconv.ParseFloat(m[1], 64); err == nil && v < limit {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// overflowWrapped: elemen berada di dalam wadah gulir horizontal (tabel lebar di dalam overflow-x-auto).
+func (s *feScan) overflowWrapped(idx int) bool {
+	for j := idx; j >= 0 && j >= idx-8; j-- {
+		if feOverflowWrapRegex.MatchString(s.lines[j]) {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *feScan) checkClickable(idx int, line string) {
@@ -889,10 +966,18 @@ func (s *feScan) hitNumeric(re *regexp.Regexp, line string, idx int, ruleID stri
 }
 
 func (s *feScan) checkSizing(idx int, line string) {
-	small := func(v float64) bool { return v < 11 }
+	// Skala tipografi dimulai dari 12px; label kapital/badge 11px dikecualikan lewat feBadgeHintRegex.
+	small := func(v float64) bool { return v < 12 }
 	wide := func(v float64) bool { return v >= 768 }
-	s.hitNumeric(feSmallFontTwRegex, line, idx, "FE-SMALL-FONT", small)
-	s.hitNumeric(feSmallFontCssRegex, line, idx, "FE-SMALL-FONT", small)
+	// Angka pada badge/penghitung/label kapital kecil memang dirancang kecil; yang dinilai teks bacaan.
+	if !feBadgeHintRegex.MatchString(line) || smallerThan(line, 9) {
+		s.hitNumeric(feSmallFontTwRegex, line, idx, "FE-SMALL-FONT", small)
+		s.hitNumeric(feSmallFontCssRegex, line, idx, "FE-SMALL-FONT", small)
+	}
+	// Breakpoint media query (`@media (min-width: 1024px)`) dan tabel lebar di dalam wadah gulir bukan lebar kaku.
+	if strings.Contains(line, "@media") || strings.Contains(line, "max-width") || s.overflowWrapped(idx) {
+		return
+	}
 	s.hitNumeric(feFixedWidthCssRegex, line, idx, "FE-FIXED-WIDTH-LAYOUT", wide)
 	s.hitNumeric(feFixedWidthTwRegex, line, idx, "FE-FIXED-WIDTH-LAYOUT", wide)
 }
@@ -901,7 +986,8 @@ func (s *feScan) checkStyleCounters(idx int, line string) {
 	if feStaticStyleRegex.MatchString(line) {
 		s.staticStyles.add(1, idx)
 	}
-	if n := len(feHexColorRegex.FindAllStringIndex(line, -1)); n > 0 && !strings.Contains(line, "var(--") {
+	// Deklarasi token (`--warna: #fff`) adalah tempat warna SEHARUSNYA ditulis; atribut cat SVG bukan gaya tema.
+	if n := len(feHexColorRegex.FindAllStringIndex(line, -1)); n > 0 && !strings.Contains(line, "var(--") && !feCssVarDeclRegex.MatchString(line) && !feSvgPaintAttrRegex.MatchString(line) {
 		s.hexColors.add(n, idx)
 	}
 	if n := len(feImportantRegex.FindAllStringIndex(line, -1)); n > 0 {
@@ -1194,10 +1280,13 @@ func collectFlutterIssues(set *uiIssueSet, content string, lines []string) {
 		if trimmed == "" || strings.HasPrefix(trimmed, "//") {
 			continue
 		}
-		if dartListNonBuilderRegex.MatchString(trimmed) {
+		// ListView(children: [...]) hanya masalah bila anaknya dirakit dari koleksi (jumlah ikut data); halaman
+		// statis, form, dan empty state berisi beberapa widget tetap tidak butuh builder.
+		if dartListNonBuilderRegex.MatchString(trimmed) && dartWindowMatches(lines, idx, 15, dartDynamicChildrenRegex) {
 			set.hit("MOB-LISTVIEW-NON-BUILDER", idx)
 		}
-		if dartShrinkWrapRegex.MatchString(trimmed) {
+		// shrinkWrap mahal hanya pada daftar lazy (builder/separated) yang panjangnya ikut data.
+		if dartShrinkWrapRegex.MatchString(trimmed) && dartLookbackMatches(lines, idx, 6, dartLazyListCtorRegex) {
 			set.hit("MOB-SHRINKWRAP-LIST", idx)
 		}
 		if !usesCachedImage && dartImageNetworkRegex.MatchString(trimmed) {
@@ -1209,6 +1298,27 @@ func collectFlutterIssues(set *uiIssueSet, content string, lines []string) {
 	}
 }
 
+func dartWindowMatches(lines []string, idx, span int, re *regexp.Regexp) bool {
+	for j := idx; j < len(lines) && j <= idx+span; j++ {
+		if re.MatchString(lines[j]) {
+			return true
+		}
+	}
+	return false
+}
+
+func dartLookbackMatches(lines []string, idx, span int, re *regexp.Regexp) bool {
+	for j := idx; j >= 0 && j >= idx-span; j-- {
+		if re.MatchString(lines[j]) {
+			return true
+		}
+	}
+	return false
+}
+
+// userContentDirRegex: folder isi unggahan pengguna / arsip, bukan aset yang dikirim bersama aplikasi.
+var userContentDirRegex = regexp.MustCompile(`(^|/)(uploads?|storage|media|legacy|backups?|archives?|user[_-]?files)(/|$)`)
+
 // InspectAssetFile menandai aset gambar/video yang terlalu berat untuk dimuat aplikasi
 func InspectAssetFile(relPath string, size int64) *models.Finding {
 	ext := strings.ToLower(filepath.Ext(relPath))
@@ -1217,6 +1327,9 @@ func InspectAssetFile(relPath string, size int64) *models.Finding {
 		return nil
 	}
 	lowerPath := strings.ToLower(filepath.ToSlash(relPath))
+	if userContentDirRegex.MatchString(filepath.ToSlash(filepath.Dir(lowerPath))) {
+		return nil
+	}
 	isAndroidRes := strings.Contains(lowerPath, "/res/drawable") || strings.Contains(lowerPath, "/res/mipmap")
 
 	warnAt, critAt := int64(webImageWarnBytes), int64(webImageCriticalBytes)
