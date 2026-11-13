@@ -40,6 +40,43 @@ const load = async () => {
 }
 
 const reload = () => { offset.value = 0; load() }
+
+// Cek ulang: endpoint selalu menghitung dari kode di disk, jadi memuat ulang = menghitung ulang Big-O. Hasilnya
+// dibandingkan dengan hitungan sebelumnya supaya terlihat apakah perubahan kode memperbaiki atau memperburuk.
+const rechecking = ref(false)
+const heavyCount = (s?: ProcessCostPage['summary']) => s ? heavy(s.route_classes) : 0
+const recheck = async () => {
+  const before = page.value?.summary
+  rechecking.value = true
+  await load()
+  rechecking.value = false
+  const after = page.value?.summary
+  if (failed.value || !after) {
+    toast.add({ title: 'Gagal menghitung ulang Big-O', description: failed.value, color: 'error' })
+    return
+  }
+  const changes: string[] = []
+  const diff = (label: string, a: number, b: number) => { if (a !== b) changes.push(`${label} ${a} → ${b}`) }
+  if (before) {
+    diff('Rute', before.routes, after.routes)
+    diff('Rute O(n²) ke atas', heavyCount(before), heavyCount(after))
+    diff('Rute N+1', before.n_plus_one_routes, after.n_plus_one_routes)
+    diff('Fungsi', before.funcs, after.funcs)
+  }
+  toast.add({
+    title: 'Big-O dihitung ulang dari kode terbaru',
+    description: changes.length ? changes.join(' · ') : 'Tidak ada perubahan dibanding hitungan sebelumnya.',
+    color: changes.length ? 'success' : 'neutral',
+    icon: 'i-lucide-sigma'
+  })
+}
+const computedLabel = computed(() => {
+  const at = page.value?.computed_at
+  if (!at) return ''
+  const time = new Date(at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  const ms = page.value?.duration_ms || 0
+  return `Dihitung dari kode di disk pukul ${time}${ms ? ` (${ms >= 1000 ? `${(ms / 1000).toFixed(1)} dtk` : `${ms} md`})` : ''}`
+})
 watch([kind, klass, onlyNPlusOne], reload)
 watch(search, () => {
   if (timer) clearTimeout(timer)
@@ -133,6 +170,25 @@ const card = 'min-w-0 rounded-2xl border border-neutral-200 dark:border-white/10
       </div>
 
       <template v-else>
+        <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <p class="flex items-center gap-1.5 text-xs text-neutral-500">
+            <UIcon name="i-lucide-clock" class="size-3.5" />
+            <span>{{ computedLabel }}. Setiap rumus punya bukti: klik baris untuk melihat potongan kodenya.</span>
+          </p>
+          <UButton
+            size="sm"
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-refresh-cw"
+            :loading="rechecking"
+            :disabled="loading"
+            title="Hitung ulang rumus tick dan Big-O semua rute dari kode terbaru di disk"
+            @click="recheck"
+          >
+            Cek ulang Big-O
+          </UButton>
+        </div>
+
         <AppStatStrip :items="stats" />
 
         <div class="grid grid-cols-1 gap-3" :class="history.length > 1 ? 'lg:grid-cols-3' : ''">

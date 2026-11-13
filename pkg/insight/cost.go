@@ -54,6 +54,10 @@ type CostPage struct {
 	History []models.ProcessCostSnapshot `json:"history"`
 	// Handling: sumber biaya tinggi yang sudah ditangani (todo / audit) dan yang belum.
 	Handling CostHandlingSummary `json:"handling"`
+	// ComputedAt & DurationMs: kapan rumus ini dihitung dari kode di disk dan berapa lama. Setiap permintaan
+	// menghitung ulang dari kode terbaru (tidak ada cache), jadi "cek ulang" = memuat ulang endpoint ini.
+	ComputedAt time.Time `json:"computed_at"`
+	DurationMs int64     `json:"duration_ms"`
 }
 
 const (
@@ -95,12 +99,14 @@ func analyze(db *gorm.DB, projectID uint) (*costAnalysis, error) {
 
 // ProcessCost menghitung biaya proses proyek, mencatat potret hariannya, dan mengembalikan satu halaman daftar.
 func ProcessCost(db *gorm.DB, projectID uint, q CostQuery, now time.Time) (*CostPage, error) {
+	started := time.Now()
 	a, err := analyze(db, projectID)
 	if err != nil {
 		return nil, err
 	}
 	rep := a.rep
-	page := &CostPage{Summary: summarize(a.mods, a.fws, rep), Kind: "routes", Routes: []RouteRow{}, Funcs: []FuncRow{}}
+	page := &CostPage{Summary: summarize(a.mods, a.fws, rep), Kind: "routes", Routes: []RouteRow{}, Funcs: []FuncRow{},
+		ComputedAt: now, DurationMs: time.Since(started).Milliseconds()}
 	if page.Summary.Supported {
 		saveSnapshot(db, projectID, page.Summary, now)
 	}

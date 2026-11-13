@@ -37,6 +37,8 @@ type CostSource struct {
 	Line  int    `json:"line"`
 	BigO  string `json:"big_o"`
 	Query string `json:"query_formula,omitempty"`
+	// Evidence: baris kode di fungsi sumber yang menaikkan biaya (bukti untuk pengguna & pengerja todo).
+	Evidence []routemap.CostEvidence `json:"evidence,omitempty"`
 }
 
 // CostHandling = di mana sumber biaya sudah ditangani dan apa langkah berikutnya.
@@ -199,7 +201,7 @@ func keyMatches(key string, rules []string, file string) bool {
 
 func sourceOf(h routemap.Hotspot) CostSource {
 	return CostSource{Kind: h.Kind, Rule: diagnostics.HotspotRule(h.Kind), Func: h.Func.Name, File: h.Func.File, Line: h.Func.Line,
-		BigO: h.Func.BigO, Query: h.Func.QueryFormula}
+		BigO: h.Func.BigO, Query: h.Func.QueryFormula, Evidence: h.Func.Evidence}
 }
 
 // handling: penanganan sumber biaya h, atau nil bila belum ditangani di mana pun.

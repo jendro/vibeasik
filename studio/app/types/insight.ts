@@ -61,6 +61,16 @@ export interface OwnerRecap {
 
 export type CostClass = 'constant' | 'log' | 'linear' | 'linearithmic' | 'quadratic' | 'cubic' | 'polynomial'
 
+/** Satu baris kode yang menjadi dasar rumus biaya (bukti): loop atas data, query, atau pemanggilan berbiaya. */
+export interface CostEvidence {
+  kind: 'loop' | 'query' | 'call'
+  line: number
+  code: string
+  /** jumlah loop atas data yang melingkupi baris ini (untuk loop: termasuk dirinya) */
+  depth: number
+  note: string
+}
+
 export interface ProcessCost {
   formula: string
   big_o: string
@@ -75,6 +85,9 @@ export interface ProcessCost {
   unbounded?: boolean
   loop_depth: number
   growth: { n: number, ticks: number, queries: number }[]
+  /** baris kode yang menaikkan biaya, di berkas evidence_file; kosong untuk biaya tetap tanpa query */
+  evidence?: CostEvidence[]
+  evidence_file?: string
 }
 
 export type CostLang = 'go' | 'php'
@@ -88,6 +101,8 @@ export interface CostSource {
   line: number
   big_o: string
   query_formula?: string
+  /** baris kode di fungsi sumber yang menaikkan biaya */
+  evidence?: CostEvidence[]
 }
 
 /** todo = todo terbuka · audit = temuan audit terbuka · ignored = bukan masalah · recheck = sudah selesai tapi masih tinggi */
@@ -184,4 +199,7 @@ export interface ProcessCostPage {
   funcs: FuncCost[]
   history: ProcessCostSnapshot[]
   handling?: CostHandlingSummary
+  /** kapan rumus dihitung dari kode di disk (setiap muat = hitung ulang) dan lamanya */
+  computed_at?: string
+  duration_ms?: number
 }

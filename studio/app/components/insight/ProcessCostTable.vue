@@ -2,7 +2,8 @@
 import type { CostRowHandling, CostSource, FuncCost, ProcessCost, RouteCost } from '~/types'
 import { costClassInfo, costHandledBadge, costStackLabel, fmtTicks, shortFormula } from '~/utils/processCost'
 
-// Tabel rumus biaya per rute atau per fungsi; klik baris untuk melihat pertumbuhan T(n) pada n = 1 … 10.000.
+// Tabel rumus biaya per rute atau per fungsi; klik baris untuk melihat bukti di kode (baris loop/query yang
+// membentuk rumusnya) dan pertumbuhan T(n) pada n = 1 … 10.000.
 // Kolom "Penanganan": todo/temuan Audit yang menangani sumber biayanya, atau tombol untuk menjadikannya todo.
 const props = defineProps<{ kind: 'routes' | 'funcs', routes: RouteCost[], funcs: FuncCost[], busy?: string }>()
 const emit = defineEmits<{ 'make-todo': [src: CostSource], 'open-todo': [id: number] }>()
@@ -15,6 +16,17 @@ const rows = computed<Row[]>(() => props.kind === 'routes'
 
 const open = ref<string | null>(null)
 const toggle = (key: string) => { open.value = open.value === key ? null : key }
+
+// Bukti di fungsi sumber ditampilkan terpisah bila sumber biayanya bukan handler/fungsi baris ini sendiri.
+const sourceOf = (r: Row) => r.source || r.handled?.source
+const sourceEvidence = (r: Row) => {
+  const src = sourceOf(r)
+  if (!src?.evidence?.length || src.file === r.evidence_file) return null
+  return src
+}
+const emptyEvidence = (r: Row) => r.class === 'constant' && !r.queries_1
+  ? 'Tidak ada loop atas data maupun query di sini: biayanya tetap berapa pun jumlah datanya.'
+  : 'Baris sumbernya tidak bisa ditunjuk dari sini: biaya berasal dari middleware atau kode yang tidak terpetakan. Lihat fungsi yang dipanggil di tab Fungsi.'
 
 const METHOD_TONE: Record<string, string> = {
   GET: 'text-emerald-700 dark:text-emerald-400', POST: 'text-sky-700 dark:text-sky-400', PUT: 'text-amber-700 dark:text-amber-400',
@@ -69,6 +81,9 @@ const METHOD_TONE: Record<string, string> = {
             </td>
             <td class="px-3 py-2.5">
               <code class="font-mono text-xs text-neutral-900 dark:text-white whitespace-nowrap" :title="r.formula">{{ shortFormula(r.formula) }}</code>
+              <div v-if="r.evidence?.length" class="text-xs text-neutral-500" :title="'klik baris untuk melihat potongan kodenya'">
+                {{ r.evidence.length }} baris bukti
+              </div>
             </td>
             <td class="px-3 py-2.5 whitespace-nowrap">
               <span class="inline-flex items-center gap-1.5">
@@ -133,6 +148,20 @@ const METHOD_TONE: Record<string, string> = {
                   <code class="font-mono">{{ r.source.func }}</code> <span class="font-mono text-neutral-500">{{ r.source.file }}:{{ r.source.line }}</span>.
                   Klik “Buat todo” agar perbaikannya masuk antrean todo.
                 </div>
+              </div>
+              <div class="mb-3 space-y-2">
+                <InsightProcessCostEvidence
+                  title="Bukti di kode"
+                  :file="r.evidence_file"
+                  :evidence="r.evidence"
+                  :empty-text="emptyEvidence(r)"
+                />
+                <InsightProcessCostEvidence
+                  v-if="sourceEvidence(r)"
+                  :title="`Bukti di fungsi sumber ${sourceEvidence(r)!.func}`"
+                  :file="sourceEvidence(r)!.file"
+                  :evidence="sourceEvidence(r)!.evidence"
+                />
               </div>
               <div class="text-xs text-neutral-500">
                 Rumus lengkap

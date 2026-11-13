@@ -38,6 +38,12 @@ func AnalyzePHP(root string) PHPAnalysis {
 		mods = append(mods, PHPModule{Name: m.Name, Dir: filepath.ToSlash(dir), Framework: m.Framework})
 		label := phpFrameworkLabel[m.Framework]
 		c := newPHPCostCtx(m)
+		src := newSrcCache(m.root)
+		type pendingRoute struct {
+			idx int
+			r   *phpRoute
+		}
+		var pending []pendingRoute
 		reach := map[string]int{}
 		routesOf := map[string][]string{}
 		for i, r := range routes {
@@ -72,10 +78,30 @@ func AnalyzePHP(root string) PHPAnalysis {
 			}
 			rep.Routes = append(rep.Routes, RouteCost{Module: m.Name, Lang: "php", Framework: label, Method: r.Method, Path: r.Path,
 				Handler: r.Handler, HandlerDecl: decl, Auth: r.auth || m.authAlias(r.mws), Middlewares: mws, Cost: total.export()})
+			pending = append(pending, pendingRoute{len(rep.Routes) - 1, r})
+		}
+		// Bukti dikumpulkan setelah semua biaya termemo (c.cur kosong: tidak menambah sisi graf).
+		for _, p := range pending {
+			rc := &rep.Routes[p.idx]
+			if !rc.Cost.needsEvidence() {
+				continue
+			}
+			switch r := p.r; {
+			case r.fn != nil:
+				rc.Evidence, rc.EvidenceFile = c.evidenceFor(c.funcScope(r.fn), r.fn.Body, src), r.fn.file.Rel
+			case r.body != nil && r.bodyFile != nil:
+				rc.Evidence, rc.EvidenceFile = c.evidenceFor(&phpScope{file: r.bodyFile, cls: r.bodyCls, vars: map[string]string{}, closures: map[string]cst{}}, r.body, src), r.bodyFile.Rel
+			case r.entry != nil:
+				rc.Evidence, rc.EvidenceFile = c.evidenceFor(&phpScope{file: r.entry, vars: map[string]string{}, closures: map[string]cst{}}, r.entry.Stmts, src), r.entry.Rel
+			}
 		}
 		for _, fn := range m.all {
+			cost := c.funcCost(fn).export()
+			if cost.needsEvidence() {
+				cost.Evidence, cost.EvidenceFile = c.evidenceFor(c.funcScope(fn), fn.Body, src), fn.file.Rel
+			}
 			rep.Funcs = append(rep.Funcs, FuncCost{Module: m.Name, Lang: "php", Name: fn.Key, File: fn.file.Rel, Line: fn.Line,
-				End: fn.End, Routes: reach[phpNodeKey(fn)], Cost: c.funcCost(fn).export()})
+				End: fn.End, Routes: reach[phpNodeKey(fn)], Cost: cost})
 		}
 		hots = append(hots, c.hotspots(routesOf)...)
 	}
@@ -87,6 +113,7 @@ func AnalyzePHP(root string) PHPAnalysis {
 // hotspots: fungsi/halaman yang pangkat Q(n) atau T(n)-nya lebih tinggi daripada semua yang dipanggilnya,
 // yaitu tempat loop yang menaikkan biaya benar-benar ditulis.
 func (c *phpCostCtx) hotspots(routesOf map[string][]string) []Hotspot {
+	src := newSrcCache(c.m.root)
 	type node struct {
 		fc   FuncCost
 		cost Cost
@@ -95,10 +122,16 @@ func (c *phpCostCtx) hotspots(routesOf map[string][]string) []Hotspot {
 	for _, fn := range c.m.all {
 		k := phpNodeKey(fn)
 		cost := c.funcCost(fn).export()
+		if cost.needsEvidence() {
+			cost.Evidence, cost.EvidenceFile = c.evidenceFor(c.funcScope(fn), fn.Body, src), fn.file.Rel
+		}
 		nodes[k] = node{FuncCost{Module: c.m.Name, Lang: "php", Name: fn.Key, File: fn.file.Rel, Line: fn.Line, End: fn.End, Cost: cost}, cost}
 	}
 	for f, v := range c.fileMemo {
 		cost := v.export()
+		if cost.needsEvidence() {
+			cost.Evidence, cost.EvidenceFile = c.evidenceFor(&phpScope{file: f, vars: map[string]string{}, closures: map[string]cst{}}, f.Stmts, src), f.Rel
+		}
 		nodes["file:"+f.Rel] = node{FuncCost{Module: c.m.Name, Lang: "php", Name: f.Rel, File: f.Rel, Line: 1, Cost: cost}, cost}
 	}
 	var out []Hotspot

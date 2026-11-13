@@ -614,6 +614,10 @@ type Cost struct {
 	Unbounded    bool          `json:"unbounded,omitempty"` // ada loop tanpa syarat berhenti statis (for {})
 	LoopDepth    int           `json:"loop_depth"`          // kedalaman loop atas data
 	Growth       []GrowthPoint `json:"growth"`
+	// Evidence: baris kode yang menjadi dasar rumus (loop atas data, query, pemanggilan berbiaya) di EvidenceFile.
+	// Kosong untuk biaya konstan tanpa query: tidak ada baris yang menaikkan pertumbuhan.
+	Evidence     []CostEvidence `json:"evidence,omitempty"`
+	EvidenceFile string         `json:"evidence_file,omitempty"`
 	rank         float64
 	qDegree      int // pangkat n tertinggi pada Q(n)
 }
@@ -671,9 +675,15 @@ type CostReport struct {
 	Funcs  []FuncCost  `json:"funcs"`
 }
 
+// needsEvidence: biaya yang tumbuh bersama data atau menyentuh database — harus bisa ditunjuk barisnya.
+func (c Cost) needsEvidence() bool {
+	return c.Degree > 0 || c.Queries1 > 0 || c.qDegree > 0 || c.Recursive || c.Unbounded
+}
+
 // computeCosts dijalankan sekali per modul setelah rute & call graph selesai disusun.
 func (g *Graph) computeCosts(m *module) {
 	c := &costCtx{m: m, memo: map[string]cst{}, busy: map[string]bool{}}
+	src := newSrcCache(m.base)
 	byPos := map[string]string{}
 	for k, f := range m.funcs {
 		byPos[f.Pos] = k
@@ -681,6 +691,15 @@ func (g *Graph) computeCosts(m *module) {
 	g.funcCosts = make(map[string]Cost, len(m.funcs))
 	for k := range m.funcs {
 		g.funcCosts[k] = c.funcCost(k).export()
+	}
+	// Bukti dikumpulkan setelah semua biaya fungsi termemo, agar biaya fungsi terpanggil sudah final.
+	for k, f := range m.funcs {
+		fc := g.funcCosts[k]
+		if !fc.needsEvidence() || f.Decl == nil || f.Decl.Body == nil || f.file == nil {
+			continue
+		}
+		fc.Evidence, fc.EvidenceFile = c.evidenceFor(f.file, f.Decl.Body.List, src), f.file.Rel
+		g.funcCosts[k] = fc
 	}
 	g.routeCosts = make(map[*Route]RouteCost, len(g.Routes))
 	for _, rt := range g.Routes {
@@ -700,8 +719,19 @@ func (g *Graph) computeCosts(m *module) {
 				mws++
 			}
 		}
+		cost := total.export()
+		// Bukti rute = bukti handlernya (fungsi bernama atau badan handler inline).
+		if cost.needsEvidence() {
+			switch {
+			case rt.handlerKey != "":
+				hc := g.funcCosts[rt.handlerKey]
+				cost.Evidence, cost.EvidenceFile = hc.Evidence, hc.EvidenceFile
+			case rt.body != nil && rt.bodyFile != nil:
+				cost.Evidence, cost.EvidenceFile = c.evidenceFor(rt.bodyFile, rt.body.List, src), rt.bodyFile.Rel
+			}
+		}
 		g.routeCosts[rt] = RouteCost{Module: g.Module, Lang: "go", Framework: g.Framework, Method: rt.Method, Path: rt.Path, Handler: rt.Handler,
-			HandlerDecl: rt.HandlerDecl, Auth: rt.Auth, Middlewares: mws, Cost: total.export()}
+			HandlerDecl: rt.HandlerDecl, Auth: rt.Auth, Middlewares: mws, Cost: cost}
 	}
 }
 
