@@ -262,6 +262,7 @@ func (s *Server) toolSecurityTest(args map[string]interface{}) (*ToolCallResult,
 		req.Live = &v
 	}
 	req.SkipBurst, _ = args["skip_burst"].(bool)
+	req.StartServer, _ = args["start_server"].(bool)
 	if req.Burst > 60 {
 		req.Burst = 60
 	}

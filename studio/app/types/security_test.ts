@@ -55,4 +55,60 @@ export interface SecurityTestRequest {
   live?: boolean
   skip_burst?: boolean
   burst?: number
+  /** nyalakan server komponen bila belum berjalan (lalu dimatikan lagi setelah uji) */
+  start_server?: boolean
+  keep_running?: boolean
+}
+
+// Sesi uji di latar (POST …/security-test/start, dipantau lewat GET …/security-test).
+export type SecurityTestStepStatus = 'pending' | 'running' | 'done' | 'failed' | 'skipped'
+
+export interface SecurityTestStep {
+  key: 'server' | 'static' | 'live' | 'stop'
+  title: string
+  status: SecurityTestStepStatus
+  detail?: string
+  started_at?: string
+  finished_at?: string
+  duration_ms?: number
+}
+
+export interface SecurityTestEvent {
+  at: string
+  level: 'info' | 'ok' | 'warn' | 'error'
+  message: string
+}
+
+/** Server yang diuji; bentuknya sejalan dengan komponen Uji Runtime agar terminal log bisa dipakai bersama. */
+export interface SecurityTestServer {
+  component_id: number
+  name: string
+  role: string
+  state: 'starting' | 'ready' | 'stopped' | 'failed' | 'external' | string
+  source: 'launched' | 'reused' | 'external' | ''
+  command?: string
+  port?: number
+  url?: string
+  pid?: number
+  boot_ms?: number
+  kept_running?: boolean
+  error_lines: number
+  routes_found: number
+  note?: string
+  logs?: string[]
+}
+
+export interface SecurityTestSession {
+  id: string
+  project_id: number
+  project_name: string
+  status: 'running' | 'completed' | 'failed' | 'cancelled'
+  steps: SecurityTestStep[]
+  events: SecurityTestEvent[]
+  server?: SecurityTestServer
+  report?: SecurityTestReport
+  summary?: string
+  error?: string
+  started_at: string
+  finished_at?: string
 }

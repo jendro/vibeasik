@@ -65,6 +65,8 @@ type LiveOptions struct {
 	Timeout    time.Duration // per request (default 5 detik)
 	SkipBurst  bool          // lewati uji burst (mis. server produksi yang rapuh)
 	ProbeLabel string        // label sasaran untuk laporan
+	// OnRequest (opsional) dipanggil setiap request probe selesai — untuk memantau uji yang sedang berjalan.
+	OnRequest func(method, path string, status int, latency time.Duration, err error)
 }
 
 // LiveResult merangkum probe server berjalan.

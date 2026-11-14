@@ -1,14 +1,17 @@
 package api
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/vibeasik/vibeasik/pkg/localauth"
 	"github.com/vibeasik/vibeasik/pkg/models"
@@ -110,5 +113,105 @@ func routes(app *fiber.App) {
 	rep, _ := last["report"].(map[string]interface{})
 	if code != 200 || rep == nil || rep["score"] != out["score"] {
 		t.Errorf("GET hasil terakhir: %d %v", code, last)
+	}
+}
+
+// waitSecSession mem-poll GET sampai sesi uji tidak lagi berjalan.
+func waitSecSession(t *testing.T, s *Server) map[string]interface{} {
+	t.Helper()
+	deadline := time.Now().Add(30 * time.Second)
+	for time.Now().Before(deadline) {
+		_, out := secTestRequest(t, s, "GET", "/api/projects/1/security-test", ``, testLocalToken)
+		sess, _ := out["session"].(map[string]interface{})
+		if sess != nil && sess["status"] != "running" {
+			return out
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
+	t.Fatal("sesi uji keamanan tidak selesai")
+	return nil
+}
+
+func secStep(sess map[string]interface{}, key string) map[string]interface{} {
+	for _, st := range sess["steps"].([]interface{}) {
+		m := st.(map[string]interface{})
+		if m["key"] == key {
+			return m
+		}
+	}
+	return nil
+}
+
+// Uji di latar: server yang belum berjalan dinyalakan lewat dev command, diuji, lalu dimatikan lagi.
+func TestSecurityTestSessionStartsAndStopsServer(t *testing.T) {
+	if _, err := exec.LookPath("python3"); err != nil {
+		t.Skip("python3 tidak tersedia untuk server uji")
+	}
+	s := newGuardTestServer(t)
+	t.Setenv(envAllowLANExec, "1") // app.Test tidak datang dari loopback
+	var comp models.Component
+	s.db.Where("project_id = ?", 1).First(&comp)
+	_ = os.WriteFile(filepath.Join(comp.AbsolutePath, "server.go"), []byte("package main\nfunc r(app *fiber.App) { app.Get(\"/\", h) }\n"), 0o644)
+	s.db.Model(&comp).Updates(map[string]interface{}{"dev_command": `python3 -m http.server "$PORT" --bind 127.0.0.1`, "port": 0, "run_port": 0})
+
+	code, out := secTestRequest(t, s, "POST", "/api/projects/1/security-test/start", `{"start_server":true,"skip_burst":true}`, testLocalToken)
+	if code != 200 || out["session"] == nil {
+		t.Fatalf("start → %d %v", code, out)
+	}
+	if ev, ok := out["session"].(map[string]interface{})["events"].([]interface{}); !ok || ev == nil {
+		t.Errorf("events harus array (bukan null) agar Studio tidak galat: %v", out["session"])
+	}
+	if code, out := secTestRequest(t, s, "POST", "/api/projects/1/security-test/start", `{"start_server":true}`, testLocalToken); code != 409 && code != 200 {
+		t.Errorf("start kedua saat berjalan → %d %v, ingin 409", code, out)
+	}
+	res := waitSecSession(t, s)
+	sess := res["session"].(map[string]interface{})
+	if sess["status"] != "completed" {
+		t.Fatalf("status sesi %v: %v", sess["status"], sess["events"])
+	}
+	if st := secStep(sess, "server"); st["status"] != "done" {
+		t.Fatalf("server tidak dinyalakan: %v · %v", st, sess["events"])
+	}
+	if st := secStep(sess, "live"); st["status"] != "done" {
+		t.Errorf("server tidak diuji: %v", st)
+	}
+	if st := secStep(sess, "stop"); st["status"] != "done" {
+		t.Errorf("server tidak dimatikan: %v", st)
+	}
+	srv, _ := sess["server"].(map[string]interface{})
+	if srv == nil || srv["source"] != "launched" || srv["state"] != "stopped" {
+		t.Errorf("info server keliru: %v", srv)
+	}
+	rep, _ := res["report"].(map[string]interface{})
+	if lv, _ := rep["live"].(map[string]interface{}); lv == nil || lv["reachable"] != true {
+		t.Errorf("laporan tanpa bukti server: %v", rep["live"])
+	}
+}
+
+// Dev command yang langsung keluar: langkah server gagal dengan alasan, kode tetap dibaca, sesi tetap selesai.
+func TestSecurityTestSessionServerExits(t *testing.T) {
+	s := newGuardTestServer(t)
+	t.Setenv(envAllowLANExec, "1")
+	var comp models.Component
+	s.db.Where("project_id = ?", 1).First(&comp)
+	s.db.Model(&comp).Updates(map[string]interface{}{"dev_command": "echo boom; exit 3", "port": 0, "run_port": 0})
+	if code, out := secTestRequest(t, s, "POST", "/api/projects/1/security-test/start", `{"start_server":true}`, testLocalToken); code != 200 {
+		t.Fatalf("start → %d %v", code, out)
+	}
+	sess := waitSecSession(t, s)["session"].(map[string]interface{})
+	if sess["status"] != "completed" {
+		t.Fatalf("status %v", sess["status"])
+	}
+	if st := secStep(sess, "server"); st["status"] != "failed" || !strings.Contains(st["detail"].(string), "keluar") {
+		t.Errorf("langkah server: %v", st)
+	}
+	if st := secStep(sess, "live"); st["status"] != "skipped" {
+		t.Errorf("tanpa server, probe harus dilewati: %v", st)
+	}
+	srv, _ := sess["server"].(map[string]interface{})
+	logs, _ := srv["logs"].([]interface{})
+	joined := fmt.Sprint(logs...)
+	if !strings.Contains(joined, "boom") {
+		t.Errorf("log server tidak terbawa: %v", logs)
 	}
 }

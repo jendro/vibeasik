@@ -79,6 +79,8 @@ func (s *Server) setupRoutes() {
 	// Uji keamanan proyek: audit router + probe server berjalan (lokal/live). Request probe hanya ke server proyek sendiri.
 	api.Get("/projects/:id/security-test", s.getProjectSecurityTest)
 	api.Post("/projects/:id/security-test", s.runProjectSecurityTest)
+	api.Post("/projects/:id/security-test/start", requireExecAccess, s.startProjectSecurityTest)
+	api.Post("/projects/:id/security-test/cancel", s.cancelProjectSecurityTest)
 	api.Post("/projects/:id/security-test/todos", s.createSecurityTestTodos)
 	api.Get("/projects/:id/owner-recap", s.getOwnerRecap)
 	api.Post("/projects/:id/link-workspace", s.linkProjectWorkspace)

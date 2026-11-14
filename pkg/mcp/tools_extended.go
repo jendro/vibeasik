@@ -242,6 +242,7 @@ func (s *Server) extendedToolsList() []Tool {
 					"live":         prop("boolean", "Run the live probe (default true when a target exists)"),
 					"skip_burst":   prop("boolean", "Skip the rate-limit burst (e.g. fragile production server)"),
 					"burst":        prop("integer", "Burst size for the rate-limit check (default 25, max 60)"),
+					"start_server": prop("boolean", "Start the backend component's dev server when it is not running, test it, then stop it again (default false)"),
 				},
 				Required: []string{"project_id"},
 			},

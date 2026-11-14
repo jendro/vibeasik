@@ -29,6 +29,8 @@ type Input struct {
 	Dirs        []SourceDir // folder sumber backend; kosong = uji live saja
 	Routes      []RouteRef
 	Live        *LiveOptions // nil = tanpa probe live
+	// OnStage (opsional) dipanggil saat tahap uji berganti: "static" (baca kode) lalu "live" (probe server).
+	OnStage func(stage string)
 }
 
 var (
@@ -41,6 +43,12 @@ var (
 func Run(ctx context.Context, in Input) *Report {
 	start := time.Now()
 	rep := &Report{ProjectID: in.ProjectID, ComponentID: in.ComponentID, Target: in.Target, StartedAt: start, RoutesSeen: len(in.Routes)}
+	stage := func(name string) {
+		if in.OnStage != nil {
+			in.OnStage(name)
+		}
+	}
+	stage("static")
 
 	if len(in.Dirs) > 0 {
 		var facts staticFacts
@@ -61,6 +69,7 @@ func Run(ctx context.Context, in Input) *Report {
 		rep.Notes = append(rep.Notes, "Tidak ada folder backend; hanya probe live yang dijalankan.")
 	}
 
+	stage("live")
 	if in.Live != nil && strings.TrimSpace(in.Live.BaseURL) != "" {
 		opts := *in.Live
 		if len(opts.Paths) == 0 {

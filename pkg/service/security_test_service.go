@@ -6,13 +6,17 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/vibeasik/vibeasik/pkg/models"
+	"gorm.io/gorm"
+
 	"github.com/vibeasik/vibeasik/pkg/repository"
+	"github.com/vibeasik/vibeasik/pkg/runner"
 	"github.com/vibeasik/vibeasik/pkg/secaudit"
 )
 
@@ -24,17 +28,26 @@ type SecurityTestRequest struct {
 	Live        *bool  `json:"live,omitempty"`         // nil/true = jalankan probe bila ada sasaran
 	SkipBurst   bool   `json:"skip_burst,omitempty"`   // lewati uji burst rate limit
 	Burst       int    `json:"burst,omitempty"`        // jumlah request burst (maks 60)
+	StartServer bool   `json:"start_server,omitempty"` // nyalakan server komponen bila belum berjalan
+	KeepRunning bool   `json:"keep_running,omitempty"` // biarkan server yang dinyalakan uji tetap menyala
+	BootTimeout int    `json:"boot_timeout_sec,omitempty"`
 }
 
 // SecurityTestService menjalankan dan menyimpan hasil uji keamanan terakhir per proyek.
 type SecurityTestService interface {
 	Run(ctx context.Context, req SecurityTestRequest) (*secaudit.Report, error)
 	Last(projectID uint) (*secaudit.Report, bool)
+	// Start memulai uji di latar (nyalakan server → baca kode → uji server → matikan server).
+	Start(req SecurityTestRequest) (*SecTestSession, error)
+	// Session = snapshot sesi uji terakhir proyek (berjalan atau selesai) sejak engine menyala.
+	Session(projectID uint) (*SecTestSession, bool)
+	Cancel(projectID uint) error
 }
 
 type securityTestService struct {
 	projects repository.ProjectRepository
 	routes   repository.RouteRepository
+	runner   *runner.Service
 }
 
 // Hasil terakhir dibagi semua instance layanan (API Studio dan MCP) dalam satu proses engine.
@@ -44,8 +57,12 @@ var (
 )
 
 // NewSecurityTestService membuat layanan uji keamanan.
-func NewSecurityTestService(projects repository.ProjectRepository, routes repository.RouteRepository) SecurityTestService {
-	return &securityTestService{projects: projects, routes: routes}
+func NewSecurityTestService(projects repository.ProjectRepository, routes repository.RouteRepository, db *gorm.DB) SecurityTestService {
+	svc := &securityTestService{projects: projects, routes: routes}
+	if db != nil {
+		svc.runner = runner.NewService(db)
+	}
+	return svc
 }
 
 var serverFrameworks = map[string]bool{"fiber": true, "gin": true, "echo": true, "chi": true, "express": true, "fastify": true,
@@ -73,28 +90,37 @@ func componentDir(p *models.Project, c models.Component) string {
 }
 
 // localBaseURL memilih port lokal komponen yang benar-benar menjawab: port jalan dari vibeasik (run_port)
-// lalu port yang dideklarasikan kode. Bila tidak ada yang menjawab, port pertama dipakai (probe melapor skipped).
-func localBaseURL(c models.Component) string {
-	var ports []int
-	for _, p := range []int{c.RunPort, c.Port} {
-		if p > 0 && (len(ports) == 0 || ports[0] != p) {
-			ports = append(ports, p)
+// lalu port yang dideklarasikan kode. Bila tidak ada yang menjawab, port pertama dipakai (probe melapor skipped)
+// dan answering = false.
+func localBaseURL(ports ...int) (base string, answering bool) {
+	var list []int
+	for _, p := range ports {
+		if p > 0 && !slices.Contains(list, p) {
+			list = append(list, p)
 		}
 	}
-	if len(ports) == 0 {
-		return ""
+	if len(list) == 0 {
+		return "", false
 	}
-	for _, p := range ports {
+	for _, p := range list {
 		addr := net.JoinHostPort("127.0.0.1", strconv.Itoa(p))
 		if conn, err := net.DialTimeout("tcp", addr, 400*time.Millisecond); err == nil {
 			conn.Close()
-			return "http://" + addr
+			return "http://" + addr, true
 		}
 	}
-	return fmt.Sprintf("http://127.0.0.1:%d", ports[0])
+	return fmt.Sprintf("http://127.0.0.1:%d", list[0]), false
 }
 
-func (s *securityTestService) Run(ctx context.Context, req SecurityTestRequest) (*secaudit.Report, error) {
+// secTestPlan = sasaran uji yang sudah divalidasi: input audit + komponen yang servernya diuji.
+type secTestPlan struct {
+	project  *models.Project
+	in       secaudit.Input
+	liveComp *models.Component
+}
+
+// prepare memvalidasi permintaan dan menyusun sasaran uji (folder backend, rute, komponen server).
+func (s *securityTestService) prepare(ctx context.Context, req SecurityTestRequest) (*secTestPlan, error) {
 	if req.ProjectID == 0 {
 		return nil, fmt.Errorf("project_id wajib diisi")
 	}
@@ -144,24 +170,21 @@ func (s *securityTestService) Run(ctx context.Context, req SecurityTestRequest) 
 	if in.Root == "" && len(in.Dirs) == 1 {
 		in.Root = in.Dirs[0].Path
 	}
+	return &secTestPlan{project: p, in: in, liveComp: liveComp}, nil
+}
 
-	wantLive := req.Live == nil || *req.Live
-	base := strings.TrimSpace(req.BaseURL)
-	if base == "" && liveComp != nil {
-		base = localBaseURL(*liveComp)
+// Run menjalankan uji secara sinkron (MCP, POST lama). Server hanya dinyalakan bila StartServer diminta.
+func (s *securityTestService) Run(ctx context.Context, req SecurityTestRequest) (*secaudit.Report, error) {
+	plan, err := s.prepare(ctx, req)
+	if err != nil {
+		return nil, err
 	}
-	if wantLive && base != "" {
-		in.Live = &secaudit.LiveOptions{BaseURL: base, Burst: req.Burst, SkipBurst: req.SkipBurst, Timeout: 5 * time.Second}
+	sess := newSecTestSession(plan.project, req)
+	s.execute(ctx, sess, plan, req)
+	if sess.Report == nil {
+		return nil, fmt.Errorf("%s", sess.Error)
 	}
-
-	rep := secaudit.Run(ctx, in)
-	if wantLive && base == "" {
-		rep.Notes = append(rep.Notes, "Tidak ada port lokal maupun URL live untuk diuji; isi base_url untuk membuktikan kontrol di server.")
-	}
-	lastSecTestMu.Lock()
-	lastSecTest[p.ID] = rep
-	lastSecTestMu.Unlock()
-	return rep, nil
+	return sess.Report, nil
 }
 
 func (s *securityTestService) Last(projectID uint) (*secaudit.Report, bool) {

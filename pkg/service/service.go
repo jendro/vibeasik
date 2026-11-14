@@ -34,6 +34,6 @@ func NewServices(repos *repository.Repositories, db *gorm.DB) *Services {
 		ScaleUp:     NewScaleUpService(repos.Components, repos.Projects),
 		Similarity:  NewSimilarityService(repos.Projects),
 		Organizer:   NewOrganizerService(repos.Projects, repos.Components, db),
-		SecTest:     NewSecurityTestService(repos.Projects, repos.Routes),
+		SecTest:     NewSecurityTestService(repos.Projects, repos.Routes, db),
 	}
 }

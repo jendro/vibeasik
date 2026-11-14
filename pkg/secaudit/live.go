@@ -33,10 +33,25 @@ var stackTraceRe = regexp.MustCompile(`(?i)(goroutine \d+ \[running\]|panic: |Tr
 var versionHeaderRe = regexp.MustCompile(`\d+\.\d+`)
 
 type prober struct {
-	base   *url.URL
-	client *http.Client
-	mu     sync.Mutex
-	count  int
+	base      *url.URL
+	client    *http.Client
+	mu        sync.Mutex
+	count     int
+	onRequest func(method, path string, status int, latency time.Duration, err error)
+}
+
+func (p *prober) report(method, target string, r probeResp) {
+	if p.onRequest == nil {
+		return
+	}
+	path := target
+	if u, err := url.Parse(target); err == nil {
+		path = u.RequestURI()
+		if p.base.Path != "" {
+			path = strings.TrimPrefix(path, p.base.Path)
+		}
+	}
+	p.onRequest(method, path, r.status, r.latency, r.err)
 }
 
 // ValidateBaseURL mengembalikan pesan galat bila URL server tidak bisa diuji (bukan http/https, tanpa host).
@@ -122,11 +137,15 @@ func (p *prober) do(ctx context.Context, method, target string, body io.Reader, 
 	start := time.Now()
 	resp, err := p.client.Do(req)
 	if err != nil {
-		return probeResp{err: err, latency: time.Since(start)}
+		r := probeResp{err: err, latency: time.Since(start)}
+		p.report(method, target, r)
+		return r
 	}
 	defer resp.Body.Close()
 	data, _ := io.ReadAll(io.LimitReader(resp.Body, maxBodyRead))
-	return probeResp{status: resp.StatusCode, headers: resp.Header, body: string(data), latency: time.Since(start)}
+	r := probeResp{status: resp.StatusCode, headers: resp.Header, body: string(data), latency: time.Since(start)}
+	p.report(method, target, r)
+	return r
 }
 
 // probeLive menguji server berjalan. Hanya request biasa (GET, OPTIONS, POST body kosong ke rute login)
@@ -147,7 +166,7 @@ func probeLive(ctx context.Context, opts LiveOptions) (*LiveResult, []Check) {
 		Timeout: timeout,
 		// Redirect tidak diikuti: header keamanan dinilai pada respons yang benar-benar dikirim server.
 		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
-	}}
+	}, onRequest: opts.OnRequest}
 	// Koneksi keep-alive ke server sasaran ditutup begitu uji selesai.
 	defer p.client.CloseIdleConnections()
 	paths := opts.Paths
