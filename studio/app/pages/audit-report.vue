@@ -4,6 +4,7 @@ definePageMeta({
 })
 
 const route = useRoute()
+const router = useRouter()
 const {
   projects,
   activeProjectId,
@@ -19,9 +20,9 @@ const {
 } = useAuditReport()
 
 const {
-  activeCategory, activeSeverity, activeStatus, searchQuery,
+  activeCategory, activeArea, activeSeverity, activeStatus, searchQuery,
   pendingActionableFindings, pendingActionableCount, isFindingResolved, isFindingIgnored,
-  statusCounts, categoryCounts, severityCounts, filteredFindings,
+  statusCounts, categoryCounts, areaCounts, severityCounts, filteredFindings,
   groupSimilar, findingGroups, mergeableGroupCount, toggleGroupSimilar, GROUP_PREF_KEY
 } = useAuditFindingFilters(reportData, resolvedFindingKeys)
 
@@ -63,6 +64,16 @@ const simulationDrawerOpen = ref(false)
 // RUNTIME-* sudah digabung engine ke diagnostic terbaru.
 const { session: runtimeSession, load: loadRuntimeSimulation } = useRuntimeSimulation(async () => {
   if (activeProjectId.value) await loadAuditReport(activeProjectId.value, false)
+})
+
+// ?area=<area> (dari panel ringkasan proyek) memilih filter area; filter ikut tersimpan di URL agar bisa dibagikan.
+const AREA_KEYS = new Set(['speed', 'data', 'ui', 'security', 'code', 'ops'])
+watch(() => route.query.area, (a) => {
+  activeArea.value = typeof a === 'string' && AREA_KEYS.has(a) ? a : 'all'
+}, { immediate: true })
+watch(activeArea, (a) => {
+  const cur = typeof route.query.area === 'string' ? route.query.area : 'all'
+  if (cur !== a) router.replace({ query: { ...route.query, area: a === 'all' ? undefined : a } })
 })
 
 const handleShowRuntimeFindings = () => {
@@ -152,13 +163,11 @@ onMounted(async () => {
       @show-findings="handleShowRuntimeFindings"
     />
 
-    <!-- Metric Summary Cards -->
+    <!-- Temuan per area perbaikan (klik = filter); ?area=speed dari ringkasan proyek langsung memfilter -->
     <DiagnosticsAuditMetricCards
-      :category-counts="categoryCounts"
-      :severity-counts="severityCounts"
-      :total-findings="reportData?.total_findings || 0"
-      :active-category="activeCategory"
-      @select-category="cat => activeCategory = cat"
+      :area-counts="areaCounts"
+      :active-area="activeArea"
+      @select-area="area => activeArea = area"
     />
 
     <!-- Filter & Search Bar -->

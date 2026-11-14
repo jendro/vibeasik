@@ -1,6 +1,8 @@
 export interface Finding {
   id?: string
   category: string
+  /** area perbaikan dari engine: speed, data, ui, security, code, ops (diisi saat dikirim, untuk filter) */
+  area?: string
   severity: 'CRITICAL' | 'WARNING' | 'INFO' | 'OPTIMIZATION' | string
   title: string
   description: string

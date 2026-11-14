@@ -21,7 +21,7 @@ func testDB(t *testing.T) *gorm.DB {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := db.AutoMigrate(&models.Project{}, &models.Component{}, &models.Todo{}, &models.Diagnostic{}, &models.ProcessCostSnapshot{}); err != nil {
+	if err := db.AutoMigrate(&models.Project{}, &models.Component{}, &models.Todo{}, &models.Diagnostic{}, &models.DeepCheckReport{}, &models.ProcessCostSnapshot{}); err != nil {
 		t.Fatal(err)
 	}
 	return db
@@ -57,6 +57,12 @@ func TestBuildOwnerRecap(t *testing.T) {
 	})
 	db.Create(&models.Diagnostic{ProjectID: pid, Score: 60, CreatedAt: at(10), FindingsJSON: "[]"})
 	db.Create(&models.Diagnostic{ProjectID: pid, Score: 82, CreatedAt: at(1), FindingsJSON: string(findings)})
+	// Diagnosa per komponen tidak tampil di halaman Audit, jadi tidak ikut dihitung; Deep Check terbaru ikut.
+	comp := uint(9)
+	compFindings, _ := json.Marshal([]models.Finding{{Title: "komponen", Severity: "WARNING", Status: "open"}})
+	db.Create(&models.Diagnostic{ProjectID: pid, ComponentID: &comp, Score: 70, CreatedAt: at(1), FindingsJSON: string(compFindings)})
+	deepFindings, _ := json.Marshal([]models.Finding{{ID: "DEEP-FORM-MISSING-VALIDATION_POST_/x", RuleID: "DEEP-FORM-MISSING-VALIDATION_POST_/x", Category: "router", Title: "validasi", Severity: "WARNING", Status: "open"}})
+	db.Create(&models.DeepCheckReport{ProjectID: pid, CreatedAt: at(0), FindingsJSON: string(deepFindings)})
 
 	r, err := BuildOwnerRecap(db, pid, 30, now)
 	if err != nil {
@@ -74,13 +80,13 @@ func TestBuildOwnerRecap(t *testing.T) {
 	if r.Algorithm.Done != 1 || r.Algorithm.Open != 1 {
 		t.Errorf("algoritma: %+v", r.Algorithm)
 	}
-	if r.Findings.Open != 1 || r.Findings.OpenCritical != 1 || r.Findings.Resolved != 1 || r.Findings.Ignored != 1 || r.Findings.ResolvedInPeriod != 1 {
+	if r.Findings.Open != 2 || r.Findings.OpenCritical != 1 || r.Findings.Resolved != 1 || r.Findings.Ignored != 1 || r.Findings.ResolvedInPeriod != 1 {
 		t.Errorf("temuan: %+v", r.Findings)
 	}
-	if r.Findings.OpenByArea["speed"] != 1 || len(r.Findings.OpenByArea) != 1 {
+	if r.Findings.OpenByArea["speed"] != 1 || r.Findings.OpenByArea["data"] != 1 || len(r.Findings.OpenByArea) != 2 {
 		t.Errorf("area temuan: %+v", r.Findings.OpenByArea)
 	}
-	if r.Findings.LastAuditAt == nil || !r.Findings.LastAuditAt.Equal(at(1)) {
+	if r.Findings.LastAuditAt == nil || !r.Findings.LastAuditAt.Equal(at(0)) {
 		t.Errorf("audit terakhir: %v", r.Findings.LastAuditAt)
 	}
 	if r.Todos.OpenFromAudit != 1 {
@@ -89,7 +95,7 @@ func TestBuildOwnerRecap(t *testing.T) {
 	if len(r.Highlights) == 0 || r.Highlights[0].CommitSHA != "abc123def" {
 		t.Errorf("todo selesai terbaru harus membawa commit: %+v", r.Highlights)
 	}
-	if len(r.Health) != 2 || r.Health[0].Score != 60 || r.Health[1].Score != 82 {
+	if len(r.Health) != 3 || r.Health[0].Score != 60 {
 		t.Errorf("kesehatan: %+v", r.Health)
 	}
 	if len(r.Timeline) != 30 || r.Timeline[29].Open != 2 {

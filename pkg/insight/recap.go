@@ -1,7 +1,6 @@
 package insight
 
 import (
-	"encoding/json"
 	"regexp"
 	"sort"
 	"strings"
@@ -318,63 +317,42 @@ func latest(ts []recapTodo) []TodoBrief {
 	return out
 }
 
-// fillFindings membaca skor tiap audit (tren kesehatan) dan temuan audit TERBARU per aplikasi.
+// fillFindings membaca skor tiap audit (tren kesehatan) dan temuan yang berlaku sekarang
+// (models.CurrentProjectFindings — himpunan yang sama dengan halaman Audit & Diagnostik).
 func fillFindings(db *gorm.DB, projectID uint, out *OwnerRecap, day func(time.Time) (*DayPoint, bool)) error {
 	var scores []models.Diagnostic
-	if err := db.Model(&models.Diagnostic{}).Select("id", "component_id", "score", "created_at").
+	if err := db.Model(&models.Diagnostic{}).Select("id", "score", "created_at").
 		Where("project_id = ?", projectID).Order("created_at DESC, id DESC").Limit(recapHealthMax).Find(&scores).Error; err != nil {
 		return err
 	}
-	latestID := map[uint]uint{} // component (0 = proyek) → audit terbaru
 	for i := len(scores) - 1; i >= 0; i-- {
-		d := scores[i]
-		out.Health = append(out.Health, HealthPoint{Date: d.CreatedAt.Format("2006-01-02"), Score: d.Score})
-		cid := uint(0)
-		if d.ComponentID != nil {
-			cid = *d.ComponentID
-		}
-		latestID[cid] = d.ID
+		out.Health = append(out.Health, HealthPoint{Date: scores[i].CreatedAt.Format("2006-01-02"), Score: scores[i].Score})
 	}
-	if len(scores) > 0 {
-		at := scores[0].CreatedAt
-		out.Findings.LastAuditAt = &at
-	}
-	if len(latestID) == 0 {
-		return nil
-	}
-	ids := make([]uint, 0, len(latestID))
-	for _, id := range latestID {
-		ids = append(ids, id)
-	}
-	var full []models.Diagnostic
-	if err := db.Model(&models.Diagnostic{}).Select("id", "findings_json").Where("id IN ?", ids).Find(&full).Error; err != nil {
+
+	findings, lastAt, err := models.CurrentProjectFindings(db, projectID)
+	if err != nil {
 		return err
 	}
-	for _, d := range full {
-		var fs []models.Finding
-		if d.FindingsJSON == "" || json.Unmarshal([]byte(d.FindingsJSON), &fs) != nil {
-			continue
-		}
-		for _, f := range fs {
-			switch f.Status {
-			case models.FindingStatusResolved:
-				out.Findings.Resolved++
-				if f.ResolvedAt != nil {
-					if p, ok := day(*f.ResolvedAt); ok {
-						p.FindingsResolved++
-						out.Findings.ResolvedInPeriod++
-					}
+	out.Findings.LastAuditAt = lastAt
+	for _, f := range findings {
+		switch {
+		case f.Status == models.FindingStatusResolved:
+			out.Findings.Resolved++
+			if f.ResolvedAt != nil {
+				if p, ok := day(*f.ResolvedAt); ok {
+					p.FindingsResolved++
+					out.Findings.ResolvedInPeriod++
 				}
-			case models.FindingStatusIgnored:
-				out.Findings.Ignored++
-			default:
-				out.Findings.Open++
-				sev := strings.ToUpper(f.Severity)
-				out.Findings.OpenBySeverity[sev]++
-				out.Findings.OpenByArea[diagnostics.FindingArea(f)]++
-				if sev == "CRITICAL" {
-					out.Findings.OpenCritical++
-				}
+			}
+		case f.Status == models.FindingStatusIgnored:
+			out.Findings.Ignored++
+		case models.IsOpenFinding(f):
+			out.Findings.Open++
+			sev := strings.ToUpper(f.Severity)
+			out.Findings.OpenBySeverity[sev]++
+			out.Findings.OpenByArea[diagnostics.FindingArea(f)]++
+			if sev == "CRITICAL" {
+				out.Findings.OpenCritical++
 			}
 		}
 	}

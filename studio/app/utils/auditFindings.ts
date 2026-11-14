@@ -58,8 +58,13 @@ export const MATCHERS: readonly FindingMatcher[] = [
   hasSameTitleAtLocation,
 ]
 
+// Sama dengan models.AreFindingsMatching di engine: dua temuan ber-ID eksplisit yang berbeda adalah temuan berbeda
+// (mis. GIT-UNCOMMITTED di tiga komponen, "…@frontend" / "…@admin"), jadi pencocokan rule/judul di lokasi yang sama
+// hanya untuk temuan tanpa ID. Tanpa penjaga ini halaman Audit menghitung lebih sedikit daripada engine.
 export const areFindingsMatching = (a: Finding, b: Finding): boolean => {
-  return MATCHERS.some(matches => matches(a, b))
+  if (hasSameId(a, b) || hasSameGeneratedKey(a, b)) return true
+  if (a.id && b.id) return false
+  return hasSameRuleAtLocation(a, b) || hasSameTitleAtLocation(a, b)
 }
 
 export const deduplicateFindings = (list: Finding[]): Finding[] => {

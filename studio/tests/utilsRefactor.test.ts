@@ -150,12 +150,14 @@ describe('auditFindings helper refactor (DEEP-FUNC-HIGH-COMPLEXITY CC reduction)
     const fKeyB = baseFinding({ id: '', rule_id: 'R1', target_file: 'a.ts', line: 1 })
     expect(areFindingsMatching(fKeyA, fKeyB)).toBe(true)
 
+    // Rule/judul di lokasi sama hanya mencocokkan temuan tanpa ID; ID eksplisit berbeda = temuan berbeda (engine).
     const fRuleA = baseFinding({ id: 'id-1', rule_id: 'R2', target_file: 'b.ts', line: 2 })
-    const fRuleB = baseFinding({ id: 'id-2', rule_id: 'R2', target_file: 'b.ts', line: 2 })
+    const fRuleB = baseFinding({ id: '', rule_id: 'R2', target_file: 'b.ts', line: 2, title: 'lain' })
     expect(areFindingsMatching(fRuleA, fRuleB)).toBe(true)
+    expect(areFindingsMatching(fRuleA, { ...fRuleB, id: 'id-2' })).toBe(false)
 
     const fTitleA = baseFinding({ id: 'id-3', rule_id: '', title: 'Title Match', target_file: 'c.ts', line: 3 })
-    const fTitleB = baseFinding({ id: 'id-4', rule_id: '', title: 'Title Match', target_file: 'c.ts', line: 3 })
+    const fTitleB = baseFinding({ id: '', rule_id: '', title: 'Title Match', target_file: 'c.ts', line: 3 })
     expect(areFindingsMatching(fTitleA, fTitleB)).toBe(true)
 
     const fMismatch = baseFinding({ id: 'id-5', rule_id: 'R5', target_file: 'd.ts', line: 4 })
@@ -222,15 +224,18 @@ describe('auditFindings helper refactor (DEEP-FUNC-HIGH-COMPLEXITY CC reduction)
     const fKeyMatch2 = baseFinding({ id: '', rule_id: 'R-KEY', target_file: 'c.ts', line: 5 })
     expect(areFindingsMatching(fKeyMatch1, fKeyMatch2)).toBe(true)
 
-    // 3. Jalur Matcher 3: RuleAtLocation sama (ID beda, Key beda)
+    // 3. Jalur Matcher 3: RuleAtLocation sama (salah satu tanpa ID)
     const fRuleLoc1 = baseFinding({ id: 'id-diff-1', rule_id: 'SEC-X', target_file: 'd.ts', line: 10, title: 'Title A' })
-    const fRuleLoc2 = baseFinding({ id: 'id-diff-2', rule_id: 'SEC-X', target_file: 'd.ts', line: 10, title: 'Title B' })
+    const fRuleLoc2 = baseFinding({ id: '', rule_id: 'SEC-X', target_file: 'd.ts', line: 10, title: 'Title B' })
     expect(areFindingsMatching(fRuleLoc1, fRuleLoc2)).toBe(true)
 
-    // 4. Jalur Matcher 4: TitleAtLocation sama (ID beda, Rule kosong/beda)
+    // 4. Jalur Matcher 4: TitleAtLocation sama (salah satu tanpa ID, rule kosong)
     const fTitleLoc1 = baseFinding({ id: 'id-diff-3', rule_id: '', target_file: 'e.ts', line: 20, title: 'Same Title' })
-    const fTitleLoc2 = baseFinding({ id: 'id-diff-4', rule_id: '', target_file: 'e.ts', line: 20, title: 'Same Title' })
+    const fTitleLoc2 = baseFinding({ id: '', rule_id: '', target_file: 'e.ts', line: 20, title: 'Same Title' })
     expect(areFindingsMatching(fTitleLoc1, fTitleLoc2)).toBe(true)
+
+    // 4b. Dua ID eksplisit berbeda tidak pernah dicocokkan lewat lokasi (sama dengan engine)
+    expect(areFindingsMatching({ ...fTitleLoc1 }, { ...fTitleLoc2, id: 'id-diff-4' })).toBe(false)
 
     // 5. Jalur Negative: Tidak ada satu pun kriteria yang cocok
     const fMismatch1 = baseFinding({ id: 'id-100', rule_id: 'R-A', target_file: 'f1.ts', line: 1, title: 'A' })
@@ -745,3 +750,19 @@ describe('todoRecommendedModelMeta helper refactor (CC reduction via lookup tabl
   })
 })
 
+
+describe('pencocokan temuan sama dengan engine', () => {
+  test('temuan ber-ID berbeda di lokasi yang sama tetap terpisah (per komponen)', () => {
+    const base = { category: 'git', severity: 'INFO', title: 'Uncommitted', description: '', suggestion: '', rule_id: 'GIT-UNCOMMITTED' }
+    const list = [
+      { ...base, id: 'GIT-UNCOMMITTED__0' },
+      { ...base, id: 'GIT-UNCOMMITTED__0@frontend' },
+      { ...base, id: 'GIT-UNCOMMITTED__0@admin' }
+    ]
+    expect(deduplicateFindings(list).length).toBe(3)
+  })
+  test('tanpa ID, rule & lokasi sama tetap dianggap satu', () => {
+    const f = { category: 'query', severity: 'WARNING', title: 'N+1', description: '', suggestion: '', rule_id: 'QUERY-NPLUS1', target_file: 'a.go', line: 3 }
+    expect(deduplicateFindings([f, { ...f, title: 'lain' }]).length).toBe(1)
+  })
+})

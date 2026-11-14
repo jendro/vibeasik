@@ -5,6 +5,8 @@ import type { DiagnosticReportResponse, Finding } from '~/types'
 export function useAuditFindingFilters(reportData: Ref<DiagnosticReportResponse | null>, resolvedFindingKeys: Ref<Set<string>>) {
   // Filters
   const activeCategory = ref('all')
+  // Area perbaikan (Finding.area dari engine: speed, data, ui, security, code, ops) — sama dengan ringkasan proyek.
+  const activeArea = ref('all')
   const activeSeverity = ref('all')
   const activeStatus = ref('active') // Default: sembunyikan temuan selesai & diabaikan
   const searchQuery = ref('')
@@ -83,6 +85,19 @@ export function useAuditFindingFilters(reportData: Ref<DiagnosticReportResponse 
     return counts
   })
 
+  const areaCounts = computed(() => {
+    const counts: Record<string, number> = {}
+    for (const f of reportData.value?.findings || []) {
+      const resolved = isFindingResolved(f)
+      const ignored = isFindingIgnored(f)
+      if (activeStatus.value === 'active' && (resolved || ignored)) continue
+      if (activeStatus.value === 'resolved' && !resolved) continue
+      if (activeStatus.value === 'ignored' && !ignored) continue
+      if (f.area) counts[f.area] = (counts[f.area] || 0) + 1
+    }
+    return counts
+  })
+
   const severityCounts = computed(() => {
     const counts: Record<string, number> = {
       CRITICAL: 0,
@@ -119,6 +134,8 @@ export function useAuditFindingFilters(reportData: Ref<DiagnosticReportResponse 
       } else if (activeStatus.value === 'ignored') {
         if (!ignored) return false
       }
+
+      if (activeArea.value !== 'all' && f.area !== activeArea.value) return false
 
       // Category filter
       if (activeCategory.value !== 'all') {
@@ -178,9 +195,9 @@ export function useAuditFindingFilters(reportData: Ref<DiagnosticReportResponse 
   }
 
   return {
-    activeCategory, activeSeverity, activeStatus, searchQuery,
+    activeCategory, activeArea, activeSeverity, activeStatus, searchQuery,
     pendingActionableFindings, pendingActionableCount, isFindingResolved, isFindingIgnored,
-    statusCounts, categoryCounts, severityCounts, filteredFindings,
+    statusCounts, categoryCounts, areaCounts, severityCounts, filteredFindings,
     groupSimilar, findingGroups, mergeableGroupCount, toggleGroupSimilar, GROUP_PREF_KEY
   }
 }

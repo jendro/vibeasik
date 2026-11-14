@@ -130,12 +130,18 @@ const fmtDate = (iso?: string) => iso ? new Date(iso).toLocaleDateString('id-ID'
             </p>
           </header>
           <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 2xl:grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
-            <li v-for="a in areas" :key="a.key" class="flex items-center justify-between gap-2 min-w-0" :title="a.desc">
-              <span class="flex items-center gap-1.5 min-w-0 text-neutral-600 dark:text-slate-300">
-                <UIcon :name="a.icon" class="size-3.5 shrink-0 text-neutral-400" />
-                <span class="truncate">{{ a.label }}</span>
-              </span>
-              <span class="tabular-nums font-medium" :class="a.n ? 'text-neutral-900 dark:text-white' : 'text-neutral-300 dark:text-slate-600'">{{ a.n }}</span>
+            <li v-for="a in areas" :key="a.key" class="min-w-0">
+              <NuxtLink
+                :to="`/audit-report?area=${a.key}`"
+                class="-mx-1.5 px-1.5 py-0.5 rounded-md flex items-center justify-between gap-2 min-w-0 hover:bg-neutral-100 dark:hover:bg-white/[0.05] focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                :title="`${a.desc} — buka temuan area ini di Audit & Diagnostik`"
+              >
+                <span class="flex items-center gap-1.5 min-w-0 text-neutral-600 dark:text-slate-300">
+                  <UIcon :name="a.icon" class="size-3.5 shrink-0 text-neutral-400" />
+                  <span class="truncate">{{ a.label }}</span>
+                </span>
+                <span class="tabular-nums font-medium" :class="a.n ? 'text-neutral-900 dark:text-white' : 'text-neutral-300 dark:text-slate-600'">{{ a.n }}</span>
+              </NuxtLink>
             </li>
           </ul>
           <div class="mt-auto flex flex-wrap gap-2">

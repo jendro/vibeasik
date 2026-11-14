@@ -37,7 +37,10 @@ type Finding struct {
 	TargetFile  string `json:"target_file,omitempty"`
 	// Component: komponen asal temuan (Project.ComponentKey, mis. "admin") bila TargetFile relatif terhadap
 	// folder komponen — dua komponen bisa punya path relatif yang sama (app/layouts/default.vue).
-	Component    string `json:"component,omitempty"`
+	Component string `json:"component,omitempty"`
+	// Area: area perbaikan (diagnostics.FindingArea: speed, data, ui, security, code, ops). Diisi saat dikirim ke
+	// Studio, bukan sumber kebenaran — pemetaannya bisa berubah, jadi selalu dihitung ulang.
+	Area         string `json:"area,omitempty"`
 	Line         int    `json:"line,omitempty"`
 	Snippet      string `json:"snippet,omitempty"`
 	RuleID       string `json:"rule_id,omitempty"`

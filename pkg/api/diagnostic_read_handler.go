@@ -126,6 +126,7 @@ func (s *Server) getLatestProjectDiagnostic(c *fiber.Ctx) error {
 	}
 
 	findings := s.syncProjectDeepCheckFindings(&diag, id)
+	diagnostics.TagFindingAreas(findings) // setelah disimpan: area hanya untuk tampilan
 
 	var optimizations []models.Optimization
 	_ = json.Unmarshal([]byte(diag.Optimizations), &optimizations)

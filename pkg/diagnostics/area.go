@@ -52,6 +52,13 @@ var areaByCategory = map[string]string{
 	"runtime": AreaOps, "risk": AreaOps,
 }
 
+// TagFindingAreas mengisi Finding.Area setiap temuan (untuk respons ke Studio).
+func TagFindingAreas(findings []models.Finding) {
+	for i := range findings {
+		findings[i].Area = FindingArea(findings[i])
+	}
+}
+
 // FindingArea: area perbaikan temuan (bawaan AreaCode bila rule & kategorinya tidak dikenal).
 func FindingArea(f models.Finding) string {
 	rule := strings.ToUpper(f.RuleID)
