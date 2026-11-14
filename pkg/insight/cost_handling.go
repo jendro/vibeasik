@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -340,8 +341,11 @@ func annotate(hots []routemap.Hotspot, l *costLedger) (func(routemap.RouteCost) 
 // ErrCostSourceGone: sumber biaya yang diminta tidak ada lagi (kode sudah berubah).
 var ErrCostSourceGone = errors.New("sumber biaya ini tidak ada lagi; muat ulang tab Biaya Proses")
 
-// CreateCostTodo menjadikan satu sumber biaya tinggi sebagai todo. Bila sudah ada todo terbuka untuk sumber
-// itu, todo tersebut yang dikembalikan (existed = true).
+// CreateCostTodo menjadikan sumber biaya tinggi sebagai todo. Semua sumber biaya di berkas yang sama (N+1
+// maupun O(n²), fungsi mana pun) dilebur menjadi SATU todo: deskripsinya dimulai dari fungsi sumber, lalu naik
+// ke rute yang menjangkaunya. Aturan audit lain di berkas itu dicatat sebagai sub todo "merged" (kunci audit
+// "<aturan>|<berkas>") agar audit dan tab Biaya Proses menunjuk todo yang sama. Bila sudah ada todo terbuka
+// untuk salah satu sumber itu, sumber lainnya dilebur ke todo tersebut (existed = true).
 func CreateCostTodo(db *gorm.DB, projectID uint, file string, line int, kind string) (*models.Todo, bool, error) {
 	a, err := analyze(db, projectID)
 	if err != nil {
@@ -357,32 +361,47 @@ func CreateCostTodo(db *gorm.DB, projectID uint, file string, line int, kind str
 	if h == nil {
 		return nil, false, ErrCostSourceGone
 	}
+	group := costGroup(a.hots, *h)
 	l := loadCostLedger(db, projectID)
-	if got := l.handling(*h); got != nil && got.TodoID != 0 && got.Where == HandledTodo {
-		var t models.Todo
-		if db.First(&t, got.TodoID).Error == nil {
-			return &t, true, nil
+
+	// Todo terbuka yang sudah menangani salah satu sumber di berkas ini → sumber lain dilebur ke sana.
+	for _, g := range group {
+		got := l.handling(g)
+		if got == nil || got.TodoID == 0 || got.Where != HandledTodo {
+			continue
 		}
+		var t models.Todo
+		if db.First(&t, got.TodoID).Error != nil {
+			continue
+		}
+		if t.Source == "process_cost" && (t.Status == models.TodoStatusPending || t.Status == models.TodoStatusSuggested) {
+			t.Title, t.Description = costGroupTitle(group), costGroupDescription(group)
+			t.Priority = costGroupPriority(group, t.Priority)
+			if err := db.Model(&t).Select("title", "description", "priority").Updates(&t).Error; err != nil {
+				return nil, false, err
+			}
+		}
+		if err := mergeCostRules(db, t, group, file); err != nil {
+			return nil, false, err
+		}
+		return &t, true, nil
 	}
 
 	var project models.Project
 	if err := db.Preload("Components").First(&project, projectID).Error; err != nil {
 		return nil, false, err
 	}
-	f := diagnostics.HotspotFinding(*h, "")
+	rule := diagnostics.HotspotRule(h.Kind)
 	todo := models.Todo{
 		Level: models.TodoLevelProject, ProjectID: &project.ID, ProjectName: project.Name,
-		TargetApps:  fmt.Sprintf("%s (%s:L%d)", project.Name, filepath.Base(file), line),
-		Title:       costTodoTitle(*h),
-		Description: costTodoDescription(*h, f),
-		Status:      models.TodoStatusPending, Priority: models.TodoPriorityMedium, Category: models.CategoryPerformance,
+		TargetApps:  fmt.Sprintf("%s (%s:L%d)", project.Name, filepath.Base(file), group[0].Func.Line),
+		Title:       costGroupTitle(group),
+		Description: costGroupDescription(group),
+		Status:      models.TodoStatusPending, Priority: costGroupPriority(group, models.TodoPriorityMedium), Category: models.CategoryPerformance,
 		CreatorType: models.CreatorHuman, CreatorName: "Biaya Proses",
-		GuidelineRef: f.RuleID, Source: "process_cost", AuditKey: f.RuleID + "|" + filepath.ToSlash(filepath.Clean(file)),
+		GuidelineRef: rule, Source: "process_cost", AuditKey: costKey(rule, file),
 		Tags:      models.TagOptimasiQuery,
 		Rationale: "Dihitung statis dari rumus tick T(n) & query Q(n) di tab Biaya Proses (batas atas kasus terburuk).",
-	}
-	if h.Kind == "nplus1" || h.Func.Degree >= 3 {
-		todo.Priority = models.TodoPriorityHigh
 	}
 	if c := componentOf(project, a.root, file); c != nil {
 		todo.Level, todo.ComponentID, todo.ComponentName = models.TodoLevelComponent, &c.ID, c.Name
@@ -390,28 +409,210 @@ func CreateCostTodo(db *gorm.DB, projectID uint, file string, line int, kind str
 	if err := db.Create(&todo).Error; err != nil {
 		return nil, false, err
 	}
+	if err := mergeCostRules(db, todo, group, file); err != nil {
+		return nil, false, err
+	}
 	return &todo, false, nil
 }
 
-func costTodoTitle(h routemap.Hotspot) string {
+func costKey(rule, file string) string { return rule + "|" + filepath.ToSlash(filepath.Clean(file)) }
+
+// costGroup: semua sumber biaya di berkas yang sama dengan h, urut dari fungsi paling atas di berkas; satu fungsi
+// yang punya N+1 sekaligus O(n²) tetap berurutan (N+1 dulu) supaya dilaporkan sebagai satu fungsi.
+func costGroup(hots []routemap.Hotspot, h routemap.Hotspot) []routemap.Hotspot {
+	var out []routemap.Hotspot
+	for _, x := range hots {
+		if x.Func.Module == h.Func.Module && x.Func.File == h.Func.File {
+			out = append(out, x)
+		}
+	}
+	sort.SliceStable(out, func(i, j int) bool {
+		if out[i].Func.Line != out[j].Func.Line {
+			return out[i].Func.Line < out[j].Func.Line
+		}
+		return out[i].Kind == "nplus1" && out[j].Kind != "nplus1"
+	})
+	return out
+}
+
+// costFunc = satu fungsi sumber beserta semua jenis biayanya.
+type costFunc struct {
+	hots []routemap.Hotspot
+}
+
+func groupByFunc(group []routemap.Hotspot) []costFunc {
+	var out []costFunc
+	idx := map[int]int{}
+	for _, h := range group {
+		if i, ok := idx[h.Func.Line]; ok {
+			out[i].hots = append(out[i].hots, h)
+			continue
+		}
+		idx[h.Func.Line] = len(out)
+		out = append(out, costFunc{hots: []routemap.Hotspot{h}})
+	}
+	return out
+}
+
+func costGroupPriority(group []routemap.Hotspot, current string) string {
+	for _, h := range group {
+		if h.Kind == "nplus1" || h.Func.Degree >= 3 {
+			return models.TodoPriorityHigh
+		}
+	}
+	return current
+}
+
+func funcShortName(h routemap.Hotspot) string {
 	name := h.Func.Name
 	if i := strings.LastIndex(name, "."); i >= 0 && h.Func.Lang == "go" {
 		name = name[i+1:]
 	}
+	return name
+}
+
+func costGroupTitle(group []routemap.Hotspot) string {
+	if len(group) == 1 {
+		return costTodoTitle(group[0])
+	}
+	fns := groupByFunc(group)
+	if len(fns) == 1 {
+		h := fns[0].hots[0]
+		big := h.Func.BigO
+		for _, x := range fns[0].hots {
+			if x.Kind == "growth" {
+				big = x.Func.BigO
+			}
+		}
+		return fmt.Sprintf("Hilangkan N+1 query & turunkan biaya %s di %s", big, funcShortName(h))
+	}
+	names := make([]string, 0, 3)
+	for i, f := range fns {
+		if i == 3 {
+			names = append(names, "…")
+			break
+		}
+		names = append(names, funcShortName(f.hots[0]))
+	}
+	return fmt.Sprintf("Turunkan biaya proses di %s (%d fungsi: %s)", filepath.Base(group[0].Func.File), len(fns), strings.Join(names, ", "))
+}
+
+func costTodoTitle(h routemap.Hotspot) string {
+	name := funcShortName(h)
 	if h.Kind == "nplus1" {
 		return fmt.Sprintf("Hilangkan N+1 query di %s (Q(n) = %s)", name, h.Func.QueryFormula)
 	}
 	return fmt.Sprintf("Turunkan biaya %s di %s", h.Func.BigO, name)
 }
 
-func costTodoDescription(h routemap.Hotspot, f models.Finding) string {
+const maxCostTodoRoutes = 30
+
+// costGroupDescription: langkah dari bawah ke atas — fungsi sumber dulu (tempat loop/query ditulis), lalu rute
+// yang menjangkaunya untuk diperiksa ulang setelah fungsinya diperbaiki.
+func costGroupDescription(group []routemap.Hotspot) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "%s\n\n**Lokasi:** `%s:%d` (fungsi `%s`)\n\n", f.Description, h.Func.File, h.Func.Line, h.Func.Name)
-	fmt.Fprintf(&b, "**Rumus saat ini:** T(n) = %s · Q(n) = %s · %s\n\n", h.Func.Formula, h.Func.QueryFormula, h.Func.BigO)
-	fmt.Fprintf(&b, "**Langkah:** %s\n\n", f.Suggestion)
-	b.WriteString("**Selesai bila:** tab Biaya Proses tidak lagi menunjuk fungsi ini sebagai sumber biaya (kelasnya turun atau N+1 hilang), dan test yang ada tetap lulus.\n\n")
-	fmt.Fprintf(&b, "**Landasan:** %s\n", f.TheoryBasis)
+	fns := groupByFunc(group)
+	file := group[0].Func.File
+	routeFuncs := map[string][]string{}
+	for _, f := range fns {
+		name := funcShortName(f.hots[0])
+		seen := map[string]bool{}
+		for _, h := range f.hots {
+			for _, r := range h.AllRoutes {
+				if !seen[r] {
+					seen[r] = true
+					routeFuncs[r] = append(routeFuncs[r], name)
+				}
+			}
+		}
+	}
+	routes := make([]string, 0, len(routeFuncs))
+	for r := range routeFuncs {
+		routes = append(routes, r)
+	}
+	sort.Strings(routes)
+
+	if len(group) > 1 {
+		fmt.Fprintf(&b, "Sumber biaya tinggi di `%s` dilebur menjadi satu todo: %d fungsi, %d rute terdampak. ", file, len(fns), len(routes))
+	}
+	b.WriteString("Kerjakan dari bawah ke atas: perbaiki fungsi sumbernya dulu, baru naik ke rute yang memanggilnya.\n\n")
+
+	b.WriteString("## 1. Mulai dari fungsi\n\n")
+	var theories []string
+	for i, f := range fns {
+		h0 := f.hots[0]
+		fmt.Fprintf(&b, "### 1.%d `%s` — `%s:%d`\n\n", i+1, h0.Func.Name, h0.Func.File, h0.Func.Line)
+		for _, h := range f.hots {
+			fd := diagnostics.HotspotFinding(h, "")
+			label := "Pertumbuhan " + h.Func.BigO
+			if h.Kind == "nplus1" {
+				label = "N+1 query"
+			}
+			fmt.Fprintf(&b, "**%s.** %s\n\n", label, fd.Description)
+			fmt.Fprintf(&b, "**Rumus saat ini:** T(n) = %s · Q(n) = %s · %s\n\n", h.Func.Formula, h.Func.QueryFormula, h.Func.BigO)
+			fmt.Fprintf(&b, "**Langkah:** %s\n\n", fd.Suggestion)
+			if fd.TheoryBasis != "" && !containsStr(theories, fd.TheoryBasis) {
+				theories = append(theories, fd.TheoryBasis)
+			}
+		}
+	}
+
+	b.WriteString("## 2. Naik ke rute\n\n")
+	b.WriteString("Setelah fungsi di atas diperbaiki, periksa tiap rute yang menjangkaunya (handler, middleware, dan pemanggilan lain di jalurnya) agar biayanya tidak naik lagi di tempat lain, lalu klik **Cek ulang Big-O** di tab Biaya Proses.\n\n")
+	for i, r := range routes {
+		if i == maxCostTodoRoutes {
+			fmt.Fprintf(&b, "- … dan %d rute lain\n", len(routes)-maxCostTodoRoutes)
+			break
+		}
+		fmt.Fprintf(&b, "- `%s` (lewat `%s`)\n", r, strings.Join(routeFuncs[r], "`, `"))
+	}
+	if len(routes) > 0 {
+		b.WriteString("\n")
+	}
+	b.WriteString("**Selesai bila:** tab Biaya Proses tidak lagi menunjuk fungsi-fungsi ini sebagai sumber biaya (kelasnya turun atau N+1 hilang), rute di atas ikut turun, dan test yang ada tetap lulus.\n\n")
+	if len(theories) > 0 {
+		fmt.Fprintf(&b, "**Landasan:** %s\n", strings.Join(theories, " "))
+	}
 	return b.String()
+}
+
+func containsStr(in []string, s string) bool {
+	for _, x := range in {
+		if x == s {
+			return true
+		}
+	}
+	return false
+}
+
+// mergeCostRules mencatat aturan audit lain di kelompok sebagai sub todo "merged" dari t, supaya kunci audit
+// "<aturan>|<berkas>" itu menunjuk todo yang sama (tidak ada todo ganda untuk satu berkas).
+func mergeCostRules(db *gorm.DB, t models.Todo, group []routemap.Hotspot, file string) error {
+	for _, h := range group {
+		rule := diagnostics.HotspotRule(h.Kind)
+		key := costKey(rule, file)
+		if key == t.AuditKey {
+			continue
+		}
+		var n int64
+		db.Model(&models.Todo{}).Where("audit_key = ? AND (id = ? OR parent_id = ?) AND status <> ?", key, t.ID, t.ID, models.TodoStatusRejected).Count(&n)
+		if n > 0 {
+			continue
+		}
+		parent := t.ID
+		sub := models.Todo{
+			Level: t.Level, ProjectID: t.ProjectID, ProjectName: t.ProjectName, ComponentID: t.ComponentID, ComponentName: t.ComponentName,
+			TargetApps: t.TargetApps, ParentID: &parent, Status: models.TodoStatusMerged,
+			Title:       fmt.Sprintf("%s (dilebur ke todo #%d)", costTodoTitle(h), t.ID),
+			Description: fmt.Sprintf("Dilebur ke todo #%d karena berada di berkas yang sama (`%s`). Kerjakan lewat todo induknya.", t.ID, file),
+			Priority:    t.Priority, Category: models.CategoryPerformance, CreatorType: models.CreatorHuman, CreatorName: "Biaya Proses",
+			GuidelineRef: rule, Source: "process_cost", AuditKey: key, Tags: models.TagOptimasiQuery,
+		}
+		if err := db.Create(&sub).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // componentOf: aplikasi (komponen) yang foldernya memuat berkas relatif root proyek.

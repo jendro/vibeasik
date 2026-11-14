@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -237,14 +238,35 @@ func pairs(c *fiber.Ctx) error {
 		t.Errorf("klik kedua harus mengembalikan todo yang sama: %+v", again)
 	}
 
+	// Satu berkas = satu todo: /pairs (O(n²)) di main.go ikut dilebur ke todo /b, dimulai dari fungsi lalu rute.
+	if !strings.Contains(todo.Description, "## 1. Mulai dari fungsi") || !strings.Contains(todo.Description, "## 2. Naik ke rute") ||
+		strings.Index(todo.Description, "`main.b`") > strings.Index(todo.Description, "`main.pairs`") ||
+		strings.Index(todo.Description, "## 1.") > strings.Index(todo.Description, "## 2.") ||
+		!strings.Contains(todo.Description, "`GET /pairs` (lewat `pairs`)") || !strings.Contains(todo.Title, "2 fungsi") {
+		t.Errorf("deskripsi harus fungsi dulu lalu rute, dua fungsi dilebur: %q\n%s", todo.Title, todo.Description)
+	}
+	var sub models.Todo
+	if err := db.Where("parent_id = ?", todo.ID).First(&sub).Error; err != nil || sub.Status != models.TodoStatusMerged || sub.AuditKey != "COST-POLYNOMIAL-GROWTH|"+nb.Source.File {
+		t.Errorf("aturan O(n²) harus jadi sub todo merged: %+v err=%v", sub, err)
+	}
+	viaPairs, existed, _ := CreateCostTodo(db, proj.ID, pr.Source.File, pr.Source.Line, "growth")
+	if !existed || viaPairs.ID != todo.ID {
+		t.Errorf("klik dari /pairs harus mengembalikan todo yang sama: %+v", viaPairs)
+	}
+	var count int64
+	db.Model(&models.Todo{}).Where("project_id = ?", proj.ID).Count(&count)
+	if count != 2 {
+		t.Errorf("harus satu todo + satu sub todo, ada %d", count)
+	}
+
 	page, _ = ProcessCost(db, proj.ID, CostQuery{}, now)
 	if h := route(page, "/b").Handled; h == nil || h.Where != HandledTodo || h.TodoID != todo.ID || route(page, "/b").Source != nil {
 		t.Errorf("/b harus menunjuk todo #%d: %+v", todo.ID, h)
 	}
-	if h := route(page, "/pairs").Handled; h == nil || h.Where != HandledAudit {
-		t.Errorf("/pairs harus menunjuk Audit: %+v", h)
+	if h := route(page, "/pairs").Handled; h == nil || h.Where != HandledTodo || h.TodoID != todo.ID {
+		t.Errorf("/pairs harus menunjuk todo gabungan #%d: %+v", todo.ID, h)
 	}
-	if hs := page.Handling; hs.InTodo != 1 || hs.InAudit != 1 || hs.Open != 0 || len(hs.Todos) != 1 || hs.AuditAt == nil {
+	if hs := page.Handling; hs.InTodo != 2 || hs.InAudit != 0 || hs.Open != 0 || len(hs.Todos) != 1 || hs.AuditAt == nil {
 		t.Errorf("rekap: %+v", hs)
 	}
 

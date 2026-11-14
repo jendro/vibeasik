@@ -123,8 +123,8 @@ const makeTodo = async (src: CostSource) => {
   try {
     const res = await createProcessCostTodo(props.project.id, src)
     toast.add({
-      title: res.already_exists ? `Sudah ada todo #${res.todo.id}` : `Todo #${res.todo.id} dibuat`,
-      description: res.todo.title,
+      title: res.already_exists ? `Dilebur ke todo #${res.todo.id}` : `Todo #${res.todo.id} dibuat`,
+      description: res.already_exists ? `Berkas ini sudah punya todo; sumber biayanya digabung ke sana: ${res.todo.title}` : res.todo.title,
       color: res.already_exists ? 'neutral' : 'success',
       icon: 'i-lucide-list-checks',
       actions: [{ label: 'Buka Todo', onClick: openTodos }]
@@ -281,7 +281,7 @@ const card = 'min-w-0 rounded-2xl border border-neutral-200 dark:border-white/10
                 <span class="font-semibold">{{ note.title }}</span>{{ note.where ? `: ${note.where}` : '' }}.
               </p>
               <p class="text-xs text-neutral-600 dark:text-neutral-300">
-                {{ note.next }} Sumber biaya (N+1 &amp; O(n²) ke atas) otomatis ikut Audit; todo yang dibuat dari sini memakai kunci audit yang sama, jadi tidak tercatat ganda.
+                {{ note.next }} Sumber biaya (N+1 &amp; O(n²) ke atas) otomatis ikut Audit; todo dari sini dimulai dari fungsi sumbernya lalu naik ke rute, dan semua sumber biaya satu berkas dilebur menjadi satu todo.
               </p>
             </div>
           </div>
