@@ -468,7 +468,8 @@ func mobileSourceLocalhost(c models.Component) []models.Finding {
 
 var (
 	// import ... from 'x' / import 'x' (baris tunggal), dipisah antara import type dan import nilai
-	importFromRe = regexp.MustCompile(`^\s*import\s+(type\s+)?(?:[^'";]*?\s+from\s+)?['"]([^'"]+)['"]`)
+	importNamespaceRe = regexp.MustCompile(`^\s*import\s+(type\s+)?\*\s+as\s`)
+	importFromRe      = regexp.MustCompile(`^\s*import\s+(type\s+)?(?:[^'";]*?\s+from\s+)?['"]([^'"]+)['"]`)
 	// ekspor bernama tingkat atas yang dibaca unimport (auto-import Nuxt) dari composables/ & utils/
 	exportNameRe = regexp.MustCompile(`^export\s+(?:async\s+)?(?:const|let|var|function\*?|class)\s+([A-Za-z_$][\w$]*)`)
 )
@@ -483,6 +484,11 @@ func inspectDuplicateImports(relPath string, lines []string) []models.Finding {
 			continue
 		}
 		key := m[1] + m[2]
+		if importNamespaceRe.MatchString(line) {
+			// `import * as vue from 'vue'` tidak bisa digabung dengan `import { h } from 'vue'` dalam satu
+			// pernyataan, jadi bukan import ganda; hanya namespace yang sama dua kali yang dihitung.
+			key = "*" + key
+		}
 		first, dup := seen[key]
 		if !dup {
 			seen[key] = i + 1

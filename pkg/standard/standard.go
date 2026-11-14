@@ -7,6 +7,7 @@ package standard
 import (
 	"fmt"
 	"log"
+	"os"
 	"regexp"
 	"sort"
 	"strings"
@@ -72,7 +73,8 @@ func Ensure(db *gorm.DB, projectID uint) (*Result, error) {
 	} else if id := closeStandardTodo(db, &p); id > 0 {
 		res.Closed = append(res.Closed, id)
 	}
-	for _, t := range diagnostics.CodeTodos(&p) {
+	fresh := diagnostics.CodeTodos(&p)
+	for _, t := range fresh {
 		saved, err := upsert(db, t)
 		if err != nil {
 			return res, err
@@ -81,7 +83,51 @@ func Ensure(db *gorm.DB, projectID uint) (*Result, error) {
 			res.Todos = append(res.Todos, *saved)
 		}
 	}
+	res.Closed = append(res.Closed, closeGoneCodeTodos(db, &p, fresh)...)
 	return res, nil
+}
+
+// closeGoneCodeTodos menutup todo kode standar yang masih terbuka tetapi masalahnya tidak lagi terdeteksi di disk
+// (sudah diperbaiki, atau pemeriksaannya dulu keliru). Pemeriksaan ini statis, jadi "tidak muncul lagi" = dasar
+// todonya hilang; tanpa penutupan, todo lama tetap pending dan dikerjakan agent untuk masalah yang tidak ada.
+func closeGoneCodeTodos(db *gorm.DB, p *models.Project, fresh []models.Todo) []uint {
+	keep := map[string]bool{}
+	for _, t := range fresh {
+		keep[codeTodoKey(t.Title, t.ComponentID)] = true
+	}
+	var open []models.Todo
+	db.Select("id", "title", "component_id", "rationale").
+		Where("project_id = ? AND source = ? AND title <> ? AND status IN ?", p.ID, "vibeasik_standard", StandardTitle(p.Name),
+			[]string{models.TodoStatusPending, models.TodoStatusSuggested}).Find(&open)
+	onDisk := map[uint]bool{}
+	for _, c := range p.Components {
+		if c.AbsolutePath != "" {
+			if fi, err := os.Stat(c.AbsolutePath); err == nil && fi.IsDir() {
+				onDisk[c.ID] = true
+			}
+		}
+	}
+	var closed []uint
+	now := time.Now()
+	for _, t := range open {
+		// Hanya todo komponen yang foldernya terbaca: folder hilang sementara ≠ masalah sudah beres.
+		if t.ComponentID == nil || !onDisk[*t.ComponentID] || keep[codeTodoKey(t.Title, t.ComponentID)] {
+			continue
+		}
+		db.Model(&models.Todo{}).Where("id = ?", t.ID).Updates(map[string]interface{}{
+			"status": models.TodoStatusCompleted, "completed_at": &now,
+			"rationale": strings.TrimSpace(t.Rationale + "\n\nCatatan penyelesaian: pemeriksaan standar tidak lagi menemukan masalah ini di disk (diperiksa otomatis oleh engine)."),
+		})
+		closed = append(closed, t.ID)
+	}
+	return closed
+}
+
+func codeTodoKey(title string, comp *uint) string {
+	if comp == nil {
+		return title + "|"
+	}
+	return fmt.Sprintf("%s|%d", title, *comp)
 }
 
 // standardTodo menyusun satu todo gabungan dari semua kekurangan standar berkas proyek.
@@ -173,6 +219,11 @@ func sameTodo(db *gorm.DB, t models.Todo) *gorm.DB {
 // atau baru selesai (< recentDone) tidak dibuat ulang; selain itu dibuat baru.
 func upsert(db *gorm.DB, t models.Todo) (*models.Todo, error) {
 	var open models.Todo
+	var merged int64
+	sameTodo(db, t).Where("status = ?", models.TodoStatusMerged).Count(&merged)
+	if merged > 0 {
+		return nil, nil // sudah dilebur ke todo gabungan yang masih berjalan; jangan buat salinan
+	}
 	err := sameTodo(db, t).Where("status IN ?", []string{models.TodoStatusPending, models.TodoStatusInProgress, models.TodoStatusSuggested}).
 		Order("id DESC").First(&open).Error
 	if err == nil {
