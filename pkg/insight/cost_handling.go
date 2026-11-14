@@ -417,8 +417,10 @@ func CreateCostTodo(db *gorm.DB, projectID uint, file string, line int, kind str
 
 func costKey(rule, file string) string { return rule + "|" + filepath.ToSlash(filepath.Clean(file)) }
 
-// costGroup: semua sumber biaya di berkas yang sama dengan h, urut dari fungsi paling atas di berkas; satu fungsi
-// yang punya N+1 sekaligus O(n²) tetap berurutan (N+1 dulu) supaya dilaporkan sebagai satu fungsi.
+// costGroup: semua sumber biaya di berkas yang sama dengan h, urut dari bawah rantai pemanggilan ke atas.
+// Pangkat sumber biaya selalu lebih tinggi daripada fungsi yang dipanggilnya, jadi pangkat terendah (fungsi
+// terdalam) dikerjakan dulu, baru pemanggilnya; seri diurutkan baris. Satu fungsi yang punya N+1 sekaligus O(n²)
+// tetap berdampingan (N+1 dulu) supaya dilaporkan sebagai satu fungsi.
 func costGroup(hots []routemap.Hotspot, h routemap.Hotspot) []routemap.Hotspot {
 	var out []routemap.Hotspot
 	for _, x := range hots {
@@ -426,9 +428,19 @@ func costGroup(hots []routemap.Hotspot, h routemap.Hotspot) []routemap.Hotspot {
 			out = append(out, x)
 		}
 	}
+	degree := map[int]int{} // pangkat tertinggi per fungsi (baris), agar N+1 & O(n²) satu fungsi tidak terpisah
+	for _, x := range out {
+		if d := max(x.Func.Degree, 1); d > degree[x.Func.Line] {
+			degree[x.Func.Line] = d
+		}
+	}
 	sort.SliceStable(out, func(i, j int) bool {
-		if out[i].Func.Line != out[j].Func.Line {
-			return out[i].Func.Line < out[j].Func.Line
+		a, b := out[i].Func, out[j].Func
+		if degree[a.Line] != degree[b.Line] {
+			return degree[a.Line] < degree[b.Line]
+		}
+		if a.Line != b.Line {
+			return a.Line < b.Line
 		}
 		return out[i].Kind == "nplus1" && out[j].Kind != "nplus1"
 	})

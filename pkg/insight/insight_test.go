@@ -240,7 +240,7 @@ func pairs(c *fiber.Ctx) error {
 
 	// Satu berkas = satu todo: /pairs (O(n²)) di main.go ikut dilebur ke todo /b, dimulai dari fungsi lalu rute.
 	if !strings.Contains(todo.Description, "## 1. Mulai dari fungsi") || !strings.Contains(todo.Description, "## 2. Naik ke rute") ||
-		strings.Index(todo.Description, "`main.b`") > strings.Index(todo.Description, "`main.pairs`") ||
+		strings.Index(todo.Description, "`main.b`") > strings.Index(todo.Description, "`main.pairs`") || // naik pangkat: b O(n) dulu, pairs O(n²)
 		strings.Index(todo.Description, "## 1.") > strings.Index(todo.Description, "## 2.") ||
 		!strings.Contains(todo.Description, "`GET /pairs` (lewat `pairs`)") || !strings.Contains(todo.Title, "2 fungsi") {
 		t.Errorf("deskripsi harus fungsi dulu lalu rute, dua fungsi dilebur: %q\n%s", todo.Title, todo.Description)
