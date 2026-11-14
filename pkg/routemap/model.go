@@ -30,6 +30,8 @@ type Graph struct {
 	callers map[string][]string
 	// biaya proses (tick) per fungsi & rute — lihat cost.go
 	funcCosts map[string]Cost
+	// background: fungsi yang dijalankan di luar rute (worker, goroutine/job dari main/init), lihat backgroundReach.
+	background map[string]bool
 	// loopCallees[fungsi][terpanggil]: pemanggilan di dalam loop atas data (lihat costCtx.inLoop).
 	loopCallees map[string]map[string]bool
 	routeCosts  map[*Route]RouteCost

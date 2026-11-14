@@ -3,6 +3,7 @@ package routemap
 import (
 	"go/ast"
 	"go/token"
+	"go/types"
 	"regexp"
 	"strings"
 )
@@ -89,6 +90,10 @@ func rangeBoundIn(sc *fnScope, e ast.Expr) (k int64, data bool) {
 	}
 	if n, ok := sc.fixedSize(e); ok {
 		return n, false
+	}
+	if sc.isChan(e) {
+		// range atas channel = loop peristiwa: tiap putaran satu pesan yang datang terpisah, bukan n data sekaligus.
+		return 1, false
 	}
 	if id, ok := e.(*ast.Ident); ok {
 		if lim, ok := sc.limits[id.Name]; ok && lim > 0 {
@@ -226,6 +231,30 @@ func (m *module) fixedCollection(fi *fileInfo, e ast.Expr) (int64, bool) {
 func (m *module) indexFixedCollections() {
 	m.fixed = map[string]int64{}
 	m.consts = map[string]int64{}
+	m.chanFields = map[string]bool{}
+	otherFields := map[string]bool{}
+	for _, f := range m.files {
+		ast.Inspect(f.AST, func(n ast.Node) bool {
+			st, ok := n.(*ast.StructType)
+			if !ok || st.Fields == nil {
+				return true
+			}
+			for _, fld := range st.Fields.List {
+				_, isChan := fld.Type.(*ast.ChanType)
+				for _, name := range fld.Names {
+					if isChan {
+						m.chanFields[name.Name] = true
+					} else {
+						otherFields[name.Name] = true
+					}
+				}
+			}
+			return true
+		})
+	}
+	for name := range otherFields { // nama field yang juga dipakai untuk tipe lain: tidak pasti channel
+		delete(m.chanFields, name)
+	}
 	reassigned := map[string]bool{}
 	for _, f := range m.files {
 		for _, d := range f.AST.Decls {
@@ -315,6 +344,9 @@ func loopBoundIn(sc *fnScope, x *ast.ForStmt) (k int64, data, unbounded bool) {
 	k, data, unbounded = loopBound(x)
 	if !data || sc == nil {
 		return k, data, unbounded
+	}
+	if x.Cond == nil && selectLoop(x.Body) {
+		return 1, false, false // `for { select { … } }` = loop peristiwa, dihitung per pesan
 	}
 	be, ok := x.Cond.(*ast.BinaryExpr)
 	if !ok || (be.Op != token.LSS && be.Op != token.LEQ) {
@@ -666,4 +698,41 @@ func (sc *fnScope) constInt(e ast.Expr) (int64, bool) {
 		return v, ok
 	}
 	return 0, false
+}
+
+// isChan: ekspresi bertipe channel menurut pemeriksa tipe (kosong bila tipe tidak diketahui).
+func (sc *fnScope) isChan(e ast.Expr) bool {
+	if sc == nil || sc.m == nil {
+		return false
+	}
+	if sc.m.types == nil || sc.m.types.info == nil {
+		if sel, ok := e.(*ast.SelectorExpr); ok {
+			sc.m.fixedOnce.Do(sc.m.indexFixedCollections)
+			return sc.m.chanFields[sel.Sel.Name]
+		}
+		return false
+	}
+	if t := sc.m.types.info.TypeOf(e); t != nil {
+		_, ok := t.Underlying().(*types.Chan)
+		return ok
+	}
+	// Tipe tidak diketahui (paket tidak ikut diperiksa): field struct lokal yang dideklarasikan sebagai chan.
+	if sel, ok := e.(*ast.SelectorExpr); ok {
+		sc.m.fixedOnce.Do(sc.m.indexFixedCollections)
+		return sc.m.chanFields[sel.Sel.Name]
+	}
+	return false
+}
+
+// selectLoop: badan `for {}` yang inti tingkat teratasnya select (menunggu pesan/timer/ctx).
+func selectLoop(body *ast.BlockStmt) bool {
+	if body == nil {
+		return false
+	}
+	for _, st := range body.List {
+		if _, ok := st.(*ast.SelectStmt); ok {
+			return true
+		}
+	}
+	return false
 }

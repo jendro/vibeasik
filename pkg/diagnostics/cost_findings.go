@@ -77,6 +77,9 @@ func HotspotFinding(h routemap.Hotspot, baseRel string) models.Finding {
 	if h.RouteCount > len(h.Routes) {
 		routes += fmt.Sprintf(" (+%d rute lain)", h.RouteCount-len(h.Routes))
 	}
+	if h.RouteCount == 0 && h.Background {
+		routes = "tidak ada rute HTTP — fungsi ini dijalankan di luar rute (worker antrean, goroutine/job dari main atau init)"
+	}
 	f := models.Finding{TargetFile: file, Line: h.Func.Line, RuleID: HotspotRule(h.Kind)}
 	// Bukti: baris yang menaikkan biaya (loop atas data, query di dalam loop, pemanggilan berbiaya), diambil dari
 	// penghitung yang sama dengan rumusnya. Baris terpenting menjadi potongan kode temuan.

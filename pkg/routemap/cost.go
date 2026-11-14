@@ -826,6 +826,7 @@ func (g *Graph) computeCosts(m *module) {
 		g.funcCosts[k] = c.funcCost(k).export()
 	}
 	g.loopCallees = c.inLoop
+	g.background = g.backgroundReach(m)
 	// Bukti dikumpulkan setelah semua biaya fungsi termemo, agar biaya fungsi terpanggil sudah final.
 	for k, f := range m.funcs {
 		fc := g.funcCosts[k]
@@ -977,6 +978,8 @@ type Hotspot struct {
 	RouteCount int      `json:"route_count"`
 	// AllRoutes: semua rute terdampak ("METHOD path"), untuk menautkan baris rute ke sumber biayanya.
 	AllRoutes []string `json:"-"`
+	// Background: fungsi dijalankan di luar rute (worker antrean, goroutine/job dari main atau init).
+	Background bool `json:"background,omitempty"`
 }
 
 const hotspotRouteSamples = 3
@@ -998,7 +1001,9 @@ func Hotspots(graphs []*Graph) []Hotspot {
 		}
 		for k, fc := range g.funcCosts {
 			routes := uniqueSorted(routesOf[k])
-			if len(routes) == 0 {
+			// Tanpa rute: tetap dihitung bila dijalankan di luar rute (worker/antrean/main), bukan kode mati.
+			bg := len(routes) == 0 && g.background[k]
+			if len(routes) == 0 && !bg {
 				continue
 			}
 			ref, ok := g.ref(k)
@@ -1036,12 +1041,12 @@ func Hotspots(graphs []*Graph) []Hotspot {
 				sample = sample[:hotspotRouteSamples]
 			}
 			if fc.qDegree >= 1 && fc.qDegree > maxQ {
-				out = append(out, Hotspot{Kind: "nplus1", Func: fn, Via: viaQ, Routes: sample, RouteCount: len(routes), AllRoutes: routes})
+				out = append(out, Hotspot{Kind: "nplus1", Func: fn, Via: viaQ, Routes: sample, RouteCount: len(routes), AllRoutes: routes, Background: bg})
 			}
 			// Pertumbuhan hanya dilaporkan bila bisa dihindari (pencarian linear di dalam loop data); loop bersarang
 			// pemrosesan data biasa dianggap wajar. N+1 query di atas selalu dilaporkan.
 			if fc.Degree >= 2 && fc.Degree > maxT && fc.Avoidable {
-				out = append(out, Hotspot{Kind: "growth", Func: fn, Via: viaT, Routes: sample, RouteCount: len(routes), AllRoutes: routes})
+				out = append(out, Hotspot{Kind: "growth", Func: fn, Via: viaT, Routes: sample, RouteCount: len(routes), AllRoutes: routes, Background: bg})
 			}
 		}
 	}

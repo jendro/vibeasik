@@ -59,9 +59,11 @@ type module struct {
 	pkgNames map[string]string
 	types    *typeIndex
 	// fixed: variabel tingkat paket berisi literal ("<import path>.<nama>" → jumlah elemen), dibangun sekali.
-	fixed     map[string]int64
-	consts    map[string]int64 // konstanta bilangan bulat tingkat paket ("<import path>.<nama>")
-	fixedOnce sync.Once
+	fixed  map[string]int64
+	consts map[string]int64 // konstanta bilangan bulat tingkat paket ("<import path>.<nama>")
+	// chanFields: nama field struct lokal yang selalu bertipe channel (cadangan bila pemeriksa tipe tidak tahu).
+	chanFields map[string]bool
+	fixedOnce  sync.Once
 }
 
 var moduleRe = regexp.MustCompile(`^module\s+(\S+)`)

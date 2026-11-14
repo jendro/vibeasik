@@ -634,8 +634,12 @@ func costGroupDescription(group []routemap.Hotspot) string {
 		}
 	}
 
-	b.WriteString("## 2. Naik ke rute\n\n")
-	b.WriteString("Setelah fungsi di atas diperbaiki, periksa tiap rute yang menjangkaunya (handler, middleware, dan pemanggilan lain di jalurnya) agar biayanya tidak naik lagi di tempat lain, lalu klik **Cek ulang Big-O** di tab Biaya Proses.\n\n")
+	if len(routes) > 0 {
+		b.WriteString("## 2. Naik ke rute\n\n")
+		b.WriteString("Setelah fungsi di atas diperbaiki, periksa tiap rute yang menjangkaunya (handler, middleware, dan pemanggilan lain di jalurnya) agar biayanya tidak naik lagi di tempat lain, lalu klik **Cek ulang Big-O** di tab Biaya Proses.\n\n")
+	} else {
+		b.WriteString("## 2. Periksa pemanggilnya\n\n")
+	}
 	for i, r := range routes {
 		if i == maxCostTodoRoutes {
 			fmt.Fprintf(&b, "- … dan %d rute lain\n", len(routes)-maxCostTodoRoutes)
@@ -645,6 +649,8 @@ func costGroupDescription(group []routemap.Hotspot) string {
 	}
 	if len(routes) > 0 {
 		b.WriteString("\n")
+	} else {
+		b.WriteString("Tidak ada rute HTTP yang menjangkau fungsi ini: ia dijalankan di luar rute (worker antrean, goroutine/job dari main atau init). Periksa pemanggil & pendaftarnya (mis. `RegisterHandler`, `go …`) setelah fungsinya diperbaiki.\n\n")
 	}
 	b.WriteString("**Selesai bila:** tab Biaya Proses tidak lagi menunjuk fungsi-fungsi ini sebagai sumber biaya (kelasnya turun atau N+1 hilang), rute di atas ikut turun, dan test yang ada tetap lulus.\n\n")
 	if len(theories) > 0 {
