@@ -96,6 +96,7 @@ func init() {
 type cxFrame struct {
 	name       string
 	line       int
+	end        int // baris terakhir fungsi (1-based)
 	count      int // 1 + titik keputusan
 	braceBase  int // kedalaman kurawal sebelum deklarasi
 	parenBase  int
@@ -209,11 +210,14 @@ type cxMeasurer struct {
 	stack        []*cxFrame
 	done         []cxFrame
 	brace, paren int
+	last         int // indeks baris tidak kosong terakhir yang sudah diproses
 }
 
 func (m *cxMeasurer) top() *cxFrame { return m.stack[len(m.stack)-1] }
 
-func (m *cxMeasurer) pop() {
+// pop menutup fungsi teratas; end = baris terakhirnya (1-based).
+func (m *cxMeasurer) pop(end int) {
+	m.top().end = end
 	m.done = append(m.done, *m.top())
 	m.stack = m.stack[:len(m.stack)-1]
 }
@@ -229,7 +233,7 @@ func (m *cxMeasurer) addParenDelta(dp int) {
 func (m *cxMeasurer) stepIndent(idx int, s string) {
 	ind := len(s) - len(strings.TrimLeft(s, " \t"))
 	for m.paren == 0 && len(m.stack) > 0 && ind <= m.top().indent {
-		m.pop()
+		m.pop(m.last + 1)
 	}
 	if name := matchFuncStart(m.profile, m.lang, s); name != "" {
 		m.stack = append(m.stack, &cxFrame{name: name, line: idx + 1, count: 1, indent: ind})
@@ -306,9 +310,9 @@ func (m *cxMeasurer) frameEnded(top *cxFrame, trimmed string) bool {
 	return false
 }
 
-func (m *cxMeasurer) popEnded(trimmed string) {
+func (m *cxMeasurer) popEnded(idx int, trimmed string) {
 	for len(m.stack) > 0 && m.frameEnded(m.top(), trimmed) {
-		m.pop()
+		m.pop(idx + 1)
 	}
 }
 
@@ -317,7 +321,7 @@ func (m *cxMeasurer) stepBrace(idx int, s, trimmed string) {
 	pushed := m.pushFrame(idx, s, trimmed)
 	m.countBranches(s, pushed)
 	m.updateDepth(s)
-	m.popEnded(trimmed)
+	m.popEnded(idx, trimmed)
 }
 
 // measureFunctions menghitung CC tiap fungsi bernama; urutan hasil = urutan fungsi berakhir (fungsi bersarang dulu).
@@ -330,12 +334,13 @@ func measureFunctions(lines []string, lang string, profile complexityProfile) []
 		}
 		if profile.indent {
 			m.stepIndent(idx, s)
-			continue
+		} else {
+			m.stepBrace(idx, s, trimmed)
 		}
-		m.stepBrace(idx, s, trimmed)
+		m.last = idx
 	}
 	for len(m.stack) > 0 {
-		m.pop()
+		m.pop(m.last + 1)
 	}
 	return m.done
 }
