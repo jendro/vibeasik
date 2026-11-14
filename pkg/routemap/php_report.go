@@ -25,11 +25,18 @@ func PHPCosts(root string) (*CostReport, []PHPModule) {
 func PHPHotspots(root string) []Hotspot { return AnalyzePHP(root).Hotspots }
 
 // AnalyzePHP menghitung laporan biaya dan sumber biayanya sekaligus.
-func AnalyzePHP(root string) PHPAnalysis {
+func AnalyzePHP(root string) PHPAnalysis { return AnalyzePHPIn(root, nil) }
+
+// AnalyzePHPIn = AnalyzePHP yang hanya menghitung aplikasi PHP yang foldernya diterima keep (nil = semua), mis.
+// hanya folder komponen terdaftar sehingga salinan sistem lama di bawah root tidak ikut diaudit.
+func AnalyzePHPIn(root string, keep func(dir string) bool) PHPAnalysis {
 	rep := &CostReport{Routes: []RouteCost{}, Funcs: []FuncCost{}}
 	var mods []PHPModule
 	var hots []Hotspot
 	for _, m := range findPHPModules(root) {
+		if keep != nil && !keep(m.Dir) {
+			continue
+		}
 		routes := collectPHPRoutes(m)
 		if len(routes) == 0 {
 			continue

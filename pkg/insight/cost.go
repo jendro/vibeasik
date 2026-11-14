@@ -4,6 +4,7 @@
 package insight
 
 import (
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -81,7 +82,17 @@ func analyze(db *gorm.DB, projectID uint) (*costAnalysis, error) {
 	if err != nil {
 		return nil, err
 	}
-	php := routemap.AnalyzePHP(root)
+	keep := componentDirFilter(db, projectID)
+	if keep != nil {
+		kept := graphs[:0]
+		for _, g := range graphs {
+			if keep(filepath.Join(root, filepath.FromSlash(g.Dir))) {
+				kept = append(kept, g)
+			}
+		}
+		graphs = kept
+	}
+	php := routemap.AnalyzePHPIn(root, keep)
 	a := &costAnalysis{root: root, rep: routemap.MergeCosts(routemap.Costs(graphs), php.Report)}
 	for _, g := range graphs {
 		a.mods = append(a.mods, g.Module)
@@ -243,4 +254,36 @@ func costHistory(db *gorm.DB, projectID uint, now time.Time) []models.ProcessCos
 	since := now.AddDate(0, 0, -costHistoryDays).Format("2006-01-02")
 	_ = db.Where("project_id = ? AND snap_date >= ?", projectID, since).Order("snap_date ASC").Find(&out).Error
 	return out
+}
+
+// componentDirFilter: aplikasi (go.mod / composer.json) yang dihitung hanya yang berada di folder komponen
+// terdaftar, atau yang memuat folder komponen. Tanpa filter, salinan sistem lama di bawah root (mis. legacy/ yang
+// sudah digantikan) ikut menghasilkan todo biaya proses untuk kode yang tidak dipakai lagi. nil = proyek tanpa
+// folder komponen yang dikenal, semua aplikasi dihitung.
+func componentDirFilter(db *gorm.DB, projectID uint) func(dir string) bool {
+	var comps []models.Component
+	db.Select("absolute_path").Where("project_id = ?", projectID).Find(&comps)
+	var dirs []string
+	for _, c := range comps {
+		if p := strings.TrimSpace(c.AbsolutePath); p != "" && p != "-" {
+			dirs = append(dirs, filepath.Clean(p))
+		}
+	}
+	if len(dirs) == 0 {
+		return nil
+	}
+	return func(dir string) bool {
+		dir = filepath.Clean(dir)
+		for _, c := range dirs {
+			if pathWithin(c, dir) || pathWithin(dir, c) {
+				return true
+			}
+		}
+		return false
+	}
+}
+
+func pathWithin(parent, child string) bool {
+	r, err := filepath.Rel(parent, child)
+	return err == nil && r != ".." && !strings.HasPrefix(r, ".."+string(filepath.Separator))
 }
