@@ -60,6 +60,7 @@ type module struct {
 	types    *typeIndex
 	// fixed: variabel tingkat paket berisi literal ("<import path>.<nama>" → jumlah elemen), dibangun sekali.
 	fixed     map[string]int64
+	consts    map[string]int64 // konstanta bilangan bulat tingkat paket ("<import path>.<nama>")
 	fixedOnce sync.Once
 }
 

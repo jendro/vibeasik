@@ -225,10 +225,25 @@ func (m *module) fixedCollection(fi *fileInfo, e ast.Expr) (int64, bool) {
 
 func (m *module) indexFixedCollections() {
 	m.fixed = map[string]int64{}
+	m.consts = map[string]int64{}
 	reassigned := map[string]bool{}
 	for _, f := range m.files {
 		for _, d := range f.AST.Decls {
 			gd, ok := d.(*ast.GenDecl)
+			if ok && gd.Tok == token.CONST {
+				for _, spec := range gd.Specs {
+					if vs, ok := spec.(*ast.ValueSpec); ok {
+						for i, name := range vs.Names {
+							if i < len(vs.Values) {
+								if v, ok := intLit(vs.Values[i]); ok {
+									m.consts[f.Pkg+"."+name.Name] = v
+								}
+							}
+						}
+					}
+				}
+				continue
+			}
 			if !ok || gd.Tok != token.VAR {
 				continue
 			}
@@ -442,4 +457,213 @@ func constOperand(e ast.Expr) bool {
 		return false
 	}
 	return false
+}
+
+// loopFrame: satu loop yang sedang dihitung — nama indeksnya dan biaya isi `if <indeks> == <konstanta>` yang
+// berjalan sekali per loop.
+type loopFrame struct {
+	idx  string
+	once cst
+}
+
+func (sc *fnScope) pushFrame(idx string) *loopFrame {
+	f := &loopFrame{idx: idx, once: newCst()}
+	sc.frames = append(sc.frames, f)
+	return f
+}
+
+func (sc *fnScope) popFrame() { sc.frames = sc.frames[:len(sc.frames)-1] }
+
+func (sc *fnScope) topFrame() *loopFrame {
+	if len(sc.frames) == 0 || sc.frames[len(sc.frames)-1].idx == "" {
+		return nil
+	}
+	return sc.frames[len(sc.frames)-1]
+}
+
+func (sc *fnScope) takeLabel() string {
+	l := sc.label
+	sc.label = ""
+	return l
+}
+
+func rangeIndex(x *ast.RangeStmt) string {
+	if id, ok := x.Key.(*ast.Ident); ok && id.Name != "_" {
+		return id.Name
+	}
+	return ""
+}
+
+func forIndex(x *ast.ForStmt) string {
+	if as, ok := x.Init.(*ast.AssignStmt); ok && len(as.Lhs) == 1 {
+		if id, ok := as.Lhs[0].(*ast.Ident); ok {
+			return id.Name
+		}
+	}
+	return ""
+}
+
+// loopShape menerapkan syarat berhenti di badan loop atas data pada jumlah putarannya:
+//   - badan berakhir dengan `break`/`return` tanpa syarat (atau loop di dalamnya `break <label loop ini>`) dan tidak
+//     ada `continue`: badan berjalan paling banyak sekali;
+//   - `if <indeks> >= N { break }` (atau >, ==) dengan N konstanta: paling banyak N putaran.
+func loopShape(sc *fnScope, body *ast.BlockStmt, idx, label string, k int64, data bool) (int64, bool) {
+	if !data || body == nil {
+		return k, data
+	}
+	if runsOnce(body, label) {
+		return 1, false
+	}
+	if n, ok := indexCap(sc, body, idx); ok {
+		return n, false
+	}
+	return k, data
+}
+
+// runsOnce: badan loop berhenti tanpa syarat di putaran pertama.
+func runsOnce(body *ast.BlockStmt, label string) bool {
+	if hasContinue(body) {
+		return false
+	}
+	for _, st := range body.List {
+		switch x := st.(type) {
+		case *ast.ReturnStmt:
+			return true
+		case *ast.BranchStmt:
+			// break tanpa label keluar dari loop ini; break berlabel keluar dari loop ini DAN loop luarnya.
+			if x.Tok == token.BREAK {
+				return true
+			}
+		case *ast.ForStmt:
+			if label != "" && breaksLabel(x.Body, label) {
+				return true
+			}
+		case *ast.RangeStmt:
+			if label != "" && breaksLabel(x.Body, label) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// breaksLabel: badan loop dalam memuat `break <label>` tanpa syarat di tingkat teratas (keluar dari loop luar).
+func breaksLabel(body *ast.BlockStmt, label string) bool {
+	if body == nil {
+		return false
+	}
+	for _, st := range body.List {
+		if b, ok := st.(*ast.BranchStmt); ok && b.Tok == token.BREAK && b.Label != nil && b.Label.Name == label {
+			return true
+		}
+	}
+	return false
+}
+
+// hasContinue: badan loop (tanpa loop/closure di dalamnya) memuat continue — putaran bisa dilewati, jadi break di
+// akhir badan belum tentu terjadi di putaran pertama.
+func hasContinue(body *ast.BlockStmt) bool {
+	found := false
+	ast.Inspect(body, func(n ast.Node) bool {
+		switch x := n.(type) {
+		case *ast.ForStmt, *ast.RangeStmt, *ast.FuncLit:
+			return n == ast.Node(body)
+		case *ast.BranchStmt:
+			if x.Tok == token.CONTINUE {
+				found = true
+			}
+		}
+		return !found
+	})
+	return found
+}
+
+// indexCap: `if i >= N { break|return }` di tingkat teratas badan, i indeks loop, N konstanta → N putaran.
+func indexCap(sc *fnScope, body *ast.BlockStmt, idx string) (int64, bool) {
+	if idx == "" {
+		return 0, false
+	}
+	for _, st := range body.List {
+		ifs, ok := st.(*ast.IfStmt)
+		if !ok || ifs.Else != nil || !exitsLoop(ifs.Body) {
+			continue
+		}
+		be, ok := ifs.Cond.(*ast.BinaryExpr)
+		if !ok {
+			continue
+		}
+		l, r, op := be.X, be.Y, be.Op
+		if isIdent(r, idx) { // N <= i → i >= N
+			l, r = r, l
+			switch op {
+			case token.LEQ:
+				op = token.GEQ
+			case token.LSS:
+				op = token.GTR
+			}
+		}
+		if !isIdent(l, idx) {
+			continue
+		}
+		n, ok := sc.constInt(r)
+		if !ok || n < 0 {
+			continue
+		}
+		switch op {
+		case token.GEQ, token.EQL:
+			return max(n, 1), true
+		case token.GTR:
+			return n + 1, true
+		}
+	}
+	return 0, false
+}
+
+// indexEqualsConst: syarat `i == <konstanta>` (atau sebaliknya) untuk indeks loop i.
+func indexEqualsConst(cond ast.Expr, idx string) bool {
+	be, ok := cond.(*ast.BinaryExpr)
+	if !ok || be.Op != token.EQL || idx == "" {
+		return false
+	}
+	if isIdent(be.X, idx) {
+		_, ok := intLit(be.Y)
+		return ok
+	}
+	if isIdent(be.Y, idx) {
+		_, ok := intLit(be.X)
+		return ok
+	}
+	return false
+}
+
+func isIdent(e ast.Expr, name string) bool {
+	id, ok := e.(*ast.Ident)
+	return ok && id.Name == name
+}
+
+// constInt: nilai bilangan bulat literal atau konstanta bernama (berkas ini / paket lokal).
+func (sc *fnScope) constInt(e ast.Expr) (int64, bool) {
+	if v, ok := intLit(e); ok {
+		return v, true
+	}
+	id, ok := e.(*ast.Ident)
+	if !ok {
+		return 0, false
+	}
+	if id.Obj != nil && id.Obj.Kind == ast.Con {
+		if vs, ok := id.Obj.Decl.(*ast.ValueSpec); ok {
+			for i, n := range vs.Names {
+				if n.Name == id.Name && i < len(vs.Values) {
+					return intLit(vs.Values[i])
+				}
+			}
+		}
+		return 0, false
+	}
+	if id.Obj == nil && sc.m != nil && sc.fi != nil {
+		sc.m.fixedOnce.Do(sc.m.indexFixedCollections)
+		v, ok := sc.m.consts[sc.fi.Pkg+"."+id.Name]
+		return v, ok
+	}
+	return 0, false
 }

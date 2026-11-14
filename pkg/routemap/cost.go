@@ -286,6 +286,9 @@ type fnScope struct {
 	key      string         // fungsi yang sedang dihitung ("" = badan handler inline)
 	closures map[string]cst // closure lokal: fn := func(){…} → biayanya dipakai saat fn() dipanggil
 	limits   map[string]int64
+	// label: label yang menunggu loop berikutnya; frames: loop yang sedang dihitung (indeks + biaya sekali-jalan).
+	label  string
+	frames []*loopFrame
 	// fixedVars: variabel lokal berukuran tetap (literal / potongan teks), lihat fixedLocals.
 	fixedVars map[string]int64
 	// loops: kedalaman loop (semua jenis), dataLoops: kedalaman loop atas data. exit: biaya `return` di dalam
@@ -330,15 +333,27 @@ func (c *costCtx) stmt(sc *fnScope, s ast.Stmt) cst {
 	case *ast.BlockStmt:
 		return c.block(sc, x.List)
 	case *ast.LabeledStmt:
-		return c.stmt(sc, x.Stmt)
+		sc.label = x.Label.Name // label milik loop berikutnya (untuk `break <label>`)
+		r := c.stmt(sc, x.Stmt)
+		sc.label = ""
+		return r
 	case *ast.IfStmt:
 		out.add(c.stmt(sc, x.Init))
 		out.tick(1)
 		out.add(c.expr(sc, x.Cond))
+		// `if i == 0 { … }` dengan i indeks loop terdalam: isinya berjalan sekali per loop, bukan per putaran.
+		if f := sc.topFrame(); f != nil && x.Else == nil && indexEqualsConst(x.Cond, f.idx) {
+			f.once = heavier(f.once, c.block(sc, x.Body.List))
+			return out
+		}
 		out.add(heavier(c.block(sc, x.Body.List), c.stmt(sc, x.Else)))
 	case *ast.ForStmt:
+		label := sc.takeLabel()
 		out.add(c.stmt(sc, x.Init))
 		k, data, unbounded := loopBoundIn(sc, x)
+		idx := forIndex(x)
+		k, data = loopShape(sc, x.Body, idx, label, k, data)
+		f := sc.pushFrame(idx)
 		iter := c.loopBody(sc, data, func() cst {
 			iter := newCst()
 			iter.tick(1) // cek syarat
@@ -347,18 +362,28 @@ func (c *costCtx) stmt(sc *fnScope, s ast.Stmt) cst {
 			iter.add(c.stmt(sc, x.Post))
 			return iter
 		})
-		out.add(c.afterLoop(sc, markSearch(loopCost(iter, k, data), iter, data, x.Body)))
+		sc.popFrame()
+		lc := loopCost(iter, k, data)
+		lc.add(f.once)
+		out.add(c.afterLoop(sc, markSearch(lc, iter, data, x.Body)))
 		out.unbounded = out.unbounded || unbounded
 	case *ast.RangeStmt:
+		label := sc.takeLabel()
 		out.add(c.expr(sc, x.X))
 		k, data := rangeBoundIn(sc, x.X)
+		idx := rangeIndex(x)
+		k, data = loopShape(sc, x.Body, idx, label, k, data)
+		f := sc.pushFrame(idx)
 		iter := c.loopBody(sc, data, func() cst {
 			iter := newCst()
 			iter.tick(1)
 			iter.add(c.block(sc, x.Body.List))
 			return iter
 		})
-		out.add(c.afterLoop(sc, markSearch(loopCost(iter, k, data), iter, data, x.Body)))
+		sc.popFrame()
+		lc := loopCost(iter, k, data)
+		lc.add(f.once)
+		out.add(c.afterLoop(sc, markSearch(lc, iter, data, x.Body)))
 	case *ast.ReturnStmt:
 		out.tick(1)
 		out.add(c.expr(sc, x))

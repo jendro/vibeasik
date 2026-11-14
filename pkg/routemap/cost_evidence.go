@@ -211,15 +211,19 @@ func (w *goEvidence) stmt(s ast.Stmt, depth int) {
 	case *ast.BlockStmt:
 		w.block(x.List, depth)
 	case *ast.LabeledStmt:
+		w.sc.label = x.Label.Name
 		w.stmt(x.Stmt, depth)
+		w.sc.label = ""
 	case *ast.IfStmt:
 		w.stmt(x.Init, depth)
 		w.calls(x.Cond, depth)
 		w.block(x.Body.List, depth)
 		w.stmt(x.Else, depth)
 	case *ast.ForStmt:
+		label := w.sc.takeLabel()
 		w.stmt(x.Init, depth)
-		_, data, unbounded := loopBoundIn(w.sc, x)
+		k, data, unbounded := loopBoundIn(w.sc, x)
+		_, data = loopShape(w.sc, x.Body, forIndex(x), label, k, data) // syarat berhenti sama dengan rumusnya
 		inner := depth
 		if data {
 			inner++
@@ -229,9 +233,11 @@ func (w *goEvidence) stmt(s ast.Stmt, depth int) {
 		w.block(x.Body.List, inner)
 		w.stmt(x.Post, inner)
 	case *ast.RangeStmt:
+		label := w.sc.takeLabel()
 		w.calls(x.X, depth)
 		inner := depth
-		if _, data := rangeBoundIn(w.sc, x.X); data {
+		k, data := rangeBoundIn(w.sc, x.X)
+		if _, data = loopShape(w.sc, x.Body, rangeIndex(x), label, k, data); data {
 			inner++
 			w.add(evidenceKindLoop, x, inner, loopNote(inner, false))
 		}
