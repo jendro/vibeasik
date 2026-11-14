@@ -17,6 +17,20 @@ func (s *Server) setupAccountRoutes(api fiber.Router) {
 	api.Post("/account/login/poll", s.pollAccountLogin)
 	api.Post("/account/refresh", s.refreshAccount)
 	api.Post("/account/logout", s.logoutAccount)
+	api.Post("/account/town", s.openTown)
+}
+
+// openTown memberi alamat masuk vibeasik Town sekali pakai untuk akun yang login di aplikasi ini.
+func (s *Server) openTown(c *fiber.Ctx) error {
+	u, err := account.TownURL()
+	if err != nil {
+		code := fiber.StatusBadGateway
+		if errors.Is(err, account.ErrNotLoggedIn) {
+			code = fiber.StatusUnauthorized
+		}
+		return c.Status(code).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"url": u})
 }
 
 func accountView() fiber.Map {

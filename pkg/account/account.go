@@ -150,6 +150,9 @@ func StartLogin(deviceName string) (*DeviceCode, error) {
 // ErrPending login belum disetujui di halaman /device.
 var ErrPending = errors.New("menunggu persetujuan")
 
+// ErrNotLoggedIn aplikasi ini belum login ke akun vibeasik.
+var ErrNotLoggedIn = errors.New("belum login ke akun vibeasik")
+
 // PollLogin menukar device code dengan token perangkat bila sudah disetujui, lalu menyimpan & mengaktifkan login.
 func PollLogin(deviceCode string) (*Status, error) {
 	var out struct {
@@ -257,6 +260,29 @@ func StartRefresher(ctx context.Context) {
 			}
 		}
 	}()
+}
+
+// TownURL meminta alamat masuk vibeasik Town sekali pakai (berlaku ±2 menit) untuk akun yang sedang
+// login di aplikasi ini, sehingga Town langsung masuk tanpa mengetik kata sandi.
+func TownURL() (string, error) {
+	tok := DeviceToken()
+	if tok == "" {
+		return "", ErrNotLoggedIn
+	}
+	var out struct {
+		URL   string `json:"url"`
+		Error string `json:"error"`
+	}
+	if err := cloudJSON(http.MethodPost, "/api/v1/town/ticket", tok, nil, &out); err != nil {
+		if out.Error != "" {
+			return "", errors.New(out.Error)
+		}
+		return "", err
+	}
+	if !strings.HasPrefix(out.URL, "https://") && !strings.HasPrefix(out.URL, "http://") {
+		return "", errors.New("alamat Town dari server tidak dikenali")
+	}
+	return out.URL, nil
 }
 
 // DeviceToken token perangkat untuk layanan cloud lain (mis. Pusat Pengetahuan); "" bila belum login.

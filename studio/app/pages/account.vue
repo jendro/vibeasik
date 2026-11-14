@@ -73,6 +73,27 @@ const refresh = async () => {
   }
 }
 
+// Buka vibeasik Town dan langsung masuk dengan akun ini (alamat sekali pakai dari server akun).
+const openingTown = ref(false)
+const openTown = async () => {
+  openingTown.value = true
+  const win = window.open('about:blank', '_blank') // dibuka saat klik agar tidak diblokir browser
+  try {
+    const { url } = await $fetch<{ url: string }>(`${apiBase}/api/account/town`, { method: 'POST' })
+    if (win) {
+      win.opener = null
+      win.location.href = url
+    } else {
+      window.location.href = url
+    }
+  } catch (err: any) {
+    win?.close()
+    toast.add({ title: 'Gagal membuka Town', description: err?.data?.error || String(err), color: 'warning' })
+  } finally {
+    openingTown.value = false
+  }
+}
+
 const doLogout = async () => {
   await logout()
   toast.add({ title: 'Keluar dari akun', description: 'Fitur berbayar terkunci kembali.', icon: 'i-lucide-log-out' })
@@ -125,7 +146,10 @@ useHead({ title: 'Akun vibeasik' })
               {{ PRO_FEATURES[f]?.label || f }}
             </UBadge>
           </div>
-          <div class="flex gap-2 pt-2">
+          <div class="flex flex-wrap gap-2 pt-2">
+            <UButton :loading="openingTown" icon="i-lucide-building-2" @click="openTown">
+              Buka vibeasik Town
+            </UButton>
             <UButton :loading="busy" icon="i-lucide-refresh-cw" variant="soft" @click="refresh">
               Perbarui paket
             </UButton>
