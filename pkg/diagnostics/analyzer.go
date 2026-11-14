@@ -428,13 +428,7 @@ func AnalyzeProject(project *models.Project, allProjects []models.Project) (*mod
 		}
 		// Temuan berkas komponen memakai path relatif terhadap folder komponen: catat komponennya agar berkas
 		// dengan path relatif sama di komponen lain (app/layouts/default.vue) tidak tertukar.
-		key := project.ComponentKey(*comp)
-		for _, f := range inspectProjectComponent(project, comp) {
-			if f.Component == "" {
-				f.Component = key
-			}
-			findings = append(findings, f)
-		}
+		findings = append(findings, tagComponent(inspectProjectComponent(project, comp), project.ComponentKey(*comp))...)
 	}
 
 	// 4. Bundle Integration & Architecture Checks
@@ -445,7 +439,7 @@ func AnalyzeProject(project *models.Project, allProjects []models.Project) (*mod
 	// FE & mobile wajib memuat data BE yang benar saat dev; Nuxt tanpa warning Duplicated imports
 	findings = append(findings, inspectFrontendBackendLink(project, 0)...)
 	for _, comp := range project.Components {
-		findings = append(findings, inspectNuxtDuplicateAutoImports(comp)...)
+		findings = append(findings, tagComponent(inspectNuxtDuplicateAutoImports(comp), project.ComponentKey(comp))...)
 	}
 
 	// 5. Git Status Check (if root_path is configured)

@@ -183,8 +183,7 @@ func InspectProjectCode(project *models.Project) []models.Finding {
 		visitedPaths[targetDir] = true
 
 		if fi, err := os.Stat(targetDir); err == nil && fi.IsDir() {
-			findings := InspectDirectory(targetDir, comp.RelativePath)
-			allFindings = append(allFindings, findings...)
+			allFindings = append(allFindings, tagComponent(InspectDirectory(targetDir, comp.RelativePath), project.ComponentKey(comp))...)
 		}
 	}
 
@@ -196,6 +195,16 @@ func InspectProjectCode(project *models.Project) []models.Finding {
 	}
 
 	return allFindings
+}
+
+// tagComponent mencatat komponen asal pada temuan yang belum punya (lihat models.Finding.Component).
+func tagComponent(fs []models.Finding, key string) []models.Finding {
+	for i := range fs {
+		if fs[i].Component == "" {
+			fs[i].Component = key
+		}
+	}
+	return fs
 }
 
 // InspectComponentCode audits code specifically within one component's directory

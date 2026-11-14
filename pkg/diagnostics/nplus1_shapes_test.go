@@ -1,6 +1,12 @@
 package diagnostics
 
-import "testing"
+import (
+	"encoding/json"
+	"strings"
+	"testing"
+
+	"github.com/vibeasik/vibeasik/pkg/models"
+)
 
 // N+1 per baris tidak dilaporkan untuk loop yang dipotong konstanta, query ke tabel yang berbeda tiap putaran,
 // dan alat CLI pemeliharaan di cmd/; loop atas data biasa tetap dilaporkan.
@@ -79,5 +85,38 @@ func TestIsOneOffToolPath(t *testing.T) {
 		if IsOneOffToolPath(p) {
 			t.Errorf("%s bukan skrip sekali jalan", p)
 		}
+	}
+}
+
+// Dua komponen dengan path relatif sama: temuan audit mencatat komponen asalnya dan potongan buktinya diambil
+// dari berkas komponen itu, bukan dari komponen pertama.
+func TestAnalyzeProjectTagsComponentOfSharedPath(t *testing.T) {
+	root := t.TempDir()
+	writeFixture(t, root, "frontend/app/layouts/default.vue", "<template>\n  <slot />\n</template>\n")
+	writeFixture(t, root, "admin/app/layouts/default.vue", "<template>\n  <div>\n    <span class=\"text-[11px] text-slate-400\">Panel manajemen</span>\n  </div>\n</template>\n")
+	p := &models.Project{Name: "Dua", RootPath: root, Components: []models.Component{
+		{Name: "Web", AbsolutePath: root + "/frontend", Role: models.RoleFrontendAdmin},
+		{Name: "Admin", AbsolutePath: root + "/admin", Role: models.RoleFrontendAdmin},
+	}}
+	d, err := AnalyzeProject(p, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fs []models.Finding
+	if err := json.Unmarshal([]byte(d.FindingsJSON), &fs); err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, f := range fs {
+		if f.RuleID != "FE-SMALL-FONT" {
+			continue
+		}
+		found = true
+		if f.Component != "admin" || f.TargetFile != "app/layouts/default.vue" || !strings.Contains(f.Snippet, "Panel manajemen") {
+			t.Errorf("temuan font harus milik admin dengan bukti dari berkas admin: %+v", f)
+		}
+	}
+	if !found {
+		t.Fatal("temuan font kecil di admin tidak terdeteksi")
 	}
 }
