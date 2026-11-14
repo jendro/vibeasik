@@ -16,6 +16,8 @@ export interface RecapTodoBrief {
   priority: string
   completed_at?: string
   score?: number
+  /** commit hasil todo (GET /api/todos/:id/changes) */
+  commit_sha?: string
 }
 
 export interface RecapWorkStat {
@@ -41,6 +43,7 @@ export interface OwnerRecap {
     avg_score: number
     scored_count: number
     open_high_priority: number
+    open_from_audit: number
   }
   timeline: RecapDayPoint[]
   categories: { category: string, done: number, open: number }[]
@@ -53,6 +56,9 @@ export interface OwnerRecap {
     open_critical: number
     resolved_in_period: number
     open_by_severity: Record<string, number>
+    /** temuan terbuka per area perbaikan (speed, data, ui, security, code, ops) */
+    open_by_area: Record<string, number>
+    last_audit_at?: string
   }
   health: { date: string, score: number }[]
   health_score: number

@@ -81,9 +81,6 @@ const stats = computed(() => {
       @updated="emit('updated', $event)"
     />
 
-    <!-- Rekap singkat untuk pemilik: kalimat, angka utama, satu grafik -->
-    <InsightOwnerRecapPanel :project="project" compact @switch-tab="emit('switchTab', $event)" />
-
     <!-- Angka utama proyek (klik untuk membuka tab terkait) -->
     <AppStatStrip :items="statItems" />
 

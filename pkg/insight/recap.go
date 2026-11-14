@@ -9,6 +9,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"github.com/vibeasik/vibeasik/pkg/diagnostics"
 	"github.com/vibeasik/vibeasik/pkg/models"
 )
 
@@ -35,6 +36,7 @@ type TodoTotals struct {
 	AvgScore         int `json:"avg_score"` // rata-rata nilai QA todo yang dinilai
 	ScoredCount      int `json:"scored_count"`
 	OpenHighPriority int `json:"open_high_priority"`
+	OpenFromAudit    int `json:"open_from_audit"` // todo terbuka yang berasal dari temuan audit
 }
 
 // CategoryStat = todo selesai/terbuka per kategori.
@@ -52,6 +54,7 @@ type TodoBrief struct {
 	Priority    string     `json:"priority"`
 	CompletedAt *time.Time `json:"completed_at,omitempty"`
 	Score       *int       `json:"score,omitempty"`
+	CommitSHA   string     `json:"commit_sha,omitempty"` // commit hasil todo (lihat GET /api/todos/:id/changes)
 }
 
 // WorkStat = kelompok pekerjaan (bug, perbaikan algoritma): selesai, masih terbuka, dan yang terbaru.
@@ -70,6 +73,10 @@ type FindingStats struct {
 	OpenCritical     int            `json:"open_critical"`
 	ResolvedInPeriod int            `json:"resolved_in_period"`
 	OpenBySeverity   map[string]int `json:"open_by_severity"`
+	// OpenByArea: temuan terbuka (belum jadi todo) per area perbaikan (diagnostics.Areas).
+	OpenByArea map[string]int `json:"open_by_area"`
+	// LastAuditAt: pemeriksaan terakhir proyek ini (audit statis, Deep Check, atau aplikasi mana pun).
+	LastAuditAt *time.Time `json:"last_audit_at,omitempty"`
 }
 
 // HealthPoint = skor kesehatan kode dari satu audit.
@@ -118,12 +125,13 @@ type recapTodo struct {
 	AuditKey    string
 	Tags        string
 	Score       *int
+	CommitSHA   string
 	CreatedAt   time.Time
 	CompletedAt *time.Time
 }
 
 func (t recapTodo) brief() TodoBrief {
-	return TodoBrief{ID: t.ID, Title: t.Title, Category: t.Category, Priority: t.Priority, CompletedAt: t.CompletedAt, Score: t.Score}
+	return TodoBrief{ID: t.ID, Title: t.Title, Category: t.Category, Priority: t.Priority, CompletedAt: t.CompletedAt, Score: t.Score, CommitSHA: t.CommitSHA}
 }
 
 func isBugTodo(t recapTodo) bool {
@@ -149,12 +157,12 @@ func BuildOwnerRecap(db *gorm.DB, projectID uint, days int, now time.Time) (*Own
 	out := &OwnerRecap{ProjectID: projectID, Days: days, GeneratedAt: now, HealthScore: proj.HealthScore,
 		Categories: []CategoryStat{}, Health: []HealthPoint{}, Highlights: []TodoBrief{},
 		Bugs: WorkStat{Latest: []TodoBrief{}}, Algorithm: WorkStat{Latest: []TodoBrief{}},
-		Findings: FindingStats{OpenBySeverity: map[string]int{}}}
+		Findings: FindingStats{OpenBySeverity: map[string]int{}, OpenByArea: map[string]int{}}}
 
 	// Hanya kolom kecil yang dibaca; seluruh todo proyek dihitung di sini agar angkanya tidak terpotong limit.
 	var todos []recapTodo
 	if err := db.Model(&models.Todo{}).
-		Select("id", "title", "category", "status", "priority", "source", "audit_key", "tags", "score", "created_at", "completed_at").
+		Select("id", "title", "category", "status", "priority", "source", "audit_key", "tags", "score", "commit_sha", "created_at", "completed_at").
 		Where("project_id = ?", projectID).Find(&todos).Error; err != nil {
 		return nil, err
 	}
@@ -210,6 +218,9 @@ func BuildOwnerRecap(db *gorm.DB, projectID uint, days int, now time.Time) (*Own
 			}
 			if t.Priority == models.TodoPriorityHigh || t.Priority == models.TodoPriorityCritical {
 				out.Todos.OpenHighPriority++
+			}
+			if t.AuditKey != "" || t.Source == "scanner" {
+				out.Todos.OpenFromAudit++
 			}
 			if bug {
 				out.Bugs.Open++
@@ -324,6 +335,10 @@ func fillFindings(db *gorm.DB, projectID uint, out *OwnerRecap, day func(time.Ti
 		}
 		latestID[cid] = d.ID
 	}
+	if len(scores) > 0 {
+		at := scores[0].CreatedAt
+		out.Findings.LastAuditAt = &at
+	}
 	if len(latestID) == 0 {
 		return nil
 	}
@@ -356,6 +371,7 @@ func fillFindings(db *gorm.DB, projectID uint, out *OwnerRecap, day func(time.Ti
 				out.Findings.Open++
 				sev := strings.ToUpper(f.Severity)
 				out.Findings.OpenBySeverity[sev]++
+				out.Findings.OpenByArea[diagnostics.FindingArea(f)]++
 				if sev == "CRITICAL" {
 					out.Findings.OpenCritical++
 				}

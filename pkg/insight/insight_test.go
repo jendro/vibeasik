@@ -38,9 +38,9 @@ func TestBuildOwnerRecap(t *testing.T) {
 	score := 90
 	todos := []models.Todo{
 		{ProjectID: &pid, Title: "Perbaiki crash saat login", Status: "completed", Category: "backend", CreatedAt: at(5), CompletedAt: ptr(at(2)), Score: &score},
-		{ProjectID: &pid, Title: "Hilangkan N+1 query daftar pesanan", Status: "completed", Category: "performance", CreatedAt: at(4), CompletedAt: ptr(at(1))},
+		{ProjectID: &pid, Title: "Hilangkan N+1 query daftar pesanan", Status: "completed", Category: "performance", CreatedAt: at(4), CompletedAt: ptr(at(1)), CommitSHA: "abc123def"},
 		{ProjectID: &pid, Title: "Halaman laporan", Status: "pending", Category: "feature", Priority: "high", CreatedAt: at(3)},
-		{ProjectID: &pid, Title: "Tambah indeks tabel log", Status: "in_progress", Category: "backend", CreatedAt: at(40)},
+		{ProjectID: &pid, Title: "Tambah indeks tabel log", Status: "in_progress", Category: "backend", AuditKey: "QUERY-NPLUS1|log.go", CreatedAt: at(40)},
 		{ProjectID: &pid, Title: "Saran ditolak", Status: "rejected", Category: "general", CreatedAt: at(1)},
 		{ProjectID: &pid, Title: "Selesai lama", Status: "completed", Category: "feature", CreatedAt: at(90), CompletedAt: ptr(at(80))},
 	}
@@ -51,7 +51,7 @@ func TestBuildOwnerRecap(t *testing.T) {
 	}
 	resolved := at(1)
 	findings, _ := json.Marshal([]models.Finding{
-		{Title: "a", Severity: "CRITICAL", Status: "open"},
+		{Title: "a", Severity: "CRITICAL", Status: "open", RuleID: "QUERY-NPLUS1_x.go_3", Category: "query"},
 		{Title: "b", Severity: "WARNING", Status: "resolved", ResolvedAt: &resolved},
 		{Title: "c", Severity: "INFO", Status: "ignored"},
 	})
@@ -76,6 +76,18 @@ func TestBuildOwnerRecap(t *testing.T) {
 	}
 	if r.Findings.Open != 1 || r.Findings.OpenCritical != 1 || r.Findings.Resolved != 1 || r.Findings.Ignored != 1 || r.Findings.ResolvedInPeriod != 1 {
 		t.Errorf("temuan: %+v", r.Findings)
+	}
+	if r.Findings.OpenByArea["speed"] != 1 || len(r.Findings.OpenByArea) != 1 {
+		t.Errorf("area temuan: %+v", r.Findings.OpenByArea)
+	}
+	if r.Findings.LastAuditAt == nil || !r.Findings.LastAuditAt.Equal(at(1)) {
+		t.Errorf("audit terakhir: %v", r.Findings.LastAuditAt)
+	}
+	if r.Todos.OpenFromAudit != 1 {
+		t.Errorf("todo terbuka dari audit: %d", r.Todos.OpenFromAudit)
+	}
+	if len(r.Highlights) == 0 || r.Highlights[0].CommitSHA != "abc123def" {
+		t.Errorf("todo selesai terbaru harus membawa commit: %+v", r.Highlights)
 	}
 	if len(r.Health) != 2 || r.Health[0].Score != 60 || r.Health[1].Score != 82 {
 		t.Errorf("kesehatan: %+v", r.Health)

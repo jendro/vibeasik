@@ -288,6 +288,10 @@ const handleCreateDirOnDisk = async (comp: ProjectComponent) => {
     />
 
     <div class="pt-6 space-y-6">
+      <!-- Alur memperbaiki aplikasi (periksa → todo → hasil) memimpin tab Ringkasan; data rekapnya tersedia di
+           semua edisi, jadi tetap tampil walau profil AI terkunci atau belum dibuat. -->
+      <InsightImprovementFlowPanel v-if="activeTab === 'overview'" :project="project" @switch-tab="switchTab" />
+
       <ProLockCard v-if="lockedFeature" :feature="lockedFeature" />
 
       <InsightOwnerRecapPanel
