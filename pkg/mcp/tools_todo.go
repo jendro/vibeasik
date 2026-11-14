@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"fmt"
+	"github.com/vibeasik/vibeasik/pkg/todochange"
 	"strings"
 	"time"
 
@@ -316,8 +317,12 @@ func (s *Server) toolUpdateTodo(args map[string]interface{}) (*ToolCallResult, e
 		}
 	}
 	s.rateUpdatedTodo(&todo, args, updates)
+	commitNote := s.recordTodoCommit(&todo, args, hasStatus && newStatus == models.TodoStatusCompleted)
 
 	res := prettyJSONText(todo)
+	if commitNote != "" {
+		res.Content = append(res.Content, ToolContent{Type: "text", Text: commitNote})
+	}
 	// Selesai tanpa pernah ditandai in_progress (agent langsung menutup todo) → tetap dicatat atas nama
 	// pegawai agar ikut dinilai QA dan pengetahuannya diperbarui.
 	agent := firstNonEmptyStr(args["completed_by_agent"], todo.CompletedByAgent, "agent coding")
@@ -331,6 +336,25 @@ func (s *Server) toolUpdateTodo(args map[string]interface{}) (*ToolCallResult, e
 		}
 	}
 	return res, nil
+}
+
+// recordTodoCommit mencatat commit hasil todo: SHA yang dilaporkan agent (commit_sha), atau — saat todo
+// diselesaikan tanpa commit tercatat — commit squash todo itu (trailer "Vibeasik-Branch: vibeasik/todo-<id>-…").
+// Hasilnya satu kalimat untuk agent; "" bila tidak ada yang perlu dicatat.
+func (s *Server) recordTodoCommit(todo *models.Todo, args map[string]interface{}, completed bool) string {
+	ref := argString(args, "commit_sha")
+	if ref == "" && (!completed || todo.CommitSHA != "") {
+		return ""
+	}
+	sha, err := todochange.Attach(s.db, todo, ref)
+	switch {
+	case err == nil:
+		return "Commit hasil todo tercatat: " + sha + " — pengguna bisa memeriksa perubahannya di Studio."
+	case ref != "":
+		return "commit_sha tidak dicatat: " + err.Error()
+	}
+	return "Commit hasil todo belum tercatat: tidak ada commit squash dengan trailer `" + todochange.SquashTrailer + todochange.BranchPrefix(todo.ID) +
+		"…` di repo proyek. Setelah commit, kirim update_todo {todo_id, commit_sha} agar pengguna bisa memeriksa perubahannya."
 }
 
 // rateUpdatedTodo menerapkan penilaian kompleksitas/dampak dari klien (atau penilaian ulang

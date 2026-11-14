@@ -238,6 +238,7 @@ text: {
   "created_at": "<t>",
   "updated_at": "<t>"
 }
+text: Commit hasil todo belum tercatat: tidak ada commit squash dengan trailer `Vibeasik-Branch: vibeasik/todo-1-…` di repo proyek. Setelah commit, kirim update_todo {todo_id, commit_sha} agar pengguna bisa memeriksa perubahannya.
 ### update_todo
 text: {
   "id": 1,

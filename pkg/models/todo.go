@@ -51,7 +51,7 @@ type Todo struct {
 	ID               uint       `gorm:"primaryKey" json:"id"`
 	Level            string     `gorm:"size:64;default:'project';index" json:"level"`    // global, project, component
 	Category         string     `gorm:"size:64;default:'general';index" json:"category"` // feature, security, ui_ux, architecture, performance, backend, devops, general
-	Categories       string     `gorm:"size:256" json:"categories,omitempty"`           // CSV semua kategori (todo gabungan lintas kategori); Category = kategori utama
+	Categories       string     `gorm:"size:256" json:"categories,omitempty"`            // CSV semua kategori (todo gabungan lintas kategori); Category = kategori utama
 	ParentID         *uint      `gorm:"index" json:"parent_id,omitempty"`                // Cascading parent todo
 	SplitFromID      *uint      `gorm:"index" json:"split_from_id,omitempty"`            // Induk yang dipecah per aplikasi (todo_split.go); sub todo ini satu aplikasi saja
 	ProjectID        *uint      `gorm:"index" json:"project_id,omitempty"`
@@ -62,15 +62,15 @@ type Todo struct {
 	Title            string     `gorm:"size:512;not null" json:"title"`
 	Description      string     `gorm:"type:text" json:"description"`
 	Status           string     `gorm:"size:64;default:'pending';index;index:idx_todos_status_created,priority:1" json:"status"` // pending, in_progress, completed, suggested, rejected
-	Priority         string     `gorm:"size:64;default:'medium'" json:"priority"`      // low, medium, high, critical
-	CreatorType      string     `gorm:"size:64;default:'human'" json:"creator_type"`   // human, ai_agent
+	Priority         string     `gorm:"size:64;default:'medium'" json:"priority"`                                                // low, medium, high, critical
+	CreatorType      string     `gorm:"size:64;default:'human'" json:"creator_type"`                                             // human, ai_agent
 	CreatorName      string     `gorm:"size:255;default:'developer'" json:"creator_name"`
 	IsAISuggestion   bool       `gorm:"default:false;index" json:"is_ai_suggestion"`
-	GuidelineRef     string     `gorm:"size:128" json:"guideline_ref,omitempty"`   // e.g. PLAN-001, ARCH-001, SEC-001
-	Tags             string     `gorm:"size:512;index" json:"tags,omitempty"`      // CSV tag fokus (todo_tags.go): fitur, keamanan-dasar, optimasi-query, rawat-ai, belajar
-	Rationale        string     `gorm:"type:text" json:"rationale,omitempty"`      // Penjelasan/analisis mengapa saran ini dibuat
-	Source           string     `gorm:"size:64;default:'manual'" json:"source"`    // manual, ai_agent, scanner, code_comment
-	AuditKey         string     `gorm:"size:600;index" json:"audit_key,omitempty"` // todo audit: "<rule>|<berkas>" — temuan dengan kunci sama digabung ke todo ini
+	GuidelineRef     string     `gorm:"size:128" json:"guideline_ref,omitempty"`         // e.g. PLAN-001, ARCH-001, SEC-001
+	Tags             string     `gorm:"size:512;index" json:"tags,omitempty"`            // CSV tag fokus (todo_tags.go): fitur, keamanan-dasar, optimasi-query, rawat-ai, belajar
+	Rationale        string     `gorm:"type:text" json:"rationale,omitempty"`            // Penjelasan/analisis mengapa saran ini dibuat
+	Source           string     `gorm:"size:64;default:'manual'" json:"source"`          // manual, ai_agent, scanner, code_comment
+	AuditKey         string     `gorm:"size:600;index" json:"audit_key,omitempty"`       // todo audit: "<rule>|<berkas>" — temuan dengan kunci sama digabung ke todo ini
 	IdempotencyKey   string     `gorm:"size:128;index" json:"idempotency_key,omitempty"` // Kunci idempotensi deduplikasi request mutasi (API-011)
 	DueDate          string     `gorm:"size:64" json:"due_date,omitempty"`
 	CompletedAt      *time.Time `gorm:"index" json:"completed_at,omitempty"`
@@ -88,6 +88,8 @@ type Todo struct {
 	HighScoreNotes   string     `gorm:"type:text" json:"high_score_notes,omitempty"`                  // Catatan detail kenapa task ini sukses/bernilai tinggi
 	SuccessFactors   []string   `gorm:"type:text;serializer:json" json:"success_factors,omitempty"`   // Butir-butir faktor penentu keberhasilan
 	InheritedFrom    string     `gorm:"size:128" json:"inherited_from,omitempty"`                     // Nama eks pegawai yang ilmunya/standarnya diwarisi
+	CommitSHA        string     `gorm:"size:64" json:"commit_sha,omitempty"`                          // SHA utuh commit hasil todo (squash), dibaca ulang lewat pkg/todochange
+	CommitRepo       string     `gorm:"size:1024" json:"-"`                                           // Repo git tempat CommitSHA berada (path lokal, tidak dikirim ke tampilan)
 	TodoComplexity              // Kerumitan multi-dimensi (logika, koding, cakupan, risiko) untuk orkestrator agent
 	TodoImpact                  // Dampak pada aplikasi (7 dimensi 0–5 → skor final 0–100 berbobot kategori)
 	CreatedAt        time.Time  `gorm:"index:idx_todos_status_created,priority:2" json:"created_at"`

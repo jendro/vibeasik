@@ -435,6 +435,9 @@ func (s *Server) updateTodo(c *fiber.Ctx) error {
 	if msg := validateTodoUpdates(updates); msg != "" {
 		return badPayload(c, msg)
 	}
+	// Commit todo hanya dicatat engine setelah diverifikasi di repo proyek (pkg/todochange), bukan dari klien.
+	delete(updates, "commit_sha")
+	delete(updates, "commit_repo")
 
 	var todo models.Todo
 	if err := s.db.First(&todo, id).Error; err != nil {

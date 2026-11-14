@@ -5,6 +5,8 @@ const { modelName } = useModelNames()
 
 defineProps<{ todo: Todo }>()
 const { formatDateTime } = useFormatters()
+const { copyToClipboard } = useCopyToClipboard()
+const showChanges = ref(false)
 </script>
 
 <template>
@@ -37,6 +39,28 @@ const { formatDateTime } = useFormatters()
         <span>Model:</span>
         <span class="font-semibold">{{ modelName(todo.completed_by_model) }}</span>
       </div>
+
+      <button
+        v-if="todo.commit_sha"
+        type="button"
+        class="flex items-center gap-1 font-mono text-xs px-2 py-0.5 rounded-md bg-white dark:bg-[#04111f] border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 hover:border-sky-400"
+        :title="`Commit ${todo.commit_sha} — klik untuk menyalin SHA utuh`"
+        @click="copyToClipboard(todo.commit_sha, 'SHA commit disalin utuh')"
+      >
+        <UIcon name="i-lucide-git-commit-horizontal" class="w-3.5 h-3.5 text-sky-500" />
+        <span>Commit:</span>
+        <span class="font-semibold">{{ todo.commit_sha.slice(0, 10) }}</span>
+      </button>
+
+      <UButton
+        size="xs"
+        color="neutral"
+        variant="outline"
+        icon="i-lucide-file-diff"
+        label="Lihat perubahan"
+        title="Buka berkas, fungsi, dan diff yang dikirim todo ini"
+        @click="showChanges = true"
+      />
 
       <!-- QA Score Badge -->
       <span
@@ -97,5 +121,7 @@ const { formatDateTime } = useFormatters()
         </li>
       </ul>
     </div>
+
+    <TodosTodoChangesModal v-if="showChanges" v-model:open="showChanges" :todo-id="todo.id" :todo-title="todo.title" />
   </div>
 </template>

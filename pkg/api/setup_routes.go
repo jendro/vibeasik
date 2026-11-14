@@ -100,6 +100,7 @@ func (s *Server) setupRoutes() {
 	api.Post("/todos/suggest", s.suggestTodos)
 	api.Post("/todos/:id/approve", s.approveTodo)
 	api.Post("/todos/:id/reject", s.rejectTodo)
+	api.Get("/todos/:id/changes", s.getTodoChanges)
 
 	// Components
 	// Mutasi komponen (tambah, ubah, hapus, buat direktori) diamankan fail-closed oleh s.localAccess.

@@ -105,6 +105,11 @@ export const useTodosApi = () => {
     return await $fetch<{ status: string, todo_ids: number[] }>(`${apiBase}/api/todos/${id}/split`, { method: 'POST' })
   }
 
+  /** Commit hasil todo: berkas, fungsi yang berubah, dan diff (dibaca ulang dari git oleh engine). */
+  const getTodoChanges = async (id: number): Promise<TodoChanges> => {
+    return await $fetch<TodoChanges>(`${apiBase}/api/todos/${id}/changes`)
+  }
+
   const approveTodo = async (id: number): Promise<Todo> => {
     return await $fetch<Todo>(`${apiBase}/api/todos/${id}/approve`, {
       method: 'POST'
@@ -129,6 +134,7 @@ export const useTodosApi = () => {
     mergeTodos,
     groupTodos,
     splitTodoGroup,
+    getTodoChanges,
     approveTodo,
     rejectTodo
   }

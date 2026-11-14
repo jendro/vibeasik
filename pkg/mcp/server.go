@@ -408,6 +408,7 @@ func (s *Server) coreToolsList() []Tool {
 					"completed_by_model": map[string]interface{}{"type": "string", "description": "Name/identifier of the AI model used by the agent (e.g. 'gemini-3.8-flash', 'claude-3.7-sonnet', 'gpt-4o')"},
 					"completed_at":       map[string]interface{}{"type": "string", "description": "Optional ISO8601 completion timestamp (e.g. '2026-10-19T10:00:00Z'). Automatically defaults to current time if status is completed and omitted."},
 					"completion_note":    map[string]interface{}{"type": "string", "description": "Verification summary appended to the todo rationale: what changed, files touched, how it was verified, or evidence it was already fulfilled"},
+					"commit_sha":         map[string]interface{}{"type": "string", "description": "Commit that delivers this todo (full or short SHA). It is verified in the project's git repos and stored in full so the user can inspect the changed files and functions. Optional when the squash commit carries the trailer 'Vibeasik-Branch: vibeasik/todo-<id>-…' — that commit is found automatically on completion."},
 					"complexity":         complexityArgSchema,
 					"impact":             impactArgSchema,
 				},

@@ -40,6 +40,8 @@ export interface Todo {
   due_date?: string
   completed_at?: string
   completed_by_agent?: string
+  /** SHA utuh commit hasil todo (squash), diverifikasi engine di repo proyek. */
+  commit_sha?: string
   /** Pegawai vibeasik yang ditugaskan (persona agent coding yang mengerjakannya). */
   employee_id?: number
   employee_name?: string
@@ -142,4 +144,55 @@ export interface TodoMergeResult {
   groups: TodoMergeGroup[]
   /** Jumlah todo yang baru dilebur */
   merged: number
+}
+
+/** Satu baris diff commit todo: add/del/ctx, nomor baris berkas lama/baru. */
+export interface TodoChangeLine {
+  kind: 'add' | 'del' | 'ctx'
+  old?: number
+  new?: number
+  text: string
+}
+
+export interface TodoChangeHunk {
+  header: string
+  /** Fungsi yang memuat perubahan pada bagian ini (dilacak engine, bukan tebakan kepala hunk git). */
+  function?: string
+  lines: TodoChangeLine[]
+}
+
+export interface TodoChangeFile {
+  path: string
+  old_path?: string
+  status: 'added' | 'modified' | 'deleted' | 'renamed'
+  added: number
+  deleted: number
+  binary?: boolean
+  functions?: string[]
+  hunks?: TodoChangeHunk[]
+  truncated?: boolean
+}
+
+export interface TodoCommit {
+  sha: string
+  short: string
+  subject: string
+  body?: string
+  author: string
+  date: string
+  repo: string
+  added: number
+  deleted: number
+  files: TodoChangeFile[]
+  truncated?: boolean
+}
+
+/** GET /api/todos/:id/changes — commit null + reason bila belum ada commit yang bisa dibaca. */
+export interface TodoChanges {
+  commit: TodoCommit | null
+  functions?: string[]
+  reason?: string
+  sha?: string
+  /** Commit milik todo gabungan induknya. */
+  via_todo_id?: number
 }
