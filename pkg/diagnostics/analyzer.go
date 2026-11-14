@@ -367,12 +367,16 @@ func fillFindingEvidence(project *models.Project, findings []models.Finding) {
 		if f.Snippet != "" || f.TargetFile == "" || f.Line <= 0 {
 			continue
 		}
-		lines, ok := cache[f.TargetFile]
+		ck := f.Component + "|" + f.TargetFile
+		lines, ok := cache[ck]
 		if !ok {
-			if data, err := os.ReadFile(filepath.Join(project.RootPath, filepath.FromSlash(f.TargetFile))); err == nil && len(data) < 2<<20 {
-				lines = strings.Split(string(data), "\n")
+			for _, p := range evidencePaths(project, *f) {
+				if data, err := os.ReadFile(p); err == nil && len(data) < 2<<20 {
+					lines = strings.Split(string(data), "\n")
+					break
+				}
 			}
-			cache[f.TargetFile] = lines
+			cache[ck] = lines
 		}
 		if f.Line <= len(lines) {
 			if code := strings.TrimSpace(lines[f.Line-1]); len(code) > 220 {
@@ -382,6 +386,18 @@ func fillFindingEvidence(project *models.Project, findings []models.Finding) {
 			}
 		}
 	}
+}
+
+// evidencePaths: berkas bukti sebuah temuan — folder komponen asalnya (bila tercatat) lalu akar proyek; tanpa
+// tebakan lewat komponen lain agar potongan kode tidak diambil dari berkas yang salah.
+func evidencePaths(project *models.Project, f models.Finding) []string {
+	var out []string
+	for _, c := range project.Components {
+		if f.Component != "" && c.AbsolutePath != "" && project.ComponentKey(c) == f.Component {
+			out = append(out, filepath.Join(c.AbsolutePath, filepath.FromSlash(f.TargetFile)))
+		}
+	}
+	return append(out, filepath.Join(project.RootPath, filepath.FromSlash(f.TargetFile)))
 }
 
 // AnalyzeProject runs static diagnostics and returns an evaluation report
@@ -410,7 +426,15 @@ func AnalyzeProject(project *models.Project, allProjects []models.Project) (*mod
 		} else if strings.HasPrefix(comp.Role, "frontend") {
 			feComponents = append(feComponents, *comp)
 		}
-		findings = append(findings, inspectProjectComponent(project, comp)...)
+		// Temuan berkas komponen memakai path relatif terhadap folder komponen: catat komponennya agar berkas
+		// dengan path relatif sama di komponen lain (app/layouts/default.vue) tidak tertukar.
+		key := project.ComponentKey(*comp)
+		for _, f := range inspectProjectComponent(project, comp) {
+			if f.Component == "" {
+				f.Component = key
+			}
+			findings = append(findings, f)
+		}
 	}
 
 	// 4. Bundle Integration & Architecture Checks

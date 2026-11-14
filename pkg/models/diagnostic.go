@@ -28,13 +28,16 @@ const (
 
 // Finding represents an individual issue, warning, or best-practice finding
 type Finding struct {
-	ID           string `json:"id,omitempty"`
-	Category     string `json:"category"` // query, router, code_smell, architecture, security, port, config
-	Severity     string `json:"severity"` // CRITICAL, WARNING, INFO, OPTIMIZATION
-	Title        string `json:"title"`
-	Description  string `json:"description"`
-	Suggestion   string `json:"suggestion"`
-	TargetFile   string `json:"target_file,omitempty"`
+	ID          string `json:"id,omitempty"`
+	Category    string `json:"category"` // query, router, code_smell, architecture, security, port, config
+	Severity    string `json:"severity"` // CRITICAL, WARNING, INFO, OPTIMIZATION
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Suggestion  string `json:"suggestion"`
+	TargetFile  string `json:"target_file,omitempty"`
+	// Component: komponen asal temuan (Project.ComponentKey, mis. "admin") bila TargetFile relatif terhadap
+	// folder komponen — dua komponen bisa punya path relatif yang sama (app/layouts/default.vue).
+	Component    string `json:"component,omitempty"`
 	Line         int    `json:"line,omitempty"`
 	Snippet      string `json:"snippet,omitempty"`
 	RuleID       string `json:"rule_id,omitempty"`
@@ -135,6 +138,20 @@ func AreFindingsMatching(a, b Finding) bool {
 
 // DeduplicateFindings returns a slice of unique findings by their stable key.
 // If duplicates exist, non-open statuses (e.g. ignored, resolved) take precedence.
+// componentDistinctID: ID temuan yang bentrok dengan temuan komponen LAIN (berkas relatif & baris sama di dua
+// komponen) diberi akhiran "@komponen". ID yang tidak bentrok dibiarkan agar status & vonisnya tetap tertaut.
+func componentDistinctID(unique []Finding, f Finding) string {
+	if f.Component == "" {
+		return f.ID
+	}
+	for _, u := range unique {
+		if u.ID == f.ID && u.Component != "" && u.Component != f.Component {
+			return f.ID + "@" + f.Component
+		}
+	}
+	return f.ID
+}
+
 func DeduplicateFindings(findings []Finding) []Finding {
 	if len(findings) == 0 {
 		return findings
@@ -145,6 +162,7 @@ func DeduplicateFindings(findings []Finding) []Finding {
 		if f.ID == "" {
 			f.ID = GenerateFindingKey(f)
 		}
+		f.ID = componentDistinctID(unique, f)
 		if f.Status == "" {
 			f.Status = FindingStatusOpen
 		}

@@ -730,6 +730,7 @@ text: {
       "description": "Component 'api' has neither an absolute nor a relative path, so its code cannot be inspected.",
       "suggestion": "Set the component path (relative to the project root) or re-scan the project.",
       "target_file": "api",
+      "component": "api",
       "rule_id": "PROJ-COMPONENT-PATH-UNSET",
       "status": "open"
     }

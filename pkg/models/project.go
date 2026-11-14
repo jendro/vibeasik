@@ -1,6 +1,8 @@
 package models
 
 import (
+	"path/filepath"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -69,6 +71,47 @@ type Project struct {
 	// Diagnostics tidak ikut respons detail project (bisa puluhan MB); gunakan GET /projects/:id/diagnostics.
 	Diagnostics []Diagnostic      `gorm:"foreignKey:ProjectID;constraint:OnDelete:CASCADE" json:"-"`
 	DeepChecks  []DeepCheckReport `gorm:"foreignKey:ProjectID;constraint:OnDelete:CASCADE" json:"deep_checks,omitempty"`
+}
+
+// ComponentKey: identitas komponen pada temuan — RelativePath bila tercatat, path folder komponen relatif
+// terhadap akar proyek ("admin"), atau nama komponen bila foldernya di luar akar.
+func (p Project) ComponentKey(c Component) string {
+	if c.RelativePath != "" {
+		if rel := strings.Trim(filepath.ToSlash(filepath.Clean(c.RelativePath)), "/"); rel != "." {
+			return rel
+		}
+	}
+	if p.RootPath != "" && p.RootPath != "-" && c.AbsolutePath != "" {
+		if rel, err := filepath.Rel(p.RootPath, c.AbsolutePath); err == nil && rel != "." && !strings.HasPrefix(rel, "..") {
+			return filepath.ToSlash(rel)
+		}
+	}
+	return c.Name
+}
+
+// FindingPaths: kandidat path absolut berkas sebuah temuan, urut dari yang paling mungkin — folder komponen asal
+// temuan (component = ComponentKey), akar proyek, folder komponen lain, nama berkas di komponen lain, lalu
+// targetFile apa adanya. Tanpa component, komponen pertama yang memuat berkas itu yang menang (bisa keliru bila
+// dua komponen punya path relatif yang sama).
+func (p Project) FindingPaths(component, targetFile string) []string {
+	rel := filepath.FromSlash(targetFile)
+	paths := make([]string, 0, 3+len(p.Components)*2)
+	if component != "" {
+		for _, c := range p.Components {
+			if c.AbsolutePath != "" && p.ComponentKey(c) == component {
+				paths = append(paths, filepath.Join(c.AbsolutePath, rel))
+			}
+		}
+	}
+	if p.RootPath != "" && p.RootPath != "-" {
+		paths = append(paths, filepath.Join(p.RootPath, rel))
+	}
+	for _, c := range p.Components {
+		if c.AbsolutePath != "" {
+			paths = append(paths, filepath.Join(c.AbsolutePath, rel), filepath.Join(c.AbsolutePath, filepath.Base(rel)))
+		}
+	}
+	return append(paths, targetFile)
 }
 
 // Component represents an individual app/service inside a project bundle
