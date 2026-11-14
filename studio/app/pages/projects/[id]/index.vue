@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Project, ProjectComponent } from '~/types'
-import { normalizeProjectTab } from '~/utils/sidebarMenuItems'
+import { normalizeProjectTab, PROJECT_TAB_PAGES } from '~/utils/sidebarMenuItems'
 
 definePageMeta({
   fluid: true
@@ -40,8 +40,14 @@ const lockedFeature = computed(() => {
 const normalizeTab = normalizeProjectTab
 const activeTab = ref(normalizeTab(route.query.tab))
 const openClientRoom = () => navigateTo('/client-room', { replace: true })
+// Tab yang kini halaman sendiri (mis. Biaya Proses): proyek ini dijadikan proyek aktif lalu halamannya dibuka.
+const openTabPage = (tab: string, replace = false) => {
+  selectActiveProject(projectId.value)
+  return navigateTo(PROJECT_TAB_PAGES[tab], { replace })
+}
 const switchTab = (tab: string) => {
   if (CLIENT_ROOM_TABS.includes(tab)) return navigateTo('/client-room')
+  if (PROJECT_TAB_PAGES[tab]) return openTabPage(tab)
   activeTab.value = tab
 }
 
@@ -54,6 +60,7 @@ const {
 
 watch(() => route.query.tab, (newTab) => {
   if (typeof newTab === 'string' && CLIENT_ROOM_TABS.includes(newTab)) return openClientRoom()
+  if (typeof newTab === 'string' && PROJECT_TAB_PAGES[newTab]) return openTabPage(newTab, true)
   // Tanpa ?tab (mis. item sidebar "Ringkasan Proyek") berarti tab bawaan, bukan tetap di tab sebelumnya.
   activeTab.value = normalizeTab(newTab)
 }, { immediate: true })
@@ -298,11 +305,6 @@ const handleCreateDirOnDisk = async (comp: ProjectComponent) => {
         v-else-if="activeTab === 'recap'"
         :project="project"
         @switch-tab="switchTab"
-      />
-
-      <InsightProcessCostTab
-        v-else-if="activeTab === 'cost'"
-        :project="project"
       />
 
       <ProjectsDetailProjectOverviewTab

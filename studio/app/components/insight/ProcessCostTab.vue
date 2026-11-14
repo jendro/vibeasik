@@ -3,7 +3,7 @@ import type { CostClass, CostSource, ProcessCostPage, Project } from '~/types'
 import type { StatItem } from '~/components/AppStatStrip.vue'
 import { COST_CLASSES, costHandlingNote, fmtTicks, shortFormula } from '~/utils/processCost'
 
-// Tab "Biaya Proses": rumus tick T(n), Big-O, dan jumlah query tiap rute/fungsi backend Go & PHP (Laravel, CodeIgniter, Slim, PHP biasa), paging dari server.
+// Isi halaman "Biaya Proses": rumus tick T(n), Big-O, dan jumlah query tiap rute/fungsi backend Go & PHP (Laravel, CodeIgniter, Slim, PHP biasa), paging dari server.
 const props = defineProps<{ project: Project }>()
 
 const { getProcessCost, createProcessCostTodo } = useApi()

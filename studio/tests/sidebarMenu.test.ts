@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { buildProjectNavItems, isProjectNavActive, normalizeProjectTab, pageTitleFor, PROJECT_TABS } from '../app/utils/sidebarMenuItems'
+import { buildProjectNavItems, isProjectNavActive, normalizeProjectTab, pageTitleFor, PROJECT_TAB_PAGES, PROJECT_TABS } from '../app/utils/sidebarMenuItems'
 
 describe('menu proyek aktif', () => {
   const items = buildProjectNavItems(7, { name: 'Demo' })
@@ -14,7 +14,7 @@ describe('menu proyek aktif', () => {
   })
 
   it('Biaya Proses ada di kelompok pemeriksaan bersama audit, uji runtime & traffic', () => {
-    for (const id of ['audit-report', 'tab:cost', 'runtime-test', 'traffic', 'security-test', 'screenshots']) {
+    for (const id of ['audit-report', 'process-cost', 'runtime-test', 'traffic', 'security-test', 'screenshots']) {
       expect(groupOf(id)).toBe('Periksa & tingkatkan')
     }
     expect(groupOf('tab:overview')).toBe('Ringkasan')
@@ -39,8 +39,9 @@ describe('menu proyek aktif', () => {
 
   it('item aktif mengikuti ?tab, dan detail aplikasi menandai Aplikasi', () => {
     const byId = (id: string) => items.find(i => i.id === id)!
-    expect(isProjectNavActive(byId('tab:cost'), '/projects/7', 'cost')).toBe(true)
-    expect(isProjectNavActive(byId('tab:overview'), '/projects/7', 'cost')).toBe(false)
+    expect(isProjectNavActive(byId('tab:recap'), '/projects/7', 'recap')).toBe(true)
+    expect(isProjectNavActive(byId('tab:overview'), '/projects/7', 'recap')).toBe(false)
+    expect(isProjectNavActive(byId('process-cost'), '/process-cost', undefined)).toBe(true)
     expect(isProjectNavActive(byId('tab:overview'), '/projects/7', undefined)).toBe(true)
     expect(isProjectNavActive(byId('tab:apps'), '/projects/7/apps/3', undefined)).toBe(true)
     expect(isProjectNavActive(byId('tab:apps'), '/projects/7', 'topology')).toBe(true)
@@ -53,9 +54,11 @@ describe('tab & judul halaman', () => {
     expect(normalizeProjectTab('base_knowledge')).toBe('technical')
     expect(normalizeProjectTab('visual_audit')).toBe('overview')
     expect(normalizeProjectTab('ngawur')).toBe('overview')
+    expect(PROJECT_TAB_PAGES.cost).toBe('/process-cost')
   })
   it('judul navbar memakai nama tab', () => {
-    expect(pageTitleFor('/projects/7', 'cost').title).toBe('Biaya Proses')
+    expect(pageTitleFor('/projects/7', 'recap').title).toBe('Rekap Pemilik')
+    expect(pageTitleFor('/process-cost').title).toBe('Biaya Proses')
     expect(pageTitleFor('/projects/7').title).toBe('Ringkasan Proyek')
     expect(pageTitleFor('/projects/7/apps/2').title).toBe('Detail Aplikasi')
   })

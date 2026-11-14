@@ -28,7 +28,6 @@ export interface ProjectTab {
 export const PROJECT_TABS: ProjectTab[] = [
   { id: 'overview', label: 'Ringkasan Proyek', desc: 'Tujuan, fitur, kematangan & angka utama', icon: 'i-lucide-layout-dashboard', group: 'Ringkasan' },
   { id: 'recap', label: 'Rekap Pemilik', desc: 'Progres, bug ditutup & kesehatan kode', icon: 'i-lucide-chart-no-axes-column', group: 'Ringkasan' },
-  { id: 'cost', label: 'Biaya Proses', desc: 'Performa kode: Big-O & N+1 tiap rute', icon: 'i-lucide-sigma', group: 'Periksa & tingkatkan' },
   { id: 'apps', label: 'Aplikasi', desc: 'Modul & hubungan antar aplikasi', icon: 'i-lucide-boxes', group: 'Struktur proyek' },
   { id: 'technical', label: 'Rute, File & Env', desc: 'Katalog router, struktur & .env', icon: 'i-lucide-book-open-check', group: 'Struktur proyek' },
   { id: 'synergy', label: 'Alur Data', desc: 'Halaman → API → Database', icon: 'i-lucide-network', group: 'Struktur proyek' }
@@ -40,6 +39,9 @@ export const projectTabFor = (id: string): ProjectTab | undefined => PROJECT_TAB
 
 // Id tab lama tetap bekerja (?tab=topology / ?tab=base_knowledge). Tab "Live Visual" dihapus: tangkapan layar &
 // audit visual ada di halaman Screenshot, jadi ?tab=visual_audit jatuh ke Ringkasan.
+// Tab yang sudah menjadi halaman sendiri: tautan lama ?tab=… dialihkan ke halamannya.
+export const PROJECT_TAB_PAGES: Record<string, string> = { cost: '/process-cost' }
+
 const PROJECT_TAB_ALIASES: Record<string, string> = { topology: 'apps', base_knowledge: 'technical', visual_audit: 'overview' }
 
 export const normalizeProjectTab = (tab: unknown): string => {
@@ -52,6 +54,7 @@ export const normalizeProjectTab = (tab: unknown): string => {
 const PROJECT_GROUPS: Record<string, string> = {
   'home': 'Ringkasan',
   'audit-report': 'Periksa & tingkatkan',
+  'process-cost': 'Periksa & tingkatkan',
   'runtime-test': 'Periksa & tingkatkan',
   'traffic': 'Periksa & tingkatkan',
   'security-test': 'Periksa & tingkatkan',
@@ -66,7 +69,7 @@ const PROJECT_GROUPS: Record<string, string> = {
 }
 const PROJECT_ORDER = [
   'home', 'tab:overview', 'tab:recap',
-  'audit-report', 'tab:cost', 'runtime-test', 'traffic', 'security-test', 'screenshots',
+  'audit-report', 'process-cost', 'runtime-test', 'traffic', 'security-test', 'screenshots',
   'todos', 'queue', 'client-room', 'audit-learning',
   'tab:apps', 'tab:technical', 'tab:synergy', 'code-map',
   'ports', 'delivery'
@@ -130,6 +133,15 @@ export const buildProjectNavItems = (activeProjectId: number | null, activeProje
       label: 'Audit & Diagnostik',
       desc: 'Pemeriksaan menyeluruh: keamanan, kode, data & tampilan',
       icon: 'i-lucide-file-text',
+      exact: false
+    },
+    {
+      // Rumus tick & Big-O tiap rute/fungsi backend; dulu tab Detail Proyek, kini halaman sendiri.
+      id: 'process-cost',
+      to: '/process-cost',
+      label: 'Biaya Proses',
+      desc: 'Performa kode: Big-O & N+1 tiap rute',
+      icon: 'i-lucide-sigma',
       exact: false
     },
     {
