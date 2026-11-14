@@ -376,3 +376,70 @@ func fixedLocals(body []ast.Stmt) map[string]int64 {
 	}
 	return out
 }
+
+// markSearch menandai biaya satu loop: loop atas data yang badannya pencarian/pencocokan → search; loop atas data
+// yang di dalamnya (langsung atau lewat fungsi terpanggil) ada loop pencarian atas data → avoid.
+func markSearch(out, iter cst, data bool, body *ast.BlockStmt) cst {
+	if !data {
+		return out
+	}
+	if iter.search {
+		out.avoid = true
+	}
+	if searchBody(body) {
+		out.search = true
+	}
+	return out
+}
+
+// searchBody: badan loop membandingkan dua nilai non-literal dengan == (mencari/mencocokkan elemen koleksi lain,
+// mis. `if p.UserID == u.ID`), langsung di tingkat teratas badan atau di if tingkat teratas. Perbandingan dengan
+// literal (`if v == ""`, `== nil`, `== 0`) adalah penyaring biasa, bukan pencarian.
+func searchBody(body *ast.BlockStmt) bool {
+	if body == nil {
+		return false
+	}
+	for _, st := range body.List {
+		ifs, ok := st.(*ast.IfStmt)
+		if !ok {
+			continue
+		}
+		found := false
+		ast.Inspect(ifs.Cond, func(n ast.Node) bool {
+			switch x := n.(type) {
+			case *ast.BinaryExpr:
+				if x.Op == token.EQL && !constOperand(x.X) && !constOperand(x.Y) {
+					found = true
+				}
+			case *ast.CallExpr:
+				if sel, ok := x.Fun.(*ast.SelectorExpr); ok && sel.Sel.Name == "EqualFold" && len(x.Args) == 2 &&
+					!constOperand(x.Args[0]) && !constOperand(x.Args[1]) {
+					found = true
+				}
+			}
+			return !found
+		})
+		if found {
+			return true
+		}
+	}
+	return false
+}
+
+// constOperand: literal, nil/true/false, atau konstanta bernama huruf besar paket (mis. models.StatusOK) —
+// sisi perbandingan yang tidak berasal dari koleksi lain.
+func constOperand(e ast.Expr) bool {
+	switch x := e.(type) {
+	case *ast.BasicLit:
+		return true
+	case *ast.Ident:
+		return x.Name == "nil" || x.Name == "true" || x.Name == "false" || (x.Obj != nil && x.Obj.Kind == ast.Con)
+	case *ast.ParenExpr:
+		return constOperand(x.X)
+	case *ast.UnaryExpr:
+		return constOperand(x.X)
+	case *ast.CallExpr: // len(xs) == 0, string(b) == ""
+		return false
+	}
+	return false
+}

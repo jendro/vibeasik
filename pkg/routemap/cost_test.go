@@ -223,7 +223,9 @@ func enrich() []Item {
 	for i := range items {
 		items[i] = loadOne(items[i].ID)
 		for j := range items {
-			_ = j
+			if items[j].ID == items[i].ID {
+				break
+			}
 		}
 	}
 	return items

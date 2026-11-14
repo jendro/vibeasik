@@ -185,6 +185,10 @@ type cst struct {
 	recursive      bool
 	unbounded      bool
 	depth          int // kedalaman loop atas data
+	// search: memuat loop atas data yang berupa pencarian/pencocokan (`if a.X == b.Y`) — bisa diganti map.
+	// avoid: loop pencarian itu berada di dalam loop atas data lain (langsung atau lewat fungsi terpanggil), jadi
+	// pertumbuhan O(n²) ke atasnya bisa dihindari. Loop bersarang biasa (baris × kolom, menyusun keluaran) wajar.
+	search, avoid bool
 }
 
 func newCst() cst { return cst{ticks: poly{}, queries: poly{}} }
@@ -196,6 +200,8 @@ func (c *cst) add(o cst) {
 	c.queries.add(o.queries)
 	c.recursive = c.recursive || o.recursive
 	c.unbounded = c.unbounded || o.unbounded
+	c.search = c.search || o.search
+	c.avoid = c.avoid || o.avoid
 	if o.depth > c.depth {
 		c.depth = o.depth
 	}
@@ -203,7 +209,8 @@ func (c *cst) add(o cst) {
 
 // scaled = biaya dikalikan k·n^dn·(log n)^dl (isi loop).
 func (c cst) scaled(k int64, dn, dl int) cst {
-	out := cst{ticks: c.ticks.times(k, dn, dl), queries: c.queries.times(k, dn, dl), recursive: c.recursive, unbounded: c.unbounded, depth: c.depth}
+	out := cst{ticks: c.ticks.times(k, dn, dl), queries: c.queries.times(k, dn, dl), recursive: c.recursive, unbounded: c.unbounded, depth: c.depth,
+		search: c.search, avoid: c.avoid}
 	if dn > 0 {
 		out.depth += dn
 	}
@@ -220,6 +227,8 @@ func heavier(a, b cst) cst {
 	}
 	w.recursive = w.recursive || l.recursive
 	w.unbounded = w.unbounded || l.unbounded
+	w.search = w.search || l.search
+	w.avoid = w.avoid || l.avoid
 	if l.depth > w.depth {
 		w.depth = l.depth
 	}
@@ -331,7 +340,7 @@ func (c *costCtx) stmt(sc *fnScope, s ast.Stmt) cst {
 			iter.add(c.stmt(sc, x.Post))
 			return iter
 		})
-		out.add(c.afterLoop(sc, loopCost(iter, k, data)))
+		out.add(c.afterLoop(sc, markSearch(loopCost(iter, k, data), iter, data, x.Body)))
 		out.unbounded = out.unbounded || unbounded
 	case *ast.RangeStmt:
 		out.add(c.expr(sc, x.X))
@@ -342,7 +351,7 @@ func (c *costCtx) stmt(sc *fnScope, s ast.Stmt) cst {
 			iter.add(c.block(sc, x.Body.List))
 			return iter
 		})
-		out.add(c.afterLoop(sc, loopCost(iter, k, data)))
+		out.add(c.afterLoop(sc, markSearch(loopCost(iter, k, data), iter, data, x.Body)))
 	case *ast.ReturnStmt:
 		out.tick(1)
 		out.add(c.expr(sc, x))
@@ -688,14 +697,18 @@ type Cost struct {
 	// Kosong untuk biaya konstan tanpa query: tidak ada baris yang menaikkan pertumbuhan.
 	Evidence     []CostEvidence `json:"evidence,omitempty"`
 	EvidenceFile string         `json:"evidence_file,omitempty"`
-	rank         float64
-	qDegree      int // pangkat n tertinggi pada Q(n)
+	// Avoidable: pertumbuhan O(n²) ke atas berasal dari pencarian/pencocokan linear di dalam loop atas data, yang
+	// bisa diganti map/indeks sekali bangun. false = loop bersarang pemrosesan data yang memang tak terhindarkan.
+	Avoidable bool `json:"avoidable,omitempty"`
+	rank      float64
+	qDegree   int // pangkat n tertinggi pada Q(n)
 }
 
 var growthSizes = []int64{1, 10, 100, 1000, 10000}
 
 func (c cst) export() Cost {
-	out := Cost{Formula: c.ticks.String(), QueryFormula: c.queries.String(), Recursive: c.recursive, Unbounded: c.unbounded, LoopDepth: c.depth}
+	out := Cost{Formula: c.ticks.String(), QueryFormula: c.queries.String(), Recursive: c.recursive, Unbounded: c.unbounded, LoopDepth: c.depth,
+		Avoidable: c.avoid}
 	out.BigO, out.Class = bigO(c.ticks)
 	out.QueryBigO, _ = bigO(c.queries)
 	lead, _ := c.ticks.lead()
@@ -975,7 +988,9 @@ func Hotspots(graphs []*Graph) []Hotspot {
 			if fc.qDegree >= 1 && fc.qDegree > maxQ {
 				out = append(out, Hotspot{Kind: "nplus1", Func: fn, Via: viaQ, Routes: sample, RouteCount: len(routes), AllRoutes: routes})
 			}
-			if fc.Degree >= 2 && fc.Degree > maxT {
+			// Pertumbuhan hanya dilaporkan bila bisa dihindari (pencarian linear di dalam loop data); loop bersarang
+			// pemrosesan data biasa dianggap wajar. N+1 query di atas selalu dilaporkan.
+			if fc.Degree >= 2 && fc.Degree > maxT && fc.Avoidable {
 				out = append(out, Hotspot{Kind: "growth", Func: fn, Via: viaT, Routes: sample, RouteCount: len(routes), AllRoutes: routes})
 			}
 		}
