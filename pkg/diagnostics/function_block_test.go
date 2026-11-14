@@ -31,6 +31,11 @@ var tail = 3`
 	if got := b.Label(); got != "fungsi `SaveUser` (baris 5–13)" {
 		t.Errorf("label = %q", got)
 	}
+	// Baris lain yang terbukti bermasalah ikut ditandai; yang di luar fungsi diabaikan.
+	m, _ := FunctionBlock("pkg/user/save.go", src, 5, 10, 11, 15)
+	if len(m.Marks) != 2 || m.Marks[0] != 10 || m.Marks[1] != 11 || strings.Count(m.Code, "▶") != 3 {
+		t.Fatalf("tanda tambahan di dalam fungsi: %+v\n%s", m, m.Code)
+	}
 	// Baris di luar fungsi bernama → potongan sekitar baris.
 	top, ok := FunctionBlock("pkg/user/save.go", src, 15)
 	if !ok || top.Name != "" || top.Start != 7 || top.End != 15 || !strings.Contains(top.Code, "▶ 15 │ var tail") {

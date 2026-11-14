@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 )
 
@@ -22,6 +23,8 @@ type FuncBlock struct {
 	End   int `json:"end"`
 	// Line: baris temuan yang ditandai ▶ di Code.
 	Line int `json:"line"`
+	// Marks: baris lain di dalam blok yang ikut ditandai ▶ (mis. baris yang terbukti bermasalah saat verifikasi).
+	Marks []int `json:"marks,omitempty"`
 	// Code: baris kode bernomor; baris temuan diawali ▶.
 	Code string `json:"code"`
 	// Cut: fungsi terlalu panjang sehingga hanya bagian di sekitar baris temuan yang ditulis.
@@ -45,8 +48,9 @@ const (
 	funcBlockMaxFile = 2 << 20
 )
 
-// FunctionBlockFile membaca berkas lalu mengembalikan blok yang memuat baris line (lihat FunctionBlock).
-func FunctionBlockFile(path string, line int) (FuncBlock, bool) {
+// FunctionBlockFile membaca berkas lalu mengembalikan blok yang memuat baris line (lihat FunctionBlock); baris
+// marks yang berada di dalam blok ikut ditandai ▶.
+func FunctionBlockFile(path string, line int, marks ...int) (FuncBlock, bool) {
 	fi, err := os.Stat(path)
 	if err != nil || fi.IsDir() || fi.Size() > funcBlockMaxFile {
 		return FuncBlock{}, false
@@ -55,28 +59,57 @@ func FunctionBlockFile(path string, line int) (FuncBlock, bool) {
 	if err != nil {
 		return FuncBlock{}, false
 	}
-	return FunctionBlock(path, string(data), line)
+	return FunctionBlock(path, string(data), line, marks...)
 }
 
 // FunctionBlock mengembalikan fungsi terdalam yang memuat baris line di berkas relPath, atau potongan sekitar
 // baris itu bila bahasanya tidak dikenal atau baris berada di luar fungsi bernama. false bila baris di luar berkas.
-func FunctionBlock(relPath, content string, line int) (FuncBlock, bool) {
+// Baris marks yang berada di dalam fungsi ikut ditandai ▶; fungsi panjang dipotong di sekitar baris tanda pertama.
+func FunctionBlock(relPath, content string, line int, marks ...int) (FuncBlock, bool) {
 	lines := strings.Split(content, "\n")
 	if line <= 0 || line > len(lines) {
 		return FuncBlock{}, false
 	}
 	if name, start, end, ok := EnclosingFunction(relPath, lines, line); ok {
-		b := FuncBlock{Name: name, Start: start, End: end, Line: line}
+		b := FuncBlock{Name: name, Start: start, End: end, Line: line, Marks: within(marks, start, end, line)}
+		focus := line
+		if len(b.Marks) > 0 {
+			focus = b.Marks[0]
+		}
 		from, to := start, end
 		if end-start+1 > funcBlockMaxLines {
 			b.Cut = true
-			from, to = max(start, line-funcBlockMaxLines/2), min(end, line+funcBlockMaxLines/2)
+			from, to = max(start, focus-funcBlockMaxLines/2), min(end, focus+funcBlockMaxLines/2)
 		}
-		b.Code = numberLines(lines, from, to, line, start, end)
+		b.Code = numberLines(lines, from, to, markSet(line, b.Marks), start, end)
 		return b, true
 	}
 	from, to := max(1, line-funcBlockAround), min(len(lines), line+funcBlockAround)
-	return FuncBlock{Start: from, End: to, Line: line, Code: numberLines(lines, from, to, line, from, to)}, true
+	b := FuncBlock{Start: from, End: to, Line: line, Marks: within(marks, from, to, line)}
+	b.Code = numberLines(lines, from, to, markSet(line, b.Marks), from, to)
+	return b, true
+}
+
+// within: baris marks yang berada di rentang lo..hi selain line, urut naik tanpa duplikat.
+func within(marks []int, lo, hi, line int) []int {
+	seen := map[int]bool{line: true}
+	var out []int
+	for _, m := range marks {
+		if m >= lo && m <= hi && !seen[m] {
+			seen[m] = true
+			out = append(out, m)
+		}
+	}
+	slices.Sort(out)
+	return out
+}
+
+func markSet(line int, marks []int) map[int]bool {
+	set := map[int]bool{line: true}
+	for _, m := range marks {
+		set[m] = true
+	}
+	return set
 }
 
 // EnclosingFunction: fungsi bernama terdalam yang memuat baris line (1-based) — nama dan rentang barisnya.
@@ -125,9 +158,9 @@ func scriptOnly(lines []string) ([]string, string) {
 	return out, lang
 }
 
-// numberLines menulis baris from..to (1-based) dengan nomor baris; baris mark diawali ▶. Bila potongan tidak
+// numberLines menulis baris from..to (1-based) dengan nomor baris; baris di marks diawali ▶. Bila potongan tidak
 // mencakup seluruh rentang lo..hi, baris "⋯" menandai bagian yang dilewati.
-func numberLines(lines []string, from, to, mark, lo, hi int) string {
+func numberLines(lines []string, from, to int, marks map[int]bool, lo, hi int) string {
 	width := len(fmt.Sprint(to))
 	var b strings.Builder
 	if from > lo {
@@ -135,7 +168,7 @@ func numberLines(lines []string, from, to, mark, lo, hi int) string {
 	}
 	for i := from; i <= to; i++ {
 		pin := "  "
-		if i == mark {
+		if marks[i] {
 			pin = "▶ "
 		}
 		fmt.Fprintf(&b, "%s%*d │ %s\n", pin, width, i, strings.TrimRight(lines[i-1], " \t\r"))
