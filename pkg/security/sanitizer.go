@@ -93,7 +93,7 @@ func NewSanitizer() *Sanitizer {
 	s.addPattern("db_credential", "DATABASE_URI_CREDENTIAL", regexp.MustCompile(`(?i)((postgres|postgresql|mysql|mongodb|mongodb\+srv|redis|rediss|amqp|couchdb):\/\/)([^:\s\/]+):([^@\s\/]+)@`))
 
 	// 6. Generic Environment & Config Assignments (e.g. FOO_KEY: "secret", DB_PASS=secret)
-	s.addPattern("env_secret", "CONFIG_SECRET", regexp.MustCompile(`(?i)\b([A-Za-z0-9_]*(KEY|SECRET|PASSWORD|PASSWD|TOKEN|AUTH|CREDENTIAL|PRIVATE))\b\s*([:=])\s*["']?([^"'\r\n\s]{6,})["']?`))
+	s.addPattern("env_secret", "CONFIG_SECRET", envRegex)
 
 	return s
 }
@@ -148,8 +148,62 @@ const aliasedMarker = "[ALIASED_"
 
 var (
 	dbURIRegex = regexp.MustCompile(`(?i)((postgres|postgresql|mysql|mongodb|mongodb\+srv|redis|rediss|amqp|couchdb):\/\/)([^:\s\/]+):([^@\s\/]+)@`)
-	envRegex   = regexp.MustCompile(`(?i)\b([A-Za-z0-9_]*(KEY|SECRET|PASSWORD|PASSWD|TOKEN|AUTH|CREDENTIAL|PRIVATE))\b\s*([:=])\s*["']?([^"'\r\n\s]{6,})["']?`)
+	// Grup: 1 nama, 3 pemisah, 4 tanda kutip pembuka (boleh kosong), 5 nilai.
+	envRegex = regexp.MustCompile(`(?i)\b([A-Za-z0-9_]*(KEY|SECRET|PASSWORD|PASSWD|TOKEN|AUTH|CREDENTIAL|PRIVATE))\b\s*([:=])\s*(["']?)([^"'\r\n\s]{6,})["']?`)
+
+	// codeCallRegex/codeMemberRegex = nilai tanpa kutip yang berupa kode, bukan literal: pemanggilan fungsi
+	// (useAdminToken(), os.Getenv(...) ) atau akses anggota (process.env.API_KEY, store.token).
+	codeCallRegex   = regexp.MustCompile(`^[A-Za-z_$][\w$]*(\.[A-Za-z_$][\w$]*)*\(`)
+	codeMemberRegex = regexp.MustCompile(`^[A-Za-z_$][\w$]*(\.[A-Za-z_$][\w$]*)+[;,)]*$`)
+	codeTypeWords   = map[string]bool{"string": true, "string;": true, "string,": true, "number": true, "boolean": true,
+		"undefined": true, "None": true, "nil": true, "String": true}
 )
+
+// isCodeValue: nilai tanpa kutip di sisi kanan "token = ..." yang jelas kode (pemanggilan fungsi,
+// akses anggota, nama tipe), bukan nilai rahasia. Nilai berkutip selalu dianggap literal.
+func isCodeValue(quote, val string) bool {
+	if quote != "" {
+		return false
+	}
+	if strings.HasPrefix(val, "${") || strings.HasPrefix(val, "$(") || strings.HasPrefix(val, "{{") {
+		return true
+	}
+	return codeCallRegex.MatchString(val) || codeMemberRegex.MatchString(val) || codeTypeWords[val]
+}
+
+// looksLikeIdentifier: kandidat GENERIC_API_KEY yang sebenarnya nama (berkas migrasi
+// 041_payments_status_needs_review, konstanta SOME_LONG_NAME, camelCase panjang), bukan kunci acak.
+// Kunci acak hampir selalu bercampur huruf dan angka di dalam satu potongan.
+func looksLikeIdentifier(m string) bool {
+	if !strings.ContainsAny(m, "0123456789") {
+		return true
+	}
+	segs := strings.FieldsFunc(m, func(r rune) bool { return r == '_' || r == '-' })
+	if len(segs) < 2 {
+		return false
+	}
+	for _, seg := range segs {
+		if !isWordSegment(seg) {
+			return false
+		}
+	}
+	return true
+}
+
+// isWordSegment: potongan nama yang seragam — semua angka, semua huruf kecil, semua huruf besar,
+// atau satu kata berhuruf awal kapital.
+func isWordSegment(seg string) bool {
+	allDigit, allLower, allUpper := true, true, true
+	for i, r := range seg {
+		isDigit := r >= '0' && r <= '9'
+		isLower := r >= 'a' && r <= 'z'
+		isUpper := r >= 'A' && r <= 'Z'
+		allDigit = allDigit && isDigit
+		allLower = allLower && (isLower || (i == 0 && isUpper))
+		allUpper = allUpper && isUpper
+	}
+	return allDigit || allLower || allUpper
+}
 
 // sanitizeRun = keadaan satu kali Sanitize: teks hasil, peta alias, dan catatan audit.
 type sanitizeRun struct {
@@ -232,13 +286,13 @@ func (r *sanitizeRun) dbURIPass() {
 func (r *sanitizeRun) envPass() {
 	r.result = envRegex.ReplaceAllStringFunc(r.result, func(m string) string {
 		sub := envRegex.FindStringSubmatch(m)
-		if len(sub) < 5 {
+		if len(sub) < 6 {
 			return m
 		}
-		varKey, delim, val := sub[1], sub[3], sub[4]
+		varKey, delim, quote, val := sub[1], sub[3], sub[4], sub[5]
 
-		// Don't mask already aliased keys or common false positives
-		if strings.HasPrefix(val, aliasedMarker) || val == "true" || val == "false" || val == "null" {
+		// Don't mask already aliased keys, common false positives, or code on the right-hand side
+		if strings.HasPrefix(val, aliasedMarker) || val == "true" || val == "false" || val == "null" || isCodeValue(quote, val) {
 			return m
 		}
 		alias := r.getAlias(val, "CONFIG_SECRET", "env_secret")
@@ -270,8 +324,9 @@ func (r *sanitizeRun) patternsPass(patterns []patternDef) {
 			r.bearerPass(p)
 			continue
 		}
+		generic := p.aliasPrefix == "GENERIC_API_KEY"
 		r.result = p.regex.ReplaceAllStringFunc(r.result, func(m string) string {
-			if strings.HasPrefix(m, aliasedMarker) {
+			if strings.HasPrefix(m, aliasedMarker) || (generic && looksLikeIdentifier(m)) {
 				return m
 			}
 			return r.getAlias(m, p.aliasPrefix, p.category)

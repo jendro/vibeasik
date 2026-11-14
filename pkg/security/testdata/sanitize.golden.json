@@ -239,25 +239,25 @@
  },
  {
   "Idx": 11,
-  "Out": "stripe [ALIASED_GENERIC_API_KEY_1] hook [ALIASED_SLACK_WEBHOOK_1]",
+  "Out": "stripe [ALIASED_STRIPE_KEY_1] hook [ALIASED_SLACK_WEBHOOK_1]",
   "Audit": {
    "redacted_count": 2,
    "custom_matches": 0,
    "built_in_matches": 2,
    "records": [
     {
-     "category": "ai_key",
-     "alias": "[ALIASED_GENERIC_API_KEY_1]",
-     "masked_preview": "sk_l••••••••uvwx"
-    },
-    {
      "category": "server_key",
      "alias": "[ALIASED_SLACK_WEBHOOK_1]",
      "masked_preview": "http••••••••XXXX"
+    },
+    {
+     "category": "server_key",
+     "alias": "[ALIASED_STRIPE_KEY_1]",
+     "masked_preview": "sk_l••••••••uvwx"
     }
    ],
    "message": "Double Security Enforced: Censored 2 secret(s) (0 custom keyword match, 2 built-in pattern match).",
-   "safe_preview": "stripe [ALIASED_GENERIC_API_KEY_1] hook [ALIASED_SLACK_WEBHOOK_1]",
+   "safe_preview": "stripe [ALIASED_STRIPE_KEY_1] hook [ALIASED_SLACK_WEBHOOK_1]",
    "double_security_level": "ACTIVE_ENFORCED"
   }
  },
