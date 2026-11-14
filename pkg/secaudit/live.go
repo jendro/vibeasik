@@ -216,6 +216,20 @@ func probeLive(ctx context.Context, opts LiveOptions) (*LiveResult, []Check) {
 	checks = append(checks, worstOf(disclosure, res.Paths))
 	checks = append(checks, worstOf(cors, res.Paths))
 	checks = append(checks, worstOf(boundary, res.Paths))
+	phase := func(name string) {
+		if opts.OnPhase != nil {
+			opts.OnPhase(name)
+		}
+	}
+	// 3. Serangan ke semua endpoint — sebelum burst agar rate limit belum menahan request.
+	if !opts.SkipAttacks && ctx.Err() == nil {
+		phase("attack")
+		attacks, atkChecks, notes := runAttacks(ctx, p, opts)
+		res.Attacks = attacks
+		res.Notes = append(res.Notes, notes...)
+		checks = append(checks, atkChecks...)
+	}
+	phase("burst")
 	if opts.SkipBurst {
 		checks = append(checks, Check{ID: "LIVE-RATE-LIMIT", Category: CatRateLimit, Title: "Rate limit terbukti di server", Status: StatusSkipped,
 			Severity: SevInfo, Source: "live", Evidence: []string{"Uji burst dilewati atas permintaan."}})
@@ -227,7 +241,11 @@ func probeLive(ctx context.Context, opts LiveOptions) (*LiveResult, []Check) {
 		if burst > maxBurst {
 			burst = maxBurst
 		}
-		checks = append(checks, liveRateLimitCheck(ctx, p, http.MethodGet, target, burst, "LIVE-RATE-LIMIT", "Rate limit terbukti di server (DDoS)"))
+		rl := liveRateLimitCheck(ctx, p, http.MethodGet, target, burst, "LIVE-RATE-LIMIT", "Rate limit terbukti di server (DDoS)")
+		checks = append(checks, rl)
+		if rl.Status == StatusPass || rl.Status == StatusWarn {
+			checks = append(checks, liveRateLimitBypassCheck(ctx, p, target))
+		}
 		for i, ap := range opts.AuthPaths {
 			if i >= 2 {
 				break
@@ -545,4 +563,42 @@ func formatStatuses(m map[int]int, errs int) string {
 		return "tanpa jawaban"
 	}
 	return strings.Join(parts, ", ")
+}
+
+// liveRateLimitBypassCheck: setelah limiter aktif (429), kirim request dengan IP palsu di header proxy. Bila server
+// percaya header itu tanpa daftar proxy tepercaya, tiap IP palsu mendapat kuota baru — rate limit tidak berguna.
+// Dua request kontrol tanpa header memastikan limiter masih menahan (bukan jendela waktunya yang habis).
+func liveRateLimitBypassCheck(ctx context.Context, p *prober, path string) Check {
+	c := Check{ID: "LIVE-RATE-LIMIT-BYPASS", Category: CatRateLimit, Title: "Rate limit tidak bisa dilewati dengan IP palsu (X-Forwarded-For)", Source: "live", GuidelineID: "SEC-007"}
+	const n = 8
+	passed := 0
+	for i := 0; i < n; i++ {
+		ip := fmt.Sprintf("203.0.113.%d", 10+i)
+		r := p.do(ctx, http.MethodGet, p.urlFor(path, nil), nil, map[string]string{
+			"X-Forwarded-For": ip, "X-Real-IP": ip, "CF-Connecting-IP": ip, "True-Client-IP": ip, "X-Client-IP": ip,
+		})
+		if r.err == nil && r.status != http.StatusTooManyRequests {
+			passed++
+		}
+	}
+	control := 0
+	for i := 0; i < 2; i++ {
+		if r := p.do(ctx, http.MethodGet, p.urlFor(path, nil), nil, nil); r.err == nil && r.status == http.StatusTooManyRequests {
+			control++
+		}
+	}
+	ev := fmt.Sprintf("%d dari %d request dengan IP palsu lolos limiter; %d dari 2 request kontrol tetap 429.", passed, n, control)
+	switch {
+	case control < 2:
+		c.Status, c.Severity = StatusSkipped, SevInfo
+		c.Evidence = []string{ev, "Limiter sudah tidak menahan request kontrol (jendela waktu habis) — tidak bisa dinilai."}
+	case passed >= n/2:
+		c.Status, c.Severity = StatusFail, SevCritical
+		c.Evidence = []string{ev, "Server memakai IP dari header X-Forwarded-For/X-Real-IP kiriman klien sebagai kunci limiter."}
+		c.Suggestion = "Percayai header IP proxy hanya dari proxy sendiri (daftar trusted proxies), atau pakai IP koneksi langsung sebagai kunci limiter."
+	default:
+		c.Status, c.Severity = StatusPass, SevInfo
+		c.Evidence = []string{ev}
+	}
+	return c
 }

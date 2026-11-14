@@ -96,7 +96,7 @@ var routes = []RouteRef{{"GET", "/api/items"}, {"POST", "/api/login"}, {"DELETE"
 
 func TestLiveHardenedServerPasses(t *testing.T) {
 	base := serve(t, hardenedApp())
-	rep := Run(context.Background(), Input{Target: "hardened", Routes: routes, Live: &LiveOptions{BaseURL: base, Burst: 20}})
+	rep := Run(context.Background(), Input{Target: "hardened", Routes: routes, Live: &LiveOptions{BaseURL: base, Burst: 20, AttackBudget: time.Second}})
 	if rep.Live == nil || !rep.Live.Reachable {
 		t.Fatalf("server tidak terjangkau: %+v", rep.Live)
 	}

@@ -263,6 +263,8 @@ func (s *Server) toolSecurityTest(args map[string]interface{}) (*ToolCallResult,
 	}
 	req.SkipBurst, _ = args["skip_burst"].(bool)
 	req.StartServer, _ = args["start_server"].(bool)
+	req.SkipAttacks, _ = args["skip_attacks"].(bool)
+	req.AuthHeader = argString(args, "auth_header")
 	if req.Burst > 60 {
 		req.Burst = 60
 	}

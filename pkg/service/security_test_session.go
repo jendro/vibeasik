@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"regexp"
 	"strings"
 	"sync"
@@ -106,7 +107,9 @@ func newSecTestSession(p *models.Project, req SecurityTestRequest) *SecTestSessi
 	sess.Steps = []SecTestStep{
 		{Key: "server", Title: serverTitle, Status: "pending"},
 		{Key: "static", Title: "Baca router & kode backend", Status: "pending"},
-		{Key: "live", Title: "Uji server: header, CORS, input, rate limit", Status: "pending"},
+		{Key: "live", Title: "Periksa header, CORS & HTTPS", Status: "pending"},
+		{Key: "attack", Title: "Serang endpoint: SQLi, XSS, traversal, JWT, …", Status: "pending"},
+		{Key: "burst", Title: "Uji rate limit (DDoS & brute-force)", Status: "pending"},
 		{Key: "stop", Title: "Matikan server", Status: "pending"},
 	}
 	return sess
@@ -145,6 +148,12 @@ func (s *SecTestSession) step(key, status, detail string) {
 	for i := range s.Steps {
 		st := &s.Steps[i]
 		if st.Key != key {
+			continue
+		}
+		if st.Status == status && st.FinishedAt != nil {
+			if detail != "" {
+				st.Detail = detail // langkah sudah selesai: hanya perbarui keterangan, bukan durasinya
+			}
 			continue
 		}
 		now := time.Now()
@@ -273,8 +282,27 @@ func (s *securityTestService) execute(ctx context.Context, sess *SecTestSession,
 	// 2–3. Baca kode lalu uji server (secaudit memberi tahu pergantian tahap).
 	wantLive := req.Live == nil || *req.Live
 	if wantLive && base != "" && ctx.Err() == nil {
-		in.Live = &secaudit.LiveOptions{BaseURL: base, Burst: req.Burst, SkipBurst: req.SkipBurst, Timeout: 5 * time.Second,
+		in.Live = &secaudit.LiveOptions{BaseURL: base, Burst: req.Burst, SkipBurst: req.SkipBurst, Timeout: 8 * time.Second,
+			SkipAttacks: req.SkipAttacks, AuthHeader: req.AuthHeader,
+			OnLog: func(level, msg string) { sess.event(level, "%s", msg) },
+			OnPhase: func(phase string) {
+				switch phase {
+				case "attack":
+					sess.step("live", "done", "")
+					sess.step("attack", "running", "")
+					sess.event("info", "— Menyerang endpoint: SQL/NoSQL injection, XSS, path traversal, command injection, SSTI, JWT palsu, akses tanpa login, berkas sensitif")
+				case "burst":
+					if sess.stepStatus("attack") == "running" {
+						sess.step("attack", "done", "")
+					} else {
+						sess.step("live", "done", "")
+					}
+					sess.step("burst", "running", "")
+					sess.event("info", "— Uji rate limit")
+				}
+			},
 			OnRequest: func(method, path string, status int, latency time.Duration, err error) {
+				path = shortenProbePath(path)
 				if err != nil {
 					sess.event("error", "%s %s → %v", method, path, err)
 					return
@@ -311,11 +339,37 @@ func (s *securityTestService) execute(ctx context.Context, sess *SecTestSession,
 	switch {
 	case in.Live == nil && !wantLive:
 		sess.step("live", "skipped", "Probe server dimatikan")
+		sess.step("attack", "skipped", "")
+		sess.step("burst", "skipped", "")
 	case in.Live == nil:
 		sess.step("live", "skipped", "Tidak ada server untuk diuji")
+		sess.step("attack", "skipped", "Tidak ada server untuk diserang")
+		sess.step("burst", "skipped", "")
 		rep.Notes = append(rep.Notes, "Tidak ada server berjalan maupun URL live untuk diuji; nyalakan server otomatis atau isi URL live untuk membuktikan kontrol di server.")
 	case rep.Live != nil && rep.Live.Reachable:
-		sess.step("live", "done", fmt.Sprintf("%d request · %d rute", rep.Live.RequestsRun, len(rep.Live.Paths)))
+		sess.step("live", "done", fmt.Sprintf("%d rute dasar", len(rep.Live.Paths)))
+		if req.SkipAttacks {
+			sess.step("attack", "skipped", "Dimatikan di checklist")
+		} else {
+			vuln, routes := 0, map[string]bool{}
+			for _, at := range rep.Live.Attacks {
+				routes[at.Method+" "+at.Route] = true
+				if at.Verdict == secaudit.VerdictVulnerable {
+					vuln++
+				}
+			}
+			sess.step("attack", "done", fmt.Sprintf("%d serangan ke %d sasaran · %d tembus", len(rep.Live.Attacks), len(routes), vuln))
+			level := "ok"
+			if vuln > 0 {
+				level = "error"
+			}
+			sess.event(level, "%d serangan dikirim, %d tembus", len(rep.Live.Attacks), vuln)
+		}
+		if req.SkipBurst {
+			sess.step("burst", "skipped", "Dimatikan di checklist")
+		} else {
+			sess.step("burst", "done", "")
+		}
 		sess.event("ok", "Server diuji dengan %d request", rep.Live.RequestsRun)
 	default:
 		msg := "Server tidak terjangkau"
@@ -502,4 +556,16 @@ func (s *securityTestService) finishServer(sess *SecTestSession, plan *secTestPl
 			}
 		})
 	}
+}
+
+// shortenProbePath memendekkan path request untuk log aktivitas: query di-decode dan dipotong agar payload
+// serangan tetap terbaca tanpa membanjiri layar.
+func shortenProbePath(p string) string {
+	if dec, err := url.QueryUnescape(p); err == nil {
+		p = dec
+	}
+	if r := []rune(p); len(r) > 110 {
+		p = string(r[:110]) + "…"
+	}
+	return p
 }

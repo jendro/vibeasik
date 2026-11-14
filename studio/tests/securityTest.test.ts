@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
-import type { SecurityCheck } from '../app/types/security_test'
-import { securityBaseUrlProblem, countSecurityByTab, filterSecurityChecks, securityTabOf } from '../app/utils/securityTest'
+import type { SecurityCheck, SecurityAttack } from '../app/types/security_test'
+import { securityBaseUrlProblem, countSecurityByTab, filterAttacks, filterSecurityChecks, securityTabOf } from '../app/utils/securityTest'
 import { pageTitleFor } from '../app/utils/sidebarMenuItems'
 
 const mk = (id: string, category: SecurityCheck['category'], status: SecurityCheck['status'], source: SecurityCheck['source'] = 'static'): SecurityCheck =>
@@ -35,5 +35,19 @@ describe('uji keamanan: filter & hitungan', () => {
   })
   it('judul navbar halaman diambil dari menu', () => {
     expect(pageTitleFor('/security-test')).toEqual({ title: 'Uji Keamanan', section: 'Proyek aktif' })
+  })
+})
+
+describe('uji keamanan: tabel serangan', () => {
+  const atk = (category: string, verdict: SecurityAttack['verdict'], payload = '\''): SecurityAttack =>
+    ({ category, verdict, payload, route: '/api/items/:id', method: 'GET', path: `/api/items/${payload}`, latency_ms: 1 })
+  const list = [atk('sqli', 'safe'), atk('xss', 'suspect'), atk('sqli', 'vulnerable', '1 OR 1'), atk('trace', 'blocked')]
+  it('bawaan: hanya tembus & mencurigakan, yang tembus di atas', () => {
+    expect(filterAttacks(list, { verdict: 'problems', category: 'all', q: '' }).map(a => a.verdict)).toEqual(['vulnerable', 'suspect'])
+  })
+  it('filter jenis, ditahan, dan cari payload', () => {
+    expect(filterAttacks(list, { verdict: 'all', category: 'sqli', q: '' }).length).toBe(2)
+    expect(filterAttacks(list, { verdict: 'blocked', category: 'all', q: '' }).map(a => a.category)).toEqual(['trace'])
+    expect(filterAttacks(list, { verdict: 'all', category: 'all', q: 'or 1' }).length).toBe(1)
   })
 })

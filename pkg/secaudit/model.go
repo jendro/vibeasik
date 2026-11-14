@@ -26,6 +26,8 @@ const (
 	CatAuth       = "auth"        // autentikasi rute mutasi
 	CatTransport  = "transport"   // HTTPS / HSTS
 	CatErrorLeaks = "error_leaks" // galat internal bocor ke klien
+	CatXSS        = "xss"         // cross-site scripting
+	CatTraversal  = "traversal"   // path traversal & berkas sensitif terbuka
 )
 
 // Severity mengikuti tingkat temuan diagnostik vibeasik.
@@ -58,13 +60,22 @@ type Location struct {
 
 // LiveOptions mengatur probe ke server berjalan.
 type LiveOptions struct {
-	BaseURL    string        // mis. http://127.0.0.1:4101 atau https://app.contoh.com
-	Paths      []string      // path GET aman untuk diuji (dari daftar rute); kosong = "/"
-	AuthPaths  []string      // path login/autentikasi (diuji burst POST kecil)
-	Burst      int           // jumlah request burst rate limit (default 25, maks 60)
-	Timeout    time.Duration // per request (default 5 detik)
-	SkipBurst  bool          // lewati uji burst (mis. server produksi yang rapuh)
-	ProbeLabel string        // label sasaran untuk laporan
+	BaseURL     string        // mis. http://127.0.0.1:4101 atau https://app.contoh.com
+	Paths       []string      // path GET aman untuk diuji (dari daftar rute); kosong = "/"
+	AuthPaths   []string      // path login/autentikasi (diuji burst POST kecil)
+	Burst       int           // jumlah request burst rate limit (default 25, maks 60)
+	Timeout     time.Duration // per request (default 5 detik)
+	SkipBurst   bool          // lewati uji burst (mis. server produksi yang rapuh)
+	ProbeLabel  string        // label sasaran untuk laporan
+	Routes      []RouteRef    // semua rute yang dikenal: sasaran uji serangan
+	AuthHeader  string        // opsional: "Bearer …" / "Cookie: …" agar endpoint berlogin ikut diserang
+	SkipAttacks bool          // lewati uji serangan (SQLi, XSS, traversal, …)
+	// AttackBudget = batas waktu fase serangan termasuk jeda rate limit (bawaan 8 menit).
+	AttackBudget time.Duration
+	// OnLog (opsional) menerima catatan fase serangan (mis. jeda karena rate limit).
+	OnLog func(level, msg string)
+	// OnPhase (opsional) dipanggil sebelum fase "attack" (serangan) dan "burst" (rate limit).
+	OnPhase func(phase string)
 	// OnRequest (opsional) dipanggil setiap request probe selesai — untuk memantau uji yang sedang berjalan.
 	OnRequest func(method, path string, status int, latency time.Duration, err error)
 }
@@ -79,6 +90,8 @@ type LiveResult struct {
 	Headers     map[string]string `json:"headers,omitempty"`
 	Paths       []string          `json:"paths,omitempty"` // rute yang menjawab dan ikut diuji
 	RequestsRun int               `json:"requests_run"`
+	Attacks     []Attack          `json:"attacks,omitempty"` // serangan yang dikirim beserta vonisnya
+	Notes       []string          `json:"-"`
 }
 
 // Report = hasil uji keamanan satu proyek / komponen.

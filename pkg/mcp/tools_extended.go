@@ -232,7 +232,7 @@ func (s *Server) extendedToolsList() []Tool {
 
 		{
 			Name:        "vibeasik_security_test",
-			Description: "Project security test: audits the backend router/source for standard controls (rate limiting against DDoS & brute-force, security headers, CORS, parameterized SQL vs injection, input validation, auth on mutations, error leaks) and proves them against the project's own running server (local port or base_url of the live server) with benign requests: header check, foreign-Origin CORS, unusual-input boundary (no SQL error / 5xx), and a small request burst expecting 429. Returns score, grade, and per-check evidence with file:line.",
+			Description: "Project security test: audits the backend router/source for standard controls (rate limiting against DDoS & brute-force, security headers, CORS, parameterized SQL vs injection, input validation, auth on mutations, error leaks) and proves them against the project's own running server (local port or base_url of the live server) with benign requests: header check, foreign-Origin CORS, unusual-input boundary (no SQL error / 5xx), a small request burst expecting 429, and an attack phase that sends common hacking payloads (SQLi incl. time-based, NoSQLi, XSS, path traversal, command injection, SSTI, open redirect, CRLF, login bypass, forged JWT, anonymous access to private routes, exposed .env/.git) to every safe GET endpoint (DELETE never sent). Returns score, grade, and per-check evidence with file:line.",
 			InputSchema: ToolSchema{
 				Type: "object",
 				Properties: map[string]interface{}{
@@ -243,6 +243,8 @@ func (s *Server) extendedToolsList() []Tool {
 					"skip_burst":   prop("boolean", "Skip the rate-limit burst (e.g. fragile production server)"),
 					"burst":        prop("integer", "Burst size for the rate-limit check (default 25, max 60)"),
 					"start_server": prop("boolean", "Start the backend component's dev server when it is not running, test it, then stop it again (default false)"),
+					"skip_attacks": prop("boolean", "Skip the attack phase (SQL/NoSQL injection, XSS, path traversal, command injection, SSTI, open redirect, CRLF, forged JWT, anonymous access, exposed files) against every safe GET endpoint and the login route"),
+					"auth_header":  prop("string", "Optional Authorization value (\"Bearer …\") or \"Cookie: …\" of a test account so endpoints behind login are attacked too"),
 				},
 				Required: []string{"project_id"},
 			},

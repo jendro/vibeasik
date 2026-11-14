@@ -31,6 +31,8 @@ type SecurityTestRequest struct {
 	StartServer bool   `json:"start_server,omitempty"` // nyalakan server komponen bila belum berjalan
 	KeepRunning bool   `json:"keep_running,omitempty"` // biarkan server yang dinyalakan uji tetap menyala
 	BootTimeout int    `json:"boot_timeout_sec,omitempty"`
+	SkipAttacks bool   `json:"skip_attacks,omitempty"` // lewati serangan SQLi/XSS/traversal/… ke semua endpoint
+	AuthHeader  string `json:"auth_header,omitempty"`  // "Bearer …" / "Cookie: …" — tidak disimpan di hasil uji
 }
 
 // SecurityTestService menjalankan dan menyimpan hasil uji keamanan terakhir per proyek.

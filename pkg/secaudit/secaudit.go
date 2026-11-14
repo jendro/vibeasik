@@ -78,8 +78,12 @@ func Run(ctx context.Context, in Input) *Report {
 		if len(opts.AuthPaths) == 0 {
 			opts.AuthPaths = AuthPaths(in.Routes)
 		}
+		if len(opts.Routes) == 0 {
+			opts.Routes = in.Routes
+		}
 		live, checks := probeLive(ctx, opts)
 		rep.Live = live
+		rep.Notes = append(rep.Notes, live.Notes...)
 		rep.Checks = append(rep.Checks, checks...)
 	} else {
 		rep.Notes = append(rep.Notes, "Probe live tidak dijalankan: kontrol berstatus \"declared\" baru terlihat di kode, belum terbukti di respons HTTP.")

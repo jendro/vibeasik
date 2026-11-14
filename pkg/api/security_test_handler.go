@@ -17,12 +17,17 @@ func parseSecurityTestRequest(c *fiber.Ctx, id int) (service.SecurityTestRequest
 		return req, msg
 	}
 	req.BaseURL = strings.TrimSpace(req.BaseURL)
+	req.AuthHeader = strings.TrimSpace(req.AuthHeader)
 	bootProblem := ""
+	if strings.ContainsAny(req.AuthHeader, "\r\n") {
+		bootProblem = "auth_header tidak boleh berisi baris baru"
+	}
 	if req.BootTimeout < 0 || req.BootTimeout > 300 {
 		bootProblem = "boot_timeout_sec harus 0–300"
 	}
 	if msg := firstProblem(
 		maxLen("base_url", req.BaseURL, maxURL),
+		maxLen("auth_header", req.AuthHeader, 4096),
 		secaudit.ValidateBaseURL(req.BaseURL),
 		burstProblem(req.Burst),
 		bootProblem,

@@ -1,7 +1,7 @@
 // Uji keamanan proyek (GET/POST /api/projects/:id/security-test, MCP vibeasik_security_test).
 
 export type SecurityCheckStatus = 'pass' | 'declared' | 'warn' | 'fail' | 'skipped'
-export type SecurityCheckCategory = 'rate_limit' | 'headers' | 'cors' | 'injection' | 'input' | 'auth' | 'transport' | 'error_leaks'
+export type SecurityCheckCategory = 'rate_limit' | 'headers' | 'cors' | 'injection' | 'input' | 'auth' | 'transport' | 'error_leaks' | 'xss' | 'traversal'
 
 export interface SecurityCheckLocation {
   file: string
@@ -22,6 +22,21 @@ export interface SecurityCheck {
   guideline_id?: string
 }
 
+export type SecurityAttackVerdict = 'vulnerable' | 'suspect' | 'safe' | 'blocked' | 'error'
+
+/** Satu serangan yang dikirim ke server (SQLi, XSS, traversal, JWT palsu, …) beserta vonisnya. */
+export interface SecurityAttack {
+  category: string
+  route: string
+  method: string
+  path: string
+  payload: string
+  status?: number
+  latency_ms: number
+  verdict: SecurityAttackVerdict
+  note?: string
+}
+
 export interface SecurityLiveResult {
   base_url: string
   reachable: boolean
@@ -31,6 +46,7 @@ export interface SecurityLiveResult {
   headers?: Record<string, string>
   paths?: string[]
   requests_run: number
+  attacks?: SecurityAttack[]
 }
 
 export interface SecurityTestReport {
@@ -58,13 +74,17 @@ export interface SecurityTestRequest {
   /** nyalakan server komponen bila belum berjalan (lalu dimatikan lagi setelah uji) */
   start_server?: boolean
   keep_running?: boolean
+  /** lewati serangan SQLi/XSS/traversal/… ke semua endpoint */
+  skip_attacks?: boolean
+  /** "Bearer …" atau "Cookie: …" akun uji agar endpoint berlogin ikut diserang (tidak disimpan) */
+  auth_header?: string
 }
 
 // Sesi uji di latar (POST …/security-test/start, dipantau lewat GET …/security-test).
 export type SecurityTestStepStatus = 'pending' | 'running' | 'done' | 'failed' | 'skipped'
 
 export interface SecurityTestStep {
-  key: 'server' | 'static' | 'live' | 'stop'
+  key: 'server' | 'static' | 'live' | 'attack' | 'burst' | 'stop'
   title: string
   status: SecurityTestStepStatus
   detail?: string

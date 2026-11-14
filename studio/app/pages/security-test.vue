@@ -15,7 +15,7 @@ const toast = useToast()
 const { projects, activeProjectId, activeProject, fetchProjects, selectActiveProject } = useActiveProject()
 
 const OPTS_KEY = 'vibeasik_sectest_opts'
-const defaultOptions = (): SecurityTestOptions => ({ component_id: 0, base_url: '', start_server: true, burst: true, keep_running: false })
+const defaultOptions = (): SecurityTestOptions => ({ component_id: 0, base_url: '', start_server: true, burst: true, keep_running: false, attacks: true, auth_header: '' })
 const options = ref<SecurityTestOptions>(defaultOptions())
 const showConfig = ref(true)
 
@@ -38,7 +38,7 @@ const loadProject = async (pid: number) => {
 onMounted(async () => {
   try {
     const saved = JSON.parse(localStorage.getItem(OPTS_KEY) || '{}')
-    options.value = { ...defaultOptions(), start_server: saved.start_server ?? true, burst: saved.burst ?? true, keep_running: !!saved.keep_running }
+    options.value = { ...defaultOptions(), start_server: saved.start_server ?? true, burst: saved.burst ?? true, keep_running: !!saved.keep_running, attacks: saved.attacks ?? true }
   } catch { /* penyimpanan tidak tersedia */ }
   await fetchProjects()
   const queryPId = route.query.project_id ? Number(route.query.project_id) : null
@@ -46,14 +46,15 @@ onMounted(async () => {
   else if (!activeProjectId.value && projects.value[0]) selectActiveProject(projects.value[0].id)
   if (activeProjectId.value) await loadProject(activeProjectId.value)
 })
-watch(() => [options.value.start_server, options.value.burst, options.value.keep_running], ([start_server, burst, keep_running]) => {
+// Header login sengaja tidak disimpan di browser.
+watch(() => [options.value.start_server, options.value.burst, options.value.keep_running, options.value.attacks], ([start_server, burst, keep_running, attacks]) => {
   try {
-    localStorage.setItem(OPTS_KEY, JSON.stringify({ start_server, burst, keep_running }))
+    localStorage.setItem(OPTS_KEY, JSON.stringify({ start_server, burst, keep_running, attacks }))
   } catch { /* abaikan */ }
 })
 watch(activeProjectId, (pid, old) => {
   if (pid && pid !== old) {
-    options.value = { ...options.value, component_id: 0, base_url: '' }
+    options.value = { ...options.value, component_id: 0, base_url: '', auth_header: '' }
     loadProject(pid)
   }
 })
@@ -74,7 +75,9 @@ const handleStart = async () => {
     base_url: useLive.value ? o.base_url.trim() : undefined,
     start_server: !useLive.value && o.start_server,
     keep_running: !useLive.value && o.start_server && o.keep_running,
-    skip_burst: !o.burst
+    skip_burst: !o.burst,
+    skip_attacks: !o.attacks,
+    auth_header: o.attacks ? o.auth_header.trim() || undefined : undefined
   })
   if (isRunning.value) showConfig.value = false
 }
@@ -144,7 +147,7 @@ const sourceLabel: Record<string, string> = { launched: 'dinyalakan uji ini', re
   <div class="space-y-5 w-full min-w-0 px-4 sm:px-6 lg:px-8 pt-6 pb-16">
     <AppPageHeader
       title="Uji Keamanan"
-      description="Server backend dinyalakan sungguhan lalu diuji: rate limit (DDoS & brute-force), SQL injection, header, CORS, validasi input, dan autentikasi — dibuktikan lewat respons HTTP nyata, bukan hanya dari kode."
+      description="Server backend dinyalakan sungguhan lalu diserang seperti peretas: SQL/NoSQL injection, XSS, path traversal, command injection, JWT palsu, akses tanpa login, berkas bocor, dan rate limit — dibuktikan lewat respons HTTP nyata, bukan hanya dari kode."
     >
       <template v-if="session || report" #meta>
         <span class="inline-flex items-center gap-1.5">
@@ -164,7 +167,7 @@ const sourceLabel: Record<string, string> = { launched: 'dinyalakan uji ini', re
           kind="scan"
           primary
           :label="session || report ? 'Jalankan ulang' : 'Mulai uji keamanan'"
-          desc="Nyalakan server bila mati, baca router & kode, uji server lewat request nyata, lalu matikan lagi"
+          desc="Nyalakan server bila mati, baca router & kode, serang semua endpoint lewat request nyata, lalu matikan lagi"
           :loading="starting"
           :disabled="!activeProjectId"
           @click="handleStart"
@@ -183,6 +186,7 @@ const sourceLabel: Record<string, string> = { launched: 'dinyalakan uji ini', re
           <span v-if="useLive" class="font-normal text-neutral-500">· server live {{ options.base_url || '(belum diisi)' }}</span>
           <span v-else-if="options.start_server" class="font-normal text-neutral-500">· server dinyalakan otomatis bila mati</span>
           <span v-else class="font-normal text-amber-600 dark:text-amber-400">· hanya server yang sudah berjalan</span>
+          <span v-if="options.attacks" class="font-normal text-rose-600 dark:text-rose-400">· serang semua endpoint{{ options.auth_header ? ' (dengan login)' : '' }}</span>
           <span v-if="!options.burst" class="font-normal text-neutral-500">· tanpa burst</span>
         </button>
         <SecurityTestConfig v-if="showConfig" v-model="options" :components="components" :disabled="isRunning" />
@@ -322,6 +326,7 @@ const sourceLabel: Record<string, string> = { launched: 'dinyalakan uji ini', re
                 </template>
               </dl>
             </section>
+            <SecurityAttackTable v-if="report.live?.attacks?.length" :attacks="report.live.attacks" />
             <UAlert v-for="(n, i) in report.notes" :key="i" color="neutral" variant="subtle" icon="i-lucide-info" :description="n" />
 
             <!-- Filter -->

@@ -9,6 +9,8 @@ export interface SecurityTestOptions {
   start_server: boolean
   burst: boolean
   keep_running: boolean
+  attacks: boolean
+  auth_header: string
 }
 
 const options = defineModel<SecurityTestOptions>({ required: true })
@@ -108,6 +110,20 @@ const portOf = (c: ProjectComponent) => c.run_port || c.port
             Nyalakan server bila mati
           </div>
           Dev command dijalankan, ditunggu sampai port siap, lalu dimatikan lagi setelah uji.
+        </div>
+      </div>
+      <div :class="optionRow">
+        <UCheckbox v-model="options.attacks" class="mt-0.5" />
+        <div class="min-w-0 flex-1 text-xs text-neutral-600 dark:text-neutral-300 space-y-2">
+          <div>
+            <div class="text-sm font-medium text-neutral-900 dark:text-white">
+              Serang semua endpoint
+            </div>
+            Payload peretas ke setiap endpoint GET & rute login: SQL/NoSQL injection (termasuk berbasis waktu), XSS, path traversal, command injection, template injection, open redirect, CRLF, JWT palsu, akses tanpa login, berkas .env/.git. DELETE tidak pernah dikirim.
+          </div>
+          <UFormField v-if="options.attacks" size="sm" label="Header login akun uji (opsional)" help="Bearer token atau Cookie: … agar endpoint di balik login ikut diserang. Tidak disimpan.">
+            <UInput v-model="options.auth_header" size="sm" type="password" icon="i-lucide-key-round" placeholder="Bearer eyJ… atau Cookie: session=…" class="w-full" autocomplete="off" />
+          </UFormField>
         </div>
       </div>
       <div :class="optionRow">
