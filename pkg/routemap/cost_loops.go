@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/token"
 	"regexp"
+	"strings"
 )
 
 // Bentuk eksekusi loop yang sebenarnya, supaya biaya (dan temuan N+1) mengikuti jumlah query nyata, bukan
@@ -86,6 +87,9 @@ func rangeBoundIn(sc *fnScope, e ast.Expr) (k int64, data bool) {
 	if !data || sc == nil {
 		return k, data
 	}
+	if n, ok := sc.fixedSize(e); ok {
+		return n, false
+	}
 	if id, ok := e.(*ast.Ident); ok {
 		if lim, ok := sc.limits[id.Name]; ok && lim > 0 {
 			return lim, false
@@ -159,6 +163,216 @@ func chainLimit(e ast.Expr) int64 {
 }
 
 // newFnScope menyiapkan cakupan biaya satu badan fungsi/handler.
-func newFnScope(fi *fileInfo, key string, body []ast.Stmt) *fnScope {
-	return &fnScope{fi: fi, key: key, closures: map[string]cst{}, limits: queryLimits(body), exit: newCst()}
+func newFnScope(m *module, fi *fileInfo, key string, body []ast.Stmt) *fnScope {
+	return &fnScope{m: m, fi: fi, key: key, closures: map[string]cst{}, limits: queryLimits(body), fixedVars: fixedLocals(body), exit: newCst()}
+}
+
+// textSplitFuncs: pemecah teks (strings.Split, regexp FindAll…) — banyak putarannya mengikuti panjang teks itu
+// (daftar host di env, deklarasi CSS), bukan jumlah baris data. Dulu loop seperti ini dihitung sebagai loop atas
+// data, sehingga fungsi string biasa (AssetURL) membuat setiap pemanggilnya di dalam loop tampak O(n²).
+var textSplitFuncs = map[string]bool{
+	"Split": true, "SplitN": true, "SplitAfter": true, "Fields": true, "FieldsFunc": true,
+	"FindAllString": true, "FindAllStringSubmatch": true, "FindAllStringIndex": true, "FindAllStringSubmatchIndex": true,
+}
+
+func textSplit(e ast.Expr) bool {
+	ce, ok := e.(*ast.CallExpr)
+	if !ok {
+		return false
+	}
+	sel, ok := ce.Fun.(*ast.SelectorExpr)
+	if !ok || !textSplitFuncs[sel.Sel.Name] {
+		return false
+	}
+	if strings.HasPrefix(sel.Sel.Name, "Find") {
+		return true // metode *regexp.Regexp
+	}
+	pkg, ok := sel.X.(*ast.Ident)
+	return ok && (pkg.Name == "strings" || pkg.Name == "bytes")
+}
+
+// fixedCollection: range atas variabel tingkat paket yang diisi literal (`var AvailableTemplates = []T{…}`,
+// `var meta = map[string]X{…}`) — ukurannya tetap sebanyak elemen literal itu, bukan n. Mengenali nama dari paket
+// yang sama maupun paket lokal lain (`certificates.AvailableTemplates`).
+func (m *module) fixedCollection(fi *fileInfo, e ast.Expr) (int64, bool) {
+	if m == nil || fi == nil {
+		return 0, false
+	}
+	var key string
+	switch x := e.(type) {
+	case *ast.Ident:
+		if x.Obj != nil && !topLevelVar(fi, x.Obj) { // variabel lokal/parameter fungsi
+			return 0, false
+		}
+		key = fi.Pkg + "." + x.Name
+	case *ast.SelectorExpr:
+		pkg, ok := x.X.(*ast.Ident)
+		if !ok || pkg.Obj != nil {
+			return 0, false
+		}
+		path, ok := fi.Imports[pkg.Name]
+		if !ok {
+			return 0, false
+		}
+		key = path + "." + x.Sel.Name
+	default:
+		return 0, false
+	}
+	m.fixedOnce.Do(m.indexFixedCollections)
+	n, ok := m.fixed[key]
+	return n, ok
+}
+
+func (m *module) indexFixedCollections() {
+	m.fixed = map[string]int64{}
+	reassigned := map[string]bool{}
+	for _, f := range m.files {
+		for _, d := range f.AST.Decls {
+			gd, ok := d.(*ast.GenDecl)
+			if !ok || gd.Tok != token.VAR {
+				continue
+			}
+			for _, spec := range gd.Specs {
+				vs, ok := spec.(*ast.ValueSpec)
+				if !ok || len(vs.Names) != len(vs.Values) {
+					continue
+				}
+				for i, name := range vs.Names {
+					if cl, ok := vs.Values[i].(*ast.CompositeLit); ok && len(cl.Elts) > 0 {
+						m.fixed[f.Pkg+"."+name.Name] = int64(len(cl.Elts))
+					}
+				}
+			}
+		}
+		// Variabel paket yang diisi ulang (append/assign) di fungsi bukan koleksi tetap.
+		ast.Inspect(f.AST, func(n ast.Node) bool {
+			as, ok := n.(*ast.AssignStmt)
+			if !ok {
+				return true
+			}
+			for _, l := range as.Lhs {
+				if id, ok := l.(*ast.Ident); ok && (id.Obj == nil || topLevelVar(f, id.Obj)) {
+					reassigned[f.Pkg+"."+id.Name] = true
+				}
+			}
+			return true
+		})
+	}
+	for k := range reassigned {
+		delete(m.fixed, k)
+	}
+}
+
+// topLevelVar: objek hasil resolusi parser adalah var tingkat paket di berkas ini (bukan var lokal fungsi).
+func topLevelVar(fi *fileInfo, obj *ast.Object) bool {
+	vs, ok := obj.Decl.(*ast.ValueSpec)
+	if !ok || obj.Kind != ast.Var {
+		return false
+	}
+	for _, d := range fi.AST.Decls {
+		if gd, ok := d.(*ast.GenDecl); ok {
+			for _, spec := range gd.Specs {
+				if spec == vs {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+// fixedSize: ekspresi koleksi berukuran tetap — potongan teks, variabel lokal berisi literal/potongan teks, atau
+// variabel paket berisi literal.
+func (sc *fnScope) fixedSize(e ast.Expr) (int64, bool) {
+	if textSplit(e) {
+		return 1, true
+	}
+	if id, ok := e.(*ast.Ident); ok {
+		if n, ok := sc.fixedVars[id.Name]; ok {
+			return n, true
+		}
+	}
+	return sc.m.fixedCollection(sc.fi, e)
+}
+
+// loopBoundIn: loopBound ditambah `for i := 0; i < len(vals); i++` atas koleksi berukuran tetap.
+func loopBoundIn(sc *fnScope, x *ast.ForStmt) (k int64, data, unbounded bool) {
+	k, data, unbounded = loopBound(x)
+	if !data || sc == nil {
+		return k, data, unbounded
+	}
+	be, ok := x.Cond.(*ast.BinaryExpr)
+	if !ok || (be.Op != token.LSS && be.Op != token.LEQ) {
+		return k, data, unbounded
+	}
+	ce, ok := be.Y.(*ast.CallExpr)
+	if !ok || len(ce.Args) != 1 {
+		return k, data, unbounded
+	}
+	if fn, ok := ce.Fun.(*ast.Ident); !ok || fn.Name != "len" {
+		return k, data, unbounded
+	}
+	if n, ok := sc.fixedSize(ce.Args[0]); ok {
+		return n, false, false
+	}
+	return k, data, unbounded
+}
+
+// fixedLocals: variabel lokal yang hanya diisi literal tak kosong (`vals := []int{1000, 900}`) atau potongan teks
+// (`hosts := strings.Split(os.Getenv("X"), ",")`). Variabel yang juga diisi nilai lain (append, hasil query) tidak
+// dicatat.
+func fixedLocals(body []ast.Stmt) map[string]int64 {
+	out := map[string]int64{}
+	other := map[string]bool{}
+	note := func(name string, v ast.Expr) {
+		switch {
+		case textSplit(v):
+			out[name] = max(out[name], 1)
+		default:
+			if cl, ok := v.(*ast.CompositeLit); ok && len(cl.Elts) > 0 {
+				out[name] = max(out[name], int64(len(cl.Elts)))
+				return
+			}
+			other[name] = true
+		}
+	}
+	for _, s := range body {
+		ast.Inspect(s, func(n ast.Node) bool {
+			switch x := n.(type) {
+			case *ast.FuncLit:
+				return false
+			case *ast.AssignStmt:
+				for i, l := range x.Lhs {
+					id, ok := l.(*ast.Ident)
+					if !ok {
+						continue
+					}
+					if len(x.Rhs) == len(x.Lhs) && (x.Tok == token.DEFINE || x.Tok == token.ASSIGN) {
+						note(id.Name, x.Rhs[i])
+					} else {
+						other[id.Name] = true
+					}
+				}
+			case *ast.ValueSpec:
+				for i, name := range x.Names {
+					if i < len(x.Values) {
+						note(name.Name, x.Values[i])
+					}
+				}
+			case *ast.CallExpr: // append(&xs, …) / Find(&xs): diisi dari luar literal
+				for _, a := range x.Args {
+					if u, ok := a.(*ast.UnaryExpr); ok && u.Op == token.AND {
+						if id, ok := u.X.(*ast.Ident); ok {
+							other[id.Name] = true
+						}
+					}
+				}
+			}
+			return true
+		})
+	}
+	for k := range other {
+		delete(out, k)
+	}
+	return out
 }

@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 // Batas agar proyek raksasa tidak membuat analisis lambat.
@@ -57,6 +58,9 @@ type module struct {
 	// pkgNames: import path paket lokal → nama paket
 	pkgNames map[string]string
 	types    *typeIndex
+	// fixed: variabel tingkat paket berisi literal ("<import path>.<nama>" → jumlah elemen), dibangun sekali.
+	fixed     map[string]int64
+	fixedOnce sync.Once
 }
 
 var moduleRe = regexp.MustCompile(`^module\s+(\S+)`)

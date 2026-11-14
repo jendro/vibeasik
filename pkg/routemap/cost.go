@@ -265,10 +265,13 @@ type costCtx struct {
 }
 
 type fnScope struct {
+	m        *module
 	fi       *fileInfo
 	key      string         // fungsi yang sedang dihitung ("" = badan handler inline)
 	closures map[string]cst // closure lokal: fn := func(){…} → biayanya dipakai saat fn() dipanggil
 	limits   map[string]int64
+	// fixedVars: variabel lokal berukuran tetap (literal / potongan teks), lihat fixedLocals.
+	fixedVars map[string]int64
 	// loops: kedalaman loop (semua jenis), dataLoops: kedalaman loop atas data. exit: biaya `return` di dalam
 	// loop — dijalankan paling banyak sekali, jadi ditambahkan sekali setelah loop terluar, tidak dikalikan.
 	loops, dataLoops int
@@ -290,7 +293,7 @@ func (c *costCtx) funcCost(key string) cst {
 		return out
 	}
 	c.busy[key] = true
-	out := c.block(newFnScope(f.file, key, f.Decl.Body.List), f.Decl.Body.List)
+	out := c.block(newFnScope(c.m, f.file, key, f.Decl.Body.List), f.Decl.Body.List)
 	delete(c.busy, key)
 	c.memo[key] = out
 	return out
@@ -319,7 +322,7 @@ func (c *costCtx) stmt(sc *fnScope, s ast.Stmt) cst {
 		out.add(heavier(c.block(sc, x.Body.List), c.stmt(sc, x.Else)))
 	case *ast.ForStmt:
 		out.add(c.stmt(sc, x.Init))
-		k, data, unbounded := loopBound(x)
+		k, data, unbounded := loopBoundIn(sc, x)
 		iter := c.loopBody(sc, data, func() cst {
 			iter := newCst()
 			iter.tick(1) // cek syarat
@@ -776,7 +779,7 @@ func (g *Graph) computeCosts(m *module) {
 		case rt.handlerKey != "":
 			total.add(c.funcCost(rt.handlerKey))
 		case rt.body != nil && rt.bodyFile != nil:
-			total.add(c.block(newFnScope(rt.bodyFile, "", rt.body.List), rt.body.List))
+			total.add(c.block(newFnScope(c.m, rt.bodyFile, "", rt.body.List), rt.body.List))
 		default:
 			total.tick(1)
 		}
