@@ -2,22 +2,18 @@
 // Isi navigasi sidebar (dipakai sidebar desktop & laci mobile): menu proyek aktif berkelompok
 // menurut alur kerja auditor, lalu menu workspace yang kelompoknya bisa dilipat.
 import { useActiveProject } from '~/composables/useActiveProject'
-import { GLOBAL_NAV_ITEMS, buildProjectNavItems, type NavItem } from '~/utils/sidebarMenuItems'
+import { GLOBAL_NAV_ITEMS, buildProjectNavItems, isProjectNavActive, type NavItem } from '~/utils/sidebarMenuItems'
 
 const props = withDefaults(defineProps<{ collapsed?: boolean, mobile?: boolean }>(), { collapsed: false, mobile: false })
 const emit = defineEmits<{ (e: 'navigate'): void }>()
 
 const route = useRoute()
 const { activeProjectId, activeProject } = useActiveProject()
-// Nama proyek aktif tampil di breadcrumb navbar; di sidebar cukup di tooltip item Detail Proyek.
+// Nama proyek aktif tampil di breadcrumb navbar; di sidebar cukup di tooltip item Ringkasan Proyek.
 const { isLocked } = useEdition()
 const lockedItem = (item: NavItem) => isLocked(proFeatureForPath(item.to))
 
-const isItemActive = (item: NavItem) => {
-  if (item.isDetail) return route.path.startsWith('/projects/')
-  if (item.exact) return route.path === item.to
-  return route.path === item.to || route.path.startsWith(item.to + '/')
-}
+const isItemActive = (item: NavItem) => isProjectNavActive(item, route.path, route.query.tab)
 
 const groupItems = (items: NavItem[]) => {
   const out: { name: string, items: NavItem[] }[] = []

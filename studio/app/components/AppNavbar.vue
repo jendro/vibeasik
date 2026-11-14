@@ -36,7 +36,7 @@ onMounted(() => {
   loadAccount()
 })
 
-const page = computed(() => pageTitleFor(route.path))
+const page = computed(() => pageTitleFor(route.path, route.query.tab))
 const isProjectPage = computed(() => page.value.section === 'Proyek aktif')
 
 // Pilihan proyek: 0 = semua proyek. Proyek non-aktif diberi keterangan status.
@@ -57,7 +57,7 @@ const selectedProject = computed({
   set: (v: number) => {
     const id = v ? Number(v) : null
     selectActiveProject(id)
-    if (route.path.startsWith('/projects/') && id) router.push(`/projects/${id}`)
+    if (route.path.startsWith('/projects/') && id) router.push({ path: `/projects/${id}`, query: route.path.includes('/apps/') ? {} : { tab: route.query.tab } })
   }
 })
 

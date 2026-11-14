@@ -54,7 +54,7 @@ onMounted(() => {
 
 // Judul tab mengikuti nama halaman di menu (halaman yang memanggil useHead sendiri tetap menang).
 useHead({
-  title: computed(() => pageTitleFor(route.path).title),
+  title: computed(() => pageTitleFor(route.path, route.query.tab).title),
   titleTemplate: (t?: string) => (t && !t.includes('vibeasik') ? `${t} · vibeasik Studio` : t || 'vibeasik Studio'),
   meta: [
     { name: 'description', content: 'vibeasik Studio: audit kode buatan AI, kelola proyek & port, dan konteks MCP untuk agent coding — berjalan lokal.' }
