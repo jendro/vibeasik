@@ -50,14 +50,23 @@ describe('kelas biaya proses', () => {
 
 describe('costHandlingNote', () => {
   test('menyebut tempat penanganan dan langkah berikutnya', () => {
-    const n = costHandlingNote({ sources: 5, in_todo: 2, in_audit: 1, ignored: 0, recheck: 0, open: 2, todos: [{ id: 12, title: 'a', status: 'pending' }, { id: 15, title: 'b', status: 'in_progress' }] })
+    const n = costHandlingNote({ sources: 5, in_todo: 2, todo_count: 2, in_audit: 1, ignored: 0, recheck: 0, open: 2, todos: [{ id: 12, title: 'a', status: 'pending' }, { id: 15, title: 'b', status: 'in_progress' }] })
     expect(n.title).toBe('Sudah ditangani 3 dari 5 sumber biaya tinggi')
-    expect(n.where).toBe('2 di todo (#12, #15) · 1 di temuan Audit')
+    expect(n.where).toBe('2 di 2 todo (#12, #15) · 1 di temuan Audit')
     expect(n.next).toContain('kerjakan todo-nya')
     expect(n.next).toContain('buat todo untuk 2 sumber')
   })
+  test('banyak sumber satu berkas dilebur ke satu todo', () => {
+    const n = costHandlingNote({ sources: 9, in_todo: 7, todo_count: 1, in_audit: 0, ignored: 0, recheck: 0, open: 2, todos: [{ id: 3757, title: 'a', status: 'pending' }] })
+    expect(n.where).toBe('7 di 1 todo (#3757)')
+  })
+  test('todo melebihi daftar ringkas', () => {
+    const todos = [1, 2, 3, 4, 5].map(id => ({ id, title: 't', status: 'pending' }))
+    const n = costHandlingNote({ sources: 8, in_todo: 8, todo_count: 7, in_audit: 0, ignored: 0, recheck: 0, open: 0, todos })
+    expect(n.where).toBe('8 di 7 todo (#1, #2, #3, #4, #5, +2 lain)')
+  })
   test('belum ada yang ditangani', () => {
-    const n = costHandlingNote({ sources: 3, in_todo: 0, in_audit: 0, ignored: 0, recheck: 0, open: 3, todos: [] })
+    const n = costHandlingNote({ sources: 3, in_todo: 0, todo_count: 0, in_audit: 0, ignored: 0, recheck: 0, open: 3, todos: [] })
     expect(n.title).toBe('3 sumber biaya tinggi belum ditangani')
     expect(n.where).toBe('')
   })

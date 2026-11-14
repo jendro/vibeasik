@@ -75,14 +75,15 @@ type CostTodoRef struct {
 
 // CostHandlingSummary = rekap penanganan seluruh sumber biaya proyek (bukan hanya halaman yang termuat).
 type CostHandlingSummary struct {
-	Sources int           `json:"sources"`
-	InTodo  int           `json:"in_todo"`
-	InAudit int           `json:"in_audit"`
-	Ignored int           `json:"ignored"`
-	Recheck int           `json:"recheck"`
-	Open    int           `json:"open"`
-	Todos   []CostTodoRef `json:"todos"`
-	AuditAt *time.Time    `json:"audit_at,omitempty"`
+	Sources   int           `json:"sources"`
+	InTodo    int           `json:"in_todo"`    // jumlah SUMBER yang ditangani todo
+	TodoCount int           `json:"todo_count"` // jumlah TODO unik (satu todo bisa menampung banyak sumber satu berkas)
+	InAudit   int           `json:"in_audit"`
+	Ignored   int           `json:"ignored"`
+	Recheck   int           `json:"recheck"`
+	Open      int           `json:"open"`
+	Todos     []CostTodoRef `json:"todos"`
+	AuditAt   *time.Time    `json:"audit_at,omitempty"`
 }
 
 const maxSummaryTodos = 5
@@ -307,9 +308,12 @@ func annotate(hots []routemap.Hotspot, l *costLedger) (func(routemap.RouteCost) 
 		case HandledRecheck:
 			sum.Recheck++
 		}
-		if got.TodoID != 0 && got.Where == HandledTodo && !seenTodo[got.TodoID] && len(sum.Todos) < maxSummaryTodos {
+		if got.TodoID != 0 && got.Where == HandledTodo && !seenTodo[got.TodoID] {
 			seenTodo[got.TodoID] = true
-			sum.Todos = append(sum.Todos, CostTodoRef{ID: got.TodoID, Title: got.TodoTitle, Status: got.TodoStatus})
+			sum.TodoCount++
+			if len(sum.Todos) < maxSummaryTodos {
+				sum.Todos = append(sum.Todos, CostTodoRef{ID: got.TodoID, Title: got.TodoTitle, Status: got.TodoStatus})
+			}
 		}
 	}
 	pick := func(idx []int) (*CostSource, *CostHandling) {

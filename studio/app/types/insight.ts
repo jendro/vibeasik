@@ -129,6 +129,7 @@ export interface CostRowHandling {
 export interface CostHandlingSummary {
   sources: number
   in_todo: number
+  todo_count: number
   in_audit: number
   ignored: number
   recheck: number

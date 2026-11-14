@@ -266,7 +266,7 @@ func pairs(c *fiber.Ctx) error {
 	if h := route(page, "/pairs").Handled; h == nil || h.Where != HandledTodo || h.TodoID != todo.ID {
 		t.Errorf("/pairs harus menunjuk todo gabungan #%d: %+v", todo.ID, h)
 	}
-	if hs := page.Handling; hs.InTodo != 2 || hs.InAudit != 0 || hs.Open != 0 || len(hs.Todos) != 1 || hs.AuditAt == nil {
+	if hs := page.Handling; hs.InTodo != 2 || hs.TodoCount != 1 || hs.InAudit != 0 || hs.Open != 0 || len(hs.Todos) != 1 || hs.AuditAt == nil {
 		t.Errorf("rekap: %+v", hs)
 	}
 

@@ -287,7 +287,7 @@ const card = 'min-w-0 rounded-2xl border border-neutral-200 dark:border-white/10
           </div>
           <div class="flex gap-2 shrink-0">
             <UButton v-if="handling!.in_todo" size="sm" color="neutral" variant="soft" icon="i-lucide-list-checks" @click="openTodos">
-              Buka Todo ({{ handling!.in_todo }})
+              Buka Todo ({{ handling!.todo_count }})
             </UButton>
             <UButton v-if="handling!.in_audit || handling!.recheck" size="sm" color="neutral" variant="soft" icon="i-lucide-shield-check" @click="openAudit">
               Buka Audit

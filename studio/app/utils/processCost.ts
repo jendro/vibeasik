@@ -45,7 +45,10 @@ export const costHandledBadge = (h: CostHandling) => {
 export const costHandlingNote = (s: CostHandlingSummary) => {
   const handled = s.in_todo + s.in_audit + s.ignored + s.recheck
   const where: string[] = []
-  if (s.in_todo) where.push(`${s.in_todo} di todo${s.todos.length ? ` (${s.todos.map(t => `#${t.id}`).join(', ')})` : ''}`)
+  if (s.in_todo) {
+    const more = s.todo_count > s.todos.length ? `, +${s.todo_count - s.todos.length} lain` : ''
+    where.push(`${s.in_todo} di ${s.todo_count} todo${s.todos.length ? ` (${s.todos.map(t => `#${t.id}`).join(', ')}${more})` : ''}`)
+  }
   if (s.in_audit) where.push(`${s.in_audit} di temuan Audit`)
   if (s.ignored) where.push(`${s.ignored} ditandai bukan masalah`)
   if (s.recheck) where.push(`${s.recheck} perlu dicek ulang`)
