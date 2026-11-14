@@ -98,7 +98,7 @@ func BuildIdentifier(p *models.Project, comp *models.Component, apiBase string) 
 			Role:         c.Role,
 			Language:     c.Language,
 			Framework:    c.Framework,
-			Port:         c.Port,
+			Port:         runPort(c),
 			AbsolutePath: c.AbsolutePath,
 		})
 	}
@@ -117,7 +117,7 @@ func BuildIdentifier(p *models.Project, comp *models.Component, apiBase string) 
 		compRole = comp.Role
 		compLang = comp.Language
 		compFmt = comp.Framework
-		compPort = comp.Port
+		compPort = runPort(*comp)
 		compPath = comp.AbsolutePath
 	}
 
@@ -410,4 +410,14 @@ func IdentifyWorkspace(db *gorm.DB, dirPath string, apiBase string) (*WorkspaceM
 	}
 
 	return result, nil
+}
+
+// runPort: port yang benar-benar dipakai saat komponen dijalankan — port blok proyek yang dialokasikan engine
+// (RunPort), atau port terdeteksi bila belum dialokasikan. Port terdeteksi lama (mis. 8091/3020) membuat agent dan
+// audit runtime memakai alamat yang tidak lagi dipakai dev.sh/.env.
+func runPort(c models.Component) int {
+	if c.RunPort > 0 {
+		return c.RunPort
+	}
+	return c.Port
 }
