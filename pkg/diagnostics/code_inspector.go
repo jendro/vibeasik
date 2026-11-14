@@ -399,8 +399,10 @@ func InspectFile(fullPath string, relPath string, lang string) []models.Finding 
 
 	// Smell 1: God Controller / Fat File (>400 baris KODE di berkas handler/controller; baris kosong, komentar,
 	// dan berkas tipe/data tidak dihitung)
-	if len(lines) > godControllerLines && scan.isControllerOrHandler && !isTypeOrDataFile(relPath) && countCodeLines(lines, lang) > godControllerLines {
-		findings = append(findings, godControllerFinding(relPath, lines))
+	if len(lines) > godControllerLines && scan.isControllerOrHandler && !isTypeOrDataFile(relPath) {
+		if code := countCodeLines(lines, lang); code > godControllerLines && godControllerApplies(relPath, lang, lines, code) {
+			findings = append(findings, godControllerFinding(relPath, lines))
+		}
 	}
 
 	findings = append(findings, scanCodeLines(scan, lines)...)
@@ -429,6 +431,41 @@ func newFileScan(relPath, lang, content string) *fileScan {
 }
 
 const godControllerLines = 400
+
+const (
+	// godControllerHandlers: berkas Go dengan handler HTTP sebanyak ini memegang banyak use case sekaligus.
+	godControllerHandlers = 8
+	// godControllerHardLines: di atas ukuran ini berkas handler Go tetap dilaporkan walau handlernya sedikit.
+	godControllerHardLines = 1200
+)
+
+var (
+	goHandlerFuncRegex = regexp.MustCompile(`^func\s+(?:\([^)]*\)\s*)?[A-Z]\w*\([^)]*(?:\*fiber\.Ctx|http\.ResponseWriter|\*gin\.Context|echo\.Context)`)
+	routeTableRegex    = regexp.MustCompile(`(?i)(^|/)(routes?|router)(/|\.[a-z]+$|_[a-z]+\.[a-z]+$)`)
+)
+
+// godControllerApplies: ukuran saja tidak membuktikan pelanggaran SRP. Berkas tabel rute dilewati; di Go,
+// berkas yang sudah dipecah per fitur (sedikit handler, banyak fungsi bantu kecil) tidak dilaporkan — yang
+// dilaporkan berkas dengan banyak handler (banyak use case) atau yang sangat besar. Bahasa lain memakai batas baris.
+func godControllerApplies(relPath, lang string, lines []string, code int) bool {
+	if routeTableRegex.MatchString(filepath.ToSlash(relPath)) {
+		return false
+	}
+	if lang != "go" {
+		return true
+	}
+	return code > godControllerHardLines || countGoHandlers(lines) >= godControllerHandlers
+}
+
+func countGoHandlers(lines []string) int {
+	n := 0
+	for _, l := range lines {
+		if goHandlerFuncRegex.MatchString(l) {
+			n++
+		}
+	}
+	return n
+}
 
 var (
 	bodyLimitRegex = regexp.MustCompile(`(MaxBytesReader|LimitReader|BodyLimit|LimitRequestBody)`)
