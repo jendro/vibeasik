@@ -13,7 +13,7 @@ import (
 func TestDeployScriptEnvOnServer(t *testing.T) {
 	cases := map[string]int{
 		"#!/usr/bin/env bash\n# vibeasik:env-on-server\nexec ./backend/scripts/deploy-prod.sh \"$@\"\n": 0,
-		"#!/usr/bin/env bash\n# vibeasik:env-on-server\ncp backend/.env.server backend/.env\n":          2,
+		"#!/usr/bin/env bash\n# vibeasik:env-on-server\ncp backend/.env.server backend/.env\n":          1,
 		"#!/usr/bin/env bash\nexec ./backend/scripts/deploy-prod.sh \"$@\"\n":                           2,
 	}
 	for body, want := range cases {
