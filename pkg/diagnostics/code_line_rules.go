@@ -21,6 +21,7 @@ type fileScan struct {
 	hasBodyLimit          bool
 	oneOffTool            bool // skrip sekali jalan (bench, seed, migrasi): aturan performa query tidak berlaku
 	inLoop                bool
+	loopStart             int // baris (1-based) loop terdalam yang sedang dibuka; 0 = di luar loop
 	inRawString           bool
 	inMarkup              bool // baris berada di markup komponen (.vue <template>, .svelte di luar <script>/<style>)
 	lineNum               int
@@ -299,12 +300,50 @@ func ruleNPlusOne(s *fileScan) (models.Finding, bool) {
 	if next := s.nextCodeLine(); strings.HasPrefix(next, "return") || strings.HasPrefix(next, "break") {
 		return models.Finding{}, false
 	}
+	// Loop yang dipotong konstanta (`if i >= 3 { break }`) menjalankan query paling banyak K kali; query ke tabel
+	// yang berbeda tiap putaran (`.Table(r.Name)`) tidak bisa digabung dengan WHERE IN.
+	if s.loopCappedByBreak() || s.matchCode(dynamicTableRegex) {
+		return models.Finding{}, false
+	}
 	return s.newFinding("query", "CRITICAL", "QUERY-NPLUS1",
 		"N+1 Query Anti-Pattern: Pemanggilan Database di Dalam Loop",
 		fmt.Sprintf("Pemanggilan kueri database terdeteksi di dalam perulangan (baris %d). Ini memicu latensi kumulatif O(N) dan saturasi connection pool.", s.lineNum),
 		"Gunakan eager loading (GORM Preload, SQL JOIN, atau WHERE IN batching) di luar perulangan sebelum iterasi dilakukan.",
 		"Martin Fowler PoEAA (Patterns of Enterprise Application Architecture): N+1 Selects Anti-Pattern. Menyebabkan bottleneck I/O jaringan database.",
 		"// Refactor ke Eager Loading (Contoh GORM):\n// SEBELUM:\n// for _, user := range users { db.Find(&orders, \"user_id = ?\", user.ID) }\n// SESUDAH:\n// db.Preload(\"Orders\").Find(&users)"), true
+}
+
+var (
+	// capBreakRegex: `if i >= 3 {` / `if (i > 10) break;` / `if i == 5: break` — batas konstanta di dalam loop.
+	capBreakRegex = regexp.MustCompile(`^(?:\}\s*)?(?:else\s+)?if\s*\(?\s*[A-Za-z_$][\w$]*\s*(?:>=|>|==)\s*\d+\s*\)?\s*[:{]?\s*(break\b)?`)
+	// dynamicTableRegex: nama tabel dari variabel/field (Go `.Table(r.Name)`, Laravel `DB::table($t)`).
+	dynamicTableRegex = regexp.MustCompile(`(?:\.Table|::table)\(\s*[$A-Za-z_][\w.$>\[\]-]*\s*[,)]`)
+)
+
+// loopCappedByBreak: loop terdalam dipotong konstanta sebelum baris ini (`if i >= K { break }`), jadi isinya
+// berjalan paling banyak K kali.
+func (s *fileScan) loopCappedByBreak() bool {
+	if s.loopStart <= 0 {
+		return false
+	}
+	for i := s.loopStart; i < s.lineNum-1 && i < len(s.codeLines); i++ {
+		m := capBreakRegex.FindStringSubmatch(strings.TrimSpace(s.codeLines[i]))
+		if m == nil {
+			continue
+		}
+		if m[1] != "" {
+			return true
+		}
+		for j := i + 1; j < len(s.codeLines); j++ {
+			if t := strings.TrimSpace(s.codeLines[j]); t != "" {
+				if strings.HasPrefix(t, "break") {
+					return true
+				}
+				break
+			}
+		}
+	}
+	return false
 }
 
 func ruleSQLInjection(s *fileScan) (models.Finding, bool) {
@@ -781,9 +820,19 @@ type loopTracker struct {
 	lang   string
 	depth  int
 	starts []loopFrame
+	line   int // baris (1-based) yang sedang diproses, diisi pemanggil sebelum update
+}
+
+// innermost: baris pembuka loop terdalam yang masih terbuka (0 = di luar loop).
+func (l *loopTracker) innermost() int {
+	if n := len(l.starts); n > 0 {
+		return l.starts[n-1].start
+	}
+	return 0
 }
 
 type loopFrame struct {
+	start  int  // baris (1-based) pembuka loop
 	depth  int  // kedalaman kurawal (atau indentasi Python) saat loop dibuka
 	opened bool // kurawal pembuka badan loop sudah terlihat
 	idle   int  // baris kode yang lewat tanpa kurawal pembuka (loop satu pernyataan tanpa kurawal)
@@ -809,7 +858,7 @@ func (l *loopTracker) update(raw, code string) bool {
 	}
 	isLoop := loopKeywordRegex.MatchString(code) && !literalLoopRegex.MatchString(code)
 	if isLoop {
-		l.starts = append(l.starts, loopFrame{depth: l.depth})
+		l.starts = append(l.starts, loopFrame{start: l.line, depth: l.depth})
 	}
 	in := len(l.starts) > 0
 	for i := 0; i < len(code); i++ {
@@ -843,7 +892,7 @@ func (l *loopTracker) updateIndent(raw, code string) bool {
 	}
 	in := len(l.starts) > 0
 	if loopKeywordRegex.MatchString(code) && !literalLoopRegex.MatchString(code) {
-		l.starts = append(l.starts, loopFrame{depth: indent, opened: true})
+		l.starts = append(l.starts, loopFrame{start: l.line, depth: indent, opened: true})
 	}
 	return in
 }
@@ -968,7 +1017,9 @@ func scanCodeLines(s *fileScan, lines []string) []models.Finding {
 			}
 			continue
 		}
+		loops.line = s.lineNum
 		s.inLoop = loops.update(line, s.code)
+		s.loopStart = loops.innermost()
 		for _, rule := range codeLineRules {
 			if f, ok := rule(s); ok {
 				findings = append(findings, f)

@@ -437,7 +437,7 @@ var (
 	handlerDirRegex  = regexp.MustCompile(`(^|/)(handlers?|controllers?|routers?|routes?|api|apis|endpoints?|http)(/|$)`)
 	handlerFileRegex = regexp.MustCompile(`(^|[_.-])(handlers?|controllers?)([_.-]|$)|controller\.[a-z]+$|handler\.[a-z]+$`)
 	typeOrDataRegex  = regexp.MustCompile(`(^|/)(types?|typings|data|fixtures|mocks?|docs?|schemas?|generated|constants?)(/|$)|[_.-](docs|types|raw|schema|data|constants)\.[a-z]+$`)
-	oneOffToolRegex  = regexp.MustCompile(`(^|/)(cmd/bench[^/]*|bench(marks?)?|scripts?|seeds?|seeders?|migrations?|fixtures|tools)(/|$)|(^|[_/-])(seed|seeder|migrate|migration|bench)[_.-]`)
+	oneOffToolRegex  = regexp.MustCompile(`(^|/)(cmd/bench[^/]*|cmd/[^/]*(?:check|fix|backfill|cleanup|repair|reindex|maint)[^/]*|bench(marks?)?|scripts?|seeds?|seeders?|migrations?|fixtures|tools)(/|$)|(^|[_/-])(seed|seeder|migrate|migration|bench)[_.-]`)
 )
 
 // isHandlerPath: berkas berada di lapisan HTTP (handler/controller/router) menurut folder atau nama berkasnya.

@@ -951,9 +951,31 @@ func (s *feScan) checkClickable(idx int, line string) {
 		return
 	}
 	tag := tagSpan(s.lines, idx, m[0])
+	// Latar modal/overlay (`@click.self="close"`) hanya menangkap klik pada dirinya, bukan kontrol yang perlu
+	// dijangkau keyboard; tutup lewat Escape/tombol adalah tanggung jawab dialognya.
+	if onlySelfClicks(tag) {
+		return
+	}
 	if !strings.Contains(tag, "role=") || !util.ContainsAny(tag, "tabindex", "tabIndex") {
 		s.set.hit("FE-CLICKABLE-NON-INTERACTIVE", idx)
 	}
+}
+
+// feClickAttrRegex: setiap atribut klik Vue beserta modifiernya.
+var feClickAttrRegex = regexp.MustCompile(`(?:@click|v-on:click)((?:\.[a-z]+)*)=`)
+
+// onlySelfClicks: semua handler klik Vue pada tag memakai modifier .self.
+func onlySelfClicks(tag string) bool {
+	ms := feClickAttrRegex.FindAllStringSubmatch(tag, -1)
+	if len(ms) == 0 {
+		return false
+	}
+	for _, m := range ms {
+		if !strings.Contains(m[1]+".", ".self.") {
+			return false
+		}
+	}
+	return true
 }
 
 // hitNumeric mencatat ruleID untuk tiap kecocokan grup-1 regex yang angkanya memenuhi pred.
