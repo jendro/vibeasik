@@ -106,6 +106,17 @@ func findMissingDevComponents(components []models.Component, content string) []s
 	return missing
 }
 
+// deployEnvOnServerRe: penanda eksplisit di deploy.sh bahwa env produksi dibaca di server, bukan disalin dari laptop.
+var (
+	deployEnvOnServerRe = regexp.MustCompile(`(?i)vibeasik:\s*env-on-server`)
+	deployCopiesEnvRe   = regexp.MustCompile(`\bcp\b[^\n]*\.env`)
+)
+
+// deployEnvOnServer: deploy.sh menyatakan env-on-server dan memang tidak menyalin berkas .env apa pun.
+func deployEnvOnServer(content string) bool {
+	return deployEnvOnServerRe.MatchString(content) && !deployCopiesEnvRe.MatchString(content)
+}
+
 func inspectDeployScript(project *models.Project) []models.Finding {
 	deployPath := filepath.Join(project.RootPath, "deploy.sh")
 	if !util.FileExists(deployPath) {
@@ -124,6 +135,11 @@ func inspectDeployScript(project *models.Project) []models.Finding {
 
 	var findings []models.Finding
 	content := readSmallFile(deployPath)
+	if deployEnvOnServer(content) {
+		// Rahasia produksi hanya ada di server dan deploy tidak menyalin .env lokal: tidak ada env yang perlu
+		// dipilih atau dikembalikan, jadi kedua aturan env di bawah tidak berlaku.
+		return nil
+	}
 	if !strings.Contains(content, ".env.local") || !strings.Contains(content, "trap") {
 		findings = append(findings, models.Finding{
 			Category:    "deployment",
