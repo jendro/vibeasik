@@ -138,8 +138,12 @@ func b(c *fiber.Ctx) error {
 		t.Fatalf("bukti pemanggilan di dalam loop harus menunjuk fungsi load")
 	}
 
+	// Todo gabungan lintas berkas (kunci "*go", mis. validasi false positive) tidak boleh menelan sumber biaya.
+	wild := models.Todo{ProjectID: &proj.ID, Title: "Validasi false positive N+1", Status: models.TodoStatusInProgress, AuditKey: "QUERY-NPLUS1|*go"}
+	db.Create(&wild)
+
 	batch, err := CreateAllCostTodos(db, proj.ID)
-	if err != nil || batch.Created != 1 || batch.Files != 1 || len(batch.Todos) != 1 {
+	if err != nil || batch.Created != 1 || batch.Merged != 0 || batch.Files != 1 || len(batch.Todos) != 1 || batch.Todos[0].ID == wild.ID {
 		t.Fatalf("jadikan semua todo: %+v err=%v", batch, err)
 	}
 	again, _ := CreateAllCostTodos(db, proj.ID)

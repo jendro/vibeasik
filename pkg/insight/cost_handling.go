@@ -195,10 +195,18 @@ func keyMatches(key string, rules []string, file string) bool {
 	if !ok {
 		return false
 	}
-	if strings.HasPrefix(target, "*") { // todo gabungan lintas berkas satu ekosistem ("*go", "*php")
-		return strings.TrimPrefix(filepath.Ext(file), ".") == strings.TrimPrefix(target, "*")
+	// Todo gabungan lintas berkas satu ekosistem ("*go", "*php") tidak dihitung menangani sumber biaya tertentu:
+	// isinya bisa hal lain (mis. memvalidasi false positive), jadi sumbernya tetap perlu todo per berkas.
+	if strings.HasPrefix(target, "*") {
+		return false
 	}
 	return samePath(target, file)
+}
+
+// isWildcardKey: kunci audit todo gabungan satu ekosistem ("QUERY-NPLUS1|*go").
+func isWildcardKey(key string) bool {
+	i := strings.Index(key, "|")
+	return i >= 0 && strings.HasPrefix(key[i+1:], "*")
 }
 
 func sourceOf(h routemap.Hotspot) CostSource {
@@ -253,6 +261,9 @@ func (l *costLedger) handling(h routemap.Hotspot) *CostHandling {
 		}
 		if f.TodoID != nil {
 			if t, ok := l.byID[*f.TodoID]; ok {
+				if isWildcardKey(t.AuditKey) {
+					return mk(HandledAudit, nil, fmt.Sprintf("Temuan ini hanya masuk todo gabungan #%d (lintas berkas). Buat todo khusus berkas ini dari sini.", t.ID))
+				}
 				t = l.resolveTodo(t)
 				where, next := todoNext(t)
 				return mk(where, &t, next)
@@ -414,9 +425,11 @@ func createCostTodoFrom(db *gorm.DB, projectID uint, a *costAnalysis, l *costLed
 	group := costGroup(a.hots, h)
 
 	// Todo terbuka yang sudah menangani salah satu sumber di berkas ini → sumber lain dilebur ke sana.
+	// Todo gabungan lintas berkas ("<aturan>|*go") tidak menjadi tempat lebur: todo dari Biaya Proses menunjuk
+	// berkas tertentu, sedangkan todo gabungan bisa berisi hal lain (mis. memvalidasi false positive).
 	for _, g := range group {
 		got := l.handling(g)
-		if got == nil || got.TodoID == 0 || got.Where != HandledTodo {
+		if got == nil || got.TodoID == 0 || got.Where != HandledTodo || isWildcardKey(l.byID[got.TodoID].AuditKey) {
 			continue
 		}
 		var t models.Todo
