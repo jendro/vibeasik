@@ -117,13 +117,18 @@ func costNote(cost cst, depth int, names []string) (kind, note string, ok bool) 
 	if deg > 0 {
 		steps = ", langkah " + label
 	}
+	what := "query"
+	if other := (cost.kinds | cost.loopKinds) &^ ioQuery; other != 0 {
+		// Operasi yang dibawa bukan (hanya) query: sebut jenis I/O-nya (berkas, HTTP, …), bukan "query".
+		what = strings.Join(IOLabels((cost.kinds | cost.loopKinds).names()), ", ")
+	}
 	switch {
 	case q && depth > 0:
 		kind = evidenceKindQuery
-		note = fmt.Sprintf("query di dalam loop data%s: dijalankan %s kali (N+1), Q = %s per putaran%s", via, powerLabel(depth), cost.queries.String(), steps)
+		note = fmt.Sprintf("%s di dalam loop data%s: dijalankan %s kali (N+1), Q = %s per putaran%s", what, via, powerLabel(depth), cost.queries.String(), steps)
 	case q:
 		kind = evidenceKindQuery
-		note = fmt.Sprintf("menjalankan query%s: Q = %s%s", via, cost.queries.String(), steps)
+		note = fmt.Sprintf("menjalankan %s%s: Q = %s%s", what, via, cost.queries.String(), steps)
 	case cost.recursive && deg == 0:
 		kind = evidenceKindCall
 		note = "pemanggilan rekursif: rumus adalah batas bawah"
@@ -253,9 +258,23 @@ func (w *goEvidence) stmt(s ast.Stmt, depth int) {
 		}
 	case *ast.ReturnStmt:
 		w.calls(x, 0) // `return` di dalam loop dijalankan paling banyak sekali
+	case *ast.GoStmt:
+		if depth > 0 {
+			w.add(evidenceKindQuery, x, depth, ioNote(ioGoroutine, depth))
+		}
+		w.calls(x.Call, depth)
 	default:
 		w.calls(s, depth)
 	}
+}
+
+// ioNote: keterangan bukti untuk I/O selain query (HTTP, berkas, email, antrean, goroutine).
+func ioNote(k ioKind, depth int) string {
+	label := strings.Join(IOLabels(k.names()), ", ")
+	if depth > 0 {
+		return fmt.Sprintf("%s di dalam loop data: dijalankan %s kali (I/O per item) — ambil/kirim sekali di luar loop atau batch", label, powerLabel(depth))
+	}
+	return label + ": satu operasi I/O"
 }
 
 func (w *goEvidence) clauses(body *ast.BlockStmt, depth int) {
@@ -348,6 +367,8 @@ func (w *goEvidence) call(ce *ast.CallExpr, depth int) bool {
 		if kind, note, ok := costNote(q, depth, nil); ok {
 			w.add(kind, ce, depth, note)
 		}
+	case sel != nil && ioCallKind(sel) != 0:
+		w.add(evidenceKindQuery, ce, depth, ioNote(ioCallKind(sel), depth))
 	}
 	return true
 }

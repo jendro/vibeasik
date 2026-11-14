@@ -189,6 +189,9 @@ type cst struct {
 	// avoid: loop pencarian itu berada di dalam loop atas data lain (langsung atau lewat fungsi terpanggil), jadi
 	// pertumbuhan O(n²) ke atasnya bisa dihindari. Loop bersarang biasa (baris × kolom, menyusun keluaran) wajar.
 	search, avoid bool
+	// kinds: jenis operasi I/O yang dijalankan (ioQuery, ioHTTP, …); loopKinds: yang dijalankan di dalam loop atas
+	// data (per item) — dasar label temuan "I/O per item".
+	kinds, loopKinds ioKind
 }
 
 func newCst() cst { return cst{ticks: poly{}, queries: poly{}} }
@@ -202,6 +205,8 @@ func (c *cst) add(o cst) {
 	c.unbounded = c.unbounded || o.unbounded
 	c.search = c.search || o.search
 	c.avoid = c.avoid || o.avoid
+	c.kinds |= o.kinds
+	c.loopKinds |= o.loopKinds
 	if o.depth > c.depth {
 		c.depth = o.depth
 	}
@@ -210,7 +215,7 @@ func (c *cst) add(o cst) {
 // scaled = biaya dikalikan k·n^dn·(log n)^dl (isi loop).
 func (c cst) scaled(k int64, dn, dl int) cst {
 	out := cst{ticks: c.ticks.times(k, dn, dl), queries: c.queries.times(k, dn, dl), recursive: c.recursive, unbounded: c.unbounded, depth: c.depth,
-		search: c.search, avoid: c.avoid}
+		search: c.search, avoid: c.avoid, kinds: c.kinds, loopKinds: c.loopKinds}
 	if dn > 0 {
 		out.depth += dn
 	}
@@ -229,6 +234,8 @@ func heavier(a, b cst) cst {
 	w.unbounded = w.unbounded || l.unbounded
 	w.search = w.search || l.search
 	w.avoid = w.avoid || l.avoid
+	w.kinds |= l.kinds
+	w.loopKinds |= l.loopKinds
 	if l.depth > w.depth {
 		w.depth = l.depth
 	}
@@ -387,7 +394,14 @@ func (c *costCtx) stmt(sc *fnScope, s ast.Stmt) cst {
 				out.add(c.expr(sc, l))
 			}
 		}
-	default: // ExprStmt, GoStmt, DeferStmt, IncDecStmt, SendStmt, DeclStmt, BranchStmt
+	case *ast.GoStmt:
+		// Goroutine baru per item di loop data = konkurensi tanpa batas (merebut pool koneksi, kegagalan tak
+		// terlihat): dihitung satu operasi seperti I/O agar dilaporkan bersama isinya.
+		out.tick(1)
+		out.add(c.expr(sc, x.Call))
+		out.queries.addTerm(term{}, 1)
+		out.kinds |= ioGoroutine
+	default: // ExprStmt, DeferStmt, IncDecStmt, SendStmt, DeclStmt, BranchStmt
 		out.tick(1)
 		out.add(c.expr(sc, s))
 	}
@@ -455,6 +469,7 @@ func loopCost(iter cst, k int64, data bool) cst {
 	var out cst
 	if data {
 		out = iter.scaled(1, 1, 0)
+		out.loopKinds |= iter.kinds
 	} else {
 		out = iter.scaled(k, 0, 0)
 	}
@@ -574,6 +589,14 @@ func (c *costCtx) call(sc *fnScope, ce *ast.CallExpr, out *cst) bool {
 		return false
 	case sel != nil && isQueryCall(sel, len(ce.Args)):
 		out.queries.addTerm(term{}, 1)
+		out.kinds |= ioQuery
+	case sel != nil:
+		// I/O di luar database (HTTP keluar, berkas, email, antrean/pubsub) dihitung seperti query: satu operasi
+		// I/O per pemanggilan, sehingga yang dijalankan per item di loop data dilaporkan sebagai I/O per item.
+		if k := ioCallKind(sel); k != 0 {
+			out.queries.addTerm(term{}, 1)
+			out.kinds |= k
+		}
 	}
 	return true
 }
@@ -700,15 +723,17 @@ type Cost struct {
 	// Avoidable: pertumbuhan O(n²) ke atas berasal dari pencarian/pencocokan linear di dalam loop atas data, yang
 	// bisa diganti map/indeks sekali bangun. false = loop bersarang pemrosesan data yang memang tak terhindarkan.
 	Avoidable bool `json:"avoidable,omitempty"`
-	rank      float64
-	qDegree   int // pangkat n tertinggi pada Q(n)
+	// IOKinds: jenis I/O yang dijalankan per item di loop atas data (query, http, file, mail, queue, goroutine).
+	IOKinds []string `json:"io_kinds,omitempty"`
+	rank    float64
+	qDegree int // pangkat n tertinggi pada Q(n)
 }
 
 var growthSizes = []int64{1, 10, 100, 1000, 10000}
 
 func (c cst) export() Cost {
 	out := Cost{Formula: c.ticks.String(), QueryFormula: c.queries.String(), Recursive: c.recursive, Unbounded: c.unbounded, LoopDepth: c.depth,
-		Avoidable: c.avoid}
+		Avoidable: c.avoid, IOKinds: c.loopKinds.names()}
 	out.BigO, out.Class = bigO(c.ticks)
 	out.QueryBigO, _ = bigO(c.queries)
 	lead, _ := c.ticks.lead()

@@ -574,6 +574,9 @@ func costGroupTitle(group []routemap.Hotspot) string {
 func costTodoTitle(h routemap.Hotspot) string {
 	name := funcShortName(h)
 	if h.Kind == "nplus1" {
+		if !routemap.OnlyQueries(h.Func.IOKinds) {
+			return fmt.Sprintf("Keluarkan I/O per item (%s) dari loop di %s (Q(n) = %s)", strings.Join(routemap.IOLabels(h.Func.IOKinds), ", "), name, h.Func.QueryFormula)
+		}
 		return fmt.Sprintf("Hilangkan N+1 query di %s (Q(n) = %s)", name, h.Func.QueryFormula)
 	}
 	return fmt.Sprintf("Turunkan biaya %s di %s", h.Func.BigO, name)

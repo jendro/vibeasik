@@ -91,6 +91,15 @@ func HotspotFinding(h routemap.Hotspot, baseRel string) models.Finding {
 		f.Description = fmt.Sprintf("Fungsi `%s` menjalankan query %s: jumlah query Q(n) = %s (n = jumlah data). Untuk 1.000 data berarti %s query. Rute terdampak: %s.",
 			h.Func.Name, via, h.Func.QueryFormula, growthAt(h.Func.Cost, 1000, true), routes)
 		f.Suggestion = nplusOneFix(h.Func.Lang) + " Bila loop-nya memang kecil dan tetap (mis. ≤ 5 jenis), tandai temuan ini sebagai bukan masalah."
+		if !routemap.OnlyQueries(h.Func.IOKinds) {
+			// I/O selain query (HTTP, berkas, email, antrean, goroutine) per item: aturannya sama — jangan per item.
+			kinds := strings.Join(routemap.IOLabels(h.Func.IOKinds), ", ")
+			f.Title = "I/O per Item di Dalam Loop (" + kinds + ")"
+			f.Description = fmt.Sprintf("Fungsi `%s` menjalankan operasi I/O (%s) %s: jumlah operasi Q(n) = %s (n = jumlah data). Untuk 1.000 data berarti %s operasi. Rute terdampak: %s.",
+				h.Func.Name, kinds, via, h.Func.QueryFormula, growthAt(h.Func.Cost, 1000, true), routes)
+			f.Suggestion = "Keluarkan I/O dari loop: ambil/baca sekali sebelum loop lalu cocokkan di memori (map), kirim secara batch (satu request/insert/publish untuk banyak item), atau batasi konkurensi dengan satu worker/pool, bukan satu goroutine per item. Bila loop-nya kecil dan tetap, tandai temuan ini sebagai bukan masalah."
+			f.TheoryBasis = "Biaya I/O (jaringan, disk, SMTP) per operasi jauh di atas biaya perhitungan di memori; satu operasi per item membuat latensi tumbuh linear terhadap jumlah data."
+		}
 		f.TheoryBasis = "N+1 Selects (Martin Fowler, Patterns of Enterprise Application Architecture): biaya I/O tumbuh linear terhadap jumlah baris."
 		f.Description += evidenceSentence(h)
 		return f
