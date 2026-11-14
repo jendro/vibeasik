@@ -21,8 +21,16 @@ const smallLimit = 50
 var batchExitRe = regexp.MustCompile(`len\(|==\s*0\b|(?i)(more|done|empty|last|cursor|rowsaffected|exhausted)`)
 
 // loopBound: jumlah putaran sebuah for. Loop batch → 1 putaran (bukan loop atas data, tidak tanpa batas).
+// Syarat gabungan `cari() && i < 1000` dibatasi konstanta di salah satu sisinya.
 func loopBound(x *ast.ForStmt) (k int64, data, unbounded bool) {
 	k, data, unbounded = forBound(x)
+	if be, ok := x.Cond.(*ast.BinaryExpr); ok && be.Op == token.LAND {
+		for _, side := range []ast.Expr{be.X, be.Y} {
+			if sk, sdata, _ := forBound(&ast.ForStmt{Init: x.Init, Cond: side}); !sdata {
+				return sk, false, false
+			}
+		}
+	}
 	if data && (chunkStep(x) || batchExit(x.Body)) {
 		return 1, false, false
 	}

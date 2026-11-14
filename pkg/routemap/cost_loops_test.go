@@ -34,6 +34,21 @@ func main() {
 	app.Get("/notif", notif)
 	app.Post("/move", move)
 	app.Delete("/participants", removeMany)
+	app.Post("/code", freeCode)
+}
+
+func taken(code string) bool {
+	var n int64
+	db.Model(&Job{}).Where("code = ?", code).Count(&n)
+	return n > 0
+}
+
+func freeCode(c *fiber.Ctx) error {
+	code := "A"
+	for i := 2; taken(code) && i < 1000; i++ {
+		code = "A" + string(rune(i))
+	}
+	return c.JSON(code)
 }
 
 func retry(c *fiber.Ctx) error {
@@ -153,7 +168,7 @@ func TestLoopShapesFollowRealQueryCount(t *testing.T) {
 	root := writeTree(t, map[string]string{"go.mod": "module demo\n\ngo 1.22\n", "main.go": loopShapesFixture})
 	graphs := Analyze(root)
 	rep := Costs(graphs)
-	for _, path := range []string{"/retry", "/export", "/dlq", "/login", "/notif"} {
+	for _, path := range []string{"/retry", "/export", "/dlq", "/login", "/notif", "/code"} {
 		if got := routeCost(t, rep, path); got.NPlusOne || got.Unbounded {
 			t.Errorf("%s: Q(n)=%q n+1=%v tanpa-batas=%v — jumlah query tidak tumbuh per baris", path, got.QueryFormula, got.NPlusOne, got.Unbounded)
 		}
@@ -168,7 +183,7 @@ func TestLoopShapesFollowRealQueryCount(t *testing.T) {
 			hot[h.Func.Name] = h
 		}
 	}
-	for _, name := range []string{"main.retry", "main.export", "main.clearDLQ", "main.login", "main.notif"} {
+	for _, name := range []string{"main.retry", "main.export", "main.clearDLQ", "main.login", "main.notif", "main.freeCode"} {
 		if h, ok := hot[name]; ok {
 			t.Errorf("%s tidak boleh menjadi sumber N+1: %+v", name, h)
 		}
