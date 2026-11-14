@@ -68,3 +68,16 @@ func TestClickableSkipsSelfOnlyBackdrop(t *testing.T) {
 		t.Error("onlySelfClicks salah membaca modifier")
 	}
 }
+
+func TestIsOneOffToolPath(t *testing.T) {
+	for _, p := range []string{"backend/cmd/bench_admin_users/main.go", "cmd/datacheck/main.go", "cmd/backfill-certs/main.go", "scripts/seed.go", "db/migrations/001.go"} {
+		if !IsOneOffToolPath(p) {
+			t.Errorf("%s adalah skrip sekali jalan", p)
+		}
+	}
+	for _, p := range []string{"cmd/server/main.go", "cmd/api/main.go", "handlers/check.go", "internal/repair/service.go"} {
+		if IsOneOffToolPath(p) {
+			t.Errorf("%s bukan skrip sekali jalan", p)
+		}
+	}
+}

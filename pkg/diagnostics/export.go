@@ -40,6 +40,10 @@ func CheckFunctionComplexity(content, targetFile, lang string, findings *[]model
 	checkFunctionComplexity(content, targetFile, lang, findings)
 }
 
+// IsOneOffToolPath: skrip sekali jalan (benchmark, seed, migrasi, alat pemeliharaan di cmd/) — aturan mutu
+// kode jalur permintaan (N+1, kompleksitas) tidak berlaku.
+func IsOneOffToolPath(relPath string) bool { return isOneOffToolPath(relPath) }
+
 // FillFindingEvidence mengisi potongan kode temuan yang menunjuk berkas & baris tetapi belum membawa buktinya
 // (dipakai pemeriksaan di luar audit statis, mis. Deep Check).
 func FillFindingEvidence(project *models.Project, findings []models.Finding) {
