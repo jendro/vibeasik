@@ -43,7 +43,7 @@ const { formatDateTime } = useFormatters()
 const moreItems = computed(() => [
   [
     { label: props.llmReviewBusy && props.llmReviewLabel ? props.llmReviewLabel : 'Review kode oleh LLM', icon: 'i-lucide-sparkles', disabled: !props.project || props.llmReviewBusy, onSelect: () => emit('runLlmReview') },
-    { label: props.sweepBusy && props.sweepLabel ? props.sweepLabel : 'Audit & selesaikan semua (otomatis)', icon: 'i-lucide-repeat', disabled: !props.project || props.sweepBusy, onSelect: () => emit('runSweep') }
+    { label: props.sweepBusy && props.sweepLabel ? props.sweepLabel : 'Audit & jadikan todo semua (otomatis, LLM)', icon: 'i-lucide-sparkles', disabled: !props.project || props.sweepBusy, onSelect: () => emit('runSweep') }
   ],
   [
     ...(props.hasLastDeepCheck
@@ -107,40 +107,31 @@ const moreItems = computed(() => [
           </div>
         </div>
         <div class="flex flex-wrap items-center gap-2">
-          <UButton
-            color="neutral"
-            variant="outline"
-            icon="i-lucide-refresh-cw"
-            size="sm"
+          <!-- Jenis tombol seragam (AppActionButton): Periksa = tanpa LLM, Proses temuan, penanda LLM = pakai kuota API -->
+          <AppActionButton
+            kind="scan"
+            label="Audit standar"
+            desc="Audit statis cepat: port, konfigurasi, dan 85 rule standar"
             :loading="diagnosing"
-            title="Audit statis cepat: port, konfigurasi, dan 85 rule standar"
             @click="emit('runAudit')"
-          >
-            Audit standar
-          </UButton>
-          <UButton
-            color="neutral"
-            variant="outline"
-            icon="i-lucide-scan-search"
-            size="sm"
+          />
+          <AppActionButton
+            kind="scan"
+            label="Deep Check"
+            desc="Simulasi latensi rute API, validasi form, dan risiko kueri"
             :loading="deepChecking"
-            title="Deep Check: simulasi latensi rute API, validasi form, dan risiko kueri"
             @click="emit('runDeepCheck')"
-          >
-            Deep Check
-          </UButton>
-          <UButton
-            color="neutral"
-            icon="i-lucide-wand-sparkles"
-            size="sm"
+          />
+          <AppActionButton
+            kind="process"
+            llm
+            primary
+            :label="pendingCount ? `Jadikan todo (${pendingCount})` : 'Jadikan todo'"
+            desc="Susun solusi tiap temuan terbuka lalu jadikan todo, bertahap per batch"
             :loading="resolvingAll"
             :disabled="!pendingCount"
-            title="Selesaikan temuan terbuka bertahap per batch lewat LLM"
             @click="emit('resolveAll')"
-          >
-            Selesaikan via LLM
-            <span v-if="pendingCount" class="rounded bg-white/15 dark:bg-neutral-900/15 px-1.5 tabular-nums">{{ pendingCount }}</span>
-          </UButton>
+          />
           <UDropdownMenu :items="moreItems" :content="{ align: 'end' }">
             <UButton color="neutral" variant="ghost" size="sm" icon="i-lucide-ellipsis" aria-label="Aksi audit lainnya" />
           </UDropdownMenu>
@@ -157,9 +148,7 @@ const moreItems = computed(() => [
         <UIcon name="i-lucide-git-compare" class="size-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5 sm:mt-0" />
         <span><span class="font-medium">Kode berubah sejak Deep Check terakhir.</span> {{ changeSummary || 'Ada berkas yang diubah.' }}</span>
       </div>
-      <UButton color="warning" variant="soft" size="sm" icon="i-lucide-scan-search" :loading="deepChecking" class="shrink-0" @click="emit('runDeepCheck')">
-        Deep Check ulang
-      </UButton>
+      <AppActionButton kind="scan" label="Deep Check ulang" desc="Periksa ulang rute & query yang berubah" :loading="deepChecking" class="shrink-0" @click="emit('runDeepCheck')" />
     </div>
   </div>
 </template>

@@ -249,8 +249,8 @@ const { getSeverityBadgeColor } = useFormatters()
 <template>
   <UModal
     v-model:open="open"
-    title="Eksekusi Solusi AI Bertahap (Progressive Batch Resolver)"
-    description="Selesaikan semua temuan audit arsitektur, kueri database, keamanan, dan Deep Check simulasi rute secara bertahap dan terkontrol via LLM."
+    title="Jadikan temuan todo, bertahap (memanggil LLM)"
+    description="LLM menyusun solusi tiap temuan (arsitektur, kueri, keamanan, Deep Check) lalu menjadikannya todo, batch demi batch."
     :ui="{ content: 'sm:max-w-3xl' }"
   >
     <template #body>
@@ -335,30 +335,27 @@ const { getSeverityBadgeColor } = useFormatters()
           <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-neutral-100 dark:border-white/[0.08]">
             <div class="flex items-center gap-2">
               <!-- Mode 1: Step-by-Step Single Batch -->
-              <UButton
+              <AppActionButton
                 v-if="!isExecuting && pendingCount > 0"
-                color="neutral"
-                variant="outline"
+                kind="process"
+                llm
                 size="xs"
-                icon="i-lucide-play"
-                title="Eksekusi hanya 1 batch (semi-manual terkontrol)"
+                :label="`Proses 1 batch (${Math.min(batchSize, pendingCount)} temuan)`"
+                desc="Jadikan todo hanya 1 batch (semi-manual terkontrol)"
                 @click="handleRunSingleBatch"
-              >
-                Proses 1 Batch ({{ Math.min(batchSize, pendingCount) }} Temuan)
-              </UButton>
+              />
 
               <!-- Mode 2: Full Auto Progressive Execution -->
-              <UButton
+              <AppActionButton
                 v-if="!isExecuting && pendingCount > 0"
-                color="primary"
-                variant="solid"
+                kind="process"
+                llm
+                primary
                 size="xs"
-                icon="i-lucide-fast-forward"
-                title="Jalankan otomatis bertahap sampai selesai dengan jeda antar-batch"
+                label="Mulai otomatis bertahap"
+                desc="Jadikan todo semua temuan, batch demi batch dengan jeda"
                 @click="handleStartAuto"
-              >
-                Mulai Otomatis Bertahap
-              </UButton>
+              />
 
               <!-- Pause Button when running auto -->
               <UButton
@@ -506,7 +503,7 @@ const { getSeverityBadgeColor } = useFormatters()
                   </span>
                   <span
                     v-if="sourceLabel(itemStates[getFindingKey(finding)]?.resolution)"
-                    class="text-[11px] max-w-48 truncate"
+                    class="text-xs max-w-48 truncate"
                     :class="itemStates[getFindingKey(finding)]?.resolution?.generated_via === 'heuristic_engine' ? 'text-amber-600 dark:text-amber-400' : 'text-neutral-500'"
                     :title="sourceLabel(itemStates[getFindingKey(finding)]?.resolution)"
                   >
@@ -571,16 +568,15 @@ const { getSeverityBadgeColor } = useFormatters()
         </UButton>
 
         <div class="flex items-center gap-2">
-          <UButton
+          <AppActionButton
             v-if="!isExecuting && pendingCount > 0"
-            color="primary"
-            variant="solid"
-            size="sm"
-            icon="i-lucide-fast-forward"
+            kind="process"
+            llm
+            primary
+            label="Mulai otomatis bertahap"
+            desc="Jadikan todo semua temuan, batch demi batch dengan jeda"
             @click="handleStartAuto"
-          >
-            Mulai Eksekusi Bertahap
-          </UButton>
+          />
         </div>
       </div>
     </template>

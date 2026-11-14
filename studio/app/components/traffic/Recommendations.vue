@@ -100,18 +100,16 @@ const makeTodo = async (r: TrafficRecommendation) => {
           </div>
           <div class="flex items-center justify-between gap-2 pt-1">
             <span class="text-xs font-mono text-neutral-400">{{ r.rule }}</span>
-            <UButton
+            <AppActionButton
               v-if="r.category !== 'info'"
+              kind="process"
               size="xs"
-              color="primary"
-              variant="soft"
-              icon="i-lucide-clipboard-plus"
+              label="Jadikan todo"
+              desc="Saran trafik ini menjadi todo proyek — tanpa LLM"
               :loading="busy === r.id"
               :disabled="!hasProject"
               @click="makeTodo(r)"
-            >
-              Jadikan Todo
-            </UButton>
+            />
           </div>
         </div>
       </div>

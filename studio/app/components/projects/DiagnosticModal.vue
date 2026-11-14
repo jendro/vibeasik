@@ -245,7 +245,7 @@ watch(open, (isOpen) => {
           :to="'/audit-report?project_id=' + diagnostic.project_id"
           @click="open = false"
         >
-          Buka Laporan Lengkap & Selesaikan via LLM
+          Buka laporan & jadikan todo
         </UButton>
         <div v-else />
         <UButton color="neutral" variant="outline" size="sm" @click="open = false">

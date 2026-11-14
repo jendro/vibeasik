@@ -127,7 +127,7 @@ const fmtTime = (s?: string) => (s ? new Date(s).toLocaleString('id-ID', { day: 
           </UFormField>
           <div class="flex flex-wrap items-center gap-3 md:col-span-2 xl:col-span-1 xl:pt-6">
             <USwitch v-model="withBurst" size="sm" label="Uji burst rate limit" title="Kirim 25 request cepat untuk membuktikan 429; matikan untuk server produksi yang rapuh" />
-            <UButton size="sm" color="neutral" icon="i-lucide-shield-check" label="Jalankan uji" :loading="running" :disabled="!!urlError" @click="start" />
+            <AppActionButton kind="scan" primary label="Jalankan uji" desc="Uji router & server live: rate limit, SQL injection, header, CORS, auth" :loading="running" :disabled="!!urlError" @click="start" />
           </div>
         </div>
         <p class="flex gap-2 text-xs text-neutral-500 dark:text-slate-400">

@@ -81,17 +81,17 @@ const toggleSub = (f: Finding) => {
       </div>
 
       <div class="flex items-center gap-1.5 shrink-0">
-        <UButton
+        <AppActionButton
           v-if="openFindings.length > 0"
+          kind="process"
+          llm
+          primary
           size="xs"
-          color="primary"
-          icon="i-lucide-sparkles"
+          :label="`Jadikan 1 todo (${openFindings.length})`"
+          :desc="`${openFindings.length} sub temuan sekaligus — satu panggilan LLM, satu todo yang mencakup semua lokasi`"
           :loading="!!resolvingKey && openFindings.some(f => findingKey(f) === resolvingKey)"
-          :title="`Selesaikan ${openFindings.length} sub temuan sekaligus — satu panggilan LLM, satu todo yang mencakup semua lokasi`"
           @click="emit('resolveGroup', group)"
-        >
-          Selesaikan Grup ({{ openFindings.length }})
-        </UButton>
+        />
         <UButton
           size="xs"
           color="neutral"

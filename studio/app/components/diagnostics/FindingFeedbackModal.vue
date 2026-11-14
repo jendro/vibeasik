@@ -133,12 +133,17 @@ const save = async () => {
         <div class="p-3 rounded-xl border border-violet-200 dark:border-violet-900/60 bg-violet-50/60 dark:bg-violet-950/20 space-y-2">
           <div class="flex items-center justify-between gap-2">
             <span class="font-bold text-violet-800 dark:text-violet-300 flex items-center gap-1.5">
-              <UIcon name="i-lucide-scan-search" class="w-4 h-4" />
+              <UIcon name="i-lucide-sparkles" class="w-4 h-4" />
               Cek ulang via LLM terhadap kode aktual
             </span>
-            <UButton size="xs" color="secondary" variant="soft" icon="i-lucide-sparkles" :loading="verifying" @click="runVerify">
-              {{ verification ? 'Cek ulang lagi' : 'Cek ulang' }}
-            </UButton>
+            <AppActionButton
+              kind="llm"
+              size="xs"
+              :label="verification ? 'Cek ulang lagi' : 'Cek ulang'"
+              desc="LLM membaca kode di sekitar baris temuan dan menilai temuannya"
+              :loading="verifying"
+              @click="runVerify"
+            />
           </div>
           <p v-if="verifying" class="text-neutral-500">
             LLM sedang membaca kode di sekitar baris temuan...

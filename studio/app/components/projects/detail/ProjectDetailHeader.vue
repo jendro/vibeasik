@@ -47,7 +47,7 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [
   [
     {
       label: 'Init vibeasik (tautan AI + peta kode)',
-      icon: 'i-lucide-sparkles',
+      icon: 'i-lucide-plug-zap',
       onSelect: () => initProject(props.project.id, props.project.name)
     },
     ...(!isProjectUnified(props.project)
@@ -159,15 +159,12 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [
             align="end"
             side="bottom"
           >
-            <UButton
-              icon="i-lucide-play"
-              color="neutral"
-              size="sm"
-              title="Jalankan pipeline LLM: Fast Scan tiap aplikasi, deteksi halaman & rute, lalu susun profil proyek"
+            <AppActionButton
+              kind="llm"
+              label="Scan & profil"
+              desc="Fast Scan tiap aplikasi, deteksi halaman & rute, lalu susun profil proyek"
               @click="$emit('startPipeline')"
-            >
-              Scan LLM
-            </UButton>
+            />
           </LastScanPopover>
           <UDropdownMenu :items="moreItems" :content="{ align: 'end' }">
             <UButton

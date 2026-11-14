@@ -175,18 +175,14 @@ const card = 'min-w-0 rounded-2xl border border-neutral-200 dark:border-white/10
             <UIcon name="i-lucide-clock" class="size-3.5" />
             <span>{{ computedLabel }}. Setiap rumus punya bukti: klik baris untuk melihat potongan kodenya.</span>
           </p>
-          <UButton
-            size="sm"
-            color="neutral"
-            variant="outline"
-            icon="i-lucide-refresh-cw"
+          <AppActionButton
+            kind="scan"
+            label="Cek ulang Big-O"
+            desc="Hitung ulang rumus tick dan Big-O semua rute dari kode terbaru di disk"
             :loading="rechecking"
             :disabled="loading"
-            title="Hitung ulang rumus tick dan Big-O semua rute dari kode terbaru di disk"
             @click="recheck"
-          >
-            Cek ulang Big-O
-          </UButton>
+          />
         </div>
 
         <AppStatStrip :items="stats" />

@@ -183,17 +183,16 @@ onUnmounted(() => {
         </div>
 
         <div class="flex items-center gap-2">
-          <UButton
+          <AppActionButton
             v-if="pendingDeepCount > 0"
+            kind="process"
+            llm
+            primary
             size="xs"
-            color="primary"
-            variant="solid"
-            icon="i-lucide-sparkles"
-            title="Selesaikan semua temuan Deep Check via LLM secara bertahap"
+            :label="`Jadikan todo (${pendingDeepCount})`"
+            desc="Susun solusi semua temuan Deep Check lalu jadikan todo, bertahap"
             @click="emit('resolveAll'); emit('update:open', false)"
-          >
-            Selesaikan Bertahap via LLM
-          </UButton>
+          />
 
           <button
             type="button"
@@ -457,17 +456,16 @@ onUnmounted(() => {
         </div>
 
         <div class="flex items-center gap-2">
-          <UButton
+          <AppActionButton
             v-if="pendingDeepCount > 0"
+            kind="process"
+            llm
+            primary
             size="xs"
-            color="primary"
-            variant="solid"
-            icon="i-lucide-sparkles"
-            title="Selesaikan semua temuan Deep Check via LLM secara bertahap"
+            :label="`Jadikan todo (${pendingDeepCount})`"
+            desc="Susun solusi semua temuan Deep Check lalu jadikan todo, bertahap"
             @click="emit('resolveAll'); emit('update:open', false)"
-          >
-            Selesaikan via LLM ({{ pendingDeepCount }})
-          </UButton>
+          />
 
           <UButton
             size="xs"

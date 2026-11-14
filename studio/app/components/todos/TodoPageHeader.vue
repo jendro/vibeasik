@@ -76,8 +76,8 @@ const showAutoRun = false
 
       <UButton
         v-if="activeProjectId"
-        icon="i-lucide-sparkles"
-        color="info"
+        icon="i-lucide-plug-zap"
+        color="neutral"
         variant="outline"
         size="sm"
         :loading="initingProject"

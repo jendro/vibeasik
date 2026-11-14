@@ -115,19 +115,16 @@ const METHOD_TONE: Record<string, string> = {
                 >
                   <UIcon :name="costHandledBadge(r.handled).icon" class="size-3" />{{ costHandledBadge(r.handled).label }}
                 </button>
-                <UButton
+                <AppActionButton
                   v-if="r.source"
+                  kind="process"
                   size="xs"
-                  color="neutral"
-                  variant="outline"
-                  icon="i-lucide-list-plus"
+                  label="Jadikan todo"
+                  :desc="`${r.source.func} (${r.source.file}:${r.source.line}) — tanpa LLM`"
                   :loading="busy === srcKey(r.source)"
                   :disabled="!!busy && busy !== srcKey(r.source)"
-                  :title="`Jadikan todo: ${r.source.func} (${r.source.file}:${r.source.line})`"
                   @click="emit('make-todo', r.source)"
-                >
-                  Buat todo
-                </UButton>
+                />
                 <span v-if="!r.handled && !r.source" class="text-xs text-neutral-400">—</span>
               </div>
             </td>

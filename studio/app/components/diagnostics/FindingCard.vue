@@ -55,7 +55,7 @@ const goToTodos = () => {
 const menuItems = computed<DropdownMenuItem[][]>(() => {
   const primaryGroup: DropdownMenuItem[] = [
     {
-      label: 'Selesaikan Ulang via LLM',
+      label: 'Susun ulang todo (LLM)',
       icon: 'i-lucide-sparkles',
       onSelect: () => emit('reResolve', props.finding)
     }
@@ -64,7 +64,7 @@ const menuItems = computed<DropdownMenuItem[][]>(() => {
   if (props.finding.todo_id || isResolved.value) {
     primaryGroup.unshift({
       label: 'Lihat Solusi & Langkah TODO',
-      icon: 'i-lucide-sparkles',
+      icon: 'i-lucide-file-text',
       onSelect: () => emit('viewResolution', props.finding)
     })
   }
@@ -85,8 +85,8 @@ const menuItems = computed<DropdownMenuItem[][]>(() => {
 
   const learningGroup: DropdownMenuItem[] = [
     {
-      label: 'Cek Ulang via LLM',
-      icon: 'i-lucide-scan-search',
+      label: 'Cek ulang temuan (LLM)',
+      icon: 'i-lucide-sparkles',
       onSelect: () => emit('feedback', props.finding, 'verify')
     }
   ]
@@ -289,18 +289,17 @@ const getCategoryColor = (cat: string) => {
       <!-- Action Buttons -->
       <div class="flex items-center gap-1.5 shrink-0">
         <!-- Main LLM Resolve Button (Hidden by default when already resolved or ignored) -->
-        <UButton
+        <AppActionButton
           v-if="!isResolved && !isIgnored"
+          kind="process"
+          llm
+          primary
           size="xs"
-          color="primary"
-          variant="solid"
-          icon="i-lucide-sparkles"
+          label="Jadikan todo"
+          desc="Susun solusi temuan baris ini dan buat todo-nya"
           :loading="resolving"
-          title="Selesaikan temuan baris ini saja via LLM dan buat rencana aksi TODO"
           @click="emit('resolve', finding)"
-        >
-          Selesaikan via LLM
-        </UButton>
+        />
 
         <!-- View LLM Resolution Button (Visible when resolved) -->
         <UButton
@@ -308,11 +307,11 @@ const getCategoryColor = (cat: string) => {
           size="xs"
           color="success"
           variant="subtle"
-          icon="i-lucide-sparkles"
-          title="Lihat solusi dan langkah penyelesaian LLM"
+          icon="i-lucide-file-text"
+          title="Lihat solusi dan langkah todo yang sudah disusun"
           @click="emit('viewResolution', finding)"
         >
-          Lihat Solusi LLM
+          Lihat solusi
         </UButton>
 
         <!-- Titik 3 (Dropdown Menu: Selesaikan Ulang, Buka Todo, Abaikan, Delete) -->
