@@ -365,8 +365,53 @@ func CreateCostTodo(db *gorm.DB, projectID uint, file string, line int, kind str
 	if h == nil {
 		return nil, false, ErrCostSourceGone
 	}
-	group := costGroup(a.hots, *h)
+	return createCostTodoFrom(db, projectID, a, loadCostLedger(db, projectID), *h, file)
+}
+
+// CostTodoBatch = hasil "Jadikan semua todo" di halaman Biaya Proses.
+type CostTodoBatch struct {
+	Created int           `json:"created"` // todo baru
+	Merged  int           `json:"merged"`  // dilebur ke todo terbuka yang sudah ada
+	Files   int           `json:"files"`   // berkas yang diproses (satu todo per berkas)
+	Todos   []CostTodoRef `json:"todos"`
+}
+
+// CreateAllCostTodos menjadikan todo semua sumber biaya yang belum punya todo terbuka (belum ditangani, atau baru
+// tercatat sebagai temuan audit), satu todo per berkas — sama dengan menekan "Jadikan todo" di tiap baris. Sumber
+// yang diabaikan atau menunggu cek ulang dilewati. Tanpa LLM.
+func CreateAllCostTodos(db *gorm.DB, projectID uint) (*CostTodoBatch, error) {
+	a, err := analyze(db, projectID)
+	if err != nil {
+		return nil, err
+	}
 	l := loadCostLedger(db, projectID)
+	out := &CostTodoBatch{}
+	done := map[string]bool{}
+	for _, h := range a.hots {
+		if done[h.Func.File] {
+			continue
+		}
+		if got := l.handling(h); got != nil && got.Where != HandledAudit {
+			continue
+		}
+		done[h.Func.File] = true
+		t, existed, err := createCostTodoFrom(db, projectID, a, l, h, h.Func.File)
+		if err != nil {
+			return out, err
+		}
+		out.Files++
+		if existed {
+			out.Merged++
+		} else {
+			out.Created++
+		}
+		out.Todos = append(out.Todos, CostTodoRef{ID: t.ID, Title: t.Title, Status: t.Status})
+	}
+	return out, nil
+}
+
+func createCostTodoFrom(db *gorm.DB, projectID uint, a *costAnalysis, l *costLedger, h routemap.Hotspot, file string) (*models.Todo, bool, error) {
+	group := costGroup(a.hots, h)
 
 	// Todo terbuka yang sudah menangani salah satu sumber di berkas ini → sumber lain dilebur ke sana.
 	for _, g := range group {

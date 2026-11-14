@@ -75,6 +75,48 @@ export interface CostEvidence {
   /** jumlah loop atas data yang melingkupi baris ini (untuk loop: termasuk dirinya) */
   depth: number
   note: string
+  /** fungsi lokal terpanggil yang membawa biaya baris ini (klik untuk membukanya di daftar Fungsi) */
+  callee?: CostCallee
+}
+
+export interface CostCallee {
+  name: string
+  file: string
+  line: number
+}
+
+/** Potongan berkas untuk tampilan editor bukti biaya. */
+export interface CostSourceWindow {
+  file: string
+  from: number
+  lines: string[]
+  total: number
+}
+
+export interface CostTodoBatch {
+  created: number
+  merged: number
+  files: number
+  todos: { id: number, title: string, status: string }[]
+}
+
+export interface FindingScope {
+  key: 'audit' | 'cost' | 'runtime'
+  label: string
+  page: string
+  rule_prefixes?: string[]
+}
+
+/** Prompt untuk agent coding pengguna: menjadikan temuan todo lewat MCP vibeasik (sama dengan tool vibeasik_findings_todo_prompt). */
+export interface FindingsTodoPrompt {
+  project_id: number
+  project_name: string
+  scope: FindingScope
+  open: number
+  critical: number
+  /** temuan perkiraan / keadaan sesaat yang tidak ikut triase agent */
+  advisory: number
+  prompt: string
 }
 
 export interface ProcessCost {
@@ -163,6 +205,8 @@ export interface FuncCost extends ProcessCost, CostRowHandling {
   name: string
   file: string
   line: number
+  /** baris penutup badan fungsi */
+  end?: number
   routes: number
 }
 

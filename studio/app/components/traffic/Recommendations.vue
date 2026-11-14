@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import type { TrafficRecommendation, TrafficSeverity, TrafficWindow } from '~/types'
+import type { StatItem } from '~/components/AppStatStrip.vue'
 
 // Saran optimasi dari data traffic nyata. "Jadikan Todo" → todo saran (status suggested) di proyek sumber.
-const props = defineProps<{ items: TrafficRecommendation[], sourceId: number, window: TrafficWindow, hasProject: boolean }>()
+const props = defineProps<{ items: TrafficRecommendation[], sourceId: number, window: TrafficWindow, hasProject: boolean, projectId?: number | null }>()
 
 const toast = useToast()
 const { recommendationToTodo } = useTraffic()
@@ -46,10 +47,54 @@ const makeTodo = async (r: TrafficRecommendation) => {
     busy.value = null
   }
 }
+
+// Rekap saran → "Jadikan semua todo": tiap saran dijadikan todo satu per satu (tanpa LLM; saran yang sudah punya
+// todo terbuka dilewati oleh engine).
+const sevCount = (s: TrafficSeverity) => props.items.filter(r => r.severity === s).length
+const recapStats = computed<StatItem[]>(() => [
+  { label: 'Saran', value: props.items.length, hint: `dari traffic ${props.window}` },
+  { label: 'Kritis', value: sevCount('critical'), dot: 'bg-rose-500', tone: sevCount('critical') ? 'text-rose-600 dark:text-rose-400' : undefined },
+  { label: 'Perlu tindakan', value: sevCount('warning'), dot: 'bg-amber-500' },
+  { label: 'Info', value: sevCount('info'), dot: 'bg-sky-500' }
+])
+const allBusy = ref(false)
+const makeAllTodos = async () => {
+  allBusy.value = true
+  let created = 0
+  let existed = 0
+  const failed: string[] = []
+  for (const r of props.items) {
+    try {
+      const res = await recommendationToTodo(props.sourceId, r.id, props.window)
+      if (res.already_exists) existed++
+      else created++
+    } catch (err: any) {
+      failed.push(`${r.title}: ${err?.data?.error || err?.message || 'gagal'}`)
+    }
+  }
+  allBusy.value = false
+  toast.add({
+    title: created ? `${created} todo saran dibuat` : 'Tidak ada todo baru',
+    description: [existed ? `${existed} saran sudah punya todo.` : '', failed.length ? `${failed.length} gagal — ${failed[0]}` : ''].filter(Boolean).join(' ') || undefined,
+    icon: 'i-lucide-clipboard-check',
+    color: failed.length ? 'warning' : created ? 'success' : 'neutral',
+    actions: [{ label: 'Buka Todo', onClick: () => { navigateTo('/todos') } }]
+  })
+}
 </script>
 
 <template>
   <div class="space-y-3">
+    <FindingsTodoBar
+      v-if="items.length"
+      :project-id="hasProject ? (projectId ?? sourceId) : null"
+      :stats="recapStats"
+      :count="hasProject ? items.length : 0"
+      :note="hasProject ? 'Setiap saran menjadi todo saran berisi bukti traffic nyata; saran yang sudah punya todo dilewati.' : 'Hubungkan sumber traffic ini ke proyek agar sarannya bisa dijadikan todo.'"
+      todo-desc="Semua saran traffic dijadikan todo saran (status disarankan) di proyek sumber — tanpa LLM"
+      :busy="allBusy"
+      @todo-all="makeAllTodos"
+    />
     <div class="flex flex-wrap gap-1.5">
       <UButton size="xs" :color="filter === 'all' ? 'primary' : 'neutral'" :variant="filter === 'all' ? 'soft' : 'ghost'" @click="filter = 'all'">
         Semua · {{ items.length }}

@@ -1,12 +1,20 @@
 <script setup lang="ts">
-import type { CostRowHandling, CostSource, FuncCost, ProcessCost, RouteCost } from '~/types'
+import type { CostCallee, CostRowHandling, CostSource, FuncCost, ProcessCost, RouteCost } from '~/types'
 import { costClassInfo, costHandledBadge, costStackLabel, fmtTicks, shortFormula } from '~/utils/processCost'
 
 // Tabel rumus biaya per rute atau per fungsi; klik baris untuk melihat bukti di kode (baris loop/query yang
 // membentuk rumusnya) dan pertumbuhan T(n) pada n = 1 … 10.000.
 // Kolom "Penanganan": todo/temuan Audit yang menangani sumber biayanya, atau tombol untuk menjadikannya todo.
-const props = defineProps<{ kind: 'routes' | 'funcs', routes: RouteCost[], funcs: FuncCost[], busy?: string }>()
-const emit = defineEmits<{ 'make-todo': [src: CostSource], 'open-todo': [id: number] }>()
+const props = defineProps<{
+  kind: 'routes' | 'funcs'
+  routes: RouteCost[]
+  funcs: FuncCost[]
+  busy?: string
+  projectId?: number
+  /** fungsi yang diminta dibuka (dari bukti "lewat `fungsi`"): barisnya dibuka & digulir ke pandangan */
+  focus?: CostCallee | null
+}>()
+const emit = defineEmits<{ 'make-todo': [src: CostSource], 'open-todo': [id: number], 'open-func': [callee: CostCallee], 'focused': [] }>()
 
 type Row = ProcessCost & CostRowHandling & { key: string, title: string, sub: string, method?: string }
 const srcKey = (s: CostSource) => `${s.kind}|${s.file}|${s.line}`
@@ -16,6 +24,18 @@ const rows = computed<Row[]>(() => props.kind === 'routes'
 
 const open = ref<string | null>(null)
 const toggle = (key: string) => { open.value = open.value === key ? null : key }
+
+// Lompat ke fungsi: setelah daftar Fungsi termuat, baris fungsi itu dibuka lalu digulir ke tengah layar.
+const rowId = (key: string) => `cost-row-${key.replace(/[^\w-]/g, '_')}`
+watch(() => [props.focus, rows.value] as const, ([f]) => {
+  if (!f || props.kind !== 'funcs') return
+  const hit = props.funcs.find(x => x.file === f.file && x.line === f.line) || props.funcs.find(x => x.name.endsWith(`.${f.name}`) || x.name === f.name)
+  if (!hit) return
+  const key = `${hit.module}|${hit.file}|${hit.name}|${hit.line}`
+  open.value = key
+  emit('focused')
+  nextTick(() => document.getElementById(rowId(key))?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
+}, { immediate: true })
 
 // Bukti di fungsi sumber ditampilkan terpisah bila sumber biayanya bukan handler/fungsi baris ini sendiri.
 const sourceOf = (r: Row) => r.source || r.handled?.source
@@ -62,6 +82,7 @@ const METHOD_TONE: Record<string, string> = {
       <tbody>
         <template v-for="r in rows" :key="r.key">
           <tr
+            :id="rowId(r.key)"
             class="border-b border-neutral-100 dark:border-white/[0.05] cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-500"
             tabindex="0"
             role="button"
@@ -152,12 +173,16 @@ const METHOD_TONE: Record<string, string> = {
                   :file="r.evidence_file"
                   :evidence="r.evidence"
                   :empty-text="emptyEvidence(r)"
+                  :project-id="projectId"
+                  @open-func="emit('open-func', $event)"
                 />
                 <InsightProcessCostEvidence
                   v-if="sourceEvidence(r)"
                   :title="`Bukti di fungsi sumber ${sourceEvidence(r)!.func}`"
                   :file="sourceEvidence(r)!.file"
                   :evidence="sourceEvidence(r)!.evidence"
+                  :project-id="projectId"
+                  @open-func="emit('open-func', $event)"
                 />
               </div>
               <div class="text-xs text-neutral-500">

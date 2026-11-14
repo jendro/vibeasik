@@ -64,3 +64,48 @@ func (s *Server) createProcessCostTodo(c *fiber.Ctx) error {
 	}
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"todo": todo, "already_exists": false})
 }
+
+// createAllProcessCostTodos: "Jadikan semua todo" di halaman Biaya Proses — semua sumber biaya yang belum punya
+// todo terbuka, satu todo per berkas (tanpa LLM).
+func (s *Server) createAllProcessCostTodos(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil || id <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
+	}
+	res, err := insight.CreateAllCostTodos(s.db, uint(id))
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error(), "partial": res})
+	}
+	return c.JSON(res)
+}
+
+// getProcessCostSource: potongan berkas (baris from..to) untuk tampilan editor bukti biaya.
+func (s *Server) getProcessCostSource(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil || id <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
+	}
+	file := c.Query("file")
+	if msg := needText("file", file, maxPath); msg != "" {
+		return badPayload(c, msg)
+	}
+	win, err := insight.CostSourceLines(s.db, uint(id), file, c.QueryInt("from", 1), c.QueryInt("to", 1))
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(win)
+}
+
+// getFindingsTodoPrompt: prompt siap salin untuk agent coding — menjadikan temuan satu sumber (audit, cost,
+// runtime) todo lewat MCP vibeasik tanpa LLM luar. Teksnya sama dengan tool MCP vibeasik_findings_todo_prompt.
+func (s *Server) getFindingsTodoPrompt(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil || id <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid project id"})
+	}
+	res, err := insight.BuildFindingsTodoPrompt(s.db, uint(id), c.Query("scope"))
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(res)
+}

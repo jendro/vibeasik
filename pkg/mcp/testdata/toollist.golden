@@ -46,6 +46,7 @@ vibeasik_code_map_search
 vibeasik_code_map_status
 vibeasik_deploy_plan
 vibeasik_ensure_unique_ports
+vibeasik_findings_todo_prompt
 vibeasik_inject_ai_template
 vibeasik_knowledge_feedback
 vibeasik_knowledge_gap

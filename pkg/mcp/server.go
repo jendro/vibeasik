@@ -158,6 +158,7 @@ func (s *Server) getToolsList() []Tool {
 func (s *Server) allTools() []Tool {
 	tools := append(append(s.coreToolsList(), s.extendedToolsList()...), s.runnerToolsList()...)
 	tools = append(tools, s.codeMapToolsList()...)
+	tools = append(tools, s.findingsToolsList()...)
 	tools = append(tools, s.pagingToolsList()...)
 	tools = append(tools, s.knowledgeToolsList()...)
 	tools = append(tools, s.activityToolsList()...)

@@ -19,6 +19,16 @@ type CostEvidence struct {
 	Code  string `json:"code"`  // isi baris itu (dipangkas)
 	Depth int    `json:"depth"` // jumlah loop atas data yang melingkupi baris ini (untuk loop: termasuk dirinya)
 	Note  string `json:"note"`  // kenapa baris ini menaikkan biaya
+	// Callee: fungsi lokal terpanggil yang membawa biayanya (pemanggilan atau query "lewat `fungsi`"), agar
+	// pembaca bisa melompat ke fungsi itu. Kosong untuk loop, query langsung, dan pemanggilan PHP.
+	Callee *CostCallee `json:"callee,omitempty"`
+}
+
+// CostCallee = fungsi terpanggil yang ditunjuk sebuah bukti biaya.
+type CostCallee struct {
+	Name string `json:"name"`
+	File string `json:"file"`
+	Line int    `json:"line"`
 }
 
 const (
@@ -296,6 +306,7 @@ func (w *goEvidence) call(ce *ast.CallExpr, depth int) bool {
 	if fs := c.m.resolveFuncs(sc.fi, ce.Fun); len(fs) > 0 {
 		best := newCst()
 		var names []string
+		var callee *CostCallee
 		for _, f := range fs {
 			if f == nil {
 				continue
@@ -304,10 +315,14 @@ func (w *goEvidence) call(ce *ast.CallExpr, depth int) bool {
 			best = heavier(best, fc)
 			if (hasQueries(fc) || costDegree(fc) > 0) && len(names) < evidenceMaxCallName {
 				names = append(names, f.Name)
+				if callee == nil && f.Decl != nil && f.file != nil {
+					callee = &CostCallee{Name: f.Name, File: f.file.Rel, Line: c.m.fset.Position(f.Decl.Pos()).Line}
+				}
 			}
 		}
 		if kind, note, ok := costNote(best, depth, names); ok {
 			w.add(kind, ce, depth, note)
+			w.out[len(w.out)-1].Callee = callee
 		}
 		return true
 	}

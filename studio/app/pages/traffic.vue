@@ -389,6 +389,7 @@ onBeforeUnmount(() => {
             :source-id="report.source.id"
             :window="windowKey"
             :has-project="Boolean(source?.project_id)"
+            :project-id="source?.project_id"
           />
           <TrafficRouteTable v-else-if="tab === 'routes'" :routes="report.routes" :groups="report.groups" />
           <div v-else-if="tab === 'origin'" class="space-y-4">

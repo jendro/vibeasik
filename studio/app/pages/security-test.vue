@@ -9,7 +9,7 @@ import { SEC_STATUS_META, SEC_STATUS_ORDER, SEC_TAB_META, securityBaseUrlProblem
 definePageMeta({ fluid: true })
 
 const { activeProjectId, activeProject, fetchProjects } = useActiveProject()
-const { getLast, run } = useSecurityTest()
+const { getLast, run, createTodos } = useSecurityTest()
 const toast = useToast()
 
 const report = ref<SecurityTestReport | null>(null)
@@ -95,6 +95,34 @@ const sourceOptions = computed(() => [
 const toggleStatus = (s: SecurityCheckStatus) => {
   filter.status = filter.status === s ? 'all' : s
 }
+// Rekap temuan → todo: pemeriksaan gagal & lemah (tanpa LLM; isi todo dari bukti & saran pemeriksaan itu).
+const todoCount = computed(() => (report.value?.summary.fail || 0) + (report.value?.summary.warn || 0))
+const todoNote = computed(() => {
+  const s = report.value?.summary
+  if (!s) return ''
+  return todoCount.value
+    ? `${s.fail} gagal dan ${s.warn} lemah perlu diperbaiki; ${s.pass} sudah terbukti lulus. Klik angka untuk menyaring daftar.`
+    : `Tidak ada pemeriksaan yang gagal atau lemah; ${s.pass} terbukti lulus.`
+})
+const todoBusy = ref(false)
+const makeAllTodos = async () => {
+  if (!activeProjectId.value) return
+  todoBusy.value = true
+  try {
+    const res = await createTodos(activeProjectId.value)
+    toast.add({
+      title: res.created ? `${res.created} todo keamanan dibuat` : 'Tidak ada todo baru',
+      description: res.existed ? `${res.existed} pemeriksaan sudah punya todo terbuka.` : undefined,
+      color: res.created ? 'success' : 'neutral',
+      icon: 'i-lucide-list-checks',
+      actions: [{ label: 'Buka Todo', onClick: () => { navigateTo('/todos') } }]
+    })
+  } catch (err: any) {
+    toast.add({ title: 'Gagal menjadikan todo', description: err?.data?.error || err?.message || '', color: 'error' })
+  } finally {
+    todoBusy.value = false
+  }
+}
 const criticalFails = computed(() => checks.value.filter(c => c.status === 'fail' && c.severity === 'CRITICAL').length)
 const fmtTime = (s?: string) => (s ? new Date(s).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-')
 </script>
@@ -169,39 +197,49 @@ const fmtTime = (s?: string) => (s ? new Date(s).toLocaleString('id-ID', { day: 
           description="Tutup temuan bertanda kritis lebih dulu: rute login tanpa rate limit, query SQL dari penggabungan string, CORS dengan credentials, atau server non-lokal tanpa HTTPS."
         />
 
-        <!-- Skor + rekap angka: satu bingkai bersambung, 6 sel (skor + 5 status) → 2 / 3 / 6 kolom -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-px overflow-hidden rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-neutral-200 dark:bg-white/[0.08]">
-          <div class="bg-white dark:bg-[#04111f] px-4 py-3.5 sm:px-5 sm:py-4">
-            <p class="text-xs font-medium text-neutral-500 dark:text-slate-400">
-              Skor · nilai {{ report.grade }}
-            </p>
-            <p class="text-2xl font-semibold tracking-tight tabular-nums" :class="securityGradeColor(report.score)">
-              {{ report.score }}<span class="text-sm font-medium text-neutral-400">/100</span>
-            </p>
-            <p class="text-xs text-neutral-400 truncate" :title="securityGradeLabel(report.grade)">
-              {{ securityGradeLabel(report.grade) }}
-            </p>
+        <FindingsTodoBar
+          :project-id="activeProjectId"
+          :stats="[]"
+          :count="todoCount"
+          :note="todoNote"
+          todo-desc="Setiap pemeriksaan gagal atau lemah dijadikan satu todo keamanan berisi bukti dan langkahnya — tanpa LLM"
+          :busy="todoBusy"
+          @todo-all="makeAllTodos"
+        >
+          <!-- Skor + rekap angka: satu bingkai bersambung, 6 sel (skor + 5 status) → 2 / 3 / 6 kolom -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-px overflow-hidden rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-neutral-200 dark:bg-white/[0.08]">
+            <div class="bg-white dark:bg-[#04111f] px-4 py-3.5 sm:px-5 sm:py-4">
+              <p class="text-xs font-medium text-neutral-500 dark:text-slate-400">
+                Skor · nilai {{ report.grade }}
+              </p>
+              <p class="text-2xl font-semibold tracking-tight tabular-nums" :class="securityGradeColor(report.score)">
+                {{ report.score }}<span class="text-sm font-medium text-neutral-400">/100</span>
+              </p>
+              <p class="text-xs text-neutral-400 truncate" :title="securityGradeLabel(report.grade)">
+                {{ securityGradeLabel(report.grade) }}
+              </p>
+            </div>
+            <button
+              v-for="s in SEC_STATUS_ORDER"
+              :key="s"
+              type="button"
+              class="text-left px-4 py-3.5 sm:px-5 sm:py-4 transition-colors"
+              :class="filter.status === s ? 'bg-sky-50/60 dark:bg-sky-500/10' : 'bg-white dark:bg-[#04111f] hover:bg-neutral-50 dark:hover:bg-white/[0.03]'"
+              :title="`${SEC_STATUS_META[s].hint} — klik untuk memfilter`"
+              @click="toggleStatus(s)"
+            >
+              <p class="text-xs font-medium text-neutral-500 dark:text-slate-400">
+                {{ SEC_STATUS_META[s].label }}
+              </p>
+              <p class="text-2xl font-semibold tracking-tight tabular-nums" :class="report.summary[s] ? SEC_STATUS_META[s].text : 'text-neutral-300 dark:text-slate-600'">
+                {{ report.summary[s] }}
+              </p>
+              <p class="text-xs text-neutral-400 truncate">
+                {{ SEC_STATUS_META[s].hint }}
+              </p>
+            </button>
           </div>
-          <button
-            v-for="s in SEC_STATUS_ORDER"
-            :key="s"
-            type="button"
-            class="text-left px-4 py-3.5 sm:px-5 sm:py-4 transition-colors"
-            :class="filter.status === s ? 'bg-sky-50/60 dark:bg-sky-500/10' : 'bg-white dark:bg-[#04111f] hover:bg-neutral-50 dark:hover:bg-white/[0.03]'"
-            :title="`${SEC_STATUS_META[s].hint} — klik untuk memfilter`"
-            @click="toggleStatus(s)"
-          >
-            <p class="text-xs font-medium text-neutral-500 dark:text-slate-400">
-              {{ SEC_STATUS_META[s].label }}
-            </p>
-            <p class="text-2xl font-semibold tracking-tight tabular-nums" :class="report.summary[s] ? SEC_STATUS_META[s].text : 'text-neutral-300 dark:text-slate-600'">
-              {{ report.summary[s] }}
-            </p>
-            <p class="text-xs text-neutral-400 truncate">
-              {{ SEC_STATUS_META[s].hint }}
-            </p>
-          </button>
-        </div>
+        </FindingsTodoBar>
 
         <!-- Server berjalan -->
         <section v-if="report.live" class="p-4 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#04111f] space-y-3">

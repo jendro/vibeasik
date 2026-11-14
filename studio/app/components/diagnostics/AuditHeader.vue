@@ -34,6 +34,9 @@ const emit = defineEmits<{
   (e: 'runSweep'): void
 }>()
 
+// Prompt agent: alternatif "Jadikan todo" tanpa kuota LLM API — agent coding pengguna yang memeriksa & membuat todo.
+const promptOpen = ref(false)
+
 const getScoreTextColor = healthTone
 const getScoreLabel = healthLabel
 
@@ -122,6 +125,16 @@ const moreItems = computed(() => [
             :loading="deepChecking"
             @click="emit('runDeepCheck')"
           />
+          <UButton
+            size="sm"
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-clipboard-copy"
+            label="Salin prompt agent"
+            title="Tanpa kuota LLM API: salin prompt untuk agent coding Anda (Claude Code, Cursor, Cline …) — agent memeriksa temuan di kode lalu membuat todo lewat MCP vibeasik"
+            :disabled="!project"
+            @click="promptOpen = true"
+          />
           <AppActionButton
             kind="process"
             llm
@@ -135,6 +148,7 @@ const moreItems = computed(() => [
           <UDropdownMenu :items="moreItems" :content="{ align: 'end' }">
             <UButton color="neutral" variant="ghost" size="sm" icon="i-lucide-ellipsis" aria-label="Aksi audit lainnya" />
           </UDropdownMenu>
+          <FindingsAgentPromptModal v-if="project" v-model:open="promptOpen" :project-id="project.id" scope="audit" />
         </div>
       </div>
     </div>

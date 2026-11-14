@@ -60,6 +60,9 @@ func (s *Server) callTool(name string, args map[string]interface{}) (*ToolCallRe
 	if res, handled, err := s.callCodeMapTool(name, args); handled {
 		return res, err
 	}
+	if res, handled, err := s.callFindingsTool(name, args); handled {
+		return res, err
+	}
 	if res, handled, err := s.callPagingTool(name, args); handled {
 		return res, err
 	}

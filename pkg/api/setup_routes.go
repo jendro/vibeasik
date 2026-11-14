@@ -73,9 +73,13 @@ func (s *Server) setupRoutes() {
 	api.Post("/projects/:id/code-map/export", s.exportCodeMap)
 	api.Get("/projects/:id/process-cost", s.getProcessCost)
 	api.Post("/projects/:id/process-cost/todo", s.createProcessCostTodo)
+	api.Post("/projects/:id/process-cost/todos", s.createAllProcessCostTodos)
+	api.Get("/projects/:id/process-cost/source", s.getProcessCostSource)
+	api.Get("/projects/:id/findings/todo-prompt", s.getFindingsTodoPrompt)
 	// Uji keamanan proyek: audit router + probe server berjalan (lokal/live). Request probe hanya ke server proyek sendiri.
 	api.Get("/projects/:id/security-test", s.getProjectSecurityTest)
 	api.Post("/projects/:id/security-test", s.runProjectSecurityTest)
+	api.Post("/projects/:id/security-test/todos", s.createSecurityTestTodos)
 	api.Get("/projects/:id/owner-recap", s.getOwnerRecap)
 	api.Post("/projects/:id/link-workspace", s.linkProjectWorkspace)
 	api.Post("/projects/:id/init-vibeasik", s.initProject)
