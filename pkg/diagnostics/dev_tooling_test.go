@@ -66,6 +66,11 @@ func TestNuxtDuplicateAutoImports(t *testing.T) {
 	}
 
 	os.WriteFile(filepath.Join(dir, "app", "composables", "useToast.ts"), []byte("export default function () {}\n"), 0o644)
+	// useToast milik Nuxt UI: tanpa modul itu, composable useToast sendiri tidak bentrok.
+	if fs = inspectNuxtDuplicateAutoImports(models.Component{AbsolutePath: dir}); len(fs) != 1 {
+		t.Fatalf("useToast tanpa @nuxt/ui bukan duplikat, got %+v", fs)
+	}
+	os.WriteFile(filepath.Join(dir, "package.json"), []byte(`{"dependencies":{"@nuxt/ui":"^3.0.0"}}`), 0o644)
 	fs = inspectNuxtDuplicateAutoImports(models.Component{AbsolutePath: dir})
 	if len(fs) != 2 || !strings.Contains(fs[1].Title, "useToast") || fs[1].TargetFile != "app/composables/useToast.ts" {
 		t.Fatalf("want useToast clash with built-in, got %+v", fs)

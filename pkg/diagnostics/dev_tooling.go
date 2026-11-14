@@ -3,6 +3,7 @@ package diagnostics
 import (
 	"bufio"
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -546,9 +547,9 @@ func scanNuxtAutoImportDir(c models.Component, dirRel string, owners map[string]
 	}
 }
 
-func findDuplicateAutoImports(owners map[string][]string) []models.Finding {
+func findDuplicateAutoImports(owners map[string][]string, deps map[string]bool) []models.Finding {
 	for n, files := range owners {
-		if builtinAutoImports[n] {
+		if builtinFor(n, deps) {
 			owners[n] = append(files, "#imports (bawaan Nuxt/Vue)")
 		}
 	}
@@ -586,7 +587,45 @@ func inspectNuxtDuplicateAutoImports(c models.Component) []models.Finding {
 	for _, dirRel := range []string{"composables", "utils", "app/composables", "app/utils", "shared/utils"} {
 		scanNuxtAutoImportDir(c, dirRel, owners)
 	}
-	return findDuplicateAutoImports(owners)
+	return findDuplicateAutoImports(owners, componentDeps(c))
+}
+
+// moduleAutoImports: auto-import yang hanya ada bila modul Nuxt tertentu terpasang — useToast bukan bawaan Nuxt,
+// tetapi milik Nuxt UI; composable useToast buatan sendiri tanpa modul itu tidak bentrok dengan apa pun.
+var moduleAutoImports = map[string][]string{
+	"useToast":     {"@nuxt/ui", "@nuxt/ui-pro"},
+	"useColorMode": {"@nuxt/ui", "@nuxt/ui-pro", "@nuxtjs/color-mode"},
+}
+
+// componentDeps: nama paket di dependencies & devDependencies package.json komponen.
+func componentDeps(c models.Component) map[string]bool {
+	var pkg struct {
+		Deps    map[string]string `json:"dependencies"`
+		DevDeps map[string]string `json:"devDependencies"`
+	}
+	_ = json.Unmarshal([]byte(readSmallFile(filepath.Join(c.AbsolutePath, "package.json"))), &pkg)
+	out := map[string]bool{}
+	for n := range pkg.Deps {
+		out[n] = true
+	}
+	for n := range pkg.DevDeps {
+		out[n] = true
+	}
+	return out
+}
+
+// builtinFor: nama ini auto-import bawaan (Nuxt/Vue, atau modul yang terpasang).
+func builtinFor(name string, deps map[string]bool) bool {
+	mods, needsModule := moduleAutoImports[name]
+	if !needsModule {
+		return builtinAutoImports[name]
+	}
+	for _, m := range mods {
+		if deps[m] {
+			return true
+		}
+	}
+	return false
 }
 
 // builtinAutoImports: auto-import bawaan Nuxt/Vue/Nuxt UI yang sering tertimpa composable buatan sendiri.
@@ -597,7 +636,7 @@ var builtinAutoImports = map[string]bool{
 	"useRoute": true, "useRouter": true, "navigateTo": true, "useHead": true, "useSeoMeta": true,
 	"useCookie": true, "useRuntimeConfig": true, "useAppConfig": true, "useNuxtApp": true, "useError": true,
 	"createError": true, "showError": true, "clearError": true, "useRequestHeaders": true, "definePageMeta": true,
-	"defineNuxtPlugin": true, "defineNuxtRouteMiddleware": true, "useToast": true, "useColorMode": true,
+	"defineNuxtPlugin": true, "defineNuxtRouteMiddleware": true,
 }
 
 func userFile(files []string) string {
