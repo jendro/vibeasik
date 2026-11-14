@@ -174,7 +174,7 @@ func (c *costCtx) evidenceFor(fi *fileInfo, body []ast.Stmt, src *srcCache) []Co
 	if fi == nil || len(body) == 0 {
 		return nil
 	}
-	w := &goEvidence{c: c, sc: &fnScope{fi: fi, closures: map[string]cst{}}, src: src}
+	w := &goEvidence{c: c, sc: newFnScope(fi, "", body), src: src}
 	w.block(body, 0)
 	return finishEvidence(w.out)
 }
@@ -204,7 +204,7 @@ func (w *goEvidence) stmt(s ast.Stmt, depth int) {
 		w.stmt(x.Else, depth)
 	case *ast.ForStmt:
 		w.stmt(x.Init, depth)
-		_, data, unbounded := forBound(x)
+		_, data, unbounded := loopBound(x)
 		inner := depth
 		if data {
 			inner++
@@ -216,7 +216,7 @@ func (w *goEvidence) stmt(s ast.Stmt, depth int) {
 	case *ast.RangeStmt:
 		w.calls(x.X, depth)
 		inner := depth
-		if _, data := rangeBound(x.X); data {
+		if _, data := rangeBoundIn(w.sc, x.X); data {
 			inner++
 			w.add(evidenceKindLoop, x, inner, loopNote(inner, false))
 		}
@@ -241,6 +241,8 @@ func (w *goEvidence) stmt(s ast.Stmt, depth int) {
 			}
 			w.calls(r, depth)
 		}
+	case *ast.ReturnStmt:
+		w.calls(x, 0) // `return` di dalam loop dijalankan paling banyak sekali
 	default:
 		w.calls(s, depth)
 	}

@@ -259,11 +259,20 @@ type costCtx struct {
 	m    *module
 	memo map[string]cst
 	busy map[string]bool
+	// inLoop[fungsi][terpanggil]: fungsi lokal yang dipanggil di dalam loop atas data — hanya merekalah yang
+	// pantas disebut "membawa query" pada temuan N+1 (Hotspot.Via).
+	inLoop map[string]map[string]bool
 }
 
 type fnScope struct {
 	fi       *fileInfo
+	key      string         // fungsi yang sedang dihitung ("" = badan handler inline)
 	closures map[string]cst // closure lokal: fn := func(){…} → biayanya dipakai saat fn() dipanggil
+	limits   map[string]int64
+	// loops: kedalaman loop (semua jenis), dataLoops: kedalaman loop atas data. exit: biaya `return` di dalam
+	// loop — dijalankan paling banyak sekali, jadi ditambahkan sekali setelah loop terluar, tidak dikalikan.
+	loops, dataLoops int
+	exit             cst
 }
 
 func (c *costCtx) funcCost(key string) cst {
@@ -281,7 +290,7 @@ func (c *costCtx) funcCost(key string) cst {
 		return out
 	}
 	c.busy[key] = true
-	out := c.block(&fnScope{fi: f.file, closures: map[string]cst{}}, f.Decl.Body.List)
+	out := c.block(newFnScope(f.file, key, f.Decl.Body.List), f.Decl.Body.List)
 	delete(c.busy, key)
 	c.memo[key] = out
 	return out
@@ -310,21 +319,34 @@ func (c *costCtx) stmt(sc *fnScope, s ast.Stmt) cst {
 		out.add(heavier(c.block(sc, x.Body.List), c.stmt(sc, x.Else)))
 	case *ast.ForStmt:
 		out.add(c.stmt(sc, x.Init))
-		iter := newCst()
-		iter.tick(1) // cek syarat
-		iter.add(c.expr(sc, x.Cond))
-		iter.add(c.block(sc, x.Body.List))
-		iter.add(c.stmt(sc, x.Post))
-		k, data, unbounded := forBound(x)
-		out.add(loopCost(iter, k, data))
+		k, data, unbounded := loopBound(x)
+		iter := c.loopBody(sc, data, func() cst {
+			iter := newCst()
+			iter.tick(1) // cek syarat
+			iter.add(c.expr(sc, x.Cond))
+			iter.add(c.block(sc, x.Body.List))
+			iter.add(c.stmt(sc, x.Post))
+			return iter
+		})
+		out.add(c.afterLoop(sc, loopCost(iter, k, data)))
 		out.unbounded = out.unbounded || unbounded
 	case *ast.RangeStmt:
 		out.add(c.expr(sc, x.X))
-		iter := newCst()
-		iter.tick(1)
-		iter.add(c.block(sc, x.Body.List))
-		k, data := rangeBound(x.X)
-		out.add(loopCost(iter, k, data))
+		k, data := rangeBoundIn(sc, x.X)
+		iter := c.loopBody(sc, data, func() cst {
+			iter := newCst()
+			iter.tick(1)
+			iter.add(c.block(sc, x.Body.List))
+			return iter
+		})
+		out.add(c.afterLoop(sc, loopCost(iter, k, data)))
+	case *ast.ReturnStmt:
+		out.tick(1)
+		out.add(c.expr(sc, x))
+		if sc.loops > 0 {
+			sc.exit = heavier(sc.exit, out)
+			return newCst()
+		}
 	case *ast.SwitchStmt:
 		out.add(c.stmt(sc, x.Init))
 		out.tick(1)
@@ -342,7 +364,7 @@ func (c *costCtx) stmt(sc *fnScope, s ast.Stmt) cst {
 		for i, r := range x.Rhs {
 			if lit, ok := r.(*ast.FuncLit); ok && i < len(x.Lhs) {
 				if id, ok := x.Lhs[i].(*ast.Ident); ok {
-					sc.closures[id.Name] = c.block(sc, lit.Body.List)
+					sc.closures[id.Name] = c.closureBlock(sc, lit.Body.List)
 					continue
 				}
 			}
@@ -353,10 +375,43 @@ func (c *costCtx) stmt(sc *fnScope, s ast.Stmt) cst {
 				out.add(c.expr(sc, l))
 			}
 		}
-	default: // ExprStmt, ReturnStmt, GoStmt, DeferStmt, IncDecStmt, SendStmt, DeclStmt, BranchStmt
+	default: // ExprStmt, GoStmt, DeferStmt, IncDecStmt, SendStmt, DeclStmt, BranchStmt
 		out.tick(1)
 		out.add(c.expr(sc, s))
 	}
+	return out
+}
+
+// loopBody menghitung isi satu putaran loop dengan kedalaman loop yang benar.
+func (c *costCtx) loopBody(sc *fnScope, data bool, body func() cst) cst {
+	sc.loops++
+	if data {
+		sc.dataLoops++
+	}
+	iter := body()
+	sc.loops--
+	if data {
+		sc.dataLoops--
+	}
+	return iter
+}
+
+// afterLoop: setelah loop terluar selesai, biaya `return` di dalamnya ditambahkan sekali (tidak dikalikan).
+func (c *costCtx) afterLoop(sc *fnScope, cost cst) cst {
+	if sc.loops == 0 {
+		cost.add(sc.exit)
+		sc.exit = newCst()
+	}
+	return cost
+}
+
+// closureBlock: badan func literal dihitung terpisah dari loop di sekitarnya — `return` di dalamnya hanya
+// mengakhiri closure itu, dan closure yang dipanggil per elemen dikalikan oleh pemanggilnya.
+func (c *costCtx) closureBlock(sc *fnScope, list []ast.Stmt) cst {
+	loops, data, exit := sc.loops, sc.dataLoops, sc.exit
+	sc.loops, sc.dataLoops, sc.exit = 0, 0, newCst()
+	out := c.block(sc, list)
+	sc.loops, sc.dataLoops, sc.exit = loops, data, exit
 	return out
 }
 
@@ -461,7 +516,7 @@ func (c *costCtx) expr(sc *fnScope, n ast.Node) cst {
 	ast.Inspect(n, func(n ast.Node) bool {
 		switch x := n.(type) {
 		case *ast.FuncLit:
-			out.add(c.block(sc, x.Body.List))
+			out.add(c.closureBlock(sc, x.Body.List))
 			return false
 		case *ast.CallExpr:
 			return c.call(sc, x, &out)
@@ -484,6 +539,7 @@ func (c *costCtx) call(sc *fnScope, ce *ast.CallExpr, out *cst) bool {
 		for _, f := range fs {
 			if f != nil {
 				best = heavier(best, c.funcCost(f.Key))
+				c.noteLoopCall(sc, f.Key)
 			}
 		}
 		out.add(best)
@@ -514,11 +570,22 @@ func (c *costCtx) call(sc *fnScope, ce *ast.CallExpr, out *cst) bool {
 func (c *costCtx) callbackArgs(sc *fnScope, ce *ast.CallExpr, cb, out *cst) {
 	for _, a := range ce.Args {
 		if lit, ok := a.(*ast.FuncLit); ok {
-			cb.add(c.block(sc, lit.Body.List))
+			cb.add(c.closureBlock(sc, lit.Body.List))
 			continue
 		}
 		out.add(c.expr(sc, a))
 	}
+}
+
+// noteLoopCall mencatat bahwa fungsi sc.key memanggil callee di dalam loop atas data.
+func (c *costCtx) noteLoopCall(sc *fnScope, callee string) {
+	if sc.dataLoops == 0 || sc.key == "" || callee == sc.key {
+		return
+	}
+	if c.inLoop[sc.key] == nil {
+		c.inLoop[sc.key] = map[string]bool{}
+	}
+	c.inLoop[sc.key][callee] = true
 }
 
 func hasFuncLit(ce *ast.CallExpr) bool {
@@ -682,7 +749,7 @@ func (c Cost) needsEvidence() bool {
 
 // computeCosts dijalankan sekali per modul setelah rute & call graph selesai disusun.
 func (g *Graph) computeCosts(m *module) {
-	c := &costCtx{m: m, memo: map[string]cst{}, busy: map[string]bool{}}
+	c := &costCtx{m: m, memo: map[string]cst{}, busy: map[string]bool{}, inLoop: map[string]map[string]bool{}}
 	src := newSrcCache(m.base)
 	byPos := map[string]string{}
 	for k, f := range m.funcs {
@@ -692,6 +759,7 @@ func (g *Graph) computeCosts(m *module) {
 	for k := range m.funcs {
 		g.funcCosts[k] = c.funcCost(k).export()
 	}
+	g.loopCallees = c.inLoop
 	// Bukti dikumpulkan setelah semua biaya fungsi termemo, agar biaya fungsi terpanggil sudah final.
 	for k, f := range m.funcs {
 		fc := g.funcCosts[k]
@@ -708,7 +776,7 @@ func (g *Graph) computeCosts(m *module) {
 		case rt.handlerKey != "":
 			total.add(c.funcCost(rt.handlerKey))
 		case rt.body != nil && rt.bodyFile != nil:
-			total.add(c.block(&fnScope{fi: rt.bodyFile, closures: map[string]cst{}}, rt.body.List))
+			total.add(c.block(newFnScope(rt.bodyFile, "", rt.body.List), rt.body.List))
 		default:
 			total.tick(1)
 		}
@@ -888,7 +956,8 @@ func Hotspots(graphs []*Graph) []Hotspot {
 					maxT = cc.Degree
 				}
 				name := shortName(g, c)
-				if q := float64(cc.Queries1); q > bestQ {
+				// Hanya terpanggil di dalam loop data yang membawa query ke N+1; yang dipanggil sekali di luar loop tidak.
+				if q := float64(cc.Queries1); q > bestQ && g.loopCallees[k][c] {
 					bestQ, viaQ = q, name
 				}
 				if cc.Degree >= 1 && cc.rank > bestT {

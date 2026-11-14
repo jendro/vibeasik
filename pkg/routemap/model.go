@@ -29,8 +29,10 @@ type Graph struct {
 	callees map[string][]string
 	callers map[string][]string
 	// biaya proses (tick) per fungsi & rute — lihat cost.go
-	funcCosts  map[string]Cost
-	routeCosts map[*Route]RouteCost
+	funcCosts map[string]Cost
+	// loopCallees[fungsi][terpanggil]: pemanggilan di dalam loop atas data (lihat costCtx.inLoop).
+	loopCallees map[string]map[string]bool
+	routeCosts  map[*Route]RouteCost
 }
 
 // Router = app/engine/group/sub-router beserta middleware yang dipasang langsung padanya (urut pendaftaran).
